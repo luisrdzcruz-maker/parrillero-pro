@@ -696,6 +696,19 @@ ERROR
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 pb-28 pt-5 text-white">
+      {/* 🔥 SWITCH VERSIONES PRO */}
+      <div className="fixed bottom-24 left-4 z-50 flex gap-2 rounded-full border border-white/10 bg-black/60 p-2 text-xs backdrop-blur">
+        <a href="/" className="px-2 py-1 hover:text-white">
+          V1
+        </a>
+        <a href="/v3" className="px-2 py-1 hover:text-orange-400">
+          V3
+        </a>
+        <a href="/v4" className="px-2 py-1 hover:text-orange-400">
+          V4
+        </a>
+      </div>
+
       <div className="mx-auto max-w-6xl">
         <header className="mb-6 rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 p-6">
           <div className="mb-4 flex justify-end">
@@ -716,7 +729,9 @@ ERROR
 
           <p className="text-sm font-medium text-orange-400">{t.app}</p>
           <h1 className="mt-2 text-3xl font-bold md:text-4xl">{t.title}</h1>
-          <p className="mt-3 max-w-2xl text-sm text-slate-300 md:text-base">{t.subtitle}</p>
+          <p className="mt-3 max-w-2xl text-sm text-slate-300 md:text-base">
+            {t.subtitle}
+          </p>
         </header>
 
         {mode === "inicio" && (
@@ -749,7 +764,9 @@ ERROR
                   <div className="rounded-2xl border border-orange-500/30 bg-orange-500/10 p-4">
                     <p className="text-sm text-orange-300">{animal}</p>
                     <h3 className="font-bold">{selectedCut.name}</h3>
-                    <p className="mt-1 text-sm text-slate-300">{selectedCut.description}</p>
+                    <p className="mt-1 text-sm text-slate-300">
+                      {selectedCut.description}
+                    </p>
                   </div>
                 )}
 
