@@ -5,12 +5,13 @@ import {
   generateCookingSteps as generateLocalCookingSteps,
   type CookingStep,
 } from "@/lib/cookingEngine";
-import { useEffect, useMemo, useState } from "react";
 import { generateParrilladaPlan } from "@/lib/parrilladaEngine";
+import { useEffect, useMemo, useState } from "react";
 
 type Animal = "Vacuno" | "Cerdo" | "Pollo" | "Pescado" | "Vegetales";
 type Mode = "inicio" | "coccion" | "menu" | "parrillada" | "cocina" | "guardados";
-type Lang = "es" | "en";
+type Lang = "es" | "en" | "fi";
+type EngineLang = "es" | "en";
 type Blocks = Record<string, string>;
 
 type SavedMenu = {
@@ -30,14 +31,16 @@ const texts = {
   es: {
     app: "IA Parrillero Pro",
     title: "Cocina mejor a la parrilla 🔥",
-    subtitle: "Planes cortos, menús BBQ, listas de compra y modo cocina en vivo.",
+    subtitle: "Motor BBQ con cocción, parrilladas, timeline live y modo cocina.",
     start: "Inicio",
     cooking: "Cocción",
     menu: "Menú",
+    parrillada: "Parrillada",
     live: "Cocina",
     saved: "Guardados",
     planCooking: "Planificar cocción",
     createMenu: "Crear menú BBQ",
+    parrilladaPro: "Parrillada Pro",
     liveMode: "Modo cocina",
     savedMenus: "Menús guardados",
     chooseAnimal: "Elige animal",
@@ -45,7 +48,8 @@ const texts = {
     configurePlan: "Configura el plan",
     result: "Resultado",
     generatePlan: "Generar plan",
-    creating: "Creando menú...",
+    createParrillada: "Crear plan parrillada",
+    creating: "Creando...",
     generating: "Generando...",
     saveMenu: "⭐ Guardar menú",
     startCooking: "Cocinar",
@@ -60,6 +64,7 @@ const texts = {
     people: "Número de personas",
     eventType: "Tipo de evento",
     meats: "Carnes / productos",
+    products: "Productos",
     sides: "Acompañamientos",
     budget: "Presupuesto (€)",
     difficulty: "Dificultad",
@@ -69,18 +74,26 @@ const texts = {
     doneness: "Punto",
     keyTips: "Consejos clave",
     planSequence: "Secuencia del plan",
+    serveTime: "Hora objetivo de servir",
+    localEngine: "Motor local",
+    aiFallback: "IA",
+    selected: "Seleccionado",
+    active: "Activo",
+    supabaseReady: "Preparado para Supabase",
   },
   en: {
     app: "AI Grill Master Pro",
     title: "Cook better on the grill 🔥",
-    subtitle: "Short plans, BBQ menus, shopping lists and live cooking mode.",
+    subtitle: "BBQ engine with cooking, grill planning, live timeline and cooking mode.",
     start: "Home",
     cooking: "Cooking",
     menu: "Menu",
+    parrillada: "BBQ Pro",
     live: "Cook",
     saved: "Saved",
     planCooking: "Plan cooking",
     createMenu: "Create BBQ menu",
+    parrilladaPro: "BBQ Planner Pro",
     liveMode: "Live cooking",
     savedMenus: "Saved menus",
     chooseAnimal: "Choose animal",
@@ -88,7 +101,8 @@ const texts = {
     configurePlan: "Configure plan",
     result: "Result",
     generatePlan: "Generate plan",
-    creating: "Creating menu...",
+    createParrillada: "Create BBQ plan",
+    creating: "Creating...",
     generating: "Generating...",
     saveMenu: "⭐ Save menu",
     startCooking: "Cook",
@@ -103,6 +117,7 @@ const texts = {
     people: "Number of people",
     eventType: "Event type",
     meats: "Meats / products",
+    products: "Products",
     sides: "Sides",
     budget: "Budget (€)",
     difficulty: "Difficulty",
@@ -112,6 +127,65 @@ const texts = {
     doneness: "Doneness",
     keyTips: "Key tips",
     planSequence: "Plan sequence",
+    serveTime: "Target serving time",
+    localEngine: "Local engine",
+    aiFallback: "AI",
+    selected: "Selected",
+    active: "Active",
+    supabaseReady: "Supabase ready",
+  },
+  fi: {
+    app: "Parrillero Pro",
+    title: "Grillaa paremmin 🔥",
+    subtitle: "BBQ-moottori: kypsennys, grillijuhlat, live-aikajana ja kokkaustila.",
+    start: "Alku",
+    cooking: "Kypsennys",
+    menu: "Menu",
+    parrillada: "BBQ Pro",
+    live: "Kokkaus",
+    saved: "Tallennetut",
+    planCooking: "Suunnittele kypsennys",
+    createMenu: "Luo BBQ-menu",
+    parrilladaPro: "BBQ Planner Pro",
+    liveMode: "Live-kokkaus",
+    savedMenus: "Tallennetut menut",
+    chooseAnimal: "Valitse ryhmä",
+    chooseCut: "Valitse leikkaus",
+    configurePlan: "Asetukset",
+    result: "Tulos",
+    generatePlan: "Luo suunnitelma",
+    createParrillada: "Luo BBQ-suunnitelma",
+    creating: "Luodaan...",
+    generating: "Luodaan...",
+    saveMenu: "⭐ Tallenna menu",
+    startCooking: "Kokkaa",
+    copy: "Kopioi",
+    whatsapp: "WhatsApp",
+    next: "Seuraava",
+    reset: "Reset",
+    pause: "Tauko",
+    startTimer: "Aloita",
+    noResult: "Tulos näkyy tässä.",
+    noSaved: "Ei tallennettuja menuja vielä.",
+    people: "Henkilömäärä",
+    eventType: "Tapahtuma",
+    meats: "Lihat / tuotteet",
+    products: "Tuotteet",
+    sides: "Lisukkeet",
+    budget: "Budjetti (€)",
+    difficulty: "Vaikeus",
+    equipment: "Väline",
+    weight: "Paino (kg)",
+    thickness: "Paksuus (cm)",
+    doneness: "Kypsyys",
+    keyTips: "Tärkeät vinkit",
+    planSequence: "Suunnitelman vaiheet",
+    serveTime: "Tarjoiluaika",
+    localEngine: "Paikallinen moottori",
+    aiFallback: "AI",
+    selected: "Valittu",
+    active: "Aktiivinen",
+    supabaseReady: "Supabase-valmis",
   },
 };
 
@@ -135,7 +209,7 @@ const animalData: Record<Animal, { icon: string; image: string; cuts: CutItem[] 
     image: "/animals/cerdo.jpg",
     cuts: [
       { name: "Secreto ibérico", image: "/cuts/secreto.jpg", description: "Graso, rápido y muy jugoso." },
-      { name: "Presa ibérica", image: "/cuts/presa.jpg", description: "Premium, buena para punto rosado." },
+      { name: "Presa ibérica", image: "/cuts/presa.jpg", description: "Premium, buena para punto rosado seguro." },
       { name: "Costillas", image: "/cuts/costillas.jpg", description: "Ideal para lento, humo y glaseado." },
       { name: "Panceta", image: "/cuts/panceta.jpg", description: "Crujiente, grasa y perfecta para fuego controlado." },
       { name: "Solomillo", image: "/cuts/solomillo-cerdo.jpg", description: "Magro, rápido y delicado." },
@@ -191,7 +265,6 @@ const equipmentOptions = [
   "Napoleon Rogue 525-2",
 ];
 
-
 const defaultCookSteps: CookingStep[] = [
   {
     title: "Precalentar",
@@ -208,13 +281,6 @@ const defaultCookSteps: CookingStep[] = [
     tips: ["No tocar", "Buscar costra", "No aplastar"],
   },
   {
-    title: "Sellar lado 2",
-    duration: 180,
-    description: "Dar la vuelta una sola vez.",
-    image: "/visuals/sear.jpg",
-    tips: ["Voltear una vez", "Mantener fuego fuerte", "Comprobar costra"],
-  },
-  {
     title: "Reposo",
     duration: 300,
     description: "Reposar antes de cortar.",
@@ -223,13 +289,8 @@ const defaultCookSteps: CookingStep[] = [
   },
 ];
 
-function getStepStatus(timeLeft: number, duration: number) {
-  const progress = (duration - timeLeft) / duration;
-
-  if (timeLeft <= 0) return "Terminado";
-  if (timeLeft <= 30) return "Últimos segundos";
-  if (progress < 0.15) return "Preparar";
-  return "Cocinando";
+function engineLang(lang: Lang): EngineLang {
+  return lang === "es" ? "es" : "en";
 }
 
 function hasLocalEngine(animal: Animal) {
@@ -263,11 +324,7 @@ function parseResponse(text: string): Blocks {
 
 function buildCookStepsFromPlan(blocks: Blocks): CookingStep[] {
   const text = blocks.PASOS || blocks.STEPS || blocks.ORDEN || blocks.ORDER || "";
-
-  const lines = text
-    .split("\n")
-    .map((line) => line.replace(/^[-•*\d.)\s]+/, "").trim())
-    .filter(Boolean);
+  const lines = text.split("\n").map((line) => line.replace(/^[-•*\d.)\s]+/, "").trim()).filter(Boolean);
 
   if (lines.length === 0) return defaultCookSteps;
 
@@ -279,11 +336,6 @@ function buildCookStepsFromPlan(blocks: Blocks): CookingStep[] {
     if (lower.includes("precal") || lower.includes("preheat")) {
       duration = 600;
       image = "/visuals/preheat.jpg";
-    }
-
-    if (lower.includes("sell") || lower.includes("sear") || lower.includes("lado") || lower.includes("side")) {
-      duration = 180;
-      image = "/visuals/sear.jpg";
     }
 
     if (lower.includes("indirect")) {
@@ -307,10 +359,7 @@ function buildCookStepsFromPlan(blocks: Blocks): CookingStep[] {
 }
 
 function getShoppingItems(text: string) {
-  return text
-    .split("\n")
-    .map((item) => item.replace(/^[-•*\d.)\s]+/, "").trim())
-    .filter(Boolean);
+  return text.split("\n").map((item) => item.replace(/^[-•*\d.)\s]+/, "").trim()).filter(Boolean);
 }
 
 function formatTitle(title: string) {
@@ -326,16 +375,25 @@ function formatTitle(title: string) {
     MENU: "🍽️ Menú",
     CANTIDADES: "📊 Cantidades",
     QUANTITIES: "📊 Quantities",
-    TIMING: "⏰ Timing",
-    TIMELINE: "⏰ Timing",
+    TIMELINE: "⏱️ Timeline Parrillada",
+    GRILL_MANAGER: "🔥 Grill Manager Pro",
     ORDEN: "🔥 Orden de cocción",
     ORDER: "🔥 Cooking order",
     COMPRA: "🛒 Lista de compra",
     SHOPPING: "🛒 Shopping list",
-    GRILL_MANAGER: "🔥 Grill Manager Pro",    
   };
 
   return map[title] || title;
+}
+
+function buildText(blocks: Blocks) {
+  return Object.keys(blocks).map((key) => `${key}\n${blocks[key]}`).join("\n\n");
+}
+
+function formatTime(seconds: number) {
+  const min = Math.floor(seconds / 60);
+  const sec = seconds % 60;
+  return `${min}:${sec.toString().padStart(2, "0")}`;
 }
 
 function getZoneLabel(zone: string) {
@@ -363,6 +421,7 @@ function parseTimeline(content: string) {
     })
     .filter((item) => item.start && item.name);
 }
+
 function minutesFromTime(value: string) {
   const [h, m] = value.split(":").map(Number);
   if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
@@ -375,40 +434,11 @@ function secondsToClock(seconds: number) {
   const m = Math.floor((safe % 3600) / 60);
   const s = safe % 60;
 
-  if (h > 0) {
-    return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  }
-
+  if (h > 0) return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-function buildText(blocks: Blocks) {
-  return Object.keys(blocks)
-    .map((key) => `${key}\n${blocks[key]}`)
-    .join("\n\n");
-}
-
-function formatTime(seconds: number) {
-  const min = Math.floor(seconds / 60);
-  const sec = seconds % 60;
-
-  return `${min}:${sec.toString().padStart(2, "0")}`;
-}
-
 export default function Home() {
-  function generateParrillada() {
-  const plan = generateParrilladaPlan({
-    people: parrilladaPeople,
-    serveTime,
-    products: parrilladaProducts,
-    sides: parrilladaSides,
-    equipment,
-    language: lang,
-  });
-  console.log("PLAN PARRILLADA:", plan);
-  setBlocks(plan);
-  setCheckedItems({});
-  }
   const [lang, setLang] = useState<Lang>("es");
   const t = texts[lang];
 
@@ -428,6 +458,11 @@ export default function Home() {
   const [budget, setBudget] = useState("200");
   const [difficulty, setDifficulty] = useState("medio");
 
+  const [parrilladaPeople, setParrilladaPeople] = useState("6");
+  const [serveTime, setServeTime] = useState("18:00");
+  const [parrilladaProducts, setParrilladaProducts] = useState("costillas, chuletón, secreto ibérico, maíz");
+  const [parrilladaSides, setParrilladaSides] = useState("patatas, ensalada, chimichurri");
+
   const [blocks, setBlocks] = useState<Blocks>({});
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [savedMenus, setSavedMenus] = useState<SavedMenu[]>([]);
@@ -440,20 +475,13 @@ export default function Home() {
 
   const cuts = useMemo(() => animalData[animal].cuts, [animal]);
   const selectedCut = cuts.find((item) => item.name === cut);
-  const currentDonenessOptions =
-    animal === "Cerdo" ? porkDonenessOptions : beefDonenessOptions;
 
+  const currentDonenessOptions = animal === "Cerdo" ? porkDonenessOptions : beefDonenessOptions;
   const showThickness = !thinCutsWithoutThickness.includes(cut);
-  const [parrilladaPeople, setParrilladaPeople] = useState("6");
-  const [serveTime, setServeTime] = useState("18:00");
-  const [parrilladaProducts, setParrilladaProducts] = useState("costillas, chuletón, secreto ibérico, maíz");
-  const [parrilladaSides, setParrilladaSides] = useState("patatas, ensalada, chimichurri");
+
   useEffect(() => {
     const stored = localStorage.getItem("parrillero_saved_menus");
-
-    if (stored) {
-      setSavedMenus(JSON.parse(stored) as SavedMenu[]);
-    }
+    if (stored) setSavedMenus(JSON.parse(stored) as SavedMenu[]);
   }, []);
 
   useEffect(() => {
@@ -492,9 +520,7 @@ export default function Home() {
       audio.play().catch(() => {});
     } catch {}
 
-    if (navigator.vibrate) {
-      navigator.vibrate([200, 100, 200]);
-    }
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
   }
 
   function updateSavedMenus(nextMenus: SavedMenu[]) {
@@ -528,13 +554,7 @@ export default function Home() {
   function handleAnimalChange(selectedAnimal: Animal) {
     setAnimal(selectedAnimal);
     setCut(animalData[selectedAnimal].cuts[0].name);
-
-    if (selectedAnimal === "Cerdo") {
-      setDoneness("jugoso seguro");
-    } else {
-      setDoneness("poco hecho");
-    }
-
+    setDoneness(selectedAnimal === "Cerdo" ? "jugoso seguro" : "poco hecho");
     setBlocks({});
     setCheckedItems({});
   }
@@ -552,9 +572,7 @@ export default function Home() {
 
     const res = await fetch("/api/chat", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message }),
     });
 
@@ -579,10 +597,10 @@ export default function Home() {
       animal,
       cut,
       weightKg: weight,
-      thicknessCm: thickness,
+      thicknessCm: showThickness ? thickness : "2",
       doneness,
       equipment,
-      language: lang,
+      language: engineLang(lang),
     };
 
     const localPlan = generateLocalCookingPlan(input);
@@ -591,43 +609,29 @@ export default function Home() {
     if (localPlan && localSteps) {
       setBlocks(localPlan);
       setCheckedItems({});
-
       setCookSteps(localSteps);
       setCurrentStep(0);
       setTimeLeft(localSteps[0].duration);
       setTimerRunning(false);
-
       return;
     }
 
     await callAI(
       `
-Language: ${lang === "es" ? "Spanish" : "English"}.
-
-Caso práctico / Practical case: planificar cocción / plan cooking.
-
+Language: ${engineLang(lang) === "es" ? "Spanish" : "English"}.
 Animal: ${animal}
-Corte/producto / Cut/product: ${cut}
-Peso / Weight: ${weight} kg
-Grosor / Thickness: ${thickness} cm
-Punto deseado / Desired doneness: ${doneness}
-Equipo / Equipment: ${equipment}
+Cut: ${cut}
+Weight: ${weight} kg
+Thickness: ${showThickness ? thickness : "not relevant"} cm
+Doneness: ${doneness}
+Equipment: ${equipment}
 
-If language is Spanish, respond with these exact block titles:
+Return exact block titles:
 SETUP
 TIEMPOS
 TEMPERATURA
 PASOS
 ERROR
-
-If language is English, respond with these exact block titles:
-SETUP
-TIMES
-TEMPERATURE
-STEPS
-ERROR
-
-Short, practical and actionable.
 `,
       true
     );
@@ -635,19 +639,17 @@ Short, practical and actionable.
 
   async function generateMenuPlan() {
     await callAI(`
-Language: ${lang === "es" ? "Spanish" : "English"}.
-
-Caso práctico / Practical case: crear menú BBQ / create BBQ menu.
+Language: ${engineLang(lang) === "es" ? "Spanish" : "English"}.
 
 Personas / People: ${people}
 Tipo de evento / Event type: ${eventType}
-Carnes/productos principales / Main meats/products: ${menuMeats}
+Carnes/productos / Products: ${menuMeats}
 Acompañamientos / Sides: ${sides}
 Presupuesto / Budget: ${budget} €
 Nivel / Difficulty: ${difficulty}
 Equipo / Equipment: ${equipment}
 
-If language is Spanish, respond with these exact block titles:
+If Spanish:
 MENU
 CANTIDADES
 TIMING
@@ -655,21 +657,32 @@ ORDEN
 COMPRA
 ERROR
 
-If language is English, respond with these exact block titles:
+If English:
 MENU
 QUANTITIES
 TIMING
 ORDER
 SHOPPING
 ERROR
-
-Short, practical and actionable.
 `);
+  }
+
+  function generateParrillada() {
+    const plan = generateParrilladaPlan({
+      people: parrilladaPeople,
+      serveTime,
+      products: parrilladaProducts,
+      sides: parrilladaSides,
+      equipment,
+      language: engineLang(lang),
+    });
+
+    setBlocks(plan);
+    setCheckedItems({});
   }
 
   function nextCookStep() {
     const next = Math.min(currentStep + 1, cookSteps.length - 1);
-
     setCurrentStep(next);
     setTimeLeft(cookSteps[next].duration);
     setTimerRunning(false);
@@ -697,140 +710,36 @@ Short, practical and actionable.
             >
               <option value="es">🇪🇸 Español</option>
               <option value="en">🇬🇧 English</option>
+              <option value="fi">🇫🇮 Suomi</option>
             </select>
           </div>
 
           <p className="text-sm font-medium text-orange-400">{t.app}</p>
           <h1 className="mt-2 text-3xl font-bold md:text-4xl">{t.title}</h1>
-          <p className="mt-3 max-w-2xl text-sm text-slate-300 md:text-base">
-            {t.subtitle}
-          </p>
+          <p className="mt-3 max-w-2xl text-sm text-slate-300 md:text-base">{t.subtitle}</p>
         </header>
 
         {mode === "inicio" && (
           <section className="grid gap-4 md:grid-cols-5">
             <HomeCard title={t.planCooking} description={t.configurePlan} emoji="🥩" onClick={() => setMode("coccion")} />
             <HomeCard title={t.createMenu} description={`${t.people}, ${t.meats.toLowerCase()}`} emoji="🍽️" onClick={() => setMode("menu")} />
+            <HomeCard title={t.parrilladaPro} description="Timeline + Grill Manager" emoji="🔥" onClick={() => setMode("parrillada")} />
             <HomeCard title={t.liveMode} description="Timer + steps" emoji="⏱️" onClick={() => setMode("cocina")} />
             <HomeCard title={t.savedMenus} description={`${savedMenus.length}`} emoji="⭐" onClick={() => setMode("guardados")} />
-            <HomeCard  title="Parrillada Pro"  description="Coordina cortes, tiempos y compra."  emoji="🔥"  onClick={() => setMode("parrillada")}/>
           </section>
         )}
-        {mode === "parrillada" && (
-          <section className="grid gap-5 md:grid-cols-[380px_1fr]">
-            <div className="space-y-4 rounded-3xl border border-slate-800 bg-slate-900 p-5">
-              <h2 className="text-xl font-bold">Parrillada Pro</h2>
 
-              <Input
-                label="Personas"
-                value={parrilladaPeople}
-                onChange={setParrilladaPeople}
-                placeholder="Ej: 6"
-              />
-
-              <Input
-                label="Hora objetivo de servir"
-                value={serveTime}
-                onChange={setServeTime}
-                placeholder="Ej: 18:00"
-              />
-
-              <Input
-                label="Productos"
-                value={parrilladaProducts}
-                onChange={setParrilladaProducts}
-                placeholder="Ej: costillas, chuletón, secreto"
-              />
-
-              <Input
-                label="Acompañamientos"
-                value={parrilladaSides}
-                onChange={setParrilladaSides}
-                placeholder="Ej: patatas, ensalada, chimichurri"
-              />
-
-              <Select
-                label={t.equipment}
-                value={equipment}
-                onChange={setEquipment}
-                options={equipmentOptions}
-              />
-
-              <button
-                onClick={generateParrillada}
-                className="w-full rounded-2xl bg-orange-500 px-5 py-4 font-bold"
-              >
-                Crear plan parrillada
-              </button>
-            </div>
-
-            <ResultCards
-              blocks={blocks}
-              loading={loading}
-              checkedItems={checkedItems}
-              setCheckedItems={setCheckedItems}
-              t={t}
-            />
-          </section>
-        )}
         {mode === "coccion" && (
           <>
-          <section className="mb-8">
-            <div className="mb-4 flex items-end justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-orange-400">
-                  {lang === "es" ? "Paso 1" : "Step 1"}
-                </p>
-                <h2 className="text-2xl font-black">{t.chooseAnimal}</h2>
-              </div>
-
-              <p className="hidden text-sm text-slate-400 md:block">
-                {lang === "es" ? "Elige la categoría principal" : "Choose the main category"}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
-              {(Object.keys(animalData) as Animal[]).map((item) => (
-                <ImageCard
-                  key={item}
-                  active={animal === item}
-                  title={item}
-                  subtitle={animalData[item].cuts.slice(0, 2).map((cutItem) => cutItem.name).join(", ")}
-                  emoji={animalData[item].icon}
-                  image={animalData[item].image}
-                  badge={hasLocalEngine(item) ? "Motor local" : "IA"}
-                  onClick={() => handleAnimalChange(item)}
-                />
-              ))}
-            </div>
-          </section>
-
-          <section className="mb-8">
-            <div className="mb-4 flex items-end justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-orange-400">
-                  {lang === "es" ? "Paso 2" : "Step 2"}
-                </p>
-                <h2 className="text-2xl font-black">{t.chooseCut}</h2>
-              </div>
-
-              <p className="hidden text-sm text-slate-400 md:block">
-                {lang === "es" ? "Selecciona el corte concreto" : "Select the exact cut"}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {cuts.map((item) => (
-                <CutCard
-                  key={item.name}
-                  active={cut === item.name}
-                  cut={item}
-                  badge={hasLocalEngine(animal) ? "Motor local" : "IA"}
-                  onClick={() => handleCutChange(item.name)}
-                />
-              ))}
-            </div>
-          </section>
+            <SelectionSections
+              lang={lang}
+              t={t}
+              animal={animal}
+              cut={cut}
+              cuts={cuts}
+              handleAnimalChange={handleAnimalChange}
+              handleCutChange={handleCutChange}
+            />
 
             <section className="grid gap-5 md:grid-cols-[380px_1fr]">
               <div className="space-y-4 rounded-3xl border border-slate-800 bg-slate-900 p-5">
@@ -845,24 +754,19 @@ Short, practical and actionable.
                 )}
 
                 <Input label={t.weight} value={weight} onChange={setWeight} placeholder="Ej: 1.2" />
-                {showThickness && (
-                <Input
-                  label={t.thickness}
-                  value={thickness}
-                  onChange={setThickness}
-                  placeholder="Ej: 5"
-                />
-              )}
 
-              <Select
-                label={t.doneness}
-                value={doneness}
-                onChange={setDoneness}
-                options={currentDonenessOptions}
-              />
+                {showThickness && (
+                  <Input label={t.thickness} value={thickness} onChange={setThickness} placeholder="Ej: 5" />
+                )}
+
+                <Select label={t.doneness} value={doneness} onChange={setDoneness} options={currentDonenessOptions} />
                 <Select label={t.equipment} value={equipment} onChange={setEquipment} options={equipmentOptions} />
 
                 <PrimaryButton onClick={generateCookingPlan} loading={loading} text={t.generatePlan} loadingText={t.generating} />
+
+                <div className="rounded-2xl border border-blue-500/20 bg-blue-500/10 p-3 text-xs text-blue-200">
+                  {t.supabaseReady}: cooking_plans, cook_steps, user_profiles
+                </div>
               </div>
 
               <ResultCards
@@ -906,162 +810,42 @@ Short, practical and actionable.
           </section>
         )}
 
-        {mode === "cocina" && (
-          <section className="grid gap-5 md:grid-cols-[420px_1fr]">
-            <div className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900">
-              {cookSteps[currentStep].image && (
-                <div className="relative h-52 overflow-hidden">
-                  <div
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{
-                      backgroundImage: `linear-gradient(to top, rgba(2,6,23,0.95), rgba(2,6,23,0.25)), url(${cookSteps[currentStep].image})`,
-                    }}
-                  />
+        {mode === "parrillada" && (
+          <section className="grid gap-5 md:grid-cols-[380px_1fr]">
+            <div className="space-y-4 rounded-3xl border border-slate-800 bg-slate-900 p-5">
+              <h2 className="text-xl font-bold">{t.parrilladaPro}</h2>
 
-                  <div className="absolute bottom-3 left-3 rounded bg-black/60 px-3 py-1 text-xs font-semibold text-white">
-                    {getStepLabel(cookSteps[currentStep].title)}
-                  </div>
-                </div>
-              )}
+              <Input label={t.people} value={parrilladaPeople} onChange={setParrilladaPeople} placeholder="Ej: 6" />
+              <Input label={t.serveTime} value={serveTime} onChange={setServeTime} placeholder="Ej: 18:00" />
+              <Input label={t.products} value={parrilladaProducts} onChange={setParrilladaProducts} placeholder="Ej: costillas, chuletón, secreto" />
+              <Input label={t.sides} value={parrilladaSides} onChange={setParrilladaSides} placeholder="Ej: patatas, ensalada, chimichurri" />
+              <Select label={t.equipment} value={equipment} onChange={setEquipment} options={equipmentOptions} />
 
-              <div className="p-5">
-                <p className="text-sm text-orange-400">
-                  {lang === "es" ? "Paso" : "Step"} {currentStep + 1} / {cookSteps.length}
-                </p>
+              <button onClick={generateParrillada} className="w-full rounded-2xl bg-orange-500 px-5 py-4 font-bold">
+                {t.createParrillada}
+              </button>
 
-                <h2 className="mt-2 text-3xl font-bold">{cookSteps[currentStep].title}</h2>
-
-                <p className="mt-3 text-slate-300">{cookSteps[currentStep].description}</p>
-                <div className="mt-5 rounded-3xl border border-orange-500/40 bg-orange-500/10 p-5">
-                  <p className="text-xs font-bold uppercase tracking-wide text-orange-300">
-                    Chef asistente ·{" "}
-                    {getStepStatus(timeLeft, cookSteps[currentStep].duration)}
-                  </p>
-
-                  <h3 className="mt-2 text-2xl font-black text-white">
-                    {timeLeft <= 30 && cookSteps[currentStep].warningCue
-                      ? cookSteps[currentStep].warningCue
-                      : cookSteps[currentStep].assistantCue || "Sigue el paso actual"}
-                  </h3>
-                </div>
-                <div className="mt-6 rounded-3xl bg-slate-950 p-8 text-center">
-                  <p className="text-7xl font-bold text-orange-400">
-                    {formatTime(timeLeft)}
-                  </p>
-
-                  <div className="mt-6 h-3 overflow-hidden rounded-full bg-slate-800">
-                    <div
-                      className="h-full rounded-full bg-orange-500 transition-[width] duration-1000 ease-linear"
-                      style={{
-                        width: `${Math.min(
-                          100,
-                          Math.max(
-                            0,
-                            ((cookSteps[currentStep].duration - timeLeft) /
-                              cookSteps[currentStep].duration) *
-                              100
-                          )
-                        )}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {cookSteps[currentStep].tips && cookSteps[currentStep].tips.length > 0 && (
-                  <div className="mt-5 rounded-3xl border border-orange-500/30 bg-orange-500/10 p-5">
-                    <h3 className="font-bold text-orange-300">{t.keyTips}</h3>
-
-                    <ul className="mt-3 space-y-2 text-sm text-slate-200">
-                      {cookSteps[currentStep].tips?.map((tip) => (
-                        <li key={tip}>• {tip}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                <div className="mt-5 grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => setTimerRunning(!timerRunning)}
-                    className="rounded-2xl bg-orange-500 px-5 py-4 font-bold"
-                  >
-                    {timerRunning ? t.pause : t.startTimer}
-                  </button>
-
-                  <button
-                    onClick={nextCookStep}
-                    className="rounded-2xl border border-slate-700 px-5 py-4 font-bold"
-                  >
-                    {t.next}
-                  </button>
-                </div>
-
-                <button
-                  onClick={resetCookMode}
-                  className="mt-3 w-full rounded-2xl border border-slate-700 px-5 py-4 text-slate-300"
-                >
-                  {t.reset}
-                </button>
+              <div className="rounded-2xl border border-blue-500/20 bg-blue-500/10 p-3 text-xs text-blue-200">
+                {t.supabaseReady}: bbq_events, bbq_timeline_items, grill_zones
               </div>
             </div>
 
-            <div className="rounded-3xl border border-slate-800 bg-slate-900 p-5">
-              <h2 className="mb-4 text-xl font-bold">{t.planSequence}</h2>
-
-              <div className="space-y-3">
-                {cookSteps.map((step, index) => (
-                  <div
-                    key={`${step.title}-${index}`}
-                    className={
-                      index === currentStep
-                        ? "scale-[1.02] overflow-hidden rounded-2xl border border-orange-500 bg-orange-500/20 shadow-lg"
-                        : "overflow-hidden rounded-2xl border border-slate-800 bg-slate-950"
-                    }
-                  >
-                    {step.image && (
-                      <div className="relative h-24 overflow-hidden">
-                        <div
-                          className="absolute inset-0 bg-cover bg-center"
-                          style={{
-                            backgroundImage: `linear-gradient(to top, rgba(2,6,23,0.9), rgba(2,6,23,0.25)), url(${step.image})`,
-                          }}
-                        />
-
-                        <div className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-1 text-[10px] font-semibold text-white">
-                          {getStepLabel(step.title)}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <h3 className="font-bold">{step.title}</h3>
-                        <span className="text-sm text-slate-400">
-                          {formatTime(step.duration)}
-                        </span>
-                      </div>
-
-                      <p className="mt-2 text-sm text-slate-400">
-                        {step.description}
-                      </p>
-
-                      {step.tips && step.tips.length > 0 && (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {step.tips.slice(0, 2).map((tip) => (
-                            <span
-                              key={tip}
-                              className="rounded-full bg-slate-800 px-3 py-1 text-xs text-slate-300"
-                            >
-                              {tip}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <ResultCards blocks={blocks} loading={loading} checkedItems={checkedItems} setCheckedItems={setCheckedItems} t={t} />
           </section>
+        )}
+
+        {mode === "cocina" && (
+          <CookingMode
+            lang={lang}
+            t={t}
+            cookSteps={cookSteps}
+            currentStep={currentStep}
+            timeLeft={timeLeft}
+            timerRunning={timerRunning}
+            setTimerRunning={setTimerRunning}
+            nextCookStep={nextCookStep}
+            resetCookMode={resetCookMode}
+          />
         )}
 
         {mode === "guardados" && (
@@ -1101,10 +885,10 @@ Short, practical and actionable.
 
       <nav className="fixed bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950/95 px-3 py-3 backdrop-blur">
         <div className="mx-auto grid max-w-4xl grid-cols-6 gap-2">
-          <Tab  active={mode === "parrillada"}  label="Parrillada"  emoji="🔥"  onClick={() => setMode("parrillada")}/>
           <Tab active={mode === "inicio"} label={t.start} emoji="🏠" onClick={() => setMode("inicio")} />
           <Tab active={mode === "coccion"} label={t.cooking} emoji="🥩" onClick={() => setMode("coccion")} />
           <Tab active={mode === "menu"} label={t.menu} emoji="🍽️" onClick={() => setMode("menu")} />
+          <Tab active={mode === "parrillada"} label={t.parrillada} emoji="🔥" onClick={() => setMode("parrillada")} />
           <Tab active={mode === "cocina"} label={t.live} emoji="⏱️" onClick={() => setMode("cocina")} />
           <Tab active={mode === "guardados"} label={t.saved} emoji="⭐" onClick={() => setMode("guardados")} />
         </div>
@@ -1113,114 +897,395 @@ Short, practical and actionable.
   );
 }
 
-function ImageCard({
-  active,
-  title,
-  subtitle,
-  emoji,
-  image,
-  badge,
-  onClick,
+/* COMPONENTS */
+
+function SelectionSections({
+  lang,
+  t,
+  animal,
+  cut,
+  cuts,
+  handleAnimalChange,
+  handleCutChange,
 }: {
-  active: boolean;
-  title: string;
-  subtitle: string;
-  emoji: string;
-  image: string;
-  badge?: string;
-  onClick: () => void;
+  lang: Lang;
+  t: typeof texts.es;
+  animal: Animal;
+  cut: string;
+  cuts: CutItem[];
+  handleAnimalChange: (animal: Animal) => void;
+  handleCutChange: (cut: string) => void;
 }) {
   return (
-    <button
-      onClick={onClick}
-      className={
-        active
-          ? "group relative overflow-hidden rounded-[28px] border border-orange-500 bg-orange-500/20 text-left shadow-[0_0_35px_rgba(249,115,22,0.25)]"
-          : "group relative overflow-hidden rounded-[28px] border border-slate-800 bg-slate-900 text-left transition hover:-translate-y-1 hover:border-orange-500/70 hover:shadow-[0_0_30px_rgba(249,115,22,0.15)]"
-      }
-    >
-      <div className="relative h-40 overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-110"
-          style={{
-            backgroundImage: `linear-gradient(to top, rgba(2,6,23,0.95), rgba(2,6,23,0.2)), url(${image})`,
-          }}
-        />
-
-        <div className="absolute left-4 top-4 rounded-2xl bg-black/55 px-3 py-2 text-3xl backdrop-blur">
-          {emoji}
+    <>
+      <section className="mb-8">
+        <div className="mb-4 flex items-end justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-orange-400">{lang === "es" ? "Paso 1" : "Step 1"}</p>
+            <h2 className="text-2xl font-black">{t.chooseAnimal}</h2>
+          </div>
         </div>
 
-        {badge && (
-          <div className="absolute right-3 top-3 rounded-full bg-orange-500 px-3 py-1 text-[11px] font-bold text-white">
-            {badge}
-          </div>
-        )}
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+          {(Object.keys(animalData) as Animal[]).map((item) => (
+            <ImageCard
+              key={item}
+              active={animal === item}
+              title={item}
+              subtitle={animalData[item].cuts.slice(0, 2).map((cutItem) => cutItem.name).join(", ")}
+              emoji={animalData[item].icon}
+              image={animalData[item].image}
+              badge={hasLocalEngine(item) ? t.localEngine : t.aiFallback}
+              selectedLabel={t.selected}
+              onClick={() => handleAnimalChange(item)}
+            />
+          ))}
+        </div>
+      </section>
 
-        {active && (
-          <div className="absolute bottom-3 right-3 rounded-full bg-white px-3 py-1 text-xs font-black text-slate-950">
-            ✓ Seleccionado
+      <section className="mb-8">
+        <div className="mb-4 flex items-end justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-orange-400">{lang === "es" ? "Paso 2" : "Step 2"}</p>
+            <h2 className="text-2xl font-black">{t.chooseCut}</h2>
           </div>
-        )}
-      </div>
+        </div>
 
-      <div className="p-4">
-        <h3 className="text-lg font-black">{title}</h3>
-        <p className="mt-1 line-clamp-2 text-xs text-slate-400">{subtitle}</p>
-      </div>
-    </button>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {cuts.map((item) => (
+            <CutCard
+              key={item.name}
+              active={cut === item.name}
+              cut={item}
+              badge={hasLocalEngine(animal) ? t.localEngine : t.aiFallback}
+              activeLabel={t.active}
+              onClick={() => handleCutChange(item.name)}
+            />
+          ))}
+        </div>
+      </section>
+    </>
   );
 }
 
-function CutCard({
-  active,
-  cut,
-  badge,
-  onClick,
+function CookingMode({
+  lang,
+  t,
+  cookSteps,
+  currentStep,
+  timeLeft,
+  timerRunning,
+  setTimerRunning,
+  nextCookStep,
+  resetCookMode,
 }: {
-  active: boolean;
-  cut: CutItem;
-  badge?: string;
-  onClick: () => void;
+  lang: Lang;
+  t: typeof texts.es;
+  cookSteps: CookingStep[];
+  currentStep: number;
+  timeLeft: number;
+  timerRunning: boolean;
+  setTimerRunning: (value: boolean) => void;
+  nextCookStep: () => void;
+  resetCookMode: () => void;
 }) {
+  const step = cookSteps[currentStep];
+
   return (
-    <button
-      onClick={onClick}
-      className={
-        active
-          ? "group relative overflow-hidden rounded-[28px] border border-orange-500 bg-orange-500/20 text-left shadow-[0_0_35px_rgba(249,115,22,0.25)]"
-          : "group relative overflow-hidden rounded-[28px] border border-slate-800 bg-slate-900 text-left transition hover:-translate-y-1 hover:border-orange-500/70 hover:shadow-[0_0_30px_rgba(249,115,22,0.15)]"
-      }
-    >
-      <div className="relative h-44 overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-110"
-          style={{
-            backgroundImage: `linear-gradient(to top, rgba(2,6,23,0.96), rgba(2,6,23,0.1)), url(${cut.image})`,
-          }}
-        />
-
-        {badge && (
-          <div className="absolute left-3 top-3 rounded-full bg-black/60 px-3 py-1 text-[11px] font-bold text-white backdrop-blur">
-            {badge}
+    <section className="grid gap-5 md:grid-cols-[420px_1fr]">
+      <div className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900">
+        {step.image && (
+          <div className="relative h-52 overflow-hidden">
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{
+                backgroundImage: `linear-gradient(to top, rgba(2,6,23,0.95), rgba(2,6,23,0.25)), url(${step.image})`,
+              }}
+            />
+            <div className="absolute bottom-3 left-3 rounded bg-black/60 px-3 py-1 text-xs font-semibold text-white">
+              {getStepLabel(step.title)}
+            </div>
           </div>
         )}
 
-        {active && (
-          <div className="absolute right-3 top-3 rounded-full bg-orange-500 px-3 py-1 text-[11px] font-black text-white">
-            ✓ Activo
-          </div>
-        )}
+        <div className="p-5">
+          <p className="text-sm text-orange-400">
+            {lang === "es" ? "Paso" : "Step"} {currentStep + 1} / {cookSteps.length}
+          </p>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4">
-          <h3 className="text-xl font-black text-white">{cut.name}</h3>
+          <h2 className="mt-2 text-3xl font-bold">{step.title}</h2>
+          <p className="mt-3 text-slate-300">{step.description}</p>
+
+          <div className="mt-6 rounded-3xl bg-slate-950 p-8 text-center">
+            <p className="text-7xl font-bold text-orange-400">{formatTime(timeLeft)}</p>
+
+            <div className="mt-6 h-3 overflow-hidden rounded-full bg-slate-800">
+              <div
+                className="h-full rounded-full bg-orange-500 transition-[width] duration-1000 ease-linear"
+                style={{
+                  width: `${Math.min(
+                    100,
+                    Math.max(0, ((step.duration - timeLeft) / step.duration) * 100)
+                  )}%`,
+                }}
+              />
+            </div>
+          </div>
+
+          {step.tips && step.tips.length > 0 && (
+            <div className="mt-5 rounded-3xl border border-orange-500/30 bg-orange-500/10 p-5">
+              <h3 className="font-bold text-orange-300">{t.keyTips}</h3>
+              <ul className="mt-3 space-y-2 text-sm text-slate-200">
+                {step.tips.map((tip) => (
+                  <li key={tip}>• {tip}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <button onClick={() => setTimerRunning(!timerRunning)} className="rounded-2xl bg-orange-500 px-5 py-4 font-bold">
+              {timerRunning ? t.pause : t.startTimer}
+            </button>
+
+            <button onClick={nextCookStep} className="rounded-2xl border border-slate-700 px-5 py-4 font-bold">
+              {t.next}
+            </button>
+          </div>
+
+          <button onClick={resetCookMode} className="mt-3 w-full rounded-2xl border border-slate-700 px-5 py-4 text-slate-300">
+            {t.reset}
+          </button>
         </div>
       </div>
 
-      <div className="p-4">
-        <p className="line-clamp-3 text-sm text-slate-400">{cut.description}</p>
+      <div className="rounded-3xl border border-slate-800 bg-slate-900 p-5">
+        <h2 className="mb-4 text-xl font-bold">{t.planSequence}</h2>
+
+        <div className="space-y-3">
+          {cookSteps.map((item, index) => (
+            <div
+              key={`${item.title}-${index}`}
+              className={
+                index === currentStep
+                  ? "scale-[1.02] overflow-hidden rounded-2xl border border-orange-500 bg-orange-500/20 shadow-lg"
+                  : "overflow-hidden rounded-2xl border border-slate-800 bg-slate-950"
+              }
+            >
+              {item.image && (
+                <div className="relative h-24 overflow-hidden">
+                  <div
+                    className="absolute inset-0 bg-cover bg-center"
+                    style={{
+                      backgroundImage: `linear-gradient(to top, rgba(2,6,23,0.9), rgba(2,6,23,0.25)), url(${item.image})`,
+                    }}
+                  />
+                  <div className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-1 text-[10px] font-semibold text-white">
+                    {getStepLabel(item.title)}
+                  </div>
+                </div>
+              )}
+
+              <div className="p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="font-bold">{item.title}</h3>
+                  <span className="text-sm text-slate-400">{formatTime(item.duration)}</span>
+                </div>
+                <p className="mt-2 text-sm text-slate-400">{item.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-    </button>
+    </section>
+  );
+}
+
+function TimelineCard({ title, content }: { title: string; content: string }) {
+  const items = parseTimeline(content);
+  const [live, setLive] = useState(false);
+  const [demoMode, setDemoMode] = useState(false);
+  const [demoStart, setDemoStart] = useState<Date | null>(null);
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    if (!live) return;
+
+    const interval = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, [live]);
+
+  function startLive() {
+    setDemoMode(false);
+    setDemoStart(null);
+    setLive(true);
+    setNow(new Date());
+  }
+
+  function startDemo() {
+    setDemoMode(true);
+    setDemoStart(new Date());
+    setLive(true);
+    setNow(new Date());
+  }
+
+  const realNowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+
+  const firstStartMin = Math.min(
+    ...items.map((item) => minutesFromTime(item.start)).filter((value): value is number => value !== null)
+  );
+
+  const demoElapsedSeconds = demoMode && demoStart ? Math.floor((now.getTime() - demoStart.getTime()) / 1000) : 0;
+  const nowSecondsOfDay = demoMode && Number.isFinite(firstStartMin) ? firstStartMin * 60 + demoElapsedSeconds : realNowSeconds;
+
+  const enriched = items.map((item) => {
+    const startMin = minutesFromTime(item.start);
+    const endMin = item.end === "--" ? startMin : minutesFromTime(item.end);
+    const startSec = startMin === null ? null : startMin * 60;
+    const endSec = endMin === null ? startSec : endMin * 60;
+
+    const isActive = startSec !== null && endSec !== null && nowSecondsOfDay >= startSec && nowSecondsOfDay <= endSec && item.end !== "--";
+    const isNext = startSec !== null && startSec > nowSecondsOfDay;
+    const secondsUntil = startSec !== null ? startSec - nowSecondsOfDay : 0;
+
+    return { ...item, isActive, isNext, secondsUntil };
+  });
+
+  const activeItem = enriched.find((item) => item.isActive);
+  const nextItem = enriched.filter((item) => item.isNext).sort((a, b) => a.secondsUntil - b.secondsUntil)[0];
+
+  return (
+    <div className="rounded-3xl border border-orange-500/40 bg-slate-900 p-5 md:col-span-2">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 className="text-xl font-black">{title}</h3>
+          <p className="mt-1 text-sm text-slate-400">Director de tiempos de la parrillada</p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => (live && !demoMode ? setLive(false) : startLive())}
+            className={live && !demoMode ? "rounded-2xl bg-red-500 px-4 py-3 text-sm font-black text-white" : "rounded-2xl bg-orange-500 px-4 py-3 text-sm font-black text-white"}
+          >
+            {live && !demoMode ? "Pausar live" : "Iniciar live"}
+          </button>
+
+          <button
+            onClick={() => (live && demoMode ? setLive(false) : startDemo())}
+            className={live && demoMode ? "rounded-2xl bg-red-500 px-4 py-3 text-sm font-black text-white" : "rounded-2xl border border-orange-500 px-4 py-3 text-sm font-black text-orange-300"}
+          >
+            {live && demoMode ? "Pausar demo" : "Demo: empezar ahora"}
+          </button>
+        </div>
+      </div>
+
+      {live && (
+        <div className="mb-5 rounded-3xl border border-orange-500/30 bg-orange-500/10 p-5">
+          <p className="text-xs font-bold uppercase tracking-wide text-orange-300">
+            {demoMode ? "Timeline Live · Demo" : "Timeline Live"}
+          </p>
+
+          {activeItem ? (
+            <>
+              <h4 className="mt-2 text-2xl font-black">Ahora: {activeItem.name}</h4>
+              <p className="mt-1 text-sm text-slate-300">{activeItem.notes}</p>
+            </>
+          ) : nextItem ? (
+            <>
+              <h4 className="mt-2 text-2xl font-black">Próximo: {nextItem.name}</h4>
+              <p className="mt-1 text-sm text-slate-300">Empieza en {secondsToClock(nextItem.secondsUntil)}</p>
+            </>
+          ) : (
+            <>
+              <h4 className="mt-2 text-2xl font-black">Parrillada lista</h4>
+              <p className="mt-1 text-sm text-slate-300">Todos los eventos del timeline han pasado.</p>
+            </>
+          )}
+        </div>
+      )}
+
+      <div className="relative space-y-4">
+        <div className="absolute bottom-4 left-[31px] top-4 w-px bg-slate-700" />
+
+        {enriched.map((item, index) => {
+          const isNextVisual = live && nextItem?.start === item.start && nextItem?.name === item.name;
+          const isActiveVisual = live && item.isActive;
+
+          return (
+            <div key={`${item.start}-${item.name}-${index}`} className="relative flex gap-4">
+              <div
+                className={
+                  isActiveVisual
+                    ? "z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-green-500 bg-green-500/20 text-sm font-black text-green-300"
+                    : isNextVisual
+                      ? "z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-orange-500 bg-orange-500/20 text-sm font-black text-orange-300"
+                      : "z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-slate-700 bg-slate-950 text-sm font-black text-slate-300"
+                }
+              >
+                {item.start}
+              </div>
+
+              <div className={isActiveVisual ? "flex-1 scale-[1.01] rounded-2xl border border-green-500 bg-green-500/10 p-4 shadow-lg" : isNextVisual ? "flex-1 scale-[1.01] rounded-2xl border border-orange-500 bg-orange-500/15 p-4 shadow-lg" : `flex-1 rounded-2xl border p-4 ${getZoneClass(item.zone)}`}>
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-lg font-black">{item.name}</h4>
+
+                  <div className="flex flex-wrap gap-2">
+                    {isActiveVisual && <span className="rounded-full bg-green-500 px-3 py-1 text-xs font-black text-white">Ahora</span>}
+                    {isNextVisual && <span className="rounded-full bg-orange-500 px-3 py-1 text-xs font-black text-white">En {secondsToClock(item.secondsUntil)}</span>}
+                    <span className="rounded-full bg-black/30 px-3 py-1 text-xs font-bold">{getZoneLabel(item.zone)}</span>
+                    {item.end !== "--" && <span className="rounded-full bg-black/30 px-3 py-1 text-xs text-slate-300">{item.start} → {item.end}</span>}
+                  </div>
+                </div>
+
+                <p className="text-sm text-slate-300">{item.notes}</p>
+                {item.duration && item.duration !== "0 min" && <p className="mt-2 text-xs text-slate-400">Duración aprox: {item.duration}</p>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function GrillManagerCard({ title, content }: { title: string; content: string }) {
+  const lines = content.split("\n").map((line) => line.trim()).filter(Boolean);
+
+  return (
+    <div className="rounded-3xl border border-red-500/40 bg-slate-900 p-5 md:col-span-2">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <h3 className="text-xl font-black">{title}</h3>
+          <p className="mt-1 text-sm text-slate-400">Control inteligente de zonas y prioridades</p>
+        </div>
+        <span className="rounded-full bg-red-500 px-3 py-1 text-xs font-black text-white">PRO</span>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2">
+        {lines.map((line) => {
+          const isWarning = line.includes("⚠️");
+          const isFire = line.includes("🔥");
+          const isPriority = line.includes("⭐");
+
+          return (
+            <div
+              key={line}
+              className={
+                isWarning
+                  ? "rounded-2xl border border-red-500/50 bg-red-500/10 p-4"
+                  : isFire
+                    ? "rounded-2xl border border-orange-500/50 bg-orange-500/10 p-4"
+                    : isPriority
+                      ? "rounded-2xl border border-yellow-500/50 bg-yellow-500/10 p-4"
+                      : "rounded-2xl border border-slate-700 bg-slate-950 p-4"
+              }
+            >
+              <p className="text-sm font-semibold text-slate-100">{line}</p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -1263,14 +1328,8 @@ function ResultCards({
                 {t.startCooking}
               </button>
             )}
-
-            <button onClick={copyText} className="rounded-xl border border-slate-700 px-3 py-2 text-sm">
-              {t.copy}
-            </button>
-
-            <button onClick={shareWhatsApp} className="rounded-xl bg-green-600 px-3 py-2 text-sm font-bold">
-              {t.whatsapp}
-            </button>
+            <button onClick={copyText} className="rounded-xl border border-slate-700 px-3 py-2 text-sm">{t.copy}</button>
+            <button onClick={shareWhatsApp} className="rounded-xl bg-green-600 px-3 py-2 text-sm font-bold">{t.whatsapp}</button>
           </div>
         )}
       </div>
@@ -1278,25 +1337,11 @@ function ResultCards({
       <div className="grid gap-4 md:grid-cols-2">
         {keys.map((key) =>
           key === "TIMELINE" ? (
-            <TimelineCard
-              key={key}
-              title="⏱️ Timeline Parrillada"
-              content={blocks[key]}
-            />
+            <TimelineCard key={key} title="⏱️ Timeline Parrillada" content={blocks[key]} />
           ) : key === "GRILL_MANAGER" ? (
-            <GrillManagerCard
-              key={key}
-              title="🔥 Grill Manager Pro"
-              content={blocks[key]}
-            />
+            <GrillManagerCard key={key} title="🔥 Grill Manager Pro" content={blocks[key]} />
           ) : key === "COMPRA" || key === "SHOPPING" ? (
-            <ShoppingListCard
-              key={key}
-              title={formatTitle(key)}
-              content={blocks[key]}
-              checkedItems={checkedItems}
-              setCheckedItems={setCheckedItems}
-            />
+            <ShoppingListCard key={key} title={formatTitle(key)} content={blocks[key]} checkedItems={checkedItems} setCheckedItems={setCheckedItems} />
           ) : (
             <Card key={key} title={formatTitle(key)} content={blocks[key]} />
           )
@@ -1344,10 +1389,7 @@ function ShoppingListCard({
               onChange={() => setCheckedItems({ ...checkedItems, [item]: !checkedItems[item] })}
               className="h-5 w-5 accent-orange-500"
             />
-
-            <span className={checkedItems[item] ? "text-slate-500 line-through" : ""}>
-              {item}
-            </span>
+            <span className={checkedItems[item] ? "text-slate-500 line-through" : ""}>{item}</span>
           </label>
         ))}
       </div>
@@ -1355,304 +1397,103 @@ function ShoppingListCard({
   );
 }
 
-function GrillManagerCard({ title, content }: { title: string; content: string }) {
-  const lines = content
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
-
-  return (
-    <div className="rounded-3xl border border-red-500/40 bg-slate-900 p-5 md:col-span-2">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <h3 className="text-xl font-black">{title}</h3>
-          <p className="mt-1 text-sm text-slate-400">
-            Control inteligente de zonas y prioridades
-          </p>
-        </div>
-
-        <span className="rounded-full bg-red-500 px-3 py-1 text-xs font-black text-white">
-          PRO
-        </span>
-      </div>
-
-      <div className="grid gap-3 md:grid-cols-2">
-        {lines.map((line) => {
-          const isWarning = line.includes("⚠️");
-          const isFire = line.includes("🔥");
-          const isPriority = line.includes("⭐");
-
-          return (
-            <div
-              key={line}
-              className={
-                isWarning
-                  ? "rounded-2xl border border-red-500/50 bg-red-500/10 p-4"
-                  : isFire
-                    ? "rounded-2xl border border-orange-500/50 bg-orange-500/10 p-4"
-                    : isPriority
-                      ? "rounded-2xl border border-yellow-500/50 bg-yellow-500/10 p-4"
-                      : "rounded-2xl border border-slate-700 bg-slate-950 p-4"
-              }
-            >
-              <p className="text-sm font-semibold text-slate-100">{line}</p>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function TimelineCard({ title, content }: { title: string; content: string }) {
-  const items = parseTimeline(content);
-  const [live, setLive] = useState(false);
-  const [demoMode, setDemoMode] = useState(false);
-  const [demoStart, setDemoStart] = useState<Date | null>(null);
-  const [now, setNow] = useState(new Date());
-
-  useEffect(() => {
-    if (!live) return;
-
-    const interval = setInterval(() => {
-      setNow(new Date());
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [live]);
-
-  function startLive() {
-    setDemoMode(false);
-    setDemoStart(null);
-    setLive(true);
-    setNow(new Date());
-  }
-
-  function startDemo() {
-    setDemoMode(true);
-    setDemoStart(new Date());
-    setLive(true);
-    setNow(new Date());
-  }
-
-  const realNowSeconds =
-    now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-
-  const firstStartMin = Math.min(
-    ...items
-      .map((item) => minutesFromTime(item.start))
-      .filter((value): value is number => value !== null)
-  );
-
-  const demoElapsedSeconds =
-    demoMode && demoStart
-      ? Math.floor((now.getTime() - demoStart.getTime()) / 1000)
-      : 0;
-
-  const nowSecondsOfDay =
-    demoMode && Number.isFinite(firstStartMin)
-      ? firstStartMin * 60 + demoElapsedSeconds
-      : realNowSeconds;
-
-  const nowMinutes = Math.floor(nowSecondsOfDay / 60);
-
-  const enriched = items.map((item) => {
-    const startMin = minutesFromTime(item.start);
-    const endMin = item.end === "--" ? startMin : minutesFromTime(item.end);
-
-    const startSec = startMin === null ? null : startMin * 60;
-    const endSec = endMin === null ? startSec : endMin * 60;
-
-    const isActive =
-      startSec !== null &&
-      endSec !== null &&
-      nowSecondsOfDay >= startSec &&
-      nowSecondsOfDay <= endSec &&
-      item.end !== "--";
-
-    const isNext =
-      startSec !== null &&
-      startSec > nowSecondsOfDay;
-
-    const secondsUntil =
-      startSec !== null ? startSec - nowSecondsOfDay : 0;
-
-    return {
-      ...item,
-      startMin,
-      endMin,
-      startSec,
-      endSec,
-      isActive,
-      isNext,
-      secondsUntil,
-    };
-  });
-
-  const activeItem = enriched.find((item) => item.isActive);
-  const nextItem = enriched
-    .filter((item) => item.isNext)
-    .sort((a, b) => a.secondsUntil - b.secondsUntil)[0];
-
-  return (
-    <div className="rounded-3xl border border-orange-500/40 bg-slate-900 p-5 md:col-span-2">
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h3 className="text-xl font-black">{title}</h3>
-          <p className="mt-1 text-sm text-slate-400">
-            Director de tiempos de la parrillada
-          </p>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => (live ? setLive(false) : startLive())}
-            className={
-              live && !demoMode
-                ? "rounded-2xl bg-red-500 px-4 py-3 text-sm font-black text-white"
-                : "rounded-2xl bg-orange-500 px-4 py-3 text-sm font-black text-white"
-            }
-          >
-            {live && !demoMode ? "Pausar live" : "Iniciar live"}
-          </button>
-
-          <button
-            onClick={() => (live && demoMode ? setLive(false) : startDemo())}
-            className={
-              live && demoMode
-                ? "rounded-2xl bg-red-500 px-4 py-3 text-sm font-black text-white"
-                : "rounded-2xl border border-orange-500 px-4 py-3 text-sm font-black text-orange-300"
-            }
-          >
-            {live && demoMode ? "Pausar demo" : "Demo: empezar ahora"}
-          </button>
-        </div>
-      </div>
-
-      {live && (
-        <div className="mb-5 rounded-3xl border border-orange-500/30 bg-orange-500/10 p-5">
-          <p className="text-xs font-bold uppercase tracking-wide text-orange-300">
-            {demoMode ? "Timeline Live · Demo" : "Timeline Live"}
-          </p>
-
-          {activeItem ? (
-            <>
-              <h4 className="mt-2 text-2xl font-black">
-                Ahora: {activeItem.name}
-              </h4>
-              <p className="mt-1 text-sm text-slate-300">
-                {activeItem.notes}
-              </p>
-            </>
-          ) : nextItem ? (
-            <>
-              <h4 className="mt-2 text-2xl font-black">
-                Próximo: {nextItem.name}
-              </h4>
-              <p className="mt-1 text-sm text-slate-300">
-                Empieza en {secondsToClock(nextItem.secondsUntil)}
-              </p>
-            </>
-          ) : (
-            <>
-              <h4 className="mt-2 text-2xl font-black">
-                Parrillada lista
-              </h4>
-              <p className="mt-1 text-sm text-slate-300">
-                Todos los eventos del timeline han pasado.
-              </p>
-            </>
-          )}
-        </div>
-      )}
-
-      <div className="relative space-y-4">
-        <div className="absolute bottom-4 left-[31px] top-4 w-px bg-slate-700" />
-
-        {enriched.map((item, index) => {
-          const isNextVisual =
-            live && nextItem?.start === item.start && nextItem?.name === item.name;
-
-          const isActiveVisual = live && item.isActive;
-
-          return (
-            <div key={`${item.start}-${item.name}-${index}`} className="relative flex gap-4">
-              <div
-                className={
-                  isActiveVisual
-                    ? "z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-green-500 bg-green-500/20 text-sm font-black text-green-300"
-                    : isNextVisual
-                      ? "z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-orange-500 bg-orange-500/20 text-sm font-black text-orange-300"
-                      : "z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-slate-700 bg-slate-950 text-sm font-black text-slate-300"
-                }
-              >
-                {item.start}
-              </div>
-
-              <div
-                className={
-                  isActiveVisual
-                    ? "flex-1 scale-[1.01] rounded-2xl border border-green-500 bg-green-500/10 p-4 shadow-lg"
-                    : isNextVisual
-                      ? "flex-1 scale-[1.01] rounded-2xl border border-orange-500 bg-orange-500/15 p-4 shadow-lg"
-                      : `flex-1 rounded-2xl border p-4 ${getZoneClass(item.zone)}`
-                }
-              >
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <h4 className="text-lg font-black">{item.name}</h4>
-
-                  <div className="flex flex-wrap gap-2">
-                    {isActiveVisual && (
-                      <span className="rounded-full bg-green-500 px-3 py-1 text-xs font-black text-white">
-                        Ahora
-                      </span>
-                    )}
-
-                    {isNextVisual && (
-                      <span className="rounded-full bg-orange-500 px-3 py-1 text-xs font-black text-white">
-                        En {secondsToClock(item.secondsUntil)}
-                      </span>
-                    )}
-
-                    <span className="rounded-full bg-black/30 px-3 py-1 text-xs font-bold">
-                      {getZoneLabel(item.zone)}
-                    </span>
-
-                    {item.end !== "--" && (
-                      <span className="rounded-full bg-black/30 px-3 py-1 text-xs text-slate-300">
-                        {item.start} → {item.end}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <p className="text-sm text-slate-300">{item.notes}</p>
-
-                {item.duration && item.duration !== "0 min" && (
-                  <p className="mt-2 text-xs text-slate-400">
-                    Duración aprox: {item.duration}
-                  </p>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function HomeCard({
+function ImageCard({
+  active,
   title,
-  description,
+  subtitle,
   emoji,
+  image,
+  badge,
+  selectedLabel,
   onClick,
 }: {
+  active: boolean;
   title: string;
-  description: string;
+  subtitle: string;
   emoji: string;
+  image: string;
+  badge?: string;
+  selectedLabel: string;
   onClick: () => void;
 }) {
+  return (
+    <button
+      onClick={onClick}
+      className={
+        active
+          ? "group relative overflow-hidden rounded-[28px] border border-orange-500 bg-orange-500/20 text-left shadow-[0_0_35px_rgba(249,115,22,0.25)]"
+          : "group relative overflow-hidden rounded-[28px] border border-slate-800 bg-slate-900 text-left transition hover:-translate-y-1 hover:border-orange-500/70 hover:shadow-[0_0_30px_rgba(249,115,22,0.15)]"
+      }
+    >
+      <div className="relative h-40 overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-110"
+          style={{
+            backgroundImage: `linear-gradient(to top, rgba(2,6,23,0.95), rgba(2,6,23,0.2)), url(${image})`,
+          }}
+        />
+
+        <div className="absolute left-4 top-4 rounded-2xl bg-black/55 px-3 py-2 text-3xl backdrop-blur">{emoji}</div>
+
+        {badge && <div className="absolute right-3 top-3 rounded-full bg-orange-500 px-3 py-1 text-[11px] font-bold text-white">{badge}</div>}
+
+        {active && <div className="absolute bottom-3 right-3 rounded-full bg-white px-3 py-1 text-xs font-black text-slate-950">✓ {selectedLabel}</div>}
+      </div>
+
+      <div className="p-4">
+        <h3 className="text-lg font-black">{title}</h3>
+        <p className="mt-1 line-clamp-2 text-xs text-slate-400">{subtitle}</p>
+      </div>
+    </button>
+  );
+}
+
+function CutCard({
+  active,
+  cut,
+  badge,
+  activeLabel,
+  onClick,
+}: {
+  active: boolean;
+  cut: CutItem;
+  badge?: string;
+  activeLabel: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={
+        active
+          ? "group relative overflow-hidden rounded-[28px] border border-orange-500 bg-orange-500/20 text-left shadow-[0_0_35px_rgba(249,115,22,0.25)]"
+          : "group relative overflow-hidden rounded-[28px] border border-slate-800 bg-slate-900 text-left transition hover:-translate-y-1 hover:border-orange-500/70 hover:shadow-[0_0_30px_rgba(249,115,22,0.15)]"
+      }
+    >
+      <div className="relative h-44 overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-110"
+          style={{
+            backgroundImage: `linear-gradient(to top, rgba(2,6,23,0.96), rgba(2,6,23,0.1)), url(${cut.image})`,
+          }}
+        />
+
+        {badge && <div className="absolute left-3 top-3 rounded-full bg-black/60 px-3 py-1 text-[11px] font-bold text-white backdrop-blur">{badge}</div>}
+        {active && <div className="absolute right-3 top-3 rounded-full bg-orange-500 px-3 py-1 text-[11px] font-black text-white">✓ {activeLabel}</div>}
+
+        <div className="absolute bottom-0 left-0 right-0 p-4">
+          <h3 className="text-xl font-black text-white">{cut.name}</h3>
+        </div>
+      </div>
+
+      <div className="p-4">
+        <p className="line-clamp-3 text-sm text-slate-400">{cut.description}</p>
+      </div>
+    </button>
+  );
+}
+
+function HomeCard({ title, description, emoji, onClick }: { title: string; description: string; emoji: string; onClick: () => void }) {
   return (
     <button onClick={onClick} className="rounded-3xl border border-slate-800 bg-slate-900 p-6 text-left transition hover:border-orange-500">
       <div className="text-4xl">{emoji}</div>
@@ -1662,17 +1503,7 @@ function HomeCard({
   );
 }
 
-function Tab({
-  active,
-  label,
-  emoji,
-  onClick,
-}: {
-  active: boolean;
-  label: string;
-  emoji: string;
-  onClick: () => void;
-}) {
+function Tab({ active, label, emoji, onClick }: { active: boolean; label: string; emoji: string; onClick: () => void }) {
   return (
     <button onClick={onClick} className={active ? "rounded-2xl bg-orange-500 px-2 py-2 text-xs font-bold text-white" : "rounded-2xl px-2 py-2 text-xs text-slate-400"}>
       <div>{emoji}</div>
@@ -1681,17 +1512,7 @@ function Tab({
   );
 }
 
-function PrimaryButton({
-  onClick,
-  loading,
-  text,
-  loadingText,
-}: {
-  onClick: () => void;
-  loading: boolean;
-  text: string;
-  loadingText: string;
-}) {
+function PrimaryButton({ onClick, loading, text, loadingText }: { onClick: () => void; loading: boolean; text: string; loadingText: string }) {
   return (
     <button onClick={onClick} disabled={loading} className="w-full rounded-2xl bg-orange-500 px-5 py-4 font-bold disabled:opacity-60">
       {loading ? loadingText : text}
@@ -1699,13 +1520,7 @@ function PrimaryButton({
   );
 }
 
-function Card({
-  title,
-  content,
-}: {
-  title: string;
-  content?: string;
-}) {
+function Card({ title, content }: { title: string; content?: string }) {
   if (!content) return null;
 
   return (
@@ -1716,17 +1531,7 @@ function Card({
   );
 }
 
-function Input({
-  label,
-  value,
-  onChange,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-}) {
+function Input({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string }) {
   return (
     <div>
       <label className="text-sm text-slate-400">{label}</label>
@@ -1735,17 +1540,7 @@ function Input({
   );
 }
 
-function Select({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: string[];
-}) {
+function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: string[] }) {
   return (
     <div>
       <label className="text-sm text-slate-400">{label}</label>
