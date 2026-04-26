@@ -1,5 +1,6 @@
 "use client";
 
+import { saveGeneratedMenu } from "@/app/actions/savedMenus";
 import {
   generateCookingPlan as generateLocalCookingPlan,
   generateCookingSteps as generateLocalCookingSteps,
@@ -13,6 +14,7 @@ type Mode = "inicio" | "coccion" | "menu" | "parrillada" | "cocina" | "guardados
 type Lang = "es" | "en" | "fi";
 type EngineLang = "es" | "en";
 type Blocks = Record<string, string>;
+type SaveMenuStatus = "idle" | "saving" | "success" | "error";
 
 type SavedMenu = {
   id: string;
@@ -52,6 +54,9 @@ const texts = {
     creating: "Creando...",
     generating: "Generando...",
     saveMenu: "⭐ Guardar menú",
+    savingMenu: "Guardando menú...",
+    menuSaved: "Menú guardado.",
+    menuSaveError: "No se pudo guardar el menú.",
     startCooking: "Cocinar",
     copy: "Copiar",
     whatsapp: "WhatsApp",
@@ -105,6 +110,9 @@ const texts = {
     creating: "Creating...",
     generating: "Generating...",
     saveMenu: "⭐ Save menu",
+    savingMenu: "Saving menu...",
+    menuSaved: "Menu saved.",
+    menuSaveError: "Could not save menu.",
     startCooking: "Cook",
     copy: "Copy",
     whatsapp: "WhatsApp",
@@ -158,6 +166,9 @@ const texts = {
     creating: "Luodaan...",
     generating: "Luodaan...",
     saveMenu: "⭐ Tallenna menu",
+    savingMenu: "Tallennetaan menua...",
+    menuSaved: "Menu tallennettu.",
+    menuSaveError: "Menua ei voitu tallentaa.",
     startCooking: "Kokkaa",
     copy: "Kopioi",
     whatsapp: "WhatsApp",
@@ -438,6 +449,17 @@ function secondsToClock(seconds: number) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
+function localeForLang(lang: Lang) {
+  if (lang === "en") return "en-US";
+  if (lang === "fi") return "fi-FI";
+  return "es-ES";
+}
+
+function parsePositiveInt(value: string) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
 export default function Home() {
   const [lang, setLang] = useState<Lang>("es");
   const t = texts[lang];
@@ -467,6 +489,8 @@ export default function Home() {
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [savedMenus, setSavedMenus] = useState<SavedMenu[]>([]);
   const [loading, setLoading] = useState(false);
+  const [saveMenuStatus, setSaveMenuStatus] = useState<SaveMenuStatus>("idle");
+  const [saveMenuMessage, setSaveMenuMessage] = useState("");
 
   const [cookSteps, setCookSteps] = useState<CookingStep[]>(defaultCookSteps);
   const [currentStep, setCurrentStep] = useState(0);
@@ -528,18 +552,52 @@ export default function Home() {
     localStorage.setItem("parrillero_saved_menus", JSON.stringify(nextMenus));
   }
 
-  function saveCurrentMenu() {
+  async function saveCurrentMenu() {
     if (!blocks.MENU && !blocks.COMPRA && !blocks.SHOPPING) return;
 
-    const newMenu: SavedMenu = {
-      id: crypto.randomUUID(),
-      title: `${eventType} · ${people} personas`,
-      date: new Date().toLocaleDateString(),
-      blocks,
-    };
+    const now = new Date();
+    const menuName = `Menú Parrillero - ${now.toLocaleDateString(localeForLang(lang))}`;
 
-    updateSavedMenus([newMenu, ...savedMenus]);
-    setMode("guardados");
+    setSaveMenuStatus("saving");
+    setSaveMenuMessage("");
+
+    try {
+      const savedMenu = await saveGeneratedMenu({
+        name: menuName,
+        lang,
+        people: parsePositiveInt(people),
+        data: {
+          type: "generated_menu",
+          generatedAt: now.toISOString(),
+          inputs: {
+            people,
+            eventType,
+            products: menuMeats,
+            sides,
+            budget,
+            difficulty,
+            equipment,
+          },
+          blocks,
+        },
+      });
+
+      const newMenu: SavedMenu = {
+        id: savedMenu.id,
+        title: savedMenu.name,
+        date: new Date(savedMenu.created_at).toLocaleDateString(localeForLang(lang)),
+        blocks,
+      };
+
+      updateSavedMenus([newMenu, ...savedMenus.filter((menu) => menu.id !== newMenu.id)]);
+      setSaveMenuStatus("success");
+      setSaveMenuMessage(t.menuSaved);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : t.menuSaveError;
+
+      setSaveMenuStatus("error");
+      setSaveMenuMessage(`${t.menuSaveError} ${errorMessage}`);
+    }
   }
 
   function deleteMenu(id: string) {
@@ -569,6 +627,8 @@ export default function Home() {
     setLoading(true);
     setBlocks({});
     setCheckedItems({});
+    setSaveMenuStatus("idle");
+    setSaveMenuMessage("");
 
     const res = await fetch("/api/chat", {
       method: "POST",
@@ -817,13 +877,32 @@ ERROR
               <PrimaryButton onClick={generateMenuPlan} loading={loading} text={t.createMenu} loadingText={t.creating} />
 
               {(blocks.MENU || blocks.COMPRA || blocks.SHOPPING) && (
-                <button onClick={saveCurrentMenu} className="w-full rounded-2xl border border-orange-500 px-5 py-4 font-bold text-orange-300">
-                  {t.saveMenu}
+                <button
+                  onClick={saveCurrentMenu}
+                  disabled={saveMenuStatus === "saving"}
+                  className="w-full rounded-2xl border border-orange-500 px-5 py-4 font-bold text-orange-300 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {saveMenuStatus === "saving" ? t.savingMenu : t.saveMenu}
                 </button>
+              )}
+
+              {saveMenuMessage && (
+                <p className={saveMenuStatus === "error" ? "text-sm text-red-300" : "text-sm text-emerald-300"}>
+                  {saveMenuMessage}
+                </p>
               )}
             </div>
 
-            <ResultCards blocks={blocks} loading={loading} checkedItems={checkedItems} setCheckedItems={setCheckedItems} t={t} />
+            <ResultCards
+              blocks={blocks}
+              loading={loading}
+              checkedItems={checkedItems}
+              setCheckedItems={setCheckedItems}
+              onSaveMenu={blocks.MENU || blocks.COMPRA || blocks.SHOPPING ? saveCurrentMenu : undefined}
+              saveMenuStatus={saveMenuStatus}
+              saveMenuMessage={saveMenuMessage}
+              t={t}
+            />
           </section>
         )}
 
@@ -1312,6 +1391,9 @@ function ResultCards({
   checkedItems,
   setCheckedItems,
   onStartCooking,
+  onSaveMenu,
+  saveMenuStatus = "idle",
+  saveMenuMessage = "",
   t,
 }: {
   blocks: Blocks;
@@ -1319,6 +1401,9 @@ function ResultCards({
   checkedItems: Record<string, boolean>;
   setCheckedItems: (value: Record<string, boolean>) => void;
   onStartCooking?: () => void;
+  onSaveMenu?: () => Promise<void>;
+  saveMenuStatus?: SaveMenuStatus;
+  saveMenuMessage?: string;
   t: typeof texts.es;
 }) {
   const keys = Object.keys(blocks);
@@ -1345,11 +1430,26 @@ function ResultCards({
                 {t.startCooking}
               </button>
             )}
+            {onSaveMenu && (
+              <button
+                onClick={onSaveMenu}
+                disabled={saveMenuStatus === "saving"}
+                className="rounded-xl border border-orange-500 px-3 py-2 text-sm font-bold text-orange-300 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {saveMenuStatus === "saving" ? t.savingMenu : t.saveMenu}
+              </button>
+            )}
             <button onClick={copyText} className="rounded-xl border border-slate-700 px-3 py-2 text-sm">{t.copy}</button>
             <button onClick={shareWhatsApp} className="rounded-xl bg-green-600 px-3 py-2 text-sm font-bold">{t.whatsapp}</button>
           </div>
         )}
       </div>
+
+      {saveMenuMessage && (
+        <div className={saveMenuStatus === "error" ? "mb-4 rounded-2xl border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200" : "mb-4 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-3 text-sm text-emerald-200"}>
+          {saveMenuMessage}
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2">
         {keys.map((key) =>
