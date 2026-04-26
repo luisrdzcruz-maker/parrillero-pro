@@ -1,6 +1,8 @@
 "use client";
 
 import { saveGeneratedMenu } from "@/app/actions/savedMenus";
+import ResultGrid from "@/components/ResultGrid";
+import ResultHero from "@/components/ResultHero";
 import {
   generateCookingPlan as generateLocalCookingPlan,
   generateCookingSteps as generateLocalCookingSteps,
@@ -369,34 +371,6 @@ function buildCookStepsFromPlan(blocks: Blocks): CookingStep[] {
   });
 }
 
-function getShoppingItems(text: string) {
-  return text.split("\n").map((item) => item.replace(/^[-•*\d.)\s]+/, "").trim()).filter(Boolean);
-}
-
-function formatTitle(title: string) {
-  const map: Record<string, string> = {
-    SETUP: "🔥 Setup",
-    TIEMPOS: "⏱️ Tiempos",
-    TIMES: "⏱️ Times",
-    TEMPERATURA: "🌡️ Temperatura",
-    TEMPERATURE: "🌡️ Temperature",
-    PASOS: "🧠 Pasos",
-    STEPS: "🧠 Steps",
-    ERROR: "⚠️ Error clave",
-    MENU: "🍽️ Menú",
-    CANTIDADES: "📊 Cantidades",
-    QUANTITIES: "📊 Quantities",
-    TIMELINE: "⏱️ Timeline Parrillada",
-    GRILL_MANAGER: "🔥 Grill Manager Pro",
-    ORDEN: "🔥 Orden de cocción",
-    ORDER: "🔥 Cooking order",
-    COMPRA: "🛒 Lista de compra",
-    SHOPPING: "🛒 Shopping list",
-  };
-
-  return map[title] || title;
-}
-
 function buildText(blocks: Blocks) {
   return Object.keys(blocks).map((key) => `${key}\n${blocks[key]}`).join("\n\n");
 }
@@ -405,48 +379,6 @@ function formatTime(seconds: number) {
   const min = Math.floor(seconds / 60);
   const sec = seconds % 60;
   return `${min}:${sec.toString().padStart(2, "0")}`;
-}
-
-function getZoneLabel(zone: string) {
-  if (zone === "directa") return "🔥 Directo";
-  if (zone === "indirecta") return "♨️ Indirecto";
-  if (zone === "acompañamiento") return "🥔 Acompañamiento";
-  if (zone === "reposo") return "✅ Servir";
-  return "🔥 BBQ";
-}
-
-function getZoneClass(zone: string) {
-  if (zone === "directa") return "border-orange-500 bg-orange-500/15";
-  if (zone === "indirecta") return "border-yellow-500 bg-yellow-500/10";
-  if (zone === "acompañamiento") return "border-green-500 bg-green-500/10";
-  if (zone === "reposo") return "border-blue-500 bg-blue-500/10";
-  return "border-slate-700 bg-slate-900";
-}
-
-function parseTimeline(content: string) {
-  return content
-    .split("\n")
-    .map((row) => {
-      const [start, end, name, zone, duration, notes] = row.split("|");
-      return { start, end, name, zone, duration, notes };
-    })
-    .filter((item) => item.start && item.name);
-}
-
-function minutesFromTime(value: string) {
-  const [h, m] = value.split(":").map(Number);
-  if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
-  return h * 60 + m;
-}
-
-function secondsToClock(seconds: number) {
-  const safe = Math.max(0, seconds);
-  const h = Math.floor(safe / 3600);
-  const m = Math.floor((safe % 3600) / 60);
-  const s = safe % 60;
-
-  if (h > 0) return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
 function localeForLang(lang: Lang) {
@@ -1197,194 +1129,6 @@ function CookingMode({
   );
 }
 
-function TimelineCard({ title, content }: { title: string; content: string }) {
-  const items = parseTimeline(content);
-  const [live, setLive] = useState(false);
-  const [demoMode, setDemoMode] = useState(false);
-  const [demoStart, setDemoStart] = useState<Date | null>(null);
-  const [now, setNow] = useState(new Date());
-
-  useEffect(() => {
-    if (!live) return;
-
-    const interval = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(interval);
-  }, [live]);
-
-  function startLive() {
-    setDemoMode(false);
-    setDemoStart(null);
-    setLive(true);
-    setNow(new Date());
-  }
-
-  function startDemo() {
-    setDemoMode(true);
-    setDemoStart(new Date());
-    setLive(true);
-    setNow(new Date());
-  }
-
-  const realNowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-
-  const firstStartMin = Math.min(
-    ...items.map((item) => minutesFromTime(item.start)).filter((value): value is number => value !== null)
-  );
-
-  const demoElapsedSeconds = demoMode && demoStart ? Math.floor((now.getTime() - demoStart.getTime()) / 1000) : 0;
-  const nowSecondsOfDay = demoMode && Number.isFinite(firstStartMin) ? firstStartMin * 60 + demoElapsedSeconds : realNowSeconds;
-
-  const enriched = items.map((item) => {
-    const startMin = minutesFromTime(item.start);
-    const endMin = item.end === "--" ? startMin : minutesFromTime(item.end);
-    const startSec = startMin === null ? null : startMin * 60;
-    const endSec = endMin === null ? startSec : endMin * 60;
-
-    const isActive = startSec !== null && endSec !== null && nowSecondsOfDay >= startSec && nowSecondsOfDay <= endSec && item.end !== "--";
-    const isNext = startSec !== null && startSec > nowSecondsOfDay;
-    const secondsUntil = startSec !== null ? startSec - nowSecondsOfDay : 0;
-
-    return { ...item, isActive, isNext, secondsUntil };
-  });
-
-  const activeItem = enriched.find((item) => item.isActive);
-  const nextItem = enriched.filter((item) => item.isNext).sort((a, b) => a.secondsUntil - b.secondsUntil)[0];
-
-  return (
-    <div className="rounded-3xl border border-orange-500/40 bg-slate-900 p-5 md:col-span-2">
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h3 className="text-xl font-black">{title}</h3>
-          <p className="mt-1 text-sm text-slate-400">Director de tiempos de la parrillada</p>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => (live && !demoMode ? setLive(false) : startLive())}
-            className={live && !demoMode ? "rounded-2xl bg-red-500 px-4 py-3 text-sm font-black text-white" : "rounded-2xl bg-orange-500 px-4 py-3 text-sm font-black text-white"}
-          >
-            {live && !demoMode ? "Pausar live" : "Iniciar live"}
-          </button>
-
-          <button
-            onClick={() => (live && demoMode ? setLive(false) : startDemo())}
-            className={live && demoMode ? "rounded-2xl bg-red-500 px-4 py-3 text-sm font-black text-white" : "rounded-2xl border border-orange-500 px-4 py-3 text-sm font-black text-orange-300"}
-          >
-            {live && demoMode ? "Pausar demo" : "Demo: empezar ahora"}
-          </button>
-        </div>
-      </div>
-
-      {live && (
-        <div className="mb-5 rounded-3xl border border-orange-500/30 bg-orange-500/10 p-5">
-          <p className="text-xs font-bold uppercase tracking-wide text-orange-300">
-            {demoMode ? "Timeline Live · Demo" : "Timeline Live"}
-          </p>
-
-          {activeItem ? (
-            <>
-              <h4 className="mt-2 text-2xl font-black">Ahora: {activeItem.name}</h4>
-              <p className="mt-1 text-sm text-slate-300">{activeItem.notes}</p>
-            </>
-          ) : nextItem ? (
-            <>
-              <h4 className="mt-2 text-2xl font-black">Próximo: {nextItem.name}</h4>
-              <p className="mt-1 text-sm text-slate-300">Empieza en {secondsToClock(nextItem.secondsUntil)}</p>
-            </>
-          ) : (
-            <>
-              <h4 className="mt-2 text-2xl font-black">Parrillada lista</h4>
-              <p className="mt-1 text-sm text-slate-300">Todos los eventos del timeline han pasado.</p>
-            </>
-          )}
-        </div>
-      )}
-
-      <div className="relative space-y-4">
-        <div className="absolute bottom-4 left-[31px] top-4 w-px bg-slate-700" />
-
-        {enriched.map((item, index) => {
-          const isNextVisual = live && nextItem?.start === item.start && nextItem?.name === item.name;
-          const isActiveVisual = live && item.isActive;
-
-          return (
-            <div key={`${item.start}-${item.name}-${index}`} className="relative flex gap-4">
-              <div
-                className={
-                  isActiveVisual
-                    ? "z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-green-500 bg-green-500/20 text-sm font-black text-green-300"
-                    : isNextVisual
-                      ? "z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-orange-500 bg-orange-500/20 text-sm font-black text-orange-300"
-                      : "z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-slate-700 bg-slate-950 text-sm font-black text-slate-300"
-                }
-              >
-                {item.start}
-              </div>
-
-              <div className={isActiveVisual ? "flex-1 scale-[1.01] rounded-2xl border border-green-500 bg-green-500/10 p-4 shadow-lg" : isNextVisual ? "flex-1 scale-[1.01] rounded-2xl border border-orange-500 bg-orange-500/15 p-4 shadow-lg" : `flex-1 rounded-2xl border p-4 ${getZoneClass(item.zone)}`}>
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <h4 className="text-lg font-black">{item.name}</h4>
-
-                  <div className="flex flex-wrap gap-2">
-                    {isActiveVisual && <span className="rounded-full bg-green-500 px-3 py-1 text-xs font-black text-white">Ahora</span>}
-                    {isNextVisual && <span className="rounded-full bg-orange-500 px-3 py-1 text-xs font-black text-white">En {secondsToClock(item.secondsUntil)}</span>}
-                    <span className="rounded-full bg-black/30 px-3 py-1 text-xs font-bold">{getZoneLabel(item.zone)}</span>
-                    {item.end !== "--" && <span className="rounded-full bg-black/30 px-3 py-1 text-xs text-slate-300">{item.start} → {item.end}</span>}
-                  </div>
-                </div>
-
-                <p className="text-sm text-slate-300">{item.notes}</p>
-                {item.duration && item.duration !== "0 min" && <p className="mt-2 text-xs text-slate-400">Duración aprox: {item.duration}</p>}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function GrillManagerCard({ title, content }: { title: string; content: string }) {
-  const lines = content.split("\n").map((line) => line.trim()).filter(Boolean);
-
-  return (
-    <div className="rounded-3xl border border-red-500/40 bg-slate-900 p-5 md:col-span-2">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <h3 className="text-xl font-black">{title}</h3>
-          <p className="mt-1 text-sm text-slate-400">Control inteligente de zonas y prioridades</p>
-        </div>
-        <span className="rounded-full bg-red-500 px-3 py-1 text-xs font-black text-white">PRO</span>
-      </div>
-
-      <div className="grid gap-3 md:grid-cols-2">
-        {lines.map((line) => {
-          const isWarning = line.includes("⚠️");
-          const isFire = line.includes("🔥");
-          const isPriority = line.includes("⭐");
-
-          return (
-            <div
-              key={line}
-              className={
-                isWarning
-                  ? "rounded-2xl border border-red-500/50 bg-red-500/10 p-4"
-                  : isFire
-                    ? "rounded-2xl border border-orange-500/50 bg-orange-500/10 p-4"
-                    : isPriority
-                      ? "rounded-2xl border border-yellow-500/50 bg-yellow-500/10 p-4"
-                      : "rounded-2xl border border-slate-700 bg-slate-950 p-4"
-              }
-            >
-              <p className="text-sm font-semibold text-slate-100">{line}</p>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 function ResultCards({
   blocks,
   loading,
@@ -1420,30 +1164,24 @@ function ResultCards({
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="text-xl font-bold">{t.result}</h2>
-
-        {keys.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {onStartCooking && (blocks.PASOS || blocks.STEPS) && (
-              <button onClick={onStartCooking} className="rounded-xl bg-orange-500 px-3 py-2 text-sm font-bold">
-                {t.startCooking}
-              </button>
-            )}
-            {onSaveMenu && (
-              <button
-                onClick={onSaveMenu}
-                disabled={saveMenuStatus === "saving"}
-                className="rounded-xl border border-orange-500 px-3 py-2 text-sm font-bold text-orange-300 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {saveMenuStatus === "saving" ? t.savingMenu : t.saveMenu}
-              </button>
-            )}
-            <button onClick={copyText} className="rounded-xl border border-slate-700 px-3 py-2 text-sm">{t.copy}</button>
-            <button onClick={shareWhatsApp} className="rounded-xl bg-green-600 px-3 py-2 text-sm font-bold">{t.whatsapp}</button>
-          </div>
-        )}
-      </div>
+      <ResultHero
+        actions={{
+          onCopy: copyText,
+          onSave: onSaveMenu,
+          onShare: shareWhatsApp,
+          onStartCooking: blocks.PASOS || blocks.STEPS ? onStartCooking : undefined,
+        }}
+        hasResult={keys.length > 0}
+        saveMenuStatus={saveMenuStatus}
+        t={{
+          copy: t.copy,
+          result: t.result,
+          save: t.saveMenu,
+          saving: t.savingMenu,
+          share: t.whatsapp,
+          startCooking: t.startCooking,
+        }}
+      />
 
       {saveMenuMessage && (
         <div className={saveMenuStatus === "error" ? "mb-4 rounded-2xl border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200" : "mb-4 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-3 text-sm text-emerald-200"}>
@@ -1451,65 +1189,14 @@ function ResultCards({
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {keys.map((key) =>
-          key === "TIMELINE" ? (
-            <TimelineCard key={key} title="⏱️ Timeline Parrillada" content={blocks[key]} />
-          ) : key === "GRILL_MANAGER" ? (
-            <GrillManagerCard key={key} title="🔥 Grill Manager Pro" content={blocks[key]} />
-          ) : key === "COMPRA" || key === "SHOPPING" ? (
-            <ShoppingListCard key={key} title={formatTitle(key)} content={blocks[key]} checkedItems={checkedItems} setCheckedItems={setCheckedItems} />
-          ) : (
-            <Card key={key} title={formatTitle(key)} content={blocks[key]} />
-          )
-        )}
-
-        {!loading && keys.length === 0 && (
-          <div className="rounded-3xl border border-slate-800 bg-slate-900 p-6 text-slate-400 md:col-span-2">
-            {t.noResult}
-          </div>
-        )}
-
-        {loading && (
-          <div className="rounded-3xl border border-slate-800 bg-slate-900 p-6 text-orange-400 md:col-span-2">
-            {t.generating}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ShoppingListCard({
-  title,
-  content,
-  checkedItems,
-  setCheckedItems,
-}: {
-  title: string;
-  content: string;
-  checkedItems: Record<string, boolean>;
-  setCheckedItems: (value: Record<string, boolean>) => void;
-}) {
-  const items = getShoppingItems(content);
-
-  return (
-    <div className="rounded-3xl border border-orange-500/40 bg-slate-900 p-5 md:col-span-2">
-      <h3 className="mb-4 text-lg font-bold">{title}</h3>
-
-      <div className="space-y-3">
-        {items.map((item) => (
-          <label key={item} className="flex cursor-pointer items-center gap-3 rounded-2xl bg-slate-950 p-3 text-slate-200">
-            <input
-              type="checkbox"
-              checked={Boolean(checkedItems[item])}
-              onChange={() => setCheckedItems({ ...checkedItems, [item]: !checkedItems[item] })}
-              className="h-5 w-5 accent-orange-500"
-            />
-            <span className={checkedItems[item] ? "text-slate-500 line-through" : ""}>{item}</span>
-          </label>
-        ))}
-      </div>
+      <ResultGrid
+        blocks={blocks}
+        checkedItems={checkedItems}
+        keys={keys}
+        loading={loading}
+        setCheckedItems={setCheckedItems}
+        t={t}
+      />
     </div>
   );
 }
@@ -1634,17 +1321,6 @@ function PrimaryButton({ onClick, loading, text, loadingText }: { onClick: () =>
     <button onClick={onClick} disabled={loading} className="w-full rounded-2xl bg-orange-500 px-5 py-4 font-bold disabled:opacity-60">
       {loading ? loadingText : text}
     </button>
-  );
-}
-
-function Card({ title, content }: { title: string; content?: string }) {
-  if (!content) return null;
-
-  return (
-    <div className="rounded-3xl border border-slate-800 bg-slate-900 p-5">
-      <h3 className="mb-3 text-lg font-bold">{title}</h3>
-      <p className="whitespace-pre-wrap text-slate-300">{content}</p>
-    </div>
   );
 }
 
