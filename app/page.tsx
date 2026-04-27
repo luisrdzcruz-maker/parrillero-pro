@@ -401,7 +401,7 @@ export default function Home() {
     setSaveMenuMessage("");
 
     try {
-      const savedMenu = await saveGeneratedMenu({
+      const savedMenuResult = await saveGeneratedMenu({
         name: menuName,
         lang,
         people: parsePositiveInt(people),
@@ -421,6 +421,16 @@ export default function Home() {
         },
       });
 
+      const fallbackId = `local-${now.getTime()}`;
+      const savedMenu =
+        savedMenuResult.ok
+          ? savedMenuResult.menu
+          : {
+              id: fallbackId,
+              name: menuName,
+              created_at: now.toISOString(),
+            };
+
       const newMenu: SavedMenu = {
         id: savedMenu.id,
         title: savedMenu.name,
@@ -429,8 +439,8 @@ export default function Home() {
       };
 
       updateSavedMenus([newMenu, ...savedMenus.filter((menu) => menu.id !== newMenu.id)]);
-      setSaveMenuStatus("success");
-      setSaveMenuMessage(t.menuSaved);
+      setSaveMenuStatus(savedMenuResult.ok ? "success" : "error");
+      setSaveMenuMessage(savedMenuResult.ok ? t.menuSaved : `${t.menuSaveError} Guardado localmente.`);
     } catch {
       setSaveMenuStatus("error");
       setSaveMenuMessage(t.menuSaveError);
@@ -1408,7 +1418,7 @@ export default function Home() {
     setSaveMenuMessage("");
 
     try {
-      const savedMenu = await saveGeneratedMenu({
+      const savedMenuResult = await saveGeneratedMenu({
         name: menuName,
         lang,
         people: parsePositiveInt(people),
@@ -1428,6 +1438,16 @@ export default function Home() {
         },
       });
 
+      const fallbackId = `local-${now.getTime()}`;
+      const savedMenu =
+        savedMenuResult.ok
+          ? savedMenuResult.menu
+          : {
+              id: fallbackId,
+              name: menuName,
+              created_at: now.toISOString(),
+            };
+
       const newMenu: SavedMenu = {
         id: savedMenu.id,
         title: savedMenu.name,
@@ -1436,8 +1456,8 @@ export default function Home() {
       };
 
       updateSavedMenus([newMenu, ...savedMenus.filter((menu) => menu.id !== newMenu.id)]);
-      setSaveMenuStatus("success");
-      setSaveMenuMessage(t.menuSaved);
+      setSaveMenuStatus(savedMenuResult.ok ? "success" : "error");
+      setSaveMenuMessage(savedMenuResult.ok ? t.menuSaved : `${t.menuSaveError} Guardado localmente.`);
     } catch {
       setSaveMenuStatus("error");
       setSaveMenuMessage(t.menuSaveError);
@@ -2414,7 +2434,7 @@ export default function Home() {
     setSaveMenuMessage("");
 
     try {
-      const savedMenu = await saveGeneratedMenu({
+      const savedMenuResult = await saveGeneratedMenu({
         name: menuName,
         lang,
         people: parsePositiveInt(people),
@@ -2434,6 +2454,16 @@ export default function Home() {
         },
       });
 
+      const fallbackId = `local-${now.getTime()}`;
+      const savedMenu =
+        savedMenuResult.ok
+          ? savedMenuResult.menu
+          : {
+              id: fallbackId,
+              name: menuName,
+              created_at: now.toISOString(),
+            };
+
       const newMenu: SavedMenu = {
         id: savedMenu.id,
         title: savedMenu.name,
@@ -2442,8 +2472,8 @@ export default function Home() {
       };
 
       updateSavedMenus([newMenu, ...savedMenus.filter((menu) => menu.id !== newMenu.id)]);
-      setSaveMenuStatus("success");
-      setSaveMenuMessage(t.menuSaved);
+      setSaveMenuStatus(savedMenuResult.ok ? "success" : "error");
+      setSaveMenuMessage(savedMenuResult.ok ? t.menuSaved : `${t.menuSaveError} Guardado localmente.`);
     } catch {
       setSaveMenuStatus("error");
       setSaveMenuMessage(t.menuSaveError);
@@ -3419,7 +3449,7 @@ export default function Home() {
     setSaveMenuMessage("");
 
     try {
-      const savedMenu = await saveGeneratedMenu({
+      const savedMenuResult = await saveGeneratedMenu({
         name: menuName,
         lang,
         people: parsePositiveInt(people),
@@ -3439,6 +3469,16 @@ export default function Home() {
         },
       });
 
+      const fallbackId = `local-${now.getTime()}`;
+      const savedMenu =
+        savedMenuResult.ok
+          ? savedMenuResult.menu
+          : {
+              id: fallbackId,
+              name: menuName,
+              created_at: now.toISOString(),
+            };
+
       const newMenu: SavedMenu = {
         id: savedMenu.id,
         title: savedMenu.name,
@@ -3447,8 +3487,8 @@ export default function Home() {
       };
 
       updateSavedMenus([newMenu, ...savedMenus.filter((menu) => menu.id !== newMenu.id)]);
-      setSaveMenuStatus("success");
-      setSaveMenuMessage(t.menuSaved);
+      setSaveMenuStatus(savedMenuResult.ok ? "success" : "error");
+      setSaveMenuMessage(savedMenuResult.ok ? t.menuSaved : `${t.menuSaveError} Guardado localmente.`);
     } catch {
       setSaveMenuStatus("error");
       setSaveMenuMessage(t.menuSaveError);
