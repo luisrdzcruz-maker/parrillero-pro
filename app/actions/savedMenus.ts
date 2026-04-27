@@ -3,9 +3,9 @@
 import { revalidatePath } from "next/cache";
 import {
   deleteSavedMenu,
-  publishSavedMenu,
+  publishSavedMenu as publishSavedMenuRow,
   saveMenu,
-  unpublishSavedMenu,
+  unpublishSavedMenu as unpublishSavedMenuRow,
   type Json,
 } from "@/lib/db/savedMenus";
 import {
@@ -107,16 +107,19 @@ export async function deleteGeneratedMenu(id: string) {
   safeRevalidate("/saved");
 }
 
-export async function publishGeneratedMenu(id: string) {
-  const savedMenu = await publishSavedMenu(id);
+export async function publishSavedMenu(id: string) {
+  const savedMenu = await publishSavedMenuRow(id);
   safeRevalidate("/saved");
   if (savedMenu.share_slug) safeRevalidate(`/share/${savedMenu.share_slug}`);
   return savedMenu;
 }
 
-export async function unpublishGeneratedMenu(id: string) {
-  const savedMenu = await unpublishSavedMenu(id);
+export async function unpublishSavedMenu(id: string) {
+  const savedMenu = await unpublishSavedMenuRow(id);
   safeRevalidate("/saved");
   if (savedMenu.share_slug) safeRevalidate(`/share/${savedMenu.share_slug}`);
   return savedMenu;
 }
+
+export const publishGeneratedMenu = publishSavedMenu;
+export const unpublishGeneratedMenu = unpublishSavedMenu;

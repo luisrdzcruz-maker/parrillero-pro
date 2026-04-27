@@ -129,9 +129,9 @@ export function BottomNavigation({
 }) {
   return (
     <nav
-      className={`${ds.nav.bottom} px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] pt-1.5 md:hidden`}
+      className={`${ds.nav.bottom} z-50 min-h-[70px] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 md:hidden`}
     >
-      <div className={`${ds.layout.navGrid} rounded-2xl bg-slate-950/70 p-1`}>
+      <div className={`${ds.layout.navGrid} gap-1.5 rounded-[1.6rem] border border-white/10 bg-slate-950/90 p-1.5 shadow-2xl shadow-black/50`}>
         <Tab
           active={mode === "inicio"}
           label={t.start}
@@ -191,12 +191,12 @@ function Tab({
       aria-current={active ? "page" : undefined}
       className={
         active
-          ? "touch-manipulation rounded-xl bg-orange-500 px-1 py-1 text-[9px] font-black leading-tight text-black shadow-lg shadow-orange-500/40 ring-2 ring-orange-200/45 transition-all duration-200 motion-reduce:transition-none active:scale-[0.96] motion-reduce:active:scale-100 active:brightness-95"
-          : "touch-manipulation rounded-xl px-1 py-1 text-[9px] leading-tight text-slate-500 opacity-50 transition-all duration-200 motion-reduce:transition-none hover:bg-white/5 hover:text-slate-300 hover:opacity-80 active:scale-[0.96] motion-reduce:active:scale-100 active:bg-white/10"
+          ? "min-h-[54px] touch-manipulation rounded-2xl bg-orange-500 px-1.5 py-1.5 text-[10px] font-black leading-tight text-black shadow-lg shadow-orange-500/45 ring-2 ring-orange-200/45 transition-all duration-200 motion-reduce:transition-none active:scale-[0.96] motion-reduce:active:scale-100 active:brightness-95"
+          : "min-h-[54px] touch-manipulation rounded-2xl px-1.5 py-1.5 text-[10px] font-bold leading-tight text-slate-400 opacity-75 transition-all duration-200 motion-reduce:transition-none hover:bg-white/5 hover:text-slate-200 hover:opacity-100 active:scale-[0.96] motion-reduce:active:scale-100 active:bg-white/10"
       }
     >
-      <div>{emoji}</div>
-      <div>{label}</div>
+      <div className="text-[20px] leading-none">{emoji}</div>
+      <div className="mt-0.5 truncate">{label}</div>
     </button>
   );
 }

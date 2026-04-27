@@ -131,7 +131,7 @@ export const ds = {
 
   nav: {
     bottom:
-      "fixed bottom-0 left-0 right-0 border-t border-white/10 bg-slate-950/90 px-3 py-3 shadow-2xl shadow-black/40 backdrop-blur-xl",
+      "fixed bottom-0 left-0 right-0 border-t border-white/10 bg-slate-950/95 shadow-2xl shadow-black/40 backdrop-blur-xl",
     switcher:
       "fixed bottom-24 left-4 z-50 flex gap-1 rounded-full border border-white/10 bg-black/60 p-1.5 text-xs shadow-2xl shadow-black/30 backdrop-blur",
     switcherLink:

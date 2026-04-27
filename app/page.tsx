@@ -1,6 +1,10 @@
 "use client";
 
-import { saveGeneratedMenu } from "@/app/actions/savedMenus";
+import {
+  publishGeneratedMenu,
+  saveGeneratedMenu,
+  unpublishGeneratedMenu,
+} from "@/app/actions/savedMenus";
 import CookingLiveMode from "@/components/CookingLiveMode";
 import {
   CookingWizard,
@@ -66,6 +70,8 @@ type SavedMenu = {
   date: string;
   blocks: Blocks;
   type?: SavedMenuType;
+  is_public?: boolean;
+  share_slug?: string | null;
 };
 
 type SavedMenuType = "cooking_plan" | "generated_menu" | "parrillada_plan";
@@ -74,6 +80,8 @@ type SavedMenuActionMenu = {
   id: string;
   name: string;
   created_at: string;
+  is_public?: boolean;
+  share_slug?: string | null;
 };
 
 type SaveGeneratedMenuResponse =
@@ -362,6 +370,9 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [saveMenuStatus, setSaveMenuStatus] = useState<SaveMenuStatus>("idle");
   const [saveMenuMessage, setSaveMenuMessage] = useState("");
+  const [shareMessage, setShareMessage] = useState("");
+  const [shareMessageMenuId, setShareMessageMenuId] = useState<string | null>(null);
+  const [sharingMenuId, setSharingMenuId] = useState<string | null>(null);
 
   const [cookSteps, setCookSteps] = useState<CookingStep[]>(defaultCookSteps);
   const [currentStep, setCurrentStep] = useState(0);
@@ -574,6 +585,8 @@ export default function Home() {
         date: new Date(savedMenu.created_at).toLocaleDateString(localeForLang(lang)),
         blocks: safeBlocks,
         type: savedType,
+        is_public: savedMenu.is_public ?? false,
+        share_slug: savedMenu.share_slug ?? null,
       };
 
       updateSavedMenus([newMenu, ...savedMenus.filter((menu) => menu.id !== newMenu.id)]);
@@ -594,6 +607,70 @@ export default function Home() {
     setSelectedSavedMenu(menu);
     resetSaveMenuState();
     navigateMode("guardados");
+  }
+
+  function updateSharedMenu(updatedMenu: SavedMenu) {
+    const nextMenus = savedMenus.map((menu) => (menu.id === updatedMenu.id ? updatedMenu : menu));
+    updateSavedMenus(nextMenus);
+    if (selectedSavedMenu?.id === updatedMenu.id) setSelectedSavedMenu(updatedMenu);
+  }
+
+  async function publishMenu(menu: SavedMenu) {
+    if (menu.id.startsWith("local_") || menu.id.startsWith("local-")) {
+      setShareMessage("Guarda en la nube para compartir");
+      setShareMessageMenuId(menu.id);
+      return;
+    }
+
+    setSharingMenuId(menu.id);
+    setShareMessage("");
+    setShareMessageMenuId(menu.id);
+
+    try {
+      const published = await publishGeneratedMenu(menu.id);
+      const updatedMenu = {
+        ...menu,
+        is_public: published.is_public,
+        share_slug: published.share_slug,
+      };
+      updateSharedMenu(updatedMenu);
+      setShareMessage(published.share_slug ? "Plan publicado" : "Plan publicado");
+    } catch {
+      setShareMessage("No se pudo publicar el plan");
+    } finally {
+      setSharingMenuId(null);
+    }
+  }
+
+  async function unpublishMenu(menu: SavedMenu) {
+    if (menu.id.startsWith("local_") || menu.id.startsWith("local-")) return;
+
+    setSharingMenuId(menu.id);
+    setShareMessage("");
+    setShareMessageMenuId(menu.id);
+
+    try {
+      const unpublished = await unpublishGeneratedMenu(menu.id);
+      const updatedMenu = {
+        ...menu,
+        is_public: unpublished.is_public,
+        share_slug: unpublished.share_slug,
+      };
+      updateSharedMenu(updatedMenu);
+      setShareMessage("Plan privado");
+    } catch {
+      setShareMessage("No se pudo cambiar la privacidad");
+    } finally {
+      setSharingMenuId(null);
+    }
+  }
+
+  async function copyShareLink(menu: SavedMenu) {
+    if (typeof window === "undefined" || !navigator.clipboard || !menu.share_slug) return;
+
+    await navigator.clipboard.writeText(`${window.location.origin}/share/${menu.share_slug}`);
+    setShareMessage("Link copiado");
+    setShareMessageMenuId(menu.id);
   }
 
   function handleAnimalChange(selectedAnimal: Animal) {
@@ -904,7 +981,7 @@ ERROR
 
   return (
     <main
-      className={`${ds.shell.page} px-3 pt-2 !pb-[max(9rem,calc(6.75rem+env(safe-area-inset-bottom,0px)))] sm:px-4 sm:pt-5 md:!pb-28`}
+      className={`${ds.shell.page} overflow-x-hidden px-3 pt-2 !pb-[max(120px,env(safe-area-inset-bottom))] sm:px-4 sm:pt-5 md:!pb-28`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -1138,7 +1215,13 @@ ERROR
               lang={lang}
               menu={selectedSavedMenu}
               onBack={() => setSelectedSavedMenu(null)}
+              onCopyLink={copyShareLink}
               onCopy={copySavedMenu}
+              onPublish={publishMenu}
+              onUnpublish={unpublishMenu}
+              shareMessage={shareMessage}
+              shareMessageMenuId={shareMessageMenuId}
+              sharingMenuId={sharingMenuId}
               setCheckedItems={setCheckedItems}
               t={t}
             />
@@ -1146,9 +1229,15 @@ ERROR
             <SavedMenusSection
               lang={lang}
               menus={savedMenus}
+              onCopyLink={copyShareLink}
               onCopy={copySavedMenu}
               onDelete={deleteMenu}
               onOpen={loadMenu}
+              onPublish={publishMenu}
+              onUnpublish={unpublishMenu}
+              shareMessage={shareMessage}
+              shareMessageMenuId={shareMessageMenuId}
+              sharingMenuId={sharingMenuId}
               t={t}
             />
           )
@@ -1169,16 +1258,28 @@ function copySavedMenu(menu: SavedMenu) {
 function SavedMenusSection({
   lang,
   menus,
+  onCopyLink,
   onCopy,
   onDelete,
   onOpen,
+  onPublish,
+  onUnpublish,
+  shareMessage,
+  shareMessageMenuId,
+  sharingMenuId,
   t,
 }: {
   lang: Lang;
   menus: SavedMenu[];
+  onCopyLink: (menu: SavedMenu) => void;
   onCopy: (menu: SavedMenu) => void;
   onDelete: (id: string) => void;
   onOpen: (menu: SavedMenu) => void;
+  onPublish: (menu: SavedMenu) => void;
+  onUnpublish: (menu: SavedMenu) => void;
+  shareMessage: string;
+  shareMessageMenuId: string | null;
+  sharingMenuId: string | null;
   t: AppText;
 }) {
   return (
@@ -1193,16 +1294,54 @@ function SavedMenusSection({
             </p>
             <h3 className="mt-1 text-xl font-bold text-white">{menu.title}</h3>
             <p className="mt-1 text-sm text-slate-400">{menu.date}</p>
+            {menu.is_public && menu.share_slug ? (
+              <p className="mt-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-xs font-bold text-emerald-200">
+                /share/{menu.share_slug}
+              </p>
+            ) : menu.id.startsWith("local_") || menu.id.startsWith("local-") ? (
+              <p className="mt-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-slate-300">
+                Guarda en la nube para compartir
+              </p>
+            ) : null}
 
             <div className="mt-4 flex flex-wrap gap-3">
               <Button onClick={() => onOpen(menu)}>{lang === "es" ? "Abrir" : "Open"}</Button>
               <Button onClick={() => onCopy(menu)} variant="secondary">
                 {t.copy}
               </Button>
+              {menu.is_public && menu.share_slug ? (
+                <>
+                  <Button onClick={() => onCopyLink(menu)} variant="outlineAccent">
+                    Copiar link
+                  </Button>
+                  <Button
+                    onClick={() => onUnpublish(menu)}
+                    variant="secondary"
+                    disabled={sharingMenuId === menu.id}
+                  >
+                    {sharingMenuId === menu.id ? "Actualizando..." : "Despublicar"}
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  onClick={() => onPublish(menu)}
+                  variant="outlineAccent"
+                  disabled={
+                    sharingMenuId === menu.id ||
+                    menu.id.startsWith("local_") ||
+                    menu.id.startsWith("local-")
+                  }
+                >
+                  {sharingMenuId === menu.id ? "Publicando..." : "Publicar"}
+                </Button>
+              )}
               <Button onClick={() => onDelete(menu.id)} variant="danger">
                 {lang === "es" ? "Borrar" : "Delete"}
               </Button>
             </div>
+            {shareMessage && shareMessageMenuId === menu.id && (
+              <p className="mt-3 text-xs font-bold text-emerald-300">{shareMessage}</p>
+            )}
           </Card>
         ))}
       </Grid>
@@ -1215,7 +1354,13 @@ function SavedMenuDetail({
   lang,
   menu,
   onBack,
+  onCopyLink,
   onCopy,
+  onPublish,
+  onUnpublish,
+  shareMessage,
+  shareMessageMenuId,
+  sharingMenuId,
   setCheckedItems,
   t,
 }: {
@@ -1223,11 +1368,18 @@ function SavedMenuDetail({
   lang: Lang;
   menu: SavedMenu;
   onBack: () => void;
+  onCopyLink: (menu: SavedMenu) => void;
   onCopy: (menu: SavedMenu) => void;
+  onPublish: (menu: SavedMenu) => void;
+  onUnpublish: (menu: SavedMenu) => void;
+  shareMessage: string;
+  shareMessageMenuId: string | null;
+  sharingMenuId: string | null;
   setCheckedItems: (value: Record<string, boolean>) => void;
   t: AppText;
 }) {
   const type = getSavedMenuType(menu);
+  const isLocal = menu.id.startsWith("local_") || menu.id.startsWith("local-");
 
   return (
     <div className="space-y-4">
@@ -1246,8 +1398,42 @@ function SavedMenuDetail({
             <Button onClick={() => onCopy(menu)} variant="outlineAccent">
               {t.copy}
             </Button>
+            {menu.is_public && menu.share_slug ? (
+              <>
+                <Button onClick={() => onCopyLink(menu)} variant="outlineAccent">
+                  Copiar link
+                </Button>
+                <Button
+                  onClick={() => onUnpublish(menu)}
+                  variant="secondary"
+                  disabled={sharingMenuId === menu.id}
+                >
+                  {sharingMenuId === menu.id ? "Actualizando..." : "Despublicar"}
+                </Button>
+              </>
+            ) : (
+              <Button
+                onClick={() => onPublish(menu)}
+                variant="outlineAccent"
+                disabled={isLocal || sharingMenuId === menu.id}
+              >
+                {sharingMenuId === menu.id ? "Publicando..." : "Publicar"}
+              </Button>
+            )}
           </div>
         </div>
+        {menu.is_public && menu.share_slug ? (
+          <div className="mt-4 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm font-bold text-emerald-200">
+            /share/{menu.share_slug}
+          </div>
+        ) : isLocal ? (
+          <p className="mt-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold text-slate-300">
+            Guarda en la nube para compartir
+          </p>
+        ) : null}
+        {shareMessage && shareMessageMenuId === menu.id && (
+          <p className="mt-3 text-sm font-bold text-emerald-300">{shareMessage}</p>
+        )}
       </Card>
 
       <ResultCards
@@ -2077,7 +2263,7 @@ ERROR
 
   return (
     <main
-      className={`${ds.shell.page} px-3 pt-2 !pb-[max(9rem,calc(6.75rem+env(safe-area-inset-bottom,0px)))] sm:px-4 sm:pt-5 md:!pb-28`}
+      className={`${ds.shell.page} overflow-x-hidden px-3 pt-2 !pb-[max(120px,env(safe-area-inset-bottom))] sm:px-4 sm:pt-5 md:!pb-28`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -3181,7 +3367,7 @@ ERROR
 
   return (
     <main
-      className={`${ds.shell.page} px-3 pt-2 !pb-[max(9rem,calc(6.75rem+env(safe-area-inset-bottom,0px)))] sm:px-4 sm:pt-5 md:!pb-28`}
+      className={`${ds.shell.page} overflow-x-hidden px-3 pt-2 !pb-[max(120px,env(safe-area-inset-bottom))] sm:px-4 sm:pt-5 md:!pb-28`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -4284,7 +4470,7 @@ ERROR
 
   return (
     <main
-      className={`${ds.shell.page} px-3 pt-2 !pb-[max(9rem,calc(6.75rem+env(safe-area-inset-bottom,0px)))] sm:px-4 sm:pt-5 md:!pb-28`}
+      className={`${ds.shell.page} overflow-x-hidden px-3 pt-2 !pb-[max(120px,env(safe-area-inset-bottom))] sm:px-4 sm:pt-5 md:!pb-28`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >

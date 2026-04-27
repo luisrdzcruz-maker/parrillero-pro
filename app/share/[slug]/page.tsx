@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { getPublicSavedMenuBySlug, type Json, type SavedMenu } from "@/lib/db/savedMenus";
 
 type ShareSlugPageProps = {
@@ -9,6 +8,7 @@ type ShareSlugPageProps = {
 };
 
 type Blocks = Record<string, string>;
+type SavedMenuType = "cooking_plan" | "generated_menu" | "parrillada_plan";
 
 export const dynamic = "force-dynamic";
 
@@ -26,9 +26,10 @@ export default async function ShareSlugPage({ params }: ShareSlugPageProps) {
   const { slug } = await params;
   const menu = await getPublicSavedMenuBySlug(slug);
 
-  if (!menu) notFound();
+  if (!menu) return <UnavailablePlan />;
 
   const meta = getMenuMeta(menu);
+  const type = getMenuType(menu.data);
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(249,115,22,0.2),transparent_32%),#020617] px-4 py-6 text-slate-100 sm:py-10">
@@ -38,13 +39,13 @@ export default async function ShareSlugPage({ params }: ShareSlugPageProps) {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(251,146,60,0.28),transparent_34%),linear-gradient(to_top,rgba(2,6,23,0.98),rgba(15,23,42,0.72),rgba(255,255,255,0.06))]" />
             <div className="relative">
               <p className="inline-flex rounded-full border border-orange-400/25 bg-orange-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">
-                Plan compartido
+                {getTypeLabel(type)}
               </p>
               <h1 className="mt-5 text-4xl font-black tracking-tight text-white sm:text-5xl">
                 {menu.name}
               </h1>
               <p className="mt-3 text-lg font-semibold text-orange-100">
-                Parrillero Pro
+                Parrillero Pro · {formatDate(menu.created_at)}
               </p>
               <p className="mt-3 max-w-xl text-sm leading-6 text-slate-300">
                 Revisa este plan guardado y crea tu propia versión para la próxima parrilla.
@@ -56,12 +57,6 @@ export default async function ShareSlugPage({ params }: ShareSlugPageProps) {
                   className="rounded-2xl bg-orange-500 px-5 py-3 text-center text-sm font-black text-black shadow-lg shadow-orange-500/20 transition active:scale-[0.98]"
                 >
                   Crear mi propio plan
-                </Link>
-                <Link
-                  href="/saved"
-                  className="rounded-2xl border border-white/10 bg-white/10 px-5 py-3 text-center text-sm font-bold text-white transition hover:bg-white/15 active:scale-[0.98]"
-                >
-                  Ver biblioteca
                 </Link>
               </div>
             </div>
@@ -88,6 +83,30 @@ export default async function ShareSlugPage({ params }: ShareSlugPageProps) {
           )}
         </section>
       </div>
+    </main>
+  );
+}
+
+function UnavailablePlan() {
+  return (
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(249,115,22,0.18),transparent_32%),#020617] px-4 py-10 text-slate-100">
+      <section className="mx-auto max-w-xl rounded-[2rem] border border-white/10 bg-slate-950/85 p-7 text-center shadow-[0_30px_100px_rgba(0,0,0,0.35)]">
+        <p className="mx-auto inline-flex rounded-full border border-orange-400/25 bg-orange-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">
+          Parrillero Pro
+        </p>
+        <h1 className="mt-5 text-3xl font-black tracking-tight text-white">
+          Este plan no está disponible
+        </h1>
+        <p className="mt-3 text-sm leading-6 text-slate-300">
+          Puede que el enlace sea privado, haya sido despublicado o ya no exista.
+        </p>
+        <Link
+          href="/"
+          className="mt-6 inline-flex rounded-2xl bg-orange-500 px-5 py-3 text-sm font-black text-black shadow-lg shadow-orange-500/20 transition active:scale-[0.98]"
+        >
+          Volver a Parrillero Pro
+        </Link>
+      </section>
     </main>
   );
 }
@@ -134,6 +153,34 @@ function getMenuMeta(menu: SavedMenu) {
     cut,
     products,
   };
+}
+
+function getMenuType(data: Json): SavedMenuType {
+  if (!isRecord(data)) return "generated_menu";
+
+  const value = data.type;
+  if (value === "cooking_plan" || value === "parrillada_plan" || value === "generated_menu") {
+    return value;
+  }
+
+  return "generated_menu";
+}
+
+function getTypeLabel(type: SavedMenuType) {
+  if (type === "cooking_plan") return "Cocción compartida";
+  if (type === "parrillada_plan") return "Parrillada compartida";
+  return "Menú compartido";
+}
+
+function formatDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Fecha no disponible";
+
+  return new Intl.DateTimeFormat("es-ES", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
 }
 
 function getBlocks(data: Json): Blocks {

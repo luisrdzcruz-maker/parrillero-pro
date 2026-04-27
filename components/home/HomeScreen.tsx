@@ -36,6 +36,15 @@ export function HomeScreen({
   onModeChange: (mode: Mode) => void;
   t: AppText;
 }) {
+  const primaryCard = {
+    description: "Elige corte, punto y equipo. El plan sale listo para ejecutar.",
+    emoji: "🥩",
+    mode: "coccion" as const,
+    priority: "Cocción",
+    stat: "Plan paso a paso",
+    title: t.planCooking,
+  };
+
   const featureCards = [
     {
       description: "Cantidades y compra para eventos.",
@@ -72,14 +81,18 @@ export function HomeScreen({
   ];
 
   return (
-    <div className="space-y-2 sm:space-y-7">
-      <section className="grid gap-2 lg:grid-cols-[1.05fr_0.95fr] lg:items-stretch">
-        <Panel className="relative p-2 sm:p-7 lg:min-h-[360px]" tone="hero">
-          <div className="pointer-events-none absolute -left-16 -top-20 h-48 w-48 rounded-full bg-orange-500/15 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 right-8 h-56 w-56 rounded-full bg-red-500/10 blur-3xl" />
+    <div className="w-full max-w-full overflow-x-hidden space-y-4 sm:space-y-7">
+      <section className="grid gap-3 lg:grid-cols-[1.05fr_0.95fr] lg:items-stretch">
+        <Panel
+          className="relative overflow-hidden p-5 shadow-2xl shadow-orange-950/25 sm:p-7 lg:min-h-[360px]"
+          tone="hero"
+        >
+          <div className="pointer-events-none absolute -left-16 -top-20 h-56 w-56 rounded-full bg-orange-500/20 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 right-8 h-64 w-64 rounded-full bg-red-500/15 blur-3xl" />
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.08),transparent_40%)]" />
 
           <FadeInSection>
-            <div className="relative z-10 flex h-full flex-col justify-between gap-2 sm:gap-7">
+            <div className="relative z-10 flex h-full flex-col justify-between gap-5 sm:gap-7">
               <div>
                 <div className="hidden flex-wrap items-center gap-2 sm:flex">
                   <Badge className="uppercase tracking-[0.16em] sm:tracking-[0.2em]">
@@ -93,20 +106,21 @@ export function HomeScreen({
                   </Badge>
                 </div>
 
-                <h1 className="mt-0 max-w-2xl text-[1.45rem] font-black leading-[1.05] tracking-[-0.045em] text-white sm:mt-5 sm:text-5xl lg:text-6xl">
-                  {t.title}
+                <h1 className="max-w-none text-[clamp(2.05rem,10.5vw,4.5rem)] font-black leading-[0.92] tracking-[-0.07em] text-white sm:mt-5 sm:max-w-2xl sm:text-6xl lg:text-7xl">
+                  <span className="block">🔥 Cocina como un PRO</span>
+                  <span className="block text-orange-300">sin pensar</span>
                 </h1>
-                <p className="mt-1 max-w-xl text-[12px] leading-snug text-slate-300 sm:mt-4 sm:text-lg sm:leading-7">
-                  {t.subtitle}
+                <p className="mt-4 max-w-sm text-[15px] font-medium leading-6 text-slate-200 sm:max-w-xl sm:text-lg sm:leading-7">
+                  Planes claros para cortes, fuego, tiempos y servicio sin improvisar.
                 </p>
 
-                <div className="mt-2 grid gap-2 sm:mt-7 sm:flex sm:gap-3">
+                <div className="mt-5 grid gap-2 sm:mt-7 sm:flex sm:gap-3">
                   <Button
-                    className="touch-manipulation px-5 py-2.5 text-sm font-black shadow-orange-500/30 transition-all duration-200 active:scale-[0.97] active:brightness-95 sm:px-7 sm:py-4 sm:text-base"
+                    className="min-h-[54px] touch-manipulation rounded-2xl px-6 py-4 text-base font-black shadow-xl shadow-orange-500/30 transition-all duration-200 active:scale-[0.97] active:brightness-95 sm:px-7 sm:text-base"
                     fullWidth
                     onClick={() => onModeChange("coccion")}
                   >
-                    {t.planCooking} <span aria-hidden="true">→</span>
+                    Empezar a cocinar <span aria-hidden="true">→</span>
                   </Button>
                 </div>
               </div>
@@ -131,12 +145,12 @@ export function HomeScreen({
         </div>
       </section>
 
-      <section className="space-y-2 sm:space-y-4">
+      <section className="space-y-3 sm:space-y-4">
         <div className="flex flex-col justify-between gap-1 sm:flex-row sm:items-end">
           <div>
             <p className={`${ds.text.eyebrow} hidden sm:block`}>Modos secundarios</p>
-            <h2 className="text-[13px] font-black tracking-tight text-slate-300 sm:mt-2 sm:text-2xl sm:text-white">
-              Más herramientas
+            <h2 className="text-lg font-black tracking-tight text-white sm:mt-2 sm:text-2xl">
+              Elige cómo quieres cocinar
             </h2>
           </div>
           <p className="hidden max-w-xl text-sm leading-6 text-slate-400 sm:block">
@@ -144,7 +158,17 @@ export function HomeScreen({
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
+        <HomeCard
+          active
+          description={primaryCard.description}
+          emoji={primaryCard.emoji}
+          onClick={() => onModeChange(primaryCard.mode)}
+          priority={primaryCard.priority}
+          stat={primaryCard.stat}
+          title={primaryCard.title}
+        />
+
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
           {featureCards.map((card) => (
             <HomeCard
               key={card.mode}
@@ -318,47 +342,65 @@ function HomeCard({
       onClick={onClick}
       className={
         active
-          ? `group ${ds.panel.homeCard} relative touch-manipulation overflow-hidden border-orange-500/55 bg-gradient-to-br from-orange-500/15 via-slate-900/90 to-slate-950 p-3 shadow-orange-500/20 ring-2 ring-orange-400/25 transition-all duration-200 active:scale-[0.97] active:brightness-[0.98] sm:p-6`
-          : `group ${ds.panel.homeCard} relative touch-manipulation overflow-hidden rounded-2xl border-white/5 bg-white/[0.025] p-2.5 opacity-90 transition-all duration-200 hover:border-white/12 active:scale-[0.97] active:brightness-[0.98] sm:rounded-3xl sm:p-5`
+          ? `group ${ds.panel.homeCard} relative min-h-[132px] touch-manipulation overflow-hidden border-orange-500/60 bg-gradient-to-br from-orange-500/20 via-slate-900/95 to-slate-950 p-5 shadow-2xl shadow-orange-500/20 ring-2 ring-orange-400/25 transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-300/70 active:scale-[0.98] active:brightness-[0.98] sm:p-6`
+          : `group ${ds.panel.homeCard} relative min-h-[140px] touch-manipulation overflow-hidden rounded-3xl border-white/10 bg-white/[0.045] p-3.5 shadow-xl shadow-black/20 transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-300/25 hover:bg-white/[0.065] active:scale-[0.97] active:brightness-[0.98] sm:p-5`
       }
     >
-      <div className="pointer-events-none absolute -right-12 -top-12 h-24 w-24 rounded-full bg-orange-500/0 blur-2xl transition-all duration-200 group-hover:bg-orange-500/10 sm:h-28 sm:w-28" />
-      <div className="relative z-10 flex items-start justify-between gap-2">
+      <div
+        className={
+          active
+            ? "pointer-events-none absolute -right-10 -top-14 h-36 w-36 rounded-full bg-orange-400/25 blur-3xl"
+            : "pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-orange-500/0 blur-2xl transition-all duration-200 group-hover:bg-orange-500/10"
+        }
+      />
+      <div className="relative z-10 flex items-start justify-between gap-3">
         <div
           className={
             active
-              ? `${ds.media.iconTile} h-10 w-10 rounded-xl border-orange-400/40 bg-orange-500/15 text-2xl sm:h-12 sm:w-12 sm:rounded-2xl sm:text-3xl`
-              : `${ds.media.iconTile} h-8 w-8 rounded-lg bg-white/[0.04] text-lg opacity-80 sm:h-11 sm:w-11 sm:rounded-2xl sm:text-2xl`
+              ? `${ds.media.iconTile} h-12 w-12 rounded-2xl border-orange-400/40 bg-orange-500/20 text-3xl shadow-lg shadow-orange-500/20 sm:h-14 sm:w-14`
+              : `${ds.media.iconTile} h-10 w-10 rounded-2xl bg-white/[0.06] text-2xl opacity-90 sm:h-11 sm:w-11`
           }
         >
           {emoji}
         </div>
         <Badge
-          className="hidden max-w-[132px] shrink-0 truncate sm:inline-flex"
+          className={active ? "max-w-[150px] shrink-0 truncate" : "hidden max-w-[132px] shrink-0 truncate sm:inline-flex"}
           tone={active ? "accent" : "glass"}
         >
           {stat}
         </Badge>
       </div>
 
-      <div className="relative z-10 mt-2 sm:mt-6">
-        <p className="text-[9px] font-black uppercase tracking-[0.14em] text-orange-300/90 sm:text-[11px] sm:tracking-[0.18em]">
+      <div className="relative z-10 mt-4 sm:mt-6">
+        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-orange-300/90 sm:text-[11px] sm:tracking-[0.18em]">
           {priority}
         </p>
-        <h2 className="mt-0.5 line-clamp-2 text-[13px] font-bold leading-tight tracking-tight text-white sm:mt-2 sm:text-xl">
+        <h2
+          className={
+            active
+              ? "mt-1 line-clamp-2 text-2xl font-black leading-tight tracking-tight text-white sm:text-3xl"
+              : "mt-1 line-clamp-2 text-[15px] font-black leading-tight tracking-tight text-white sm:mt-2 sm:text-xl"
+          }
+        >
           {title}
         </h2>
-        <p className="mt-0.5 line-clamp-1 text-[11px] leading-4 text-slate-400 sm:mt-3 sm:line-clamp-none sm:text-sm sm:leading-6">
+        <p
+          className={
+            active
+              ? "mt-2 max-w-xl text-sm font-medium leading-6 text-slate-200"
+              : "mt-1 line-clamp-2 text-xs leading-5 text-slate-400 sm:mt-3 sm:line-clamp-none sm:text-sm sm:leading-6"
+          }
+        >
           {description}
         </p>
       </div>
 
       <div
-        className={`relative z-10 mt-2 flex items-center justify-between text-[11px] font-semibold sm:mt-5 sm:text-sm ${active ? "text-orange-300" : "text-slate-400"}`}
+        className={`relative z-10 mt-4 flex items-center justify-between text-sm font-black sm:mt-5 ${active ? "text-orange-200" : "text-slate-400"}`}
       >
-        <span>Abrir</span>
+        <span>{active ? "Empezar" : "Abrir"}</span>
         <span
-          className={`flex h-6 w-6 items-center justify-center rounded-full border transition-all duration-200 group-hover:translate-x-1 sm:h-8 sm:w-8 ${active ? "border-orange-400/20 bg-orange-500/10 group-hover:bg-orange-500/15" : "border-white/10 bg-white/[0.03] group-hover:bg-white/[0.06]"}`}
+          className={`flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-200 group-hover:translate-x-1 ${active ? "border-orange-300/30 bg-orange-500/20 shadow-lg shadow-orange-500/20 group-hover:bg-orange-500/25" : "border-white/10 bg-white/[0.04] group-hover:bg-white/[0.08]"}`}
         >
           →
         </span>

@@ -31,10 +31,14 @@ const texts = {
     delete: "Eliminar",
     deleting: "Eliminando...",
     publish: "Publicar",
-    unpublish: "Ocultar",
+    unpublish: "Despublicar",
+    copyLink: "Copiar link",
+    private: "Privado",
+    public: "Público",
     publishing: "Actualizando...",
-    copiedShare: "Enlace público copiado.",
+    copiedShare: "Link copiado",
     shareError: "No se pudo actualizar el enlace público. Inténtalo otra vez.",
+    localOnly: "Guarda en la nube para compartir",
     emptyTitle: "Todavía no tienes planes guardados",
     emptyText: "Crea un plan desde el generador y guárdalo para repetir tus mejores parrilladas.",
     createFirst: "Crear primer plan",
@@ -67,10 +71,14 @@ const texts = {
     delete: "Delete",
     deleting: "Deleting...",
     publish: "Publish",
-    unpublish: "Hide",
+    unpublish: "Unpublish",
+    copyLink: "Copy link",
+    private: "Private",
+    public: "Public",
     publishing: "Updating...",
-    copiedShare: "Public link copied.",
+    copiedShare: "Link copied",
     shareError: "Could not update the public link. Try again.",
+    localOnly: "Save to cloud to share",
     emptyTitle: "You do not have saved plans yet",
     emptyText:
       "Create a plan from the generator and save it so your best BBQs are ready to repeat.",
@@ -104,10 +112,14 @@ const texts = {
     delete: "Poista",
     deleting: "Poistetaan...",
     publish: "Julkaise",
-    unpublish: "Piilota",
+    unpublish: "Poista julkaisu",
+    copyLink: "Kopioi linkki",
+    private: "Yksityinen",
+    public: "Julkinen",
     publishing: "Päivitetään...",
-    copiedShare: "Julkinen linkki kopioitu.",
+    copiedShare: "Linkki kopioitu",
     shareError: "Julkisen linkin päivitys epäonnistui. Yritä uudelleen.",
+    localOnly: "Tallenna pilveen jakaaksesi",
     emptyTitle: "Sinulla ei ole vielä tallennettuja suunnitelmia",
     emptyText:
       "Luo suunnitelma generaattorissa ja tallenna parhaat grillaukset toistamista varten.",
@@ -204,6 +216,11 @@ export default function SavedMenusClient({ initialMenus }: { initialMenus: Saved
   }
 
   function handleShareToggle(menu: SavedMenu) {
+    if (menu.id.startsWith("local_") || menu.id.startsWith("local-")) {
+      setError(t.localOnly);
+      return;
+    }
+
     setError("");
     setPendingShareId(menu.id);
 
@@ -220,15 +237,7 @@ export default function SavedMenusClient({ initialMenus }: { initialMenus: Saved
         );
 
         if (!menu.is_public && updatedMenu.share_slug) {
-          try {
-            await navigator.clipboard.writeText(
-              `${window.location.origin}/share/${updatedMenu.share_slug}`,
-            );
-            setCopiedShareId(updatedMenu.id);
-            window.setTimeout(() => setCopiedShareId(null), 2200);
-          } catch {
-            // Publishing should still succeed if the browser blocks clipboard access.
-          }
+          await copyShareLink(updatedMenu);
         }
 
         router.refresh();
@@ -238,6 +247,18 @@ export default function SavedMenusClient({ initialMenus }: { initialMenus: Saved
         setPendingShareId(null);
       }
     });
+  }
+
+  async function copyShareLink(menu: SavedMenu) {
+    if (!menu.share_slug || typeof window === "undefined" || !navigator.clipboard) return;
+
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/share/${menu.share_slug}`);
+      setCopiedShareId(menu.id);
+      window.setTimeout(() => setCopiedShareId(null), 2200);
+    } catch {
+      setError(t.shareError);
+    }
   }
 
   return (
@@ -329,6 +350,7 @@ export default function SavedMenusClient({ initialMenus }: { initialMenus: Saved
                   menu={menu}
                   meta={meta}
                   onDelete={() => handleDelete(menu.id)}
+                  onCopyLink={() => copyShareLink(menu)}
                   onShareToggle={() => handleShareToggle(menu)}
                   onToggle={() => setOpenMenuId(isOpen ? null : menu.id)}
                   shareCopied={copiedShareId === menu.id}
@@ -359,6 +381,7 @@ function SavedMenuCard({
   menu,
   meta,
   onDelete,
+  onCopyLink,
   onShareToggle,
   onToggle,
   shareCopied,
@@ -371,11 +394,14 @@ function SavedMenuCard({
   menu: SavedMenu;
   meta: SavedMenuMeta;
   onDelete: () => void;
+  onCopyLink: () => void;
   onShareToggle: () => void;
   onToggle: () => void;
   shareCopied: boolean;
   t: (typeof texts)[Lang];
 }) {
+  const isLocal = menu.id.startsWith("local_") || menu.id.startsWith("local-");
+
   return (
     <article
       tabIndex={0}
@@ -416,6 +442,7 @@ function SavedMenuCard({
           <InfoPill label={t.products} value={meta.products || "—"} />
           <InfoPill label={t.language} value={menu.lang.toUpperCase()} />
           <InfoPill label="Tipo" value={getTypeLabel(meta.type, t)} />
+          <InfoPill label="Share" value={menu.is_public ? t.public : t.private} />
         </div>
 
         <div className="flex gap-3">
@@ -431,7 +458,7 @@ function SavedMenuCard({
           </button>
           <button
             type="button"
-            disabled={isSharing}
+            disabled={isSharing || isLocal}
             onClick={(event) => {
               event.stopPropagation();
               onShareToggle();
@@ -453,14 +480,32 @@ function SavedMenuCard({
           </button>
         </div>
 
+        {isLocal && (
+          <p className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-xs font-bold text-slate-300">
+            {t.localOnly}
+          </p>
+        )}
+
         {menu.is_public && menu.share_slug && (
-          <Link
-            href={`/share/${menu.share_slug}`}
-            onClick={(event) => event.stopPropagation()}
-            className="block rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-center text-xs font-black text-emerald-200 transition hover:bg-emerald-500/15"
-          >
-            {shareCopied ? t.copiedShare : `/share/${menu.share_slug}`}
-          </Link>
+          <div className="space-y-2 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3">
+            <Link
+              href={`/share/${menu.share_slug}`}
+              onClick={(event) => event.stopPropagation()}
+              className="block text-center text-xs font-black text-emerald-200 transition hover:text-emerald-100"
+            >
+              /share/{menu.share_slug}
+            </Link>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onCopyLink();
+              }}
+              className="w-full rounded-xl bg-emerald-400/15 px-3 py-2 text-xs font-black text-emerald-100 transition hover:bg-emerald-400/25"
+            >
+              {shareCopied ? t.copiedShare : t.copyLink}
+            </button>
+          </div>
         )}
 
         {isOpen && (
