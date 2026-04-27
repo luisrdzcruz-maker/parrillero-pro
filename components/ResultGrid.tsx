@@ -3,10 +3,15 @@
 import { Badge, Card, Grid } from "@/components/ui";
 import { ds } from "@/lib/design-system";
 import { formatTitle, getGrillManagerLineClass, getShoppingItems } from "@/lib/uiHelpers";
-import ResultCard from "./ResultCard";
+import ResultCard from "@/components/ResultCard";
 import ResultTimeline from "./ResultTimeline";
 
 type Blocks = Record<string, string>;
+type ResultItem =
+  | { key: string; title: string; content: string; type: "card"; variant?: "default" | "primary" | "summary" | "tip" | "setup" }
+  | { key: string; title: string; content: string; type: "timeline" }
+  | { key: string; title: string; content: string; type: "grill" }
+  | { key: string; title: string; content: string; type: "shopping" };
 
 const fullWidthPanel =
   `${ds.panel.result} transition-all duration-200 md:col-span-2`;
@@ -116,6 +121,91 @@ function ResultLoadingState({ text }: { text: string }) {
   );
 }
 
+function findBlockKey(keys: string[], candidates: string[]) {
+  return keys.find((key) => candidates.includes(key.toUpperCase()));
+}
+
+function combineBlocks(blocks: Blocks, keys: string[]) {
+  return keys
+    .map((key) => blocks[key])
+    .filter(Boolean)
+    .join("\n");
+}
+
+function getOrderedResultItems(blocks: Blocks, keys: string[]): ResultItem[] {
+  const setupKey = findBlockKey(keys, ["SETUP", "CONFIGURACION", "CONFIGURACIÓN"]);
+  const timeKey = findBlockKey(keys, ["TIEMPOS", "TIMES"]);
+  const tempKey = findBlockKey(keys, ["TEMPERATURA", "TEMPERATURE"]);
+  const stepsKey = findBlockKey(keys, ["PASOS", "STEPS"]);
+  const errorKey = findBlockKey(keys, ["ERROR", "ERROR CLAVE", "KEY ERROR"]);
+  const usedKeys = new Set([setupKey, timeKey, tempKey, stepsKey, errorKey].filter(Boolean));
+  const items: ResultItem[] = [];
+
+  if (setupKey) {
+    items.push({
+      key: setupKey,
+      title: formatTitle(setupKey),
+      content: blocks[setupKey],
+      type: "card",
+      variant: "setup",
+    });
+  }
+
+  if (timeKey || tempKey) {
+    const mergedKeys = [timeKey, tempKey].filter(Boolean) as string[];
+    items.push({
+      key: mergedKeys.join("-"),
+      title: "Tiempos + Temperatura",
+      content: combineBlocks(blocks, mergedKeys),
+      type: "card",
+      variant: "summary",
+    });
+  }
+
+  if (stepsKey) {
+    items.push({
+      key: stepsKey,
+      title: formatTitle(stepsKey),
+      content: blocks[stepsKey],
+      type: "card",
+      variant: "primary",
+    });
+  }
+
+  if (errorKey) {
+    items.push({
+      key: errorKey,
+      title: "Error clave",
+      content: blocks[errorKey],
+      type: "card",
+      variant: "tip",
+    });
+  }
+
+  keys.forEach((key) => {
+    if (usedKeys.has(key)) return;
+
+    if (key === "TIMELINE") {
+      items.push({ key, title: "⏱️ Timeline Parrillada", content: blocks[key], type: "timeline" });
+      return;
+    }
+
+    if (key === "GRILL_MANAGER") {
+      items.push({ key, title: "🔥 Grill Manager Pro", content: blocks[key], type: "grill" });
+      return;
+    }
+
+    if (key === "COMPRA" || key === "SHOPPING") {
+      items.push({ key, title: formatTitle(key), content: blocks[key], type: "shopping" });
+      return;
+    }
+
+    items.push({ key, title: formatTitle(key), content: blocks[key], type: "card" });
+  });
+
+  return items;
+}
+
 export default function ResultGrid({
   blocks,
   checkedItems,
@@ -134,19 +224,25 @@ export default function ResultGrid({
     noResult: string;
   };
 }) {
+  const items = getOrderedResultItems(blocks, keys);
+
   return (
     <Grid className="mx-auto max-w-5xl md:gap-5" variant="cards">
-      {keys.map((key) =>
-        key === "TIMELINE" ? (
-          <ResultTimeline key={key} title="⏱️ Timeline Parrillada" content={blocks[key]} />
-        ) : key === "GRILL_MANAGER" ? (
-          <GrillManagerCard key={key} title="🔥 Grill Manager Pro" content={blocks[key]} />
-        ) : key === "COMPRA" || key === "SHOPPING" ? (
-          <ShoppingListCard key={key} title={formatTitle(key)} content={blocks[key]} checkedItems={checkedItems} setCheckedItems={setCheckedItems} />
-        ) : (
-          <ResultCard key={key} title={formatTitle(key)} content={blocks[key]} />
-        )
-      )}
+      {items.map((item) => {
+        if (item.type === "timeline") {
+          return <ResultTimeline key={item.key} title={item.title} content={item.content} />;
+        }
+
+        if (item.type === "grill") {
+          return <GrillManagerCard key={item.key} title={item.title} content={item.content} />;
+        }
+
+        if (item.type === "shopping") {
+          return <ShoppingListCard key={item.key} title={item.title} content={item.content} checkedItems={checkedItems} setCheckedItems={setCheckedItems} />;
+        }
+
+        return <ResultCard key={item.key} title={item.title} content={item.content} variant={item.variant} />;
+      })}
 
       {!loading && keys.length === 0 && <ResultEmptyState text={t.noResult} />}
 
