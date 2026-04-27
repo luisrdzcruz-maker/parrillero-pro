@@ -1151,6 +1151,8 @@ function ResultCards({
   t: typeof texts.es;
 }) {
   const keys = Object.keys(blocks);
+  const hasResult = keys.length > 0;
+  const canStartCooking = Boolean(blocks.PASOS || blocks.STEPS);
 
   function copyText() {
     navigator.clipboard.writeText(buildText(blocks));
@@ -1163,15 +1165,15 @@ function ResultCards({
   }
 
   return (
-    <div>
+    <div className="mx-auto max-w-5xl space-y-5">
       <ResultHero
         actions={{
           onCopy: copyText,
           onSave: onSaveMenu,
           onShare: shareWhatsApp,
-          onStartCooking: blocks.PASOS || blocks.STEPS ? onStartCooking : undefined,
+          onStartCooking: canStartCooking ? onStartCooking : undefined,
         }}
-        hasResult={keys.length > 0}
+        hasResult={hasResult}
         saveMenuStatus={saveMenuStatus}
         t={{
           copy: t.copy,
@@ -1184,8 +1186,17 @@ function ResultCards({
       />
 
       {saveMenuMessage && (
-        <div className={saveMenuStatus === "error" ? "mb-4 rounded-2xl border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200" : "mb-4 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-3 text-sm text-emerald-200"}>
-          {saveMenuMessage}
+        <div
+          className={
+            saveMenuStatus === "error"
+              ? "rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-medium text-red-200 shadow-lg shadow-black/10"
+              : "rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-200 shadow-lg shadow-black/10"
+          }
+        >
+          <div className="flex items-start gap-3">
+            <span className={saveMenuStatus === "error" ? "mt-1 h-2 w-2 rounded-full bg-red-300" : "mt-1 h-2 w-2 rounded-full bg-emerald-300"} />
+            <span>{saveMenuMessage}</span>
+          </div>
         </div>
       )}
 

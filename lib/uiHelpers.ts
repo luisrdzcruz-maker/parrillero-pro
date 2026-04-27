@@ -23,8 +23,18 @@ export function formatTitle(title: string) {
 }
 
 export function getResultCardIcon(title: string) {
+  const normalized = title.toUpperCase();
+
+  if (normalized.includes("SETUP")) return "🔥";
+  if (normalized.includes("TIEMPOS") || normalized.includes("TIMES")) return "⏱️";
+  if (normalized.includes("TEMPERATURA") || normalized.includes("TEMPERATURE")) return "🌡️";
+  if (normalized.includes("PASOS") || normalized.includes("STEPS")) return "🧠";
+  if (normalized.includes("COMPRA") || normalized.includes("SHOPPING")) return "🛒";
+  if (normalized.includes("TIMELINE")) return "⏳";
+  if (normalized.includes("GRILL_MANAGER") || normalized.includes("GRILL MANAGER")) return "🎛️";
+
   const [first] = title.trim().split(" ");
-  return first && first.length <= 3 ? first : "🔥";
+  return first && first.length <= 3 ? first : "✦";
 }
 
 export function getResultCardTitle(title: string) {
@@ -33,12 +43,15 @@ export function getResultCardTitle(title: string) {
 }
 
 export function getResultCardAccent(title: string) {
-  if (title.includes("Compra") || title.includes("Shopping")) return "from-emerald-500/20 via-slate-900 to-slate-950 border-emerald-400/30";
-  if (title.includes("Tiempo") || title.includes("Times")) return "from-blue-500/20 via-slate-900 to-slate-950 border-blue-400/30";
-  if (title.includes("Temperatura") || title.includes("Temperature")) return "from-red-500/20 via-slate-900 to-slate-950 border-red-400/30";
-  if (title.includes("Pasos") || title.includes("Steps")) return "from-violet-500/20 via-slate-900 to-slate-950 border-violet-400/30";
-  if (title.includes("Menú")) return "from-orange-500/25 via-slate-900 to-slate-950 border-orange-400/40";
-  return "from-orange-500/15 via-slate-900 to-slate-950 border-white/10";
+  const normalized = title.toUpperCase();
+
+  if (normalized.includes("COMPRA") || normalized.includes("SHOPPING")) return "bg-emerald-400/70";
+  if (normalized.includes("TIEMPOS") || normalized.includes("TIMES")) return "bg-sky-400/70";
+  if (normalized.includes("TEMPERATURA") || normalized.includes("TEMPERATURE")) return "bg-red-400/70";
+  if (normalized.includes("PASOS") || normalized.includes("STEPS")) return "bg-violet-400/70";
+  if (normalized.includes("TIMELINE")) return "bg-amber-400/70";
+  if (normalized.includes("GRILL_MANAGER") || normalized.includes("GRILL MANAGER")) return "bg-orange-400/70";
+  return "bg-orange-400/60";
 }
 
 export function getShoppingItems(text: string) {
