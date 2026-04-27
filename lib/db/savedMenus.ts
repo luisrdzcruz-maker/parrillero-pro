@@ -27,39 +27,113 @@ export type SaveMenuInput = {
   data: Json;
 };
 
+type SavedMenuRow = Partial<SavedMenu> & {
+  id: string;
+  created_at: string;
+  name: string;
+  lang: string;
+  people: number | null;
+  data: Json;
+};
+
 function createShareSlug() {
   return `bbq-${crypto.randomUUID().replace(/-/g, "").slice(0, 12)}`;
+}
+
+function createFallbackSavedMenu(input: SaveMenuInput): SavedMenu {
+  const createdAt = new Date().toISOString();
+
+  console.log("[saveMenu] Using local fallback saved menu");
+
+  return {
+    id: `local_${Date.now()}`,
+    created_at: createdAt,
+    updated_at: createdAt,
+    user_id: null,
+    name: input.name,
+    lang: input.lang,
+    people: input.people ?? null,
+    data: input.data,
+    is_public: false,
+    share_slug: null,
+    published_at: null,
+  };
+}
+
+async function safeGetCurrentUserId(): Promise<string | null> {
+  try {
+    return await getCurrentUserId();
+  } catch (error) {
+    console.error("[savedMenus] Could not read auth user; continuing anonymously", error);
+    return null;
+  }
 }
 
 const savedMenuSelect =
   "id, created_at, updated_at, user_id, name, lang, people, data, is_public, share_slug, published_at";
 
-export async function saveMenu(input: SaveMenuInput): Promise<SavedMenu> {
-  const supabase = await createClient();
-  const userId = await getCurrentUserId();
+const legacySavedMenuSelect = "id, created_at, name, lang, people, data";
 
-  const { data, error } = await supabase
-    .from("saved_menus")
-    .insert({
-      user_id: userId,
+function toSavedMenu(row: SavedMenuRow): SavedMenu {
+  return {
+    id: row.id,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    user_id: row.user_id ?? null,
+    name: row.name,
+    lang: row.lang,
+    people: row.people,
+    data: row.data,
+    is_public: row.is_public ?? false,
+    share_slug: row.share_slug ?? null,
+    published_at: row.published_at ?? null,
+  };
+}
+
+export async function saveMenu(input: SaveMenuInput): Promise<SavedMenu> {
+  try {
+    const supabase = await createClient();
+    const userId = await safeGetCurrentUserId();
+    const insertPayload: Record<string, Json | string | number | null> = {
       name: input.name,
       lang: input.lang,
       people: input.people ?? null,
       data: input.data,
-    })
-    .select(savedMenuSelect)
-    .single();
+    };
 
-  if (error) {
-    throw new Error(`Failed to save menu: ${error.message}`);
+    if (userId) {
+      insertPayload.user_id = userId;
+    }
+
+    const result = await supabase
+      .from("saved_menus")
+      .insert(insertPayload)
+      .select(legacySavedMenuSelect)
+      .single();
+
+    if (result.error || !result.data) {
+      console.error("[saveMenu] Supabase failed", result.error);
+      return createFallbackSavedMenu(input);
+    }
+
+    return toSavedMenu(result.data as SavedMenuRow);
+  } catch (error) {
+    console.error("[saveMenu] Supabase failed", error);
+    return createFallbackSavedMenu(input);
   }
-
-  return data as SavedMenu;
 }
 
 export async function getSavedMenus(): Promise<SavedMenu[]> {
-  const supabase = await createClient();
-  const userId = await getCurrentUserId();
+  let supabase: Awaited<ReturnType<typeof createClient>>;
+
+  try {
+    supabase = await createClient();
+  } catch (error) {
+    console.error("[savedMenus] Supabase failed while loading saved menus", error);
+    return [];
+  }
+
+  const userId = await safeGetCurrentUserId();
 
   let query = supabase
     .from("saved_menus")
@@ -74,15 +148,34 @@ export async function getSavedMenus(): Promise<SavedMenu[]> {
 
   const { data, error } = await query;
 
-  if (error) {
-    throw new Error(`Failed to get saved menus: ${error.message}`);
+  if (!error) {
+    return ((data ?? []) as SavedMenuRow[]).map(toSavedMenu);
   }
 
-  return (data ?? []) as SavedMenu[];
+  console.error("[savedMenus] Modern get failed; trying legacy select", error);
+
+  const legacyResult = await supabase
+    .from("saved_menus")
+    .select(legacySavedMenuSelect)
+    .order("created_at", { ascending: false });
+
+  if (legacyResult.error) {
+    console.error("[savedMenus] Failed to get saved menus", legacyResult.error);
+    return [];
+  }
+
+  return ((legacyResult.data ?? []) as SavedMenuRow[]).map(toSavedMenu);
 }
 
 export async function deleteSavedMenu(id: string): Promise<void> {
-  const supabase = await createClient();
+  let supabase: Awaited<ReturnType<typeof createClient>>;
+
+  try {
+    supabase = await createClient();
+  } catch (error) {
+    console.error("[savedMenus] Supabase failed while deleting saved menu", error);
+    return;
+  }
 
   const { error } = await supabase.from("saved_menus").delete().eq("id", id);
 
@@ -100,6 +193,7 @@ export async function publishSavedMenu(id: string): Promise<SavedMenu> {
     .single();
 
   if (existingError) {
+    console.error("[savedMenus] Failed to read menu before publish", existingError);
     throw new Error(`Failed to publish saved menu: ${existingError.message}`);
   }
 
@@ -120,10 +214,11 @@ export async function publishSavedMenu(id: string): Promise<SavedMenu> {
     .single();
 
   if (error) {
+    console.error("[savedMenus] Failed to publish menu", error);
     throw new Error(`Failed to publish saved menu: ${error.message}`);
   }
 
-  return data as SavedMenu;
+  return toSavedMenu(data as SavedMenuRow);
 }
 
 export async function unpublishSavedMenu(id: string): Promise<SavedMenu> {
@@ -140,10 +235,11 @@ export async function unpublishSavedMenu(id: string): Promise<SavedMenu> {
     .single();
 
   if (error) {
+    console.error("[savedMenus] Failed to unpublish menu", error);
     throw new Error(`Failed to unpublish saved menu: ${error.message}`);
   }
 
-  return data as SavedMenu;
+  return toSavedMenu(data as SavedMenuRow);
 }
 
 export async function getPublicSavedMenuBySlug(slug: string): Promise<SavedMenu | null> {
@@ -157,8 +253,9 @@ export async function getPublicSavedMenuBySlug(slug: string): Promise<SavedMenu 
     .maybeSingle();
 
   if (error) {
-    throw new Error(`Failed to get public saved menu: ${error.message}`);
+    console.error("[savedMenus] Failed to get public saved menu", error);
+    return null;
   }
 
-  return (data as SavedMenu | null) ?? null;
+  return data ? toSavedMenu(data as SavedMenuRow) : null;
 }

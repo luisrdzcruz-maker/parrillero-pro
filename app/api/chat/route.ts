@@ -75,25 +75,42 @@ function looksLikeMenuRequest(message: string) {
 function createFallbackReply(message: string) {
   if (looksLikeMenuRequest(message)) {
     return `MENU
-Plan parrillero simple con proteína principal, acompañamiento vegetal y pan o ensalada.
+Principal: 1 corte parrillero por persona o una bandeja mixta de carne, pollo y chorizo.
+Acompañamientos: verduras a la parrilla, ensalada fresca, pan y una salsa simple.
+Final: servir todo al centro para compartir, manteniendo carnes reposadas y jugosas.
 
 CANTIDADES
-Calcula 350-450 g de proteína por persona y ajusta guarniciones según el grupo.
+Por persona: 350-450 g de proteína total, 180-220 g de verduras, 80-120 g de pan o papas y 40-60 g de salsa.
+Para 4 personas: 1.6 kg de proteína, 800 g de verduras, 400 g de pan o papas y 200 g de salsa.
+Para 8 personas: 3.2 kg de proteína, 1.6 kg de verduras, 800 g de pan o papas y 400 g de salsa.
+Ajuste: sube 15% si el grupo come fuerte o si no habrá muchas guarniciones.
 
 TIMING
-Prepara mise en place primero, enciende el fuego con margen y cocina lo más grueso antes que lo fino.
+T - 60 min: compra lista, carnes fuera de frío controlado, verduras lavadas y mesa preparada.
+T - 45 min: enciende carbón o precalienta gas/kamado; busca zona fuerte y zona media.
+T - 30 min: sazona carnes, corta verduras y prepara salsa.
+T - 20 min: empieza cortes gruesos o piezas con hueso.
+T - 10 min: agrega chorizos, pollo fino o verduras firmes.
+T - 5 min: calienta pan, termina guarniciones y prepara fuente de reposo.
+T: sirve primero lo que ya reposó y deja tandas pequeñas calientes.
 
 ORDEN
-1. Precalienta la parrilla.
-2. Sazona y organiza los productos.
-3. Cocina por tandas según grosor.
-4. Reposa carnes antes de servir.
+1. Enciende y estabiliza la parrilla con una zona directa y otra indirecta.
+2. Cocina primero lo más grueso: vacío, costilla, pollo con hueso o vegetales densos.
+3. Sella cortes medianos a fuego fuerte y muévelos a zona media para terminar.
+4. Cocina chorizos, brochetas y verduras mientras reposan los cortes principales.
+5. Calienta pan y monta ensaladas al final para que no se marchiten.
+6. Reposa carnes 5-10 minutos, corta contra la fibra y sirve por tandas.
 
 COMPRA
-Proteína principal, verduras, sal, pimienta, aceite, pan o ensalada y bebidas.
+Proteínas: carne principal, pollo o chorizo según preferencia, calculando 350-450 g por persona.
+Verduras: pimientos, cebolla, calabacín, champiñones o mazorca.
+Guarniciones: pan, papas, ensalada verde o arroz simple.
+Salsas y básicos: chimichurri o salsa BBQ, sal gruesa, pimienta, aceite, limón y servilletas.
+Equipo: carbón o gas suficiente, pinzas, tabla, cuchillo, bandeja de reposo y termómetro si hay.
 
 ERROR
-Respuesta fallback: la IA no está disponible ahora, pero puedes continuar con este plan base.`;
+Respuesta fallback: la IA no está disponible ahora, pero este menú base mantiene cantidades, timing, orden y compra listos para usar.`;
   }
 
   return `SETUP

@@ -16,17 +16,40 @@ type SaveGeneratedMenuInput = {
   data: Record<string, unknown>;
 };
 
+type SaveGeneratedMenuResult =
+  | {
+      ok: true;
+      menu: Awaited<ReturnType<typeof saveMenu>>;
+    }
+  | {
+      ok: false;
+      error: string;
+    };
+
 export async function saveGeneratedMenu(input: SaveGeneratedMenuInput) {
-  const savedMenu = await saveMenu({
-    name: input.name,
-    lang: input.lang,
-    people: input.people,
-    data: input.data as Json,
-  });
+  try {
+    const savedMenu = await saveMenu({
+      name: input.name,
+      lang: input.lang,
+      people: input.people,
+      data: input.data as Json,
+    });
 
-  revalidatePath("/saved");
+    revalidatePath("/saved");
 
-  return savedMenu;
+    return {
+      ok: true,
+      menu: savedMenu,
+    } satisfies SaveGeneratedMenuResult;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "No se pudo guardar el menú.";
+    console.error("[savedMenusAction] Failed to save generated menu", error);
+
+    return {
+      ok: false,
+      error: message,
+    } satisfies SaveGeneratedMenuResult;
+  }
 }
 
 export async function deleteGeneratedMenu(id: string) {
