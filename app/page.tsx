@@ -929,7 +929,7 @@ ERROR
 
   return (
     <main
-      className={`${ds.shell.page} pb-36 md:pb-28`}
+      className={`${ds.shell.page} px-3 pt-3 pb-28 sm:px-4 sm:pt-5 md:pb-28`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -1106,9 +1106,9 @@ function AppHeader({
   t: typeof texts.es;
 }) {
   return (
-    <header className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-950/50 px-3 py-2.5 shadow-lg shadow-black/10 backdrop-blur sm:mb-4 sm:rounded-3xl sm:px-4 sm:py-3">
+    <header className="mb-2 flex items-center justify-between gap-2 rounded-2xl border border-white/10 bg-slate-950/50 px-2.5 py-2 shadow-lg shadow-black/10 backdrop-blur sm:mb-4 sm:rounded-3xl sm:px-4 sm:py-3">
       <div className="min-w-0">
-        <Badge className="text-[10px] uppercase tracking-[0.16em] sm:text-xs sm:tracking-[0.2em]">{t.app}</Badge>
+        <Badge className="px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] sm:px-3 sm:py-1 sm:text-xs sm:tracking-[0.2em]">{t.app}</Badge>
         <p className="mt-2 hidden text-sm text-slate-400 sm:block">{t.subtitle}</p>
       </div>
 
@@ -1116,7 +1116,7 @@ function AppHeader({
         <select
           value={lang}
           onChange={(event) => onLangChange(event.target.value as Lang)}
-          className={`${ds.input.compactSelect} max-w-[132px] py-1.5 text-xs sm:max-w-none sm:py-2 sm:text-sm`}
+          className={`${ds.input.compactSelect} max-w-[112px] rounded-xl px-2 py-1.5 text-[11px] sm:max-w-none sm:rounded-2xl sm:px-3 sm:py-2 sm:text-sm`}
         >
           <option value="es">🇪🇸 Español</option>
           <option value="en">🇬🇧 English</option>
@@ -1663,13 +1663,13 @@ function HomeScreen({
   ];
 
   return (
-    <div className="space-y-3 sm:space-y-7">
-      <section className="grid gap-3 lg:grid-cols-[1.08fr_0.92fr] lg:items-stretch">
-        <Panel className="relative p-3.5 sm:p-8 lg:min-h-[390px]" tone="hero">
-          <div className="pointer-events-none absolute -left-20 -top-20 h-56 w-56 rounded-full bg-orange-500/15 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-28 right-10 h-64 w-64 rounded-full bg-red-500/10 blur-3xl" />
+    <div className="space-y-2.5 sm:space-y-7">
+      <section className="grid gap-2.5 lg:grid-cols-[1.05fr_0.95fr] lg:items-stretch">
+        <Panel className="relative p-2.5 sm:p-7 lg:min-h-[360px]" tone="hero">
+          <div className="pointer-events-none absolute -left-16 -top-20 h-48 w-48 rounded-full bg-orange-500/15 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 right-8 h-56 w-56 rounded-full bg-red-500/10 blur-3xl" />
 
-          <div className="relative z-10 flex h-full flex-col justify-between gap-3 sm:gap-8">
+          <div className="relative z-10 flex h-full flex-col justify-between gap-2.5 sm:gap-7">
             <div>
               <div className="hidden flex-wrap items-center gap-2 sm:flex">
                 <Badge className="uppercase tracking-[0.16em] sm:tracking-[0.2em]">Parrillero Pro</Badge>
@@ -1678,19 +1678,19 @@ function HomeScreen({
                 </Badge>
               </div>
 
-              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-orange-300 sm:hidden">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-300 sm:hidden">
                 Plan guiado
               </p>
-              <h1 className="mt-1 max-w-3xl text-3xl font-black tracking-[-0.04em] text-white sm:mt-5 sm:text-5xl lg:text-6xl">
+              <h1 className="mt-0.5 max-w-2xl text-[1.6rem] font-black leading-[1.02] tracking-[-0.045em] text-white sm:mt-5 sm:text-5xl lg:text-6xl">
                 {t.title}
               </h1>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300 sm:mt-4 sm:text-lg sm:leading-7">
+              <p className="mt-1.5 max-w-xl text-[13px] leading-5 text-slate-300 sm:mt-4 sm:text-lg sm:leading-7">
                 {t.subtitle}
               </p>
 
-              <div className="mt-4 grid gap-2 sm:mt-7 sm:flex sm:gap-3">
-                <Button className="px-5 py-4 text-base font-black sm:px-7 sm:py-4" fullWidth onClick={() => onModeChange("coccion")}>
-                  {t.planCooking}
+              <div className="mt-2.5 grid gap-2 sm:mt-7 sm:flex sm:gap-3">
+                <Button className="px-5 py-3 text-sm font-black shadow-orange-500/30 sm:px-7 sm:py-4 sm:text-base" fullWidth onClick={() => onModeChange("coccion")}>
+                  {t.planCooking} <span aria-hidden="true">→</span>
                 </Button>
               </div>
             </div>
@@ -1714,18 +1714,18 @@ function HomeScreen({
         </div>
       </section>
 
-      <section className="space-y-3 sm:space-y-4">
-        <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+      <section className="space-y-2 sm:space-y-4">
+        <div className="flex flex-col justify-between gap-1 sm:flex-row sm:items-end">
           <div>
             <p className={`${ds.text.eyebrow} hidden sm:block`}>Modos secundarios</p>
-            <h2 className="text-base font-black tracking-tight text-white sm:mt-2 sm:text-2xl">También puedes</h2>
+            <h2 className="text-[13px] font-black tracking-tight text-slate-300 sm:mt-2 sm:text-2xl sm:text-white">Más herramientas</h2>
           </div>
           <p className="hidden max-w-xl text-sm leading-6 text-slate-400 sm:block">
             Herramientas extra para menús, grupos, cocina en vivo y planes guardados.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
           {featureCards.map((card) => (
             <HomeCard
               key={card.mode}
@@ -1745,18 +1745,18 @@ function HomeScreen({
 }
 
 function HomeFlowPreview() {
-  const steps = ["Animal", "Corte", "Plan", "Live"];
+  const steps = ["Corte", "Punto", "Fuego", "Pasos"];
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/20 p-1.5 ring-1 ring-inset ring-white/[0.03] sm:hidden">
+    <div className="rounded-xl border border-white/10 bg-black/20 p-1 ring-1 ring-inset ring-white/[0.03] sm:rounded-2xl sm:p-2">
       <div className="grid grid-cols-4 gap-1">
         {steps.map((step, index) => (
           <div
             key={step}
             className={
               index === 0
-                ? "rounded-xl bg-orange-500 px-2 py-1.5 text-center text-[10px] font-black text-black"
-                : "rounded-xl bg-white/[0.04] px-2 py-1.5 text-center text-[10px] font-semibold text-slate-300"
+                ? "rounded-lg bg-orange-500 px-1.5 py-1 text-center text-[9px] font-black text-black sm:rounded-xl sm:px-2 sm:py-2 sm:text-xs"
+                : "rounded-lg bg-white/[0.04] px-1.5 py-1 text-center text-[9px] font-semibold text-slate-300 sm:rounded-xl sm:px-2 sm:py-2 sm:text-xs"
             }
           >
             {step}
@@ -1899,8 +1899,8 @@ function BottomNavigation({
   t: typeof texts.es;
 }) {
   return (
-    <nav className={`${ds.nav.bottom} md:hidden`}>
-      <div className={`${ds.layout.navGrid} rounded-3xl bg-slate-950/70 p-1`}>
+    <nav className={`${ds.nav.bottom} px-2 py-2 md:hidden`}>
+      <div className={`${ds.layout.navGrid} rounded-2xl bg-slate-950/70 p-1`}>
         <Tab active={mode === "inicio"} label={t.start} emoji="🏠" onClick={() => onModeChange("inicio")} />
         <Tab active={mode === "coccion"} label={t.cooking} emoji="🥩" onClick={() => onModeChange("coccion")} />
         <Tab active={mode === "menu"} label={t.menu} emoji="🍽️" onClick={() => onModeChange("menu")} />
@@ -2181,26 +2181,26 @@ function HomeCard({
       className={
         active
           ? `${ds.panel.homeCard} relative overflow-hidden border-orange-500/50 bg-gradient-to-br from-orange-500/15 via-slate-900/90 to-slate-950 p-3 shadow-orange-500/10 ring-1 ring-orange-300/15 active:scale-[0.98] sm:p-6`
-          : `${ds.panel.homeCard} relative overflow-hidden border-white/5 bg-white/[0.025] p-3 opacity-90 active:scale-[0.98] sm:p-5`
+          : `${ds.panel.homeCard} relative overflow-hidden rounded-2xl border-white/5 bg-white/[0.025] p-2.5 opacity-90 active:scale-[0.98] sm:rounded-3xl sm:p-5`
       }
     >
-      <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-orange-500/0 blur-2xl transition group-hover:bg-orange-500/10" />
+      <div className="pointer-events-none absolute -right-12 -top-12 h-24 w-24 rounded-full bg-orange-500/0 blur-2xl transition group-hover:bg-orange-500/10 sm:h-28 sm:w-28" />
       <div className="relative z-10 flex items-start justify-between gap-2">
-        <div className={active ? `${ds.media.iconTile} h-10 w-10 rounded-xl border-orange-400/40 bg-orange-500/15 text-2xl sm:h-12 sm:w-12 sm:rounded-2xl sm:text-3xl` : `${ds.media.iconTile} h-9 w-9 rounded-xl bg-white/[0.04] text-xl opacity-80 sm:h-11 sm:w-11 sm:rounded-2xl sm:text-2xl`}>{emoji}</div>
+        <div className={active ? `${ds.media.iconTile} h-10 w-10 rounded-xl border-orange-400/40 bg-orange-500/15 text-2xl sm:h-12 sm:w-12 sm:rounded-2xl sm:text-3xl` : `${ds.media.iconTile} h-8 w-8 rounded-lg bg-white/[0.04] text-lg opacity-80 sm:h-11 sm:w-11 sm:rounded-2xl sm:text-2xl`}>{emoji}</div>
         <Badge className="hidden max-w-[132px] shrink-0 truncate sm:inline-flex" tone={active ? "accent" : "glass"}>
           {stat}
         </Badge>
       </div>
 
-      <div className="relative z-10 mt-3 sm:mt-6">
-        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-orange-300/90 sm:text-[11px] sm:tracking-[0.18em]">{priority}</p>
-        <h2 className="mt-1 line-clamp-2 text-sm font-bold tracking-tight text-white sm:mt-2 sm:text-xl">{title}</h2>
-        <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-400 sm:mt-3 sm:line-clamp-none sm:text-sm sm:leading-6">{description}</p>
+      <div className="relative z-10 mt-2 sm:mt-6">
+        <p className="text-[9px] font-black uppercase tracking-[0.14em] text-orange-300/90 sm:text-[11px] sm:tracking-[0.18em]">{priority}</p>
+        <h2 className="mt-0.5 line-clamp-2 text-[13px] font-bold leading-tight tracking-tight text-white sm:mt-2 sm:text-xl">{title}</h2>
+        <p className="mt-0.5 line-clamp-1 text-[11px] leading-4 text-slate-400 sm:mt-3 sm:line-clamp-none sm:text-sm sm:leading-6">{description}</p>
       </div>
 
-      <div className={`relative z-10 mt-3 flex items-center justify-between text-xs font-semibold sm:mt-5 sm:text-sm ${active ? "text-orange-300" : "text-slate-400"}`}>
+      <div className={`relative z-10 mt-2 flex items-center justify-between text-[11px] font-semibold sm:mt-5 sm:text-sm ${active ? "text-orange-300" : "text-slate-400"}`}>
         <span>Abrir</span>
-        <span className={`flex h-7 w-7 items-center justify-center rounded-full border transition group-hover:translate-x-1 sm:h-8 sm:w-8 ${active ? "border-orange-400/20 bg-orange-500/10 group-hover:bg-orange-500/15" : "border-white/10 bg-white/[0.03] group-hover:bg-white/[0.06]"}`}>→</span>
+        <span className={`flex h-6 w-6 items-center justify-center rounded-full border transition group-hover:translate-x-1 sm:h-8 sm:w-8 ${active ? "border-orange-400/20 bg-orange-500/10 group-hover:bg-orange-500/15" : "border-white/10 bg-white/[0.03] group-hover:bg-white/[0.06]"}`}>→</span>
       </div>
     </button>
   );
@@ -2212,8 +2212,8 @@ function Tab({ active, label, emoji, onClick }: { active: boolean; label: string
       onClick={onClick}
       className={
         active
-          ? `${ds.button.tabActive} ring-1 ring-orange-200/30`
-          : `${ds.button.tabIdle} opacity-70 hover:opacity-100`
+          ? `${ds.button.tabActive} px-1.5 py-1.5 text-[10px] ring-1 ring-orange-200/30`
+          : `${ds.button.tabIdle} px-1.5 py-1.5 text-[10px] opacity-70 hover:opacity-100`
       }
     >
       <div>{emoji}</div>
