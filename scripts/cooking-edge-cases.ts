@@ -16,7 +16,7 @@ import {
 } from "../lib/cookingCatalog";
 import { generateCookingPlan, generateCookingSteps, getCutById } from "../lib/cookingEngine";
 
-const LANGUAGE: "es" = "es";
+const LANGUAGE = "es" as const;
 const WEIGHT_KG = "1";
 const THIN = "1";
 const THICK = "10";
@@ -106,12 +106,18 @@ function snapshot(plan: CookingPlan | null, steps: CookingStep[] | null): string
   return JSON.stringify({ plan, steps });
 }
 
-function analyzeOne(input: CookingInput, identical1vs10: boolean, showThickness: boolean): string[] {
+function analyzeOne(
+  input: CookingInput,
+  identical1vs10: boolean,
+  showThickness: boolean,
+): string[] {
   const plan = generateCookingPlan(input);
   const steps = generateCookingSteps(input);
   const out = [...checkPlanStructure(plan), ...checkStepDurations(steps)];
   if (showThickness && identical1vs10) {
-    out.push("thickness 1cm vs 10cm → identical plan+steps while catalog has showThickness=true (unexpected)");
+    out.push(
+      "thickness 1cm vs 10cm → identical plan+steps while catalog has showThickness=true (unexpected)",
+    );
   }
   return out;
 }
@@ -170,7 +176,9 @@ function main() {
     }
   }
 
-  console.log("Cooking engine — edge cases (1cm & 10cm, extreme doneness, all equipment, meat vs veg)\n");
+  console.log(
+    "Cooking engine — edge cases (1cm & 10cm, extreme doneness, all equipment, meat vs veg)\n",
+  );
   console.log(
     `Runs: ${meatRunCount + vegRunCount} (meat rows: ${meatRunCount} · vegetable rows: ${vegRunCount})`,
   );

@@ -17,7 +17,8 @@ function getEquipmentKind(equipment = ""): EquipmentKind | null {
   const value = normalize(equipment);
 
   if (value.includes("kamado")) return "kamado";
-  if (value.includes("carbón") || value.includes("carbon") || value.includes("charcoal")) return "charcoal";
+  if (value.includes("carbón") || value.includes("carbon") || value.includes("charcoal"))
+    return "charcoal";
   if (value.includes("gas") || value.includes("napoleon") || value.includes("rogue")) return "gas";
 
   return null;
@@ -26,11 +27,7 @@ function getEquipmentKind(equipment = ""): EquipmentKind | null {
 function getSetupMethod(method = "", heatType = ""): SetupMethod {
   const value = `${normalize(method)} ${normalize(heatType)}`;
 
-  if (
-    value.includes("1 zone") ||
-    value.includes("one zone") ||
-    value.includes("una zona")
-  ) {
+  if (value.includes("1 zone") || value.includes("one zone") || value.includes("una zona")) {
     return "oneZone";
   }
 

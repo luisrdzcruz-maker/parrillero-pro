@@ -14,12 +14,7 @@ const variantClasses: Record<GridVariant, string> = {
   split: ds.layout.splitGrid,
 };
 
-export function Grid({
-  children,
-  className = "",
-  variant = "cards",
-  ...props
-}: GridProps) {
+export function Grid({ children, className = "", variant = "cards", ...props }: GridProps) {
   return (
     <div className={cx(variantClasses[variant], className)} {...props}>
       {children}

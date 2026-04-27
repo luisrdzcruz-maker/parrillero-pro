@@ -86,9 +86,53 @@ export function detectCookingStepType(value = ""): CookingStepType {
 
   if (matchesAny(text, ["rest", "reposo", "reposar", "reposa"])) return "rest";
   if (matchesAny(text, ["serve", "servir", "sirve", "emplatar", "plating"])) return "serve";
-  if (matchesAny(text, ["preheat", "precalentar", "precalienta", "precalienta", "calentar parrilla", "preheat grill"])) return "preheat";
-  if (matchesAny(text, ["indirect", "indirecto", "oven", "horno", "slow cook", "coccion lenta", "cocina suave", "cook through", "cocinar interior", "render fat", "fundir grasa"])) return "indirect";
-  if (matchesAny(text, ["sear", "sellar", "sella", "sellado", "dorar", "dorado", "brown", "crisp", "crujiente", "glaze", "glaseado", "direct", "directo", "grill direct", "parrilla directa"])) return "sear";
+  if (
+    matchesAny(text, [
+      "preheat",
+      "precalentar",
+      "precalienta",
+      "precalienta",
+      "calentar parrilla",
+      "preheat grill",
+    ])
+  )
+    return "preheat";
+  if (
+    matchesAny(text, [
+      "indirect",
+      "indirecto",
+      "oven",
+      "horno",
+      "slow cook",
+      "coccion lenta",
+      "cocina suave",
+      "cook through",
+      "cocinar interior",
+      "render fat",
+      "fundir grasa",
+    ])
+  )
+    return "indirect";
+  if (
+    matchesAny(text, [
+      "sear",
+      "sellar",
+      "sella",
+      "sellado",
+      "dorar",
+      "dorado",
+      "brown",
+      "crisp",
+      "crujiente",
+      "glaze",
+      "glaseado",
+      "direct",
+      "directo",
+      "grill direct",
+      "parrilla directa",
+    ])
+  )
+    return "sear";
   if (matchesAny(text, ["finish", "terminar", "final"])) return "serve";
 
   return "default";
@@ -124,7 +168,9 @@ export function getCookingStepImage({
     return cookingStepImages.vegetables[resolvedStepType] ?? cookingStepImages.vegetables.default;
   }
 
-  const animalImage = animalId ? cookingStepImages[animalId][resolvedStepType] ?? cookingStepImages[animalId].default : undefined;
+  const animalImage = animalId
+    ? (cookingStepImages[animalId][resolvedStepType] ?? cookingStepImages[animalId].default)
+    : undefined;
   if (animalImage) return animalImage;
 
   return (method ? methodFallbackImages[method] : undefined) ?? DEFAULT_COOKING_STEP_IMAGE;

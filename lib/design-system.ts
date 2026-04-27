@@ -57,40 +57,56 @@ export const ds = {
   panel: {
     form: "space-y-4 rounded-3xl border border-white/10 bg-slate-900/75 p-5 shadow-2xl shadow-black/20 ring-1 ring-inset ring-white/[0.03] backdrop-blur",
     card: "rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900/95 to-slate-900/65 shadow-lg shadow-black/20 ring-1 ring-inset ring-white/[0.03]",
-    result: "relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/95 to-slate-900/65 shadow-lg shadow-black/20 ring-1 ring-inset ring-white/[0.03]",
-    homeCard: "group rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900/95 to-slate-900/60 p-6 text-left shadow-lg shadow-black/15 ring-1 ring-inset ring-white/[0.03] transition hover:-translate-y-1 hover:border-orange-500/40 hover:shadow-orange-500/10 active:scale-[0.99]",
+    result:
+      "relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/95 to-slate-900/65 shadow-lg shadow-black/20 ring-1 ring-inset ring-white/[0.03]",
+    homeCard:
+      "group rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900/95 to-slate-900/60 p-6 text-left shadow-lg shadow-black/15 ring-1 ring-inset ring-white/[0.03] transition hover:-translate-y-1 hover:border-orange-500/40 hover:shadow-orange-500/10 active:scale-[0.99]",
     hero: "overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900/95 via-slate-900/80 to-slate-950/95 shadow-2xl shadow-black/25 ring-1 ring-inset ring-white/[0.03]",
     highlight: "rounded-2xl border border-orange-500/30 bg-orange-500/10 p-4",
-    empty: "rounded-3xl border border-white/10 bg-slate-900/75 p-6 text-slate-400 shadow-xl shadow-black/10",
-    glass: "rounded-2xl border border-white/10 bg-white/5 p-5 shadow-xl shadow-black/20 backdrop-blur",
+    empty:
+      "rounded-3xl border border-white/10 bg-slate-900/75 p-6 text-slate-400 shadow-xl shadow-black/10",
+    glass:
+      "rounded-2xl border border-white/10 bg-white/5 p-5 shadow-xl shadow-black/20 backdrop-blur",
     timer: "mt-6 rounded-3xl bg-slate-950 p-8 text-center",
   },
 
   button: {
     base: "inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold outline-none transition focus-visible:ring-2 focus-visible:ring-orange-500/40 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60",
-    primary: "w-full rounded-2xl bg-orange-500 px-5 py-4 font-bold text-black shadow-lg shadow-orange-500/20 transition hover:bg-orange-400 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60",
+    primary:
+      "w-full rounded-2xl bg-orange-500 px-5 py-4 font-bold text-black shadow-lg shadow-orange-500/20 transition hover:bg-orange-400 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60",
     primaryCompact: "bg-orange-500 text-black shadow-lg shadow-orange-500/20 hover:bg-orange-400",
-    secondary: "rounded-xl border border-white/10 bg-white/5 px-4 py-2 font-medium text-slate-200 transition hover:border-orange-500/40 hover:bg-white/10 active:scale-[0.98]",
-    secondaryCompact: "border border-white/10 bg-white/5 text-slate-200 hover:border-orange-500/40 hover:bg-white/10",
-    danger: "rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-2 font-medium text-red-200 transition hover:bg-red-500/15 active:scale-[0.98]",
+    secondary:
+      "rounded-xl border border-white/10 bg-white/5 px-4 py-2 font-medium text-slate-200 transition hover:border-orange-500/40 hover:bg-white/10 active:scale-[0.98]",
+    secondaryCompact:
+      "border border-white/10 bg-white/5 text-slate-200 hover:border-orange-500/40 hover:bg-white/10",
+    danger:
+      "rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-2 font-medium text-red-200 transition hover:bg-red-500/15 active:scale-[0.98]",
     dangerCompact: "border border-red-500/40 bg-red-500/10 text-red-200 hover:bg-red-500/15",
     dangerSolidCompact: "bg-red-500 text-white shadow-lg shadow-red-500/20 hover:bg-red-400",
     ghost: "text-slate-300 hover:bg-white/5 hover:text-white",
-    outlineAccent: "w-full rounded-2xl border border-orange-500/50 bg-orange-500/10 px-5 py-4 font-bold text-orange-200 transition hover:bg-orange-500/15 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60",
-    outlineAccentCompact: "border border-orange-500/50 bg-orange-500/10 text-orange-200 hover:bg-orange-500/15",
-    tabActive: "rounded-2xl bg-orange-500 px-2 py-2 text-xs font-bold text-black shadow-lg shadow-orange-500/20 transition active:scale-[0.98]",
-    tabIdle: "rounded-2xl px-2 py-2 text-xs text-slate-400 transition hover:bg-white/5 hover:text-slate-200 active:scale-[0.98]",
+    outlineAccent:
+      "w-full rounded-2xl border border-orange-500/50 bg-orange-500/10 px-5 py-4 font-bold text-orange-200 transition hover:bg-orange-500/15 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60",
+    outlineAccentCompact:
+      "border border-orange-500/50 bg-orange-500/10 text-orange-200 hover:bg-orange-500/15",
+    tabActive:
+      "rounded-2xl bg-orange-500 px-2 py-2 text-xs font-bold text-black shadow-lg shadow-orange-500/20 transition active:scale-[0.98]",
+    tabIdle:
+      "rounded-2xl px-2 py-2 text-xs text-slate-400 transition hover:bg-white/5 hover:text-slate-200 active:scale-[0.98]",
   },
 
   input: {
     label: "text-sm font-medium text-slate-400",
-    field: "mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/80 p-3 text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/10",
-    compactSelect: "rounded-2xl border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-slate-200 shadow-inner shadow-black/20 outline-none transition focus:border-orange-500/50",
+    field:
+      "mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/80 p-3 text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/10",
+    compactSelect:
+      "rounded-2xl border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-slate-200 shadow-inner shadow-black/20 outline-none transition focus:border-orange-500/50",
   },
 
   media: {
-    iconTile: "flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-3xl transition group-hover:border-orange-500/30 group-hover:bg-orange-500/10",
-    iconBox: "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-base shadow-sm shadow-black/10",
+    iconTile:
+      "flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-3xl transition group-hover:border-orange-500/30 group-hover:bg-orange-500/10",
+    iconBox:
+      "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-base shadow-sm shadow-black/10",
     progressTrack: "mt-6 h-3 overflow-hidden rounded-full bg-slate-800",
     progressBar: "h-full rounded-full bg-orange-500 transition-[width] duration-1000 ease-linear",
   },
@@ -107,14 +123,19 @@ export const ds = {
 
   notice: {
     info: "rounded-2xl border border-blue-500/20 bg-blue-500/10 p-3 text-xs text-blue-200 ring-1 ring-inset ring-blue-400/5",
-    success: "rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-200 shadow-lg shadow-black/10",
-    error: "rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-medium text-red-200 shadow-lg shadow-black/10",
+    success:
+      "rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-200 shadow-lg shadow-black/10",
+    error:
+      "rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-medium text-red-200 shadow-lg shadow-black/10",
   },
 
   nav: {
-    bottom: "fixed bottom-0 left-0 right-0 border-t border-white/10 bg-slate-950/90 px-3 py-3 shadow-2xl shadow-black/40 backdrop-blur-xl",
-    switcher: "fixed bottom-24 left-4 z-50 flex gap-1 rounded-full border border-white/10 bg-black/60 p-1.5 text-xs shadow-2xl shadow-black/30 backdrop-blur",
-    switcherLink: "rounded-full px-3 py-1.5 font-semibold text-slate-300 transition hover:bg-white/10 hover:text-orange-300",
+    bottom:
+      "fixed bottom-0 left-0 right-0 border-t border-white/10 bg-slate-950/90 px-3 py-3 shadow-2xl shadow-black/40 backdrop-blur-xl",
+    switcher:
+      "fixed bottom-24 left-4 z-50 flex gap-1 rounded-full border border-white/10 bg-black/60 p-1.5 text-xs shadow-2xl shadow-black/30 backdrop-blur",
+    switcherLink:
+      "rounded-full px-3 py-1.5 font-semibold text-slate-300 transition hover:bg-white/10 hover:text-orange-300",
   },
 } as const;
 

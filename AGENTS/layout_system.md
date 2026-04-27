@@ -11,6 +11,7 @@ Tasks:
 - Improve vertical rhythm
 
 Rules:
+
 - No random spacing
 - No inline chaos
 

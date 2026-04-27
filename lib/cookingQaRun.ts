@@ -1,5 +1,11 @@
 import { animalCatalog, type AnimalId, type CookingInput } from "./cookingCatalog";
-import { generateCookingPlan, generateCookingSteps, getCutForInput, getCutsByAnimal, getDonenessOptions } from "./cookingEngine";
+import {
+  generateCookingPlan,
+  generateCookingSteps,
+  getCutForInput,
+  getCutsByAnimal,
+  getDonenessOptions,
+} from "./cookingEngine";
 import { computeCookingQualityScore } from "./cookingQualityScore";
 import { validateCookingEngineOutput } from "./cookingOutputValidation";
 

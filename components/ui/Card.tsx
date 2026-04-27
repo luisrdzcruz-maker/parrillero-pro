@@ -15,12 +15,7 @@ const toneClasses: Record<CardTone, string> = {
   glass: ds.panel.glass,
 };
 
-export function Card({
-  children,
-  className = "",
-  tone = "default",
-  ...props
-}: CardProps) {
+export function Card({ children, className = "", tone = "default", ...props }: CardProps) {
   return (
     <div className={cx(toneClasses[tone], className)} {...props}>
       {children}

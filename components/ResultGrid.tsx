@@ -8,13 +8,18 @@ import ResultTimeline from "./ResultTimeline";
 
 type Blocks = Record<string, string>;
 type ResultItem =
-  | { key: string; title: string; content: string; type: "card"; variant?: "default" | "primary" | "summary" | "tip" | "setup" }
+  | {
+      key: string;
+      title: string;
+      content: string;
+      type: "card";
+      variant?: "default" | "primary" | "summary" | "tip" | "setup";
+    }
   | { key: string; title: string; content: string; type: "timeline" }
   | { key: string; title: string; content: string; type: "grill" }
   | { key: string; title: string; content: string; type: "shopping" };
 
-const fullWidthPanel =
-  `${ds.panel.result} transition-all duration-200 md:col-span-2`;
+const fullWidthPanel = `${ds.panel.result} transition-all duration-200 md:col-span-2`;
 
 function ShoppingListCard({
   title,
@@ -30,15 +35,17 @@ function ShoppingListCard({
   const items = getShoppingItems(content);
 
   return (
-    <div className={`${fullWidthPanel} hover:border-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/10`}>
+    <div
+      className={`${fullWidthPanel} hover:border-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/10`}
+    >
       <div className="absolute left-0 top-0 h-full w-[3px] rounded-l-2xl bg-emerald-400/70" />
       <div className="flex flex-col gap-3 border-b border-white/5 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
         <div className="flex items-start gap-3">
-          <div className={ds.media.iconBox}>
-            🛒
-          </div>
+          <div className={ds.media.iconBox}>🛒</div>
           <div>
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-emerald-300">Checklist</p>
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-emerald-300">
+              Checklist
+            </p>
             <h3 className="mt-1 text-sm font-semibold tracking-wide text-white">{title}</h3>
           </div>
         </div>
@@ -49,7 +56,10 @@ function ShoppingListCard({
 
       <div className="grid gap-2.5 p-4 sm:grid-cols-2 sm:p-5">
         {items.map((item) => (
-          <label key={item} className="flex cursor-pointer items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-sm leading-relaxed text-slate-300 transition hover:border-emerald-400/40 hover:bg-white/[0.06]">
+          <label
+            key={item}
+            className="flex cursor-pointer items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-sm leading-relaxed text-slate-300 transition hover:border-emerald-400/40 hover:bg-white/[0.06]"
+          >
             <input
               type="checkbox"
               checked={Boolean(checkedItems[item])}
@@ -65,19 +75,24 @@ function ShoppingListCard({
 }
 
 function GrillManagerCard({ title, content }: { title: string; content: string }) {
-  const lines = content.split("\n").map((line) => line.trim()).filter(Boolean);
+  const lines = content
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
 
   return (
-    <div className={`${fullWidthPanel} p-4 hover:border-red-500/30 hover:shadow-xl hover:shadow-red-500/10 sm:p-5`}>
+    <div
+      className={`${fullWidthPanel} p-4 hover:border-red-500/30 hover:shadow-xl hover:shadow-red-500/10 sm:p-5`}
+    >
       <div className="absolute left-0 top-0 h-full w-[3px] rounded-l-2xl bg-red-400/70" />
       <div className="mb-5 flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <div className={ds.media.iconBox}>
-            🎛️
-          </div>
+          <div className={ds.media.iconBox}>🎛️</div>
           <div>
             <h3 className="text-sm font-semibold tracking-wide text-white">{title}</h3>
-            <p className="mt-1 text-sm leading-relaxed text-slate-400">Control inteligente de zonas y prioridades</p>
+            <p className="mt-1 text-sm leading-relaxed text-slate-400">
+              Control inteligente de zonas y prioridades
+            </p>
           </div>
         </div>
         <Badge tone="danger">PRO</Badge>
@@ -238,10 +253,25 @@ export default function ResultGrid({
         }
 
         if (item.type === "shopping") {
-          return <ShoppingListCard key={item.key} title={item.title} content={item.content} checkedItems={checkedItems} setCheckedItems={setCheckedItems} />;
+          return (
+            <ShoppingListCard
+              key={item.key}
+              title={item.title}
+              content={item.content}
+              checkedItems={checkedItems}
+              setCheckedItems={setCheckedItems}
+            />
+          );
         }
 
-        return <ResultCard key={item.key} title={item.title} content={item.content} variant={item.variant} />;
+        return (
+          <ResultCard
+            key={item.key}
+            title={item.title}
+            content={item.content}
+            variant={item.variant}
+          />
+        );
       })}
 
       {!loading && keys.length === 0 && <ResultEmptyState text={t.noResult} />}

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 
 type Doneness = "rare" | "medium_rare" | "medium" | "well_done";
@@ -75,10 +76,7 @@ function V3UI() {
   const [doneness, setDoneness] = useState<Doneness>("medium_rare");
   const [showResult, setShowResult] = useState(false);
 
-  const selectedCut = useMemo(
-    () => cuts.find((cut) => cut.id === cutId) ?? cuts[0],
-    [cutId]
-  );
+  const selectedCut = useMemo(() => cuts.find((cut) => cut.id === cutId) ?? cuts[0], [cutId]);
 
   const selectedDoneness = donenessOptions.find((item) => item.id === doneness);
   const temp = selectedCut.temp[doneness];
@@ -101,8 +99,8 @@ function V3UI() {
           </h1>
 
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-zinc-400">
-            Elige corte, punto y recibe un plan claro con temperatura, tiempo,
-            reposo y errores que debes evitar.
+            Elige corte, punto y recibe un plan claro con temperatura, tiempo, reposo y errores que
+            debes evitar.
           </p>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-3">
@@ -139,9 +137,7 @@ function V3UI() {
                     <div className="text-4xl">{cut.emoji}</div>
                     <div>
                       <div className="text-lg font-black">{cut.name}</div>
-                      <div className="mt-1 text-sm text-zinc-400">
-                        {cut.subtitle}
-                      </div>
+                      <div className="mt-1 text-sm text-zinc-400">{cut.subtitle}</div>
                     </div>
                   </div>
                 </button>
@@ -197,17 +193,13 @@ function V3UI() {
                   Preview del resultado
                 </p>
 
-                <h2 className="text-4xl font-black tracking-tight">
-                  {selectedCut.name}
-                </h2>
+                <h2 className="text-4xl font-black tracking-tight">{selectedCut.name}</h2>
 
                 <p className="mt-3 text-zinc-400">{selectedCut.subtitle}</p>
               </div>
 
               <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.06] p-5">
-                <div className="text-sm font-bold text-zinc-400">
-                  Resultado que verás
-                </div>
+                <div className="text-sm font-bold text-zinc-400">Resultado que verás</div>
                 <div className="mt-3 grid gap-3">
                   <GhostMetric label="Temperatura" />
                   <GhostMetric label="Tiempo" />
@@ -220,27 +212,20 @@ function V3UI() {
               <div className="mb-6 flex items-start justify-between gap-4">
                 <div>
                   <div className="text-7xl">{selectedCut.emoji}</div>
-                  <h2 className="mt-5 text-4xl font-black tracking-tight">
-                    {selectedCut.name}
-                  </h2>
-                  <p className="mt-2 text-zinc-400">
-                    {selectedDoneness?.label}
-                  </p>
+                  <h2 className="mt-5 text-4xl font-black tracking-tight">{selectedCut.name}</h2>
+                  <p className="mt-2 text-zinc-400">{selectedDoneness?.label}</p>
                 </div>
 
-                <a
+                <Link
                   href="/"
                   className="rounded-full border border-white/10 px-3 py-2 text-xs text-zinc-300 hover:bg-white/10"
                 >
                   V1
-                </a>
+                </Link>
               </div>
 
               <div className="grid gap-3">
-                <Metric
-                  label="Temperatura objetivo"
-                  value={temp ? `${temp}ºC` : "Visual"}
-                />
+                <Metric label="Temperatura objetivo" value={temp ? `${temp}ºC` : "Visual"} />
 
                 <Metric label="Tiempo estimado" value={selectedCut.time} />
 
@@ -251,18 +236,14 @@ function V3UI() {
                 <div className="text-sm font-black uppercase tracking-[0.18em] text-orange-200">
                   Consejo Pro
                 </div>
-                <p className="mt-3 text-lg leading-relaxed">
-                  {selectedCut.tip}
-                </p>
+                <p className="mt-3 text-lg leading-relaxed">{selectedCut.tip}</p>
               </div>
 
               <div className="mt-4 rounded-[1.5rem] border border-red-400/20 bg-red-500/10 p-5">
                 <div className="text-sm font-black uppercase tracking-[0.18em] text-red-200">
                   Error a evitar
                 </div>
-                <p className="mt-3 text-lg leading-relaxed">
-                  {selectedCut.mistake}
-                </p>
+                <p className="mt-3 text-lg leading-relaxed">{selectedCut.mistake}</p>
               </div>
 
               <button
@@ -299,9 +280,7 @@ function MiniProof({ value, label }: { value: string; label: string }) {
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.06] p-5">
-      <div className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">
-        {label}
-      </div>
+      <div className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">{label}</div>
       <div className="mt-2 text-3xl font-black text-orange-300">{value}</div>
     </div>
   );
@@ -310,9 +289,7 @@ function Metric({ label, value }: { label: string; value: string }) {
 function GhostMetric({ label }: { label: string }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-      <div className="text-xs uppercase tracking-[0.18em] text-zinc-500">
-        {label}
-      </div>
+      <div className="text-xs uppercase tracking-[0.18em] text-zinc-500">{label}</div>
       <div className="mt-2 h-7 w-32 rounded-full bg-white/10" />
     </div>
   );

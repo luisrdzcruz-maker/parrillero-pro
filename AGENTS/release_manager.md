@@ -4,6 +4,7 @@ Goal:
 Prepare changes for GitHub and Vercel.
 
 Check:
+
 - no debug text
 - no broken UI states
 - no unused experimental UI
@@ -11,6 +12,7 @@ Check:
 - app is stable for preview
 
 Output:
+
 - release summary
 - risk list
 - commit message suggestion

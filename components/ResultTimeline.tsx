@@ -2,12 +2,7 @@
 
 import { Badge, Button, Panel } from "@/components/ui";
 import { ds } from "@/lib/design-system";
-import {
-  buildTimelineView,
-  getZoneClass,
-  getZoneLabel,
-  secondsToClock,
-} from "@/lib/uiHelpers";
+import { buildTimelineView, getZoneClass, getZoneLabel, secondsToClock } from "@/lib/uiHelpers";
 import { useEffect, useState } from "react";
 
 type TimelineItem = ReturnType<typeof buildTimelineView>["enriched"][number];
@@ -102,37 +97,41 @@ function LiveStatusPanel({
       className={`m-4 shadow-md shadow-black/10 transition-all duration-300 ease-out motion-reduce:transition-none sm:m-5 ${ds.effects.innerRing}`}
       tone="highlight"
     >
-      <p className={ds.text.eyebrow}>
-        {demoMode ? "Timeline Live · Demo" : "Timeline Live"}
-      </p>
+      <p className={ds.text.eyebrow}>{demoMode ? "Timeline Live · Demo" : "Timeline Live"}</p>
 
       {activeItem ? (
         <>
-          <h4 className="mt-2 text-xl font-semibold text-white transition-colors duration-200">Ahora: {activeItem.name}</h4>
-          <p className={`mt-1 transition-colors duration-200 ${ds.text.body}`}>{activeItem.notes}</p>
+          <h4 className="mt-2 text-xl font-semibold text-white transition-colors duration-200">
+            Ahora: {activeItem.name}
+          </h4>
+          <p className={`mt-1 transition-colors duration-200 ${ds.text.body}`}>
+            {activeItem.notes}
+          </p>
         </>
       ) : nextItem ? (
         <>
-          <h4 className="mt-2 text-xl font-semibold text-white transition-colors duration-200">Próximo: {nextItem.name}</h4>
-          <p className={`mt-1 transition-colors duration-200 ${ds.text.body}`}>Empieza en {secondsToClock(nextItem.secondsUntil)}</p>
+          <h4 className="mt-2 text-xl font-semibold text-white transition-colors duration-200">
+            Próximo: {nextItem.name}
+          </h4>
+          <p className={`mt-1 transition-colors duration-200 ${ds.text.body}`}>
+            Empieza en {secondsToClock(nextItem.secondsUntil)}
+          </p>
         </>
       ) : (
         <>
-          <h4 className="mt-2 text-xl font-semibold text-white transition-colors duration-200">Parrillada lista</h4>
-          <p className={`mt-1 transition-colors duration-200 ${ds.text.body}`}>Todos los eventos del timeline han pasado.</p>
+          <h4 className="mt-2 text-xl font-semibold text-white transition-colors duration-200">
+            Parrillada lista
+          </h4>
+          <p className={`mt-1 transition-colors duration-200 ${ds.text.body}`}>
+            Todos los eventos del timeline han pasado.
+          </p>
         </>
       )}
     </Panel>
   );
 }
 
-function TimelineRow({
-  item,
-  status,
-}: {
-  item: TimelineItem;
-  status: TimelineRowStatus;
-}) {
+function TimelineRow({ item, status }: { item: TimelineItem; status: TimelineRowStatus }) {
   const isActive = status === "active";
   const isNext = status === "next";
   const isIdle = !isActive && !isNext;
@@ -159,11 +158,16 @@ function TimelineRow({
 
       <div className={cardClass} data-timeline-card>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <h4 className="text-sm font-semibold tracking-wide text-white sm:text-base">{item.name}</h4>
+          <h4 className="text-sm font-semibold tracking-wide text-white sm:text-base">
+            {item.name}
+          </h4>
 
           <div className="flex flex-wrap gap-2">
             {isActive && (
-              <Badge className="transition-all duration-200 motion-reduce:transition-none" tone="success">
+              <Badge
+                className="transition-all duration-200 motion-reduce:transition-none"
+                tone="success"
+              >
                 Ahora
               </Badge>
             )}
@@ -175,20 +179,30 @@ function TimelineRow({
                 En {secondsToClock(item.secondsUntil)}
               </Badge>
             )}
-            <Badge className="font-medium transition-all duration-200 motion-reduce:transition-none" tone="glass">
+            <Badge
+              className="font-medium transition-all duration-200 motion-reduce:transition-none"
+              tone="glass"
+            >
               {getZoneLabel(item.zone)}
             </Badge>
             {item.end !== "--" && (
-              <Badge className="text-slate-400 transition-all duration-200 motion-reduce:transition-none" tone="glass">
+              <Badge
+                className="text-slate-400 transition-all duration-200 motion-reduce:transition-none"
+                tone="glass"
+              >
                 {item.start} → {item.end}
               </Badge>
             )}
           </div>
         </div>
 
-        <p className="text-sm leading-relaxed text-slate-300 transition-colors duration-200 motion-reduce:transition-none">{item.notes}</p>
+        <p className="text-sm leading-relaxed text-slate-300 transition-colors duration-200 motion-reduce:transition-none">
+          {item.notes}
+        </p>
         {item.duration && item.duration !== "0 min" && (
-          <p className="mt-2 text-xs text-slate-400 transition-opacity duration-200 motion-reduce:transition-none">Duración aprox: {item.duration}</p>
+          <p className="mt-2 text-xs text-slate-400 transition-opacity duration-200 motion-reduce:transition-none">
+            Duración aprox: {item.duration}
+          </p>
         )}
       </div>
     </div>
@@ -222,13 +236,7 @@ function TimelineList({
   );
 }
 
-export default function ResultTimeline({
-  title,
-  content,
-}: {
-  title: string;
-  content: string;
-}) {
+export default function ResultTimeline({ title, content }: { title: string; content: string }) {
   const [live, setLive] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
   const [demoStart, setDemoStart] = useState<Date | null>(null);

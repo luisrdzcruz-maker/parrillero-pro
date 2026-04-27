@@ -49,7 +49,8 @@ function getCookingZone(step: CookingStep) {
 
   if (value.includes("repos") || value.includes("rest")) return "Reposo";
   if (value.includes("serv") || value.includes("serve")) return "Servir";
-  if (value.includes("indirect") || value.includes("indirecto") || value.includes("horno")) return "Indirecto";
+  if (value.includes("indirect") || value.includes("indirecto") || value.includes("horno"))
+    return "Indirecto";
 
   return "Directo";
 }
@@ -108,7 +109,11 @@ export default function CookingLiveMode({
       <section className="min-h-[calc(100vh-2rem)] overflow-hidden pb-28 md:pb-6">
         <Panel className="flex min-h-[calc(100vh-2rem)] flex-col justify-between p-5" tone="hero">
           <div className="flex items-center justify-between">
-            <Button className="rounded-full px-3 py-2 text-xs" onClick={onBackToPlan} variant="secondary">
+            <Button
+              className="rounded-full px-3 py-2 text-xs"
+              onClick={onBackToPlan}
+              variant="secondary"
+            >
               ← {isSpanish ? "Plan" : "Plan"}
             </Button>
             <Badge className="uppercase tracking-[0.2em]">Live</Badge>
@@ -140,7 +145,9 @@ export default function CookingLiveMode({
   const nextStep = cookSteps[currentStep + 1];
   const totalSteps = cookSteps.length;
   const hasTimer = Number.isFinite(step.duration) && step.duration > 0;
-  const stepProgress = hasTimer ? Math.min(100, Math.max(0, ((step.duration - timeLeft) / step.duration) * 100)) : 0;
+  const stepProgress = hasTimer
+    ? Math.min(100, Math.max(0, ((step.duration - timeLeft) / step.duration) * 100))
+    : 0;
   const sessionProgress = getSessionProgress(currentStep, totalSteps);
   const shortContext = getShortContext(step);
   const zone = getCookingZone(step);
@@ -184,7 +191,11 @@ export default function CookingLiveMode({
     >
       <div className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-2xl flex-col">
         <header className="sticky top-3 z-20 mb-3 flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/90 px-3 py-2.5 shadow-xl shadow-black/30 backdrop-blur">
-          <Button className="rounded-full px-3 py-2 text-xs" onClick={onBackToPlan} variant="secondary">
+          <Button
+            className="rounded-full px-3 py-2 text-xs"
+            onClick={onBackToPlan}
+            variant="secondary"
+          >
             ← {isSpanish ? "Plan" : "Plan"}
           </Button>
           <div className="text-center">
@@ -217,7 +228,11 @@ export default function CookingLiveMode({
               {cookingAlertsEnabled ? (
                 <Badge tone="success">{alertsActiveLabel}</Badge>
               ) : (
-                <Button className="rounded-full px-3 py-2 text-xs" onClick={onEnableAlerts} variant="outlineAccent">
+                <Button
+                  className="rounded-full px-3 py-2 text-xs"
+                  onClick={onEnableAlerts}
+                  variant="outlineAccent"
+                >
                   {alertsLabel}
                 </Button>
               )}
@@ -244,7 +259,9 @@ export default function CookingLiveMode({
             <div className="mt-8 rounded-[2rem] border border-orange-400/20 bg-black/35 p-5 shadow-2xl shadow-black/30">
               {hasTimer ? (
                 <>
-                  <p className={`font-mono text-8xl font-black tracking-tighter text-orange-300 transition-all duration-200 sm:text-9xl ${isFinishing ? "animate-pulse text-red-300" : ""}`}>
+                  <p
+                    className={`font-mono text-8xl font-black tracking-tighter text-orange-300 transition-all duration-200 sm:text-9xl ${isFinishing ? "animate-pulse text-red-300" : ""}`}
+                  >
                     {formatTime(timeLeft)}
                   </p>
                   <div className="mt-5 h-2.5 overflow-hidden rounded-full bg-white/10">
@@ -260,7 +277,9 @@ export default function CookingLiveMode({
                     {isSpanish ? "Sin temporizador" : "Manual mode"}
                   </p>
                   <p className="mt-2 text-sm text-slate-400">
-                    {isSpanish ? "Completa el paso cuando esté listo." : "Complete this step when ready."}
+                    {isSpanish
+                      ? "Completa el paso cuando esté listo."
+                      : "Complete this step when ready."}
                   </p>
                 </div>
               )}
@@ -277,7 +296,11 @@ export default function CookingLiveMode({
                   {nextStep?.title ?? (isSpanish ? "Servir y disfrutar" : "Serve and enjoy")}
                 </p>
                 <span className="shrink-0 text-sm font-bold text-orange-200">
-                  {nextStep?.duration ? formatTime(nextStep.duration) : isSpanish ? "manual" : "manual"}
+                  {nextStep?.duration
+                    ? formatTime(nextStep.duration)
+                    : isSpanish
+                      ? "manual"
+                      : "manual"}
                 </span>
               </div>
             </div>
@@ -286,10 +309,18 @@ export default function CookingLiveMode({
               <Button onClick={onPreviousStep} disabled={currentStep === 0} variant="secondary">
                 {isSpanish ? "Anterior" : "Previous"}
               </Button>
-              <Button disabled={!hasTimer} onClick={() => setTimerRunning(!timerRunning)} variant="secondary">
+              <Button
+                disabled={!hasTimer}
+                onClick={() => setTimerRunning(!timerRunning)}
+                variant="secondary"
+              >
                 {pauseLabel}
               </Button>
-              <Button onClick={onNextStep} disabled={currentStep === totalSteps - 1} variant="secondary">
+              <Button
+                onClick={onNextStep}
+                disabled={currentStep === totalSteps - 1}
+                variant="secondary"
+              >
                 {nextLabel}
               </Button>
             </div>

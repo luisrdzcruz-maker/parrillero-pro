@@ -7,10 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "qa:cooking": "tsx scripts/cooking-engine-qa.ts",
     "snapshots:cooking": "tsx scripts/cooking-snapshots.ts",
     "snapshots:cooking:update": "tsx scripts/cooking-snapshots.ts --update",
-    "check:ui": "tsx scripts/print-ui-checklist.ts"
+    "check:ui": "tsx scripts/print-ui-checklist.ts",
+    "check": "npm run lint && npm run build && npm run qa:cooking && npm run check:ui",
+    "qa": "npm run qa:cooking && npm run snapshots:cooking && npm run check:ui"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.2",
@@ -26,6 +30,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
+    "prettier": "^3.8.3",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"

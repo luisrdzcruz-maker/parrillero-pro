@@ -148,13 +148,17 @@ function ResultCardPreview({ variant }: { variant: DesignVariant }) {
           <p className="text-xs font-black uppercase tracking-[0.2em] text-[var(--preview-accent)]">
             Resultado
           </p>
-          <h2 className="mt-1 text-2xl font-black text-[var(--preview-text)]">Sellado + indirecto</h2>
+          <h2 className="mt-1 text-2xl font-black text-[var(--preview-text)]">
+            Sellado + indirecto
+          </h2>
         </div>
       </div>
 
       <div className="grid gap-3 p-4">
         <div className="rounded-2xl bg-[var(--preview-accent-soft)] p-3">
-          <p className="text-sm font-bold text-[var(--preview-text)]">Salir a 52°C, reposar 10 min.</p>
+          <p className="text-sm font-bold text-[var(--preview-text)]">
+            Salir a 52°C, reposar 10 min.
+          </p>
         </div>
         <p className="text-sm leading-6 text-[var(--preview-muted)]">
           Precalienta, sella fuerte por ambos lados y termina en zona indirecta hasta el objetivo.
@@ -193,9 +197,12 @@ export default function DesignPreview({ variant }: { variant: DesignVariant }) {
         <aside className="lg:sticky lg:top-8">
           <InternalLabel />
           <h1 className="mt-5 text-4xl font-black tracking-tight">{variant.name}</h1>
-          <p className="mt-3 text-lg font-semibold text-[var(--preview-muted)]">{variant.tagline}</p>
+          <p className="mt-3 text-lg font-semibold text-[var(--preview-muted)]">
+            {variant.tagline}
+          </p>
           <p className="mt-6 rounded-2xl border border-[var(--preview-border)] bg-[var(--preview-panel)] p-4 text-sm leading-6 text-[var(--preview-muted)]">
-            Internal route only. This preview is for founder/design testing and is not exposed as a production theme selector.
+            Internal route only. This preview is for founder/design testing and is not exposed as a
+            production theme selector.
           </p>
         </aside>
 

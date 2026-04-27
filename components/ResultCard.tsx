@@ -1,11 +1,7 @@
 "use client";
 
 import { useState, type SyntheticEvent } from "react";
-import {
-  getResultCardAccent,
-  getResultCardIcon,
-  getResultCardTitle,
-} from "@/lib/uiHelpers";
+import { getResultCardAccent, getResultCardIcon, getResultCardTitle } from "@/lib/uiHelpers";
 import { getSetupImage, SETUP_PLACEHOLDER_IMAGE } from "@/lib/setupVisuals";
 import { Badge, Button, Panel } from "@/components/ui";
 import { ds } from "@/lib/design-system";
@@ -38,7 +34,9 @@ function ResultCardHeader({
   return (
     <div className="flex items-start justify-between gap-4">
       <div className="flex min-w-0 items-start gap-3">
-        <div className={`${ds.media.iconBox} ${isPrimary ? "h-12 w-12 text-xl" : "h-10 w-10 text-base"} rounded-2xl bg-white/[0.06] ring-1 ring-inset ring-white/[0.04]`}>
+        <div
+          className={`${ds.media.iconBox} ${isPrimary ? "h-12 w-12 text-xl" : "h-10 w-10 text-base"} rounded-2xl bg-white/[0.06] ring-1 ring-inset ring-white/[0.04]`}
+        >
           {icon}
         </div>
 
@@ -46,14 +44,19 @@ function ResultCardHeader({
           <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300/90">
             {isTip ? "Consejo clave" : isPrimary ? "Siguiente acción" : "Plan"}
           </p>
-          <h3 className={`${isPrimary ? "text-xl sm:text-2xl" : "text-base"} mt-1 truncate font-black tracking-tight text-white`}>
+          <h3
+            className={`${isPrimary ? "text-xl sm:text-2xl" : "text-base"} mt-1 truncate font-black tracking-tight text-white`}
+          >
             {title}
           </h3>
           <div className={`mt-2 h-0.5 w-12 rounded-full ${accent}`} />
         </div>
       </div>
 
-      <Badge className="shrink-0 border-white/10 bg-black/35 text-[11px] font-bold" tone={isTip ? "danger" : "glass"}>
+      <Badge
+        className="shrink-0 border-white/10 bg-black/35 text-[11px] font-bold"
+        tone={isTip ? "danger" : "glass"}
+      >
         {lineCount} {lineCount === 1 ? "línea" : "líneas"}
       </Badge>
     </div>
@@ -72,7 +75,9 @@ function ResultCardContent({
 
   return (
     <div className={`${isTip ? "mt-3" : "mt-5 border-t border-white/5 pt-4"}`}>
-      <div className={`${isPrimary ? "p-4 text-base leading-7 text-slate-100" : isTip ? "border-orange-400/15 bg-orange-500/[0.04] p-3 text-sm leading-6 text-orange-100" : "p-3.5 text-sm leading-relaxed text-slate-300"} space-y-2.5 rounded-2xl border border-white/[0.06] bg-black/15 shadow-inner shadow-black/10 ring-1 ring-inset ring-white/[0.03]`}>
+      <div
+        className={`${isPrimary ? "p-4 text-base leading-7 text-slate-100" : isTip ? "border-orange-400/15 bg-orange-500/[0.04] p-3 text-sm leading-6 text-orange-100" : "p-3.5 text-sm leading-relaxed text-slate-300"} space-y-2.5 rounded-2xl border border-white/[0.06] bg-black/15 shadow-inner shadow-black/10 ring-1 ring-inset ring-white/[0.03]`}
+      >
         {lines.map((line, index) => (
           <p key={`${line}-${index}`} className="whitespace-pre-wrap">
             {line}
@@ -85,16 +90,14 @@ function ResultCardContent({
 
 function isSetupCard(title: string) {
   const normalizedTitle = title.toUpperCase();
-  return normalizedTitle.includes("SETUP") || normalizedTitle.includes("CONFIGURACION") || normalizedTitle.includes("CONFIGURACIÓN");
+  return (
+    normalizedTitle.includes("SETUP") ||
+    normalizedTitle.includes("CONFIGURACION") ||
+    normalizedTitle.includes("CONFIGURACIÓN")
+  );
 }
 
-function SetupVisualToggle({
-  content,
-  title,
-}: {
-  content: string;
-  title: string;
-}) {
+function SetupVisualToggle({ content, title }: { content: string; title: string }) {
   const [open, setOpen] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
   const setupImage = getSetupImage({ equipment: content, heatType: content, method: content });
@@ -164,7 +167,8 @@ function SetupVisualToggle({
                       Setup visual listo para conectar asset WebP
                     </p>
                     <p className="mx-auto mt-2 max-w-xs text-xs leading-5 text-slate-400">
-                      El plan sigue funcionando con la guía textual mientras se añade la imagen final.
+                      El plan sigue funcionando con la guía textual mientras se añade la imagen
+                      final.
                     </p>
                   </div>
                 </div>
@@ -174,7 +178,10 @@ function SetupVisualToggle({
                 <>
                   <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(251,146,60,0.28),transparent_34%),linear-gradient(to_top,rgba(2,6,23,0.9)_0%,rgba(2,6,23,0.38)_54%,rgba(255,255,255,0.08)_100%)]" />
                   <div className="pointer-events-none absolute bottom-0 left-0 right-0 p-4">
-                    <Badge className="border-orange-400/30 bg-black/45 text-orange-200" tone="glass">
+                    <Badge
+                      className="border-orange-400/30 bg-black/45 text-orange-200"
+                      tone="glass"
+                    >
                       Setup del fuego
                     </Badge>
                     <p className="mt-2 text-sm font-semibold text-white">
@@ -213,7 +220,10 @@ export default function ResultCard({ title, content, variant = "default" }: Resu
   const icon = getResultCardIcon(title);
   const cleanTitle = getResultCardTitle(title);
   const accent = getResultCardAccent(title);
-  const contentLines = content.split("\n").map((line) => line.trim()).filter(Boolean);
+  const contentLines = content
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
 
   return (
     <Panel as="article" className={`${cardClassName} ${getCardTone(variant)}`} tone="result">

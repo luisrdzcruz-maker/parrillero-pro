@@ -46,9 +46,7 @@ function minutesToTime(total: number) {
   const h = Math.floor(normalized / 60);
   const m = normalized % 60;
 
-  return `${h.toString().padStart(2, "0")}:${m
-    .toString()
-    .padStart(2, "0")}`;
+  return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
 }
 
 function classifyProduct(name: string, people: number): ItemPlan {
@@ -66,11 +64,7 @@ function classifyProduct(name: string, people: number): ItemPlan {
     };
   }
 
-  if (
-    n.includes("tomahawk") ||
-    n.includes("chuletón") ||
-    n.includes("chuleton")
-  ) {
+  if (n.includes("tomahawk") || n.includes("chuletón") || n.includes("chuleton")) {
     return {
       name,
       startOffset: 65,
@@ -158,17 +152,13 @@ function buildTimeline(items: ItemPlan[], serveMinutes: number) {
 
   const rows = sorted.map((item) => {
     const start = minutesToTime(serveMinutes - item.startOffset);
-    const end = minutesToTime(
-      serveMinutes - item.startOffset + item.duration
-    );
+    const end = minutesToTime(serveMinutes - item.startOffset + item.duration);
 
     return `${start}|${end}|${item.name}|${item.zone}|${item.duration} min|${item.notes}`;
   });
 
   rows.push(
-    `${minutesToTime(
-      serveMinutes
-    )}|--|SERVIR|reposo|0 min|Todo debe estar reposado y listo.`
+    `${minutesToTime(serveMinutes)}|--|SERVIR|reposo|0 min|Todo debe estar reposado y listo.`,
   );
 
   return rows.join("\n");
@@ -177,15 +167,11 @@ function buildTimeline(items: ItemPlan[], serveMinutes: number) {
 function buildGrillManager(items: ItemPlan[], language: "es" | "en") {
   const sorted = [...items].sort((a, b) => b.startOffset - a.startOffset);
 
-  const hasLongIndirect = sorted.some(
-    (item) => item.zone === "indirecta" && item.duration >= 90
-  );
+  const hasLongIndirect = sorted.some((item) => item.zone === "indirecta" && item.duration >= 90);
 
   const indirectItems = sorted.filter((item) => item.zone === "indirecta");
   const directItems = sorted.filter((item) => item.zone === "directa");
-  const fastDirectItems = sorted.filter(
-    (item) => item.zone === "directa" && item.duration <= 30
-  );
+  const fastDirectItems = sorted.filter((item) => item.zone === "directa" && item.duration <= 30);
   const highPriorityItems = sorted.filter((item) => item.priority === "alta");
 
   if (language === "en") {
@@ -223,9 +209,7 @@ function buildGrillManager(items: ItemPlan[], language: "es" | "en") {
   ].join("\n");
 }
 
-export function generateParrilladaPlan(
-  input: ParrilladaInput
-): ParrilladaPlan {
+export function generateParrilladaPlan(input: ParrilladaInput): ParrilladaPlan {
   const people = parsePeople(input.people);
   const products = parseProducts(input.products);
   const serveMinutes = timeToMinutes(input.serveTime || "18:00");
@@ -236,23 +220,15 @@ export function generateParrilladaPlan(
   if (input.language === "en") {
     return {
       MENU: `BBQ for ${people} people.\nMain products: ${products.join(
-        ", "
-      )}.\nSides: ${input.sides || "simple sides"}.\nEquipment: ${
-        input.equipment
-      }.`,
+        ", ",
+      )}.\nSides: ${input.sides || "simple sides"}.\nEquipment: ${input.equipment}.`,
       TIMELINE: buildTimeline(sorted, serveMinutes),
       GRILL_MANAGER: buildGrillManager(sorted, "en"),
-      QUANTITIES: sorted
-        .map((item) => `- ${item.name}: ${item.quantity}`)
-        .join("\n"),
-      ORDER: sorted
-        .map((item, index) => `${index + 1}. ${item.name}: ${item.notes}`)
-        .join("\n"),
+      QUANTITIES: sorted.map((item) => `- ${item.name}: ${item.quantity}`).join("\n"),
+      ORDER: sorted.map((item, index) => `${index + 1}. ${item.name}: ${item.notes}`).join("\n"),
       SHOPPING: [
         ...sorted.map((item) => `- ${item.name}: ${item.quantity}`),
-        input.sides
-          ? `- Sides: ${input.sides}`
-          : "- Sides: potatoes, salad, bread, sauces",
+        input.sides ? `- Sides: ${input.sides}` : "- Sides: potatoes, salad, bread, sauces",
         "- Salt",
         "- Charcoal/gas check",
       ].join("\n"),
@@ -263,18 +239,14 @@ export function generateParrilladaPlan(
 
   return {
     MENU: `Parrillada para ${people} personas.\nProductos principales: ${products.join(
-      ", "
+      ", ",
     )}.\nAcompañamientos: ${
       input.sides || "acompañamientos sencillos"
     }.\nEquipo: ${input.equipment}.`,
     TIMELINE: buildTimeline(sorted, serveMinutes),
     GRILL_MANAGER: buildGrillManager(sorted, "es"),
-    CANTIDADES: sorted
-      .map((item) => `- ${item.name}: ${item.quantity}`)
-      .join("\n"),
-    ORDEN: sorted
-      .map((item, index) => `${index + 1}. ${item.name}: ${item.notes}`)
-      .join("\n"),
+    CANTIDADES: sorted.map((item) => `- ${item.name}: ${item.quantity}`).join("\n"),
+    ORDEN: sorted.map((item, index) => `${index + 1}. ${item.name}: ${item.notes}`).join("\n"),
     COMPRA: [
       ...sorted.map((item) => `- ${item.name}: ${item.quantity}`),
       input.sides

@@ -1,11 +1,30 @@
 "use client";
 
-import { track } from "@/lib/analytics";
 import { saveGeneratedMenu } from "@/app/actions/savedMenus";
 import CookingLiveMode from "@/components/CookingLiveMode";
-import ResultGrid from "@/components/ResultGrid";
-import ResultHero from "@/components/ResultHero";
-import { Badge, Button, Card, Grid, Panel, Section } from "@/components/ui";
+import {
+  CookingWizard,
+  Input,
+  PrimaryButton,
+  ResultCards,
+  Select,
+  equipmentOptions,
+  type Blocks,
+  type CookingWizardStep,
+  type SaveMenuStatus,
+  type SelectOption,
+} from "@/components/cooking/CookingWizard";
+import { HomeScreen } from "@/components/home/HomeScreen";
+import {
+  AppHeader,
+  BottomNavigation,
+  DesktopModeTabs,
+  type Mode,
+} from "@/components/navigation/AppHeader";
+import { Button, Card, Grid, Section } from "@/components/ui";
+import { track } from "@/lib/analytics";
+import type { AnimalId, CookingMethod, CookingStep, ProductCut } from "@/lib/cookingCatalog";
+import { getCookingStepImage } from "@/lib/cookingVisuals";
 import {
   generateCookingPlan as generateLocalCookingPlan,
   generateCookingSteps as generateLocalCookingSteps,
@@ -14,25 +33,14 @@ import {
   getDonenessOptions,
   shouldShowThickness,
 } from "@/lib/cookingRules";
-import type {
-  AnimalId,
-  CookingMethod,
-  CookingStep,
-  ProductCut,
-} from "@/lib/cookingCatalog";
-import { getCookingStepImage } from "@/lib/cookingVisuals";
 import { ds } from "@/lib/design-system";
+import { texts, type AppText, type Lang } from "@/lib/i18n/texts";
+import { animalIdsByLabel, type Animal } from "@/lib/media/animalMedia";
+import { cutImages } from "@/lib/media/cutImages";
 import { generateParrilladaPlan } from "@/lib/parrilladaEngine";
-import { type ReactNode, type TouchEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { type TouchEvent, useEffect, useMemo, useRef, useState } from "react";
 
-type Animal = "Vacuno" | "Cerdo" | "Pollo" | "Pescado" | "Verduras";
-type Mode = "inicio" | "coccion" | "menu" | "parrillada" | "cocina" | "guardados";
-type Lang = "es" | "en" | "fi";
 type EngineLang = "es" | "en";
-type Blocks = Record<string, string>;
-type SaveMenuStatus = "idle" | "saving" | "success" | "error";
-type CookingWizardStep = "animal" | "cut" | "details" | "result";
-type SelectOption = string | { label: string; value: string };
 type CookingVisualContext = {
   animalId?: AnimalId;
   cutId?: string;
@@ -59,235 +67,3038 @@ type CutItem = {
   description: string;
 };
 
-type AnimalMedia = {
-  image: string;
-};
-
-const animalIdsByLabel: Record<Animal, AnimalId> = {
-  Vacuno: "beef",
-  Cerdo: "pork",
-  Pollo: "chicken",
-  Pescado: "fish",
-  Verduras: "vegetables",
-};
-
-const animalOptions: Animal[] = ["Vacuno", "Cerdo", "Pollo", "Pescado", "Verduras"];
-
-const texts = {
-  es: {
-    app: "IA Parrillero Pro",
-    title: "Tu plan de cocción, claro y listo.",
-    subtitle: "Como un chef profesional, pero sin pensar.",
-    start: "Inicio",
-    cooking: "Cocción",
-    menu: "Menú",
-    parrillada: "Parrillada",
-    live: "Cocina",
-    saved: "Guardados",
-    planCooking: "Crear plan de cocción",
-    createMenu: "Crear menú BBQ",
-    parrilladaPro: "Parrillada Pro",
-    liveMode: "Modo cocina",
-    savedMenus: "Menús guardados",
-    chooseAnimal: "Elige animal",
-    chooseCut: "Elige corte",
-    configurePlan: "Configura el plan",
-    result: "Resultado",
-    generatePlan: "Generar plan",
-    createParrillada: "Crear plan parrillada",
-    creating: "Creando...",
-    generating: "Generando...",
-    saveMenu: "⭐ Guardar menú",
-    savingMenu: "Guardando menú...",
-    menuSaved: "Menú guardado.",
-    menuSaveError: "No se pudo guardar el menú.",
-    startCooking: "Cocinar",
-    copy: "Copiar",
-    whatsapp: "WhatsApp",
-    next: "Siguiente",
-    reset: "Reset",
-    pause: "Pausar",
-    startTimer: "Iniciar",
-    noResult: "El resultado aparecerá aquí.",
-    noSaved: "Todavía no tienes menús guardados.",
-    people: "Número de personas",
-    eventType: "Tipo de evento",
-    meats: "Carnes / productos",
-    products: "Productos",
-    sides: "Acompañamientos",
-    budget: "Presupuesto (€)",
-    difficulty: "Dificultad",
-    equipment: "Equipo",
-    weight: "Peso (kg)",
-    thickness: "Grosor (cm)",
-    doneness: "Punto",
-    keyTips: "Consejos clave",
-    planSequence: "Secuencia del plan",
-    serveTime: "Hora objetivo de servir",
-    localEngine: "Motor local",
-    aiFallback: "IA",
-    selected: "Seleccionado",
-    active: "Activo",
+const defaultCookSteps: CookingStep[] = [
+  {
+    title: "Precalentar",
+    duration: 600,
+    description: "Precalienta la parrilla con tapa cerrada.",
+    image: getCookingStepImage({ stepTitle: "Precalentar" }),
+    tips: ["Parrilla caliente", "Tapa cerrada", "Rejillas limpias"],
   },
-  en: {
-    app: "AI Grill Master Pro",
-    title: "Your cooking plan, clear and ready.",
-    subtitle: "Like a pro chef—without the mental load.",
-    start: "Home",
-    cooking: "Cooking",
-    menu: "Menu",
-    parrillada: "BBQ Pro",
-    live: "Cook",
-    saved: "Saved",
-    planCooking: "Create cooking plan",
-    createMenu: "Create BBQ menu",
-    parrilladaPro: "BBQ Planner Pro",
-    liveMode: "Live cooking",
-    savedMenus: "Saved menus",
-    chooseAnimal: "Choose animal",
-    chooseCut: "Choose cut",
-    configurePlan: "Configure plan",
-    result: "Result",
-    generatePlan: "Generate plan",
-    createParrillada: "Create BBQ plan",
-    creating: "Creating...",
-    generating: "Generating...",
-    saveMenu: "⭐ Save menu",
-    savingMenu: "Saving menu...",
-    menuSaved: "Menu saved.",
-    menuSaveError: "Could not save menu.",
-    startCooking: "Cook",
-    copy: "Copy",
-    whatsapp: "WhatsApp",
-    next: "Next",
-    reset: "Reset",
-    pause: "Pause",
-    startTimer: "Start",
-    noResult: "The result will appear here.",
-    noSaved: "You do not have saved menus yet.",
-    people: "Number of people",
-    eventType: "Event type",
-    meats: "Meats / products",
-    products: "Products",
-    sides: "Sides",
-    budget: "Budget (€)",
-    difficulty: "Difficulty",
-    equipment: "Equipment",
-    weight: "Weight (kg)",
-    thickness: "Thickness (cm)",
-    doneness: "Doneness",
-    keyTips: "Key tips",
-    planSequence: "Plan sequence",
-    serveTime: "Target serving time",
-    localEngine: "Local engine",
-    aiFallback: "AI",
-    selected: "Selected",
-    active: "Active",
+  {
+    title: "Sellar lado 1",
+    duration: 180,
+    description: "Carne en zona directa. No mover.",
+    image: getCookingStepImage({ stepTitle: "Sellar lado 1" }),
+    tips: ["No tocar", "Buscar costra", "No aplastar"],
   },
-  fi: {
-    app: "Parrillero Pro",
-    title: "Selkeä grillaussuunnitelma valmiina.",
-    subtitle: "Kuin ammattikokki—ilman päänsärkyä.",
-    start: "Alku",
-    cooking: "Kypsennys",
-    menu: "Menu",
-    parrillada: "BBQ Pro",
-    live: "Kokkaus",
-    saved: "Tallennetut",
-    planCooking: "Luo kypsennyssuunnitelma",
-    createMenu: "Luo BBQ-menu",
-    parrilladaPro: "BBQ Planner Pro",
-    liveMode: "Live-kokkaus",
-    savedMenus: "Tallennetut menut",
-    chooseAnimal: "Valitse ryhmä",
-    chooseCut: "Valitse leikkaus",
-    configurePlan: "Asetukset",
-    result: "Tulos",
-    generatePlan: "Luo suunnitelma",
-    createParrillada: "Luo BBQ-suunnitelma",
-    creating: "Luodaan...",
-    generating: "Luodaan...",
-    saveMenu: "⭐ Tallenna menu",
-    savingMenu: "Tallennetaan menua...",
-    menuSaved: "Menu tallennettu.",
-    menuSaveError: "Menua ei voitu tallentaa.",
-    startCooking: "Kokkaa",
-    copy: "Kopioi",
-    whatsapp: "WhatsApp",
-    next: "Seuraava",
-    reset: "Reset",
-    pause: "Tauko",
-    startTimer: "Aloita",
-    noResult: "Tulos näkyy tässä.",
-    noSaved: "Ei tallennettuja menuja vielä.",
-    people: "Henkilömäärä",
-    eventType: "Tapahtuma",
-    meats: "Lihat / tuotteet",
-    products: "Tuotteet",
-    sides: "Lisukkeet",
-    budget: "Budjetti (€)",
-    difficulty: "Vaikeus",
-    equipment: "Väline",
-    weight: "Paino (kg)",
-    thickness: "Paksuus (cm)",
-    doneness: "Kypsyys",
-    keyTips: "Tärkeät vinkit",
-    planSequence: "Suunnitelman vaiheet",
-    serveTime: "Tarjoiluaika",
-    localEngine: "Paikallinen moottori",
-    aiFallback: "AI",
-    selected: "Valittu",
-    active: "Aktiivinen",
+  {
+    title: "Reposo",
+    duration: 300,
+    description: "Reposar antes de cortar.",
+    image: getCookingStepImage({ stepTitle: "Reposo" }),
+    tips: ["No cortar al momento", "Estabilizar jugos", "Cortar después del reposo"],
   },
-};
-
-const animalMedia: Record<Animal, AnimalMedia> = {
-  Vacuno: { image: "/animals/vacuno.jpg" },
-  Cerdo: { image: "/animals/cerdo.jpg" },
-  Pollo: { image: "/animals/pollo.jpg" },
-  Pescado: { image: "/animals/pescado.jpg" },
-  Verduras: { image: "/animals/vegetales.jpg" },
-};
-
-const cutImages: Record<string, string> = {
-  aguja: "/cuts/aguja-chuck.jpg",
-  lomo_alto: "/cuts/lomo-alto.jpg",
-  tomahawk: "/cuts/tomahawk.jpg",
-  entrecote: "/cuts/ribeye.jpg",
-  picanha: "/cuts/picanha.jpg",
-  maminha: "/cuts/maminha.jpg",
-  bavette: "/cuts/babette.jpg",
-  entrana: "/cuts/skirt-steak.jpg",
-  secreto_iberico: "/cuts/secreto.jpg",
-  presa_iberica: "/cuts/presa.jpg",
-  costillas: "/cuts/costillas.jpg",
-  panceta: "/cuts/panceta.jpg",
-  solomillo: "/cuts/solomillo-cerdo.jpg",
-  pork_chop: "/cuts/chuleta-cerdo.jpg",
-  muslos: "/cuts/muslos-pollo.jpg",
-  alitas: "/cuts/alitas.jpg",
-  pechuga: "/cuts/pechuga.jpg",
-  pollo_entero: "/cuts/pollo-entero.jpg",
-  rodaballo: "/cuts/rodaballo.jpg",
-  salmon: "/cuts/salmon.jpg",
-  lubina: "/cuts/lubina.jpg",
-  dorada: "/cuts/dorada.jpg",
-  maiz: "/cuts/maiz.jpg",
-  berenjena: "/cuts/berenjena.jpg",
-  patata: "/cuts/patata.jpg",
-  esparragos: "/cuts/esparragos.jpg",
-  pimientos: "/cuts/pimientos.jpg",
-  calabacin: "/cuts/calabacin.jpg",
-  setas: "/cuts/setas.jpg",
-};
-
-const equipmentOptions = [
-  "parrilla gas",
-  "parrilla carbón",
-  "kamado",
-  "cocina interior",
-  "Napoleon Rogue 525-2",
 ];
+
+function engineLang(lang: Lang): EngineLang {
+  return lang === "es" ? "es" : "en";
+}
+
+function hasLocalEngine(animal: Animal) {
+  return Boolean(animalIdsByLabel[animal]);
+}
+
+function getInitialDoneness(animal: Animal) {
+  return getDonenessOptions(animalIdsByLabel[animal])[0]?.id ?? "";
+}
+
+function getDonenessSelectOptions(animal: Animal, lang: Lang): SelectOption[] {
+  const labelLang = lang === "fi" ? "en" : lang;
+
+  return getDonenessOptions(animalIdsByLabel[animal]).map((option) => ({
+    value: option.id,
+    label: option.names[labelLang],
+  }));
+}
+
+function catalogLang(lang: Lang) {
+  return lang;
+}
+
+function getCutName(cut: ProductCut, lang: Lang) {
+  return cut.names[catalogLang(lang)] ?? cut.names.es;
+}
+
+function getCutDescription(cut: ProductCut, lang: Lang) {
+  return cut.notes?.[catalogLang(lang)] ?? cut.error[engineLang(lang)] ?? "";
+}
+
+function getCutItems(animal: Animal, lang: Lang): CutItem[] {
+  return getCutsByAnimal(animalIdsByLabel[animal]).map((cut) => ({
+    id: cut.id,
+    name: getCutName(cut, lang),
+    image: cutImages[cut.id] ?? "/cuts/placeholder.jpg",
+    description: getCutDescription(cut, lang),
+  }));
+}
+
+function getAnimalPreview(animal: Animal, lang: Lang) {
+  return getCutItems(animal, lang)
+    .slice(0, 2)
+    .map((cut) => cut.name)
+    .join(", ");
+}
+
+function isInteractiveSwipeTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false;
+
+  return Boolean(target.closest("input, select, textarea, a, label"));
+}
+
+function isMobileSwipeViewport() {
+  if (typeof window === "undefined") return false;
+
+  return window.innerWidth < 768;
+}
+
+function getCookingVisualContext(animal: Animal, cutId?: string): CookingVisualContext {
+  const cut = cutId ? getCutById(cutId) : undefined;
+
+  return {
+    animalId: animalIdsByLabel[animal],
+    cutId,
+    method: cut?.defaultMethod,
+  };
+}
+
+function withCookingStepImages(steps: CookingStep[], context: CookingVisualContext): CookingStep[] {
+  return steps.map((step) => ({
+    ...step,
+    image: getCookingStepImage({
+      animalId: context.animalId,
+      cutId: context.cutId,
+      method: context.method,
+      stepTitle: `${step.title} ${step.description}`,
+    }),
+  }));
+}
+
+function parseResponse(text: string): Blocks {
+  const blocks: Blocks = {};
+  const sections = text.split(/\n(?=[A-ZÁÉÍÓÚ]+)/);
+
+  sections.forEach((section) => {
+    const [title, ...rest] = section.trim().split("\n");
+    const content = rest.join("\n").trim();
+    if (title && content) blocks[title.trim()] = content;
+  });
+
+  return blocks;
+}
+
+function buildCookStepsFromPlan(blocks: Blocks): CookingStep[] {
+  const text = blocks.PASOS || blocks.STEPS || blocks.ORDEN || blocks.ORDER || "";
+  const lines = text
+    .split("\n")
+    .map((line) => line.replace(/^[-•*\d.)\s]+/, "").trim())
+    .filter(Boolean);
+
+  if (lines.length === 0) return defaultCookSteps;
+
+  return lines.map((line) => {
+    const lower = line.toLowerCase();
+    let duration = 300;
+    const image = getCookingStepImage({ stepTitle: line });
+
+    if (lower.includes("precal") || lower.includes("preheat")) {
+      duration = 600;
+    }
+
+    if (lower.includes("indirect")) {
+      duration = 300;
+    }
+
+    if (lower.includes("repos") || lower.includes("rest")) {
+      duration = 300;
+    }
+
+    return {
+      title: line.length > 32 ? line.slice(0, 32) + "..." : line,
+      duration,
+      description: line,
+      image,
+      tips: [],
+    };
+  });
+}
+
+function buildText(blocks: Blocks) {
+  return Object.keys(blocks)
+    .map((key) => `${key}\n${blocks[key]}`)
+    .join("\n\n");
+}
+
+function localeForLang(lang: Lang) {
+  if (lang === "en") return "en-US";
+  if (lang === "fi") return "fi-FI";
+  return "es-ES";
+}
+
+function parsePositiveInt(value: string) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+export default function Home() {
+  const [lang, setLang] = useState<Lang>("es");
+  const t = texts[lang];
+
+  const [mode, setMode] = useState<Mode>("inicio");
+  const [cookingStep, setCookingStep] = useState<CookingWizardStep>("animal");
+
+  const [animal, setAnimal] = useState<Animal>("Vacuno");
+  const [cut, setCut] = useState("");
+  const [weight, setWeight] = useState("1");
+  const [thickness, setThickness] = useState("5");
+  const [doneness, setDoneness] = useState("rare");
+  const [equipment, setEquipment] = useState("parrilla gas");
+
+  const [people, setPeople] = useState("6");
+  const [eventType, setEventType] = useState("cena con amigos");
+  const [menuMeats, setMenuMeats] = useState("chuletón, secreto ibérico");
+  const [sides, setSides] = useState("patatas, ensalada, chimichurri");
+  const [budget, setBudget] = useState("200");
+  const [difficulty, setDifficulty] = useState("medio");
+
+  const [parrilladaPeople, setParrilladaPeople] = useState("6");
+  const [serveTime, setServeTime] = useState("18:00");
+  const [parrilladaProducts, setParrilladaProducts] = useState(
+    "costillas, chuletón, secreto ibérico, maíz",
+  );
+  const [parrilladaSides, setParrilladaSides] = useState("patatas, ensalada, chimichurri");
+
+  const [blocks, setBlocks] = useState<Blocks>({});
+  const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
+  const [savedMenus, setSavedMenus] = useState<SavedMenu[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [saveMenuStatus, setSaveMenuStatus] = useState<SaveMenuStatus>("idle");
+  const [saveMenuMessage, setSaveMenuMessage] = useState("");
+
+  const [cookSteps, setCookSteps] = useState<CookingStep[]>(defaultCookSteps);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(defaultCookSteps[0].duration);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [cookingAlertsEnabled, setCookingAlertsEnabled] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState<
+    NotificationPermission | "unsupported"
+  >("default");
+  const [cookingAlertMessage, setCookingAlertMessage] = useState("");
+  const touchStartRef = useRef<TouchPoint | null>(null);
+  const modeHistoryRef = useRef<Mode[]>([]);
+
+  const cuts = useMemo(() => getCutItems(animal, lang), [animal, lang]);
+  const selectedCut = cuts.find((item) => item.id === cut);
+
+  const currentDonenessOptions = getDonenessSelectOptions(animal, lang);
+  const showThickness = cut ? shouldShowThickness(cut) : true;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const stored = localStorage.getItem("parrillero_saved_menus");
+    if (!stored) return;
+
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+
+      try {
+        setSavedMenus(JSON.parse(stored) as SavedMenu[]);
+      } catch {
+        // Ignore malformed legacy localStorage data.
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!timerRunning) return;
+
+    const interval = setInterval(() => {
+      setTimeLeft((current) => {
+        if (current <= 1) {
+          clearInterval(interval);
+          setTimerRunning(false);
+          notifyStepFinished();
+
+          setTimeout(() => {
+            setCurrentStep((previous) => {
+              const next = Math.min(previous + 1, cookSteps.length - 1);
+              setTimeLeft(cookSteps[next]?.duration ?? 0);
+              return next;
+            });
+          }, 800);
+
+          return 0;
+        }
+
+        return current - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [timerRunning, currentStep, cookSteps.length]);
+
+  function notifyStepFinished() {
+    if (typeof window === "undefined") return;
+
+    const nextStep = cookSteps[Math.min(currentStep + 1, cookSteps.length - 1)];
+    const message = nextStep ? `Siguiente paso: ${nextStep.title}` : "Plan de cocción completado.";
+
+    try {
+      const audio = new Audio("/sounds/beep.mp3");
+      audio.play().catch(() => {});
+    } catch {}
+
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+
+    setCookingAlertMessage(message);
+    window.setTimeout(() => setCookingAlertMessage(""), 5000);
+
+    if (cookingAlertsEnabled && "Notification" in window && Notification.permission === "granted") {
+      try {
+        new Notification("Parrillero Pro", { body: message });
+      } catch {}
+    }
+  }
+
+  async function enableCookingAlerts() {
+    setCookingAlertsEnabled(true);
+
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      setNotificationPermission("unsupported");
+      return;
+    }
+
+    if (Notification.permission === "default") {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      return;
+    }
+
+    setNotificationPermission(Notification.permission);
+  }
+
+  function updateSavedMenus(nextMenus: SavedMenu[]) {
+    setSavedMenus(nextMenus);
+    if (typeof window === "undefined") return;
+
+    localStorage.setItem("parrillero_saved_menus", JSON.stringify(nextMenus));
+  }
+
+  async function saveCurrentMenu() {
+    if (typeof window === "undefined") return;
+    if (Object.keys(blocks).length === 0) return;
+
+    const now = new Date();
+    const menuName = `Menú Parrillero - ${now.toLocaleDateString(localeForLang(lang))}`;
+
+    setSaveMenuStatus("saving");
+    setSaveMenuMessage("");
+
+    try {
+      const savedMenu = await saveGeneratedMenu({
+        name: menuName,
+        lang,
+        people: parsePositiveInt(people),
+        data: {
+          type: "generated_menu",
+          generatedAt: now.toISOString(),
+          inputs: {
+            people,
+            eventType,
+            products: menuMeats,
+            sides,
+            budget,
+            difficulty,
+            equipment,
+          },
+          blocks,
+        },
+      });
+
+      const newMenu: SavedMenu = {
+        id: savedMenu.id,
+        title: savedMenu.name,
+        date: new Date(savedMenu.created_at).toLocaleDateString(localeForLang(lang)),
+        blocks,
+      };
+
+      updateSavedMenus([newMenu, ...savedMenus.filter((menu) => menu.id !== newMenu.id)]);
+      setSaveMenuStatus("success");
+      setSaveMenuMessage(t.menuSaved);
+    } catch {
+      setSaveMenuStatus("error");
+      setSaveMenuMessage(t.menuSaveError);
+    }
+  }
+
+  function deleteMenu(id: string) {
+    updateSavedMenus(savedMenus.filter((menu) => menu.id !== id));
+  }
+
+  function loadMenu(menu: SavedMenu) {
+    setBlocks(menu.blocks);
+    navigateMode("menu");
+  }
+
+  function handleAnimalChange(selectedAnimal: Animal) {
+    setAnimal(selectedAnimal);
+    setCut("");
+    setDoneness(getInitialDoneness(selectedAnimal));
+    setBlocks({});
+    setCheckedItems({});
+    setCookingStep("cut");
+    track({ name: "animal_selected", animal: selectedAnimal, lang });
+  }
+
+  function handleCutChange(selectedCutId: string) {
+    setCut(selectedCutId);
+    setBlocks({});
+    setCheckedItems({});
+    setCookingStep("details");
+    track({ name: "cut_selected", animal, cutId: selectedCutId, lang });
+  }
+
+  async function callAI(
+    message: string,
+    createCookSteps = false,
+    visualContext?: CookingVisualContext,
+  ): Promise<boolean> {
+    setLoading(true);
+    setBlocks({});
+    setCheckedItems({});
+    setSaveMenuStatus("idle");
+    setSaveMenuMessage("");
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+      });
+
+      if (!res.ok) {
+        if (createCookSteps) {
+          track({ name: "cooking_failure", where: "ai_http", status: res.status });
+        }
+        setLoading(false);
+        return false;
+      }
+
+      const data = await res.json();
+      const parsed = parseResponse(data.reply);
+
+      setBlocks(parsed);
+
+      if (createCookSteps) {
+        const baseSteps = buildCookStepsFromPlan(parsed);
+        const steps = visualContext ? withCookingStepImages(baseSteps, visualContext) : baseSteps;
+        setCookSteps(steps);
+        setCurrentStep(0);
+        setTimeLeft(steps[0].duration);
+        setTimerRunning(false);
+      }
+    } catch (e) {
+      if (createCookSteps) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (e instanceof TypeError) {
+          track({ name: "cooking_failure", where: "ai_network", message: msg });
+        } else {
+          track({ name: "cooking_failure", where: "ai_exception", message: msg });
+        }
+      }
+      setLoading(false);
+      return false;
+    }
+
+    setLoading(false);
+    return true;
+  }
+
+  async function generateCookingPlan() {
+    const visualContext = getCookingVisualContext(animal, cut);
+    const input = {
+      animal,
+      cut,
+      weightKg: weight,
+      thicknessCm: showThickness ? thickness : "2",
+      doneness,
+      equipment,
+      language: engineLang(lang),
+    };
+
+    const localPlan = generateLocalCookingPlan(input);
+    const localSteps = generateLocalCookingSteps(input);
+
+    if (localPlan && localSteps) {
+      track({ name: "cooking_plan_result", path: "local" });
+      const visualSteps = withCookingStepImages(localSteps, visualContext);
+      setBlocks(localPlan);
+      setCheckedItems({});
+      setCookSteps(visualSteps);
+      setCurrentStep(0);
+      setTimeLeft(visualSteps[0].duration);
+      setTimerRunning(false);
+      setCookingStep("result");
+      return;
+    }
+
+    track({ name: "cooking_ai_fallback" });
+    const ok = await callAI(
+      `
+Language: ${engineLang(lang) === "es" ? "Spanish" : "English"}.
+Animal: ${animal}
+Cut: ${selectedCut?.name ?? cut}
+Weight: ${weight} kg
+Thickness: ${showThickness ? thickness : "not relevant"} cm
+Doneness: ${doneness}
+Equipment: ${equipment}
+
+Return exact block titles:
+SETUP
+TIEMPOS
+TEMPERATURA
+PASOS
+ERROR
+`,
+      true,
+      visualContext,
+    );
+    if (ok) {
+      track({ name: "cooking_plan_result", path: "ai" });
+    }
+    setCookingStep("result");
+  }
+
+  async function generateMenuPlan() {
+    await callAI(`
+Language: ${engineLang(lang) === "es" ? "Spanish" : "English"}.
+
+Personas / People: ${people}
+Tipo de evento / Event type: ${eventType}
+Carnes/productos / Products: ${menuMeats}
+Acompañamientos / Sides: ${sides}
+Presupuesto / Budget: ${budget} €
+Nivel / Difficulty: ${difficulty}
+Equipo / Equipment: ${equipment}
+
+If Spanish:
+MENU
+CANTIDADES
+TIMING
+ORDEN
+COMPRA
+ERROR
+
+If English:
+MENU
+QUANTITIES
+TIMING
+ORDER
+SHOPPING
+ERROR
+`);
+  }
+
+  function generateParrillada() {
+    const plan = generateParrilladaPlan({
+      people: parrilladaPeople,
+      serveTime,
+      products: parrilladaProducts,
+      sides: parrilladaSides,
+      equipment,
+      language: engineLang(lang),
+    });
+
+    setBlocks(plan);
+    setCheckedItems({});
+  }
+
+  function nextCookStep() {
+    const next = Math.min(currentStep + 1, cookSteps.length - 1);
+    setCurrentStep(next);
+    setTimeLeft(cookSteps[next].duration);
+    setTimerRunning(false);
+  }
+
+  function previousCookStep() {
+    const previous = Math.max(currentStep - 1, 0);
+    setCurrentStep(previous);
+    setTimeLeft(cookSteps[previous].duration);
+    setTimerRunning(false);
+  }
+
+  function goToCookStep(stepIndex: number) {
+    const next = Math.max(0, Math.min(stepIndex, cookSteps.length - 1));
+    setCurrentStep(next);
+    setTimeLeft(cookSteps[next].duration);
+    setTimerRunning(false);
+  }
+
+  function resetCookMode() {
+    setCurrentStep(0);
+    setTimeLeft(cookSteps[0].duration);
+    setTimerRunning(false);
+  }
+
+  function handleLanguageChange(nextLang: Lang) {
+    setLang(nextLang);
+    setBlocks({});
+    setCheckedItems({});
+  }
+
+  function navigateMode(nextMode: Mode, trackHistory = true) {
+    if (nextMode === mode) return;
+    if (trackHistory) modeHistoryRef.current = [...modeHistoryRef.current.slice(-8), mode];
+    if (nextMode === "coccion") setCookingStep("animal");
+    setMode(nextMode);
+  }
+
+  function handleModeChange(nextMode: Mode) {
+    navigateMode(nextMode);
+  }
+
+  function handleSwipeNavigation(direction: SwipeDirection) {
+    if (direction === "back") {
+      if (mode === "coccion") {
+        if (cookingStep === "result") {
+          setCookingStep("details");
+          return;
+        }
+
+        if (cookingStep === "details") {
+          setCookingStep("cut");
+          return;
+        }
+
+        if (cookingStep === "cut") {
+          setCookingStep("animal");
+          return;
+        }
+
+        if (cookingStep === "animal") {
+          return;
+        }
+
+        return;
+      }
+
+      if (modeHistoryRef.current.length > 0) {
+        const previousMode = modeHistoryRef.current[modeHistoryRef.current.length - 1];
+        modeHistoryRef.current = modeHistoryRef.current.slice(0, -1);
+        navigateMode(previousMode, false);
+      }
+
+      return;
+    }
+
+    if (mode !== "coccion") return;
+
+    if (cookingStep === "animal" && animal) {
+      setCookingStep("cut");
+      return;
+    }
+
+    if (cookingStep === "cut" && selectedCut) {
+      setCookingStep("details");
+    }
+  }
+
+  function handleTouchStart(event: TouchEvent<HTMLElement>) {
+    if (!isMobileSwipeViewport() || isInteractiveSwipeTarget(event.target)) {
+      touchStartRef.current = null;
+      return;
+    }
+
+    const touch = event.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  }
+
+  function handleTouchEnd(event: TouchEvent<HTMLElement>) {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+
+    if (!start || !isMobileSwipeViewport() || isInteractiveSwipeTarget(event.target)) return;
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    const horizontalDistance = Math.abs(deltaX);
+    const verticalDistance = Math.abs(deltaY);
+
+    if (horizontalDistance < 60 || horizontalDistance <= verticalDistance) return;
+
+    handleSwipeNavigation(deltaX > 0 ? "back" : "forward");
+  }
+
+  return (
+    <main
+      className={`${ds.shell.page} px-3 pt-2 !pb-[max(9rem,calc(6.75rem+env(safe-area-inset-bottom,0px)))] sm:px-4 sm:pt-5 md:!pb-28`}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      <div className={ds.shell.container}>
+        <AppHeader lang={lang} onLangChange={handleLanguageChange} t={t} />
+        <DesktopModeTabs mode={mode} onModeChange={handleModeChange} t={t} />
+
+        {mode === "inicio" && (
+          <HomeScreen savedMenusCount={savedMenus.length} t={t} onModeChange={handleModeChange} />
+        )}
+
+        {mode === "coccion" && (
+          <CookingWizard
+            animal={animal}
+            cookingStep={cookingStep}
+            currentDonenessOptions={currentDonenessOptions}
+            cut={cut}
+            cuts={cuts}
+            equipment={equipment}
+            generateCookingPlan={generateCookingPlan}
+            getAnimalPreview={getAnimalPreview}
+            handleAnimalChange={handleAnimalChange}
+            handleCutChange={handleCutChange}
+            hasLocalEngine={hasLocalEngine}
+            lang={lang}
+            loading={loading}
+            selectedCut={selectedCut}
+            saveMenuMessage={saveMenuMessage}
+            saveMenuStatus={saveMenuStatus}
+            setCookingStep={setCookingStep}
+            setDoneness={setDoneness}
+            setEquipment={setEquipment}
+            setMode={setMode}
+            setTimerRunning={setTimerRunning}
+            setThickness={setThickness}
+            setWeight={setWeight}
+            showThickness={showThickness}
+            onSaveMenu={saveCurrentMenu}
+            t={t}
+            weight={weight}
+            thickness={thickness}
+            doneness={doneness}
+            blocks={blocks}
+            checkedItems={checkedItems}
+            setCheckedItems={setCheckedItems}
+          />
+        )}
+
+        {mode === "menu" && (
+          <Grid variant="split">
+            <div className={ds.panel.form}>
+              <h2 className="text-xl font-bold">{t.createMenu}</h2>
+
+              <Input label={t.people} value={people} onChange={setPeople} placeholder="Ej: 6" />
+              <Select
+                label={t.eventType}
+                value={eventType}
+                onChange={setEventType}
+                options={[
+                  "cena con amigos",
+                  "comida familiar",
+                  "barbacoa informal",
+                  "celebración especial",
+                  "menú premium",
+                ]}
+              />
+              <Input
+                label={t.meats}
+                value={menuMeats}
+                onChange={setMenuMeats}
+                placeholder="Ej: chuletón, secreto, maíz"
+              />
+              <Input
+                label={t.sides}
+                value={sides}
+                onChange={setSides}
+                placeholder="Ej: patatas, ensalada, chimichurri"
+              />
+              <Input label={t.budget} value={budget} onChange={setBudget} placeholder="Ej: 200" />
+              <Select
+                label={t.difficulty}
+                value={difficulty}
+                onChange={setDifficulty}
+                options={["fácil", "medio", "avanzado"]}
+              />
+              <Select
+                label={t.equipment}
+                value={equipment}
+                onChange={setEquipment}
+                options={equipmentOptions}
+              />
+
+              <PrimaryButton
+                onClick={generateMenuPlan}
+                loading={loading}
+                text={t.createMenu}
+                loadingText={t.creating}
+              />
+
+              {(blocks.MENU || blocks.COMPRA || blocks.SHOPPING) && (
+                <Button
+                  className="px-5 py-4 font-bold"
+                  fullWidth
+                  onClick={saveCurrentMenu}
+                  disabled={saveMenuStatus === "saving"}
+                  variant="outlineAccent"
+                >
+                  {saveMenuStatus === "saving" ? t.savingMenu : t.saveMenu}
+                </Button>
+              )}
+
+              {saveMenuMessage && (
+                <p
+                  className={
+                    saveMenuStatus === "error" ? "text-sm text-red-300" : "text-sm text-emerald-300"
+                  }
+                >
+                  {saveMenuMessage}
+                </p>
+              )}
+            </div>
+
+            <ResultCards
+              blocks={blocks}
+              loading={loading}
+              checkedItems={checkedItems}
+              setCheckedItems={setCheckedItems}
+              onSaveMenu={
+                blocks.MENU || blocks.COMPRA || blocks.SHOPPING ? saveCurrentMenu : undefined
+              }
+              saveMenuStatus={saveMenuStatus}
+              saveMenuMessage={saveMenuMessage}
+              t={t}
+            />
+          </Grid>
+        )}
+
+        {mode === "parrillada" && (
+          <Grid variant="split">
+            <div className={ds.panel.form}>
+              <h2 className="text-xl font-bold">{t.parrilladaPro}</h2>
+
+              <Input
+                label={t.people}
+                value={parrilladaPeople}
+                onChange={setParrilladaPeople}
+                placeholder="Ej: 6"
+              />
+              <Input
+                label={t.serveTime}
+                value={serveTime}
+                onChange={setServeTime}
+                placeholder="Ej: 18:00"
+              />
+              <Input
+                label={t.products}
+                value={parrilladaProducts}
+                onChange={setParrilladaProducts}
+                placeholder="Ej: costillas, chuletón, secreto"
+              />
+              <Input
+                label={t.sides}
+                value={parrilladaSides}
+                onChange={setParrilladaSides}
+                placeholder="Ej: patatas, ensalada, chimichurri"
+              />
+              <Select
+                label={t.equipment}
+                value={equipment}
+                onChange={setEquipment}
+                options={equipmentOptions}
+              />
+
+              <Button className="px-5 py-4 font-bold" fullWidth onClick={generateParrillada}>
+                {t.createParrillada}
+              </Button>
+            </div>
+
+            <ResultCards
+              blocks={blocks}
+              loading={loading}
+              checkedItems={checkedItems}
+              setCheckedItems={setCheckedItems}
+              t={t}
+            />
+          </Grid>
+        )}
+
+        {mode === "cocina" && (
+          <CookingLiveMode
+            context={[animal, selectedCut?.name, equipment].filter(Boolean).join(" · ")}
+            lang={lang}
+            cookSteps={cookSteps}
+            currentStep={currentStep}
+            cookingAlertsEnabled={cookingAlertsEnabled}
+            cookingAlertMessage={cookingAlertMessage}
+            hasCookingPlan={Boolean(blocks.PASOS || blocks.STEPS)}
+            timeLeft={timeLeft}
+            timerRunning={timerRunning}
+            notificationPermission={notificationPermission}
+            onBackToPlan={() => navigateMode("coccion")}
+            onEnableAlerts={enableCookingAlerts}
+            onNextStep={nextCookStep}
+            onPreviousStep={previousCookStep}
+            setTimerRunning={setTimerRunning}
+            onGoToStep={goToCookStep}
+            onCompleteStep={nextCookStep}
+            onReset={resetCookMode}
+          />
+        )}
+
+        {mode === "guardados" && (
+          <SavedMenusSection
+            lang={lang}
+            menus={savedMenus}
+            onCopy={copySavedMenu}
+            onDelete={deleteMenu}
+            onOpen={loadMenu}
+            t={t}
+          />
+        )}
+      </div>
+
+      {mode !== "cocina" && <BottomNavigation mode={mode} onModeChange={handleModeChange} t={t} />}
+    </main>
+  );
+}
+
+function copySavedMenu(menu: SavedMenu) {
+  if (typeof window === "undefined" || !navigator.clipboard) return;
+
+  navigator.clipboard.writeText(buildText(menu.blocks));
+}
+
+function SavedMenusSection({
+  lang,
+  menus,
+  onCopy,
+  onDelete,
+  onOpen,
+  t,
+}: {
+  lang: Lang;
+  menus: SavedMenu[];
+  onCopy: (menu: SavedMenu) => void;
+  onDelete: (id: string) => void;
+  onOpen: (menu: SavedMenu) => void;
+  t: AppText;
+}) {
+  return (
+    <Section eyebrow={`${menus.length} ${t.saved}`} title={t.savedMenus}>
+      {menus.length === 0 && <Card tone="empty">{t.noSaved}</Card>}
+
+      <Grid>
+        {menus.map((menu) => (
+          <Card key={menu.id}>
+            <p className="text-sm font-medium text-orange-300">{t.savedMenus}</p>
+            <h3 className="mt-1 text-xl font-bold text-white">{menu.title}</h3>
+            <p className="mt-1 text-sm text-slate-400">{menu.date}</p>
+
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Button onClick={() => onOpen(menu)}>{lang === "es" ? "Abrir" : "Open"}</Button>
+              <Button onClick={() => onCopy(menu)} variant="secondary">
+                {t.copy}
+              </Button>
+              <Button onClick={() => onDelete(menu.id)} variant="danger">
+                {lang === "es" ? "Borrar" : "Delete"}
+              </Button>
+            </div>
+          </Card>
+        ))}
+      </Grid>
+    </Section>
+  );
+}
+/*
+import CookingLiveMode from "@/components/CookingLiveMode";
+import {
+  CookingWizard,
+  Input,
+  PrimaryButton,
+  ResultCards,
+  Select,
+  equipmentOptions,
+  type Blocks,
+  type CookingWizardStep,
+  type SaveMenuStatus,
+  type SelectOption,
+} from "@/components/cooking/CookingWizard";
+import { HomeScreen } from "@/components/home/HomeScreen";
+import {
+  AppHeader,
+  BottomNavigation,
+  DesktopModeTabs,
+  type Mode,
+} from "@/components/navigation/AppHeader";
+import { Button, Card, Grid, Section } from "@/components/ui";
+import { track } from "@/lib/analytics";
+import type { AnimalId, CookingMethod, CookingStep, ProductCut } from "@/lib/cookingCatalog";
+import { getCookingStepImage } from "@/lib/cookingVisuals";
+import {
+  generateCookingPlan as generateLocalCookingPlan,
+  generateCookingSteps as generateLocalCookingSteps,
+  getCutById,
+  getCutsByAnimal,
+  getDonenessOptions,
+  shouldShowThickness,
+} from "@/lib/cookingRules";
+import { ds } from "@/lib/design-system";
+import { texts, type AppText, type Lang } from "@/lib/i18n/texts";
+import { animalIdsByLabel, type Animal } from "@/lib/media/animalMedia";
+import { cutImages } from "@/lib/media/cutImages";
+import { generateParrilladaPlan } from "@/lib/parrilladaEngine";
+import { type TouchEvent, useEffect, useMemo, useRef, useState } from "react";
+
+type EngineLang = "es" | "en";
+type CookingVisualContext = {
+  animalId?: AnimalId;
+  cutId?: string;
+  method?: CookingMethod;
+};
+
+type SwipeDirection = "back" | "forward";
+type TouchPoint = {
+  x: number;
+  y: number;
+};
+
+type SavedMenu = {
+  id: string;
+  title: string;
+  date: string;
+  blocks: Blocks;
+};
+
+type CutItem = {
+  id: string;
+  name: string;
+  image: string;
+  description: string;
+};
+
+const defaultCookSteps: CookingStep[] = [
+  {
+    title: "Precalentar",
+    duration: 600,
+    description: "Precalienta la parrilla con tapa cerrada.",
+    image: getCookingStepImage({ stepTitle: "Precalentar" }),
+    tips: ["Parrilla caliente", "Tapa cerrada", "Rejillas limpias"],
+  },
+  {
+    title: "Sellar lado 1",
+    duration: 180,
+    description: "Carne en zona directa. No mover.",
+    image: getCookingStepImage({ stepTitle: "Sellar lado 1" }),
+    tips: ["No tocar", "Buscar costra", "No aplastar"],
+  },
+  {
+    title: "Reposo",
+    duration: 300,
+    description: "Reposar antes de cortar.",
+    image: getCookingStepImage({ stepTitle: "Reposo" }),
+    tips: ["No cortar al momento", "Estabilizar jugos", "Cortar después del reposo"],
+  },
+];
+
+function engineLang(lang: Lang): EngineLang {
+  return lang === "es" ? "es" : "en";
+}
+
+function hasLocalEngine(animal: Animal) {
+  return Boolean(animalIdsByLabel[animal]);
+}
+
+function getInitialDoneness(animal: Animal) {
+  return getDonenessOptions(animalIdsByLabel[animal])[0]?.id ?? "";
+}
+
+function getDonenessSelectOptions(animal: Animal, lang: Lang): SelectOption[] {
+  const labelLang = lang === "fi" ? "en" : lang;
+
+  return getDonenessOptions(animalIdsByLabel[animal]).map((option) => ({
+    value: option.id,
+    label: option.names[labelLang],
+  }));
+}
+
+function catalogLang(lang: Lang) {
+  return lang;
+}
+
+function getCutName(cut: ProductCut, lang: Lang) {
+  return cut.names[catalogLang(lang)] ?? cut.names.es;
+}
+
+function getCutDescription(cut: ProductCut, lang: Lang) {
+  return cut.notes?.[catalogLang(lang)] ?? cut.error[engineLang(lang)] ?? "";
+}
+
+function getCutItems(animal: Animal, lang: Lang): CutItem[] {
+  return getCutsByAnimal(animalIdsByLabel[animal]).map((cut) => ({
+    id: cut.id,
+    name: getCutName(cut, lang),
+    image: cutImages[cut.id] ?? "/cuts/placeholder.jpg",
+    description: getCutDescription(cut, lang),
+  }));
+}
+
+function getAnimalPreview(animal: Animal, lang: Lang) {
+  return getCutItems(animal, lang)
+    .slice(0, 2)
+    .map((cut) => cut.name)
+    .join(", ");
+}
+
+function isInteractiveSwipeTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false;
+
+  return Boolean(target.closest("input, select, textarea, a, label"));
+}
+
+function isMobileSwipeViewport() {
+  if (typeof window === "undefined") return false;
+
+  return window.innerWidth < 768;
+}
+
+function getCookingVisualContext(animal: Animal, cutId?: string): CookingVisualContext {
+  const cut = cutId ? getCutById(cutId) : undefined;
+
+  return {
+    animalId: animalIdsByLabel[animal],
+    cutId,
+    method: cut?.defaultMethod,
+  };
+}
+
+function withCookingStepImages(steps: CookingStep[], context: CookingVisualContext): CookingStep[] {
+  return steps.map((step) => ({
+    ...step,
+    image: getCookingStepImage({
+      animalId: context.animalId,
+      cutId: context.cutId,
+      method: context.method,
+      stepTitle: `${step.title} ${step.description}`,
+    }),
+  }));
+}
+
+function parseResponse(text: string): Blocks {
+  const blocks: Blocks = {};
+  const sections = text.split(/\n(?=[A-ZÁÉÍÓÚ]+)/);
+
+  sections.forEach((section) => {
+    const [title, ...rest] = section.trim().split("\n");
+    const content = rest.join("\n").trim();
+    if (title && content) blocks[title.trim()] = content;
+  });
+
+  return blocks;
+}
+
+function buildCookStepsFromPlan(blocks: Blocks): CookingStep[] {
+  const text = blocks.PASOS || blocks.STEPS || blocks.ORDEN || blocks.ORDER || "";
+  const lines = text
+    .split("\n")
+    .map((line) => line.replace(/^[-•*\d.)\s]+/, "").trim())
+    .filter(Boolean);
+
+  if (lines.length === 0) return defaultCookSteps;
+
+  return lines.map((line) => {
+    const lower = line.toLowerCase();
+    let duration = 300;
+    const image = getCookingStepImage({ stepTitle: line });
+
+    if (lower.includes("precal") || lower.includes("preheat")) {
+      duration = 600;
+    }
+
+    if (lower.includes("indirect")) {
+      duration = 300;
+    }
+
+    if (lower.includes("repos") || lower.includes("rest")) {
+      duration = 300;
+    }
+
+    return {
+      title: line.length > 32 ? line.slice(0, 32) + "..." : line,
+      duration,
+      description: line,
+      image,
+      tips: [],
+    };
+  });
+}
+
+function buildText(blocks: Blocks) {
+  return Object.keys(blocks)
+    .map((key) => `${key}\n${blocks[key]}`)
+    .join("\n\n");
+}
+
+function localeForLang(lang: Lang) {
+  if (lang === "en") return "en-US";
+  if (lang === "fi") return "fi-FI";
+  return "es-ES";
+}
+
+function parsePositiveInt(value: string) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+export default function Home() {
+  const [lang, setLang] = useState<Lang>("es");
+  const t = texts[lang];
+
+  const [mode, setMode] = useState<Mode>("inicio");
+  const [cookingStep, setCookingStep] = useState<CookingWizardStep>("animal");
+
+  const [animal, setAnimal] = useState<Animal>("Vacuno");
+  const [cut, setCut] = useState("");
+  const [weight, setWeight] = useState("1");
+  const [thickness, setThickness] = useState("5");
+  const [doneness, setDoneness] = useState("rare");
+  const [equipment, setEquipment] = useState("parrilla gas");
+
+  const [people, setPeople] = useState("6");
+  const [eventType, setEventType] = useState("cena con amigos");
+  const [menuMeats, setMenuMeats] = useState("chuletón, secreto ibérico");
+  const [sides, setSides] = useState("patatas, ensalada, chimichurri");
+  const [budget, setBudget] = useState("200");
+  const [difficulty, setDifficulty] = useState("medio");
+
+  const [parrilladaPeople, setParrilladaPeople] = useState("6");
+  const [serveTime, setServeTime] = useState("18:00");
+  const [parrilladaProducts, setParrilladaProducts] = useState(
+    "costillas, chuletón, secreto ibérico, maíz",
+  );
+  const [parrilladaSides, setParrilladaSides] = useState("patatas, ensalada, chimichurri");
+
+  const [blocks, setBlocks] = useState<Blocks>({});
+  const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
+  const [savedMenus, setSavedMenus] = useState<SavedMenu[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [saveMenuStatus, setSaveMenuStatus] = useState<SaveMenuStatus>("idle");
+  const [saveMenuMessage, setSaveMenuMessage] = useState("");
+
+  const [cookSteps, setCookSteps] = useState<CookingStep[]>(defaultCookSteps);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(defaultCookSteps[0].duration);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [cookingAlertsEnabled, setCookingAlertsEnabled] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState<
+    NotificationPermission | "unsupported"
+  >("default");
+  const [cookingAlertMessage, setCookingAlertMessage] = useState("");
+  const touchStartRef = useRef<TouchPoint | null>(null);
+  const modeHistoryRef = useRef<Mode[]>([]);
+
+  const cuts = useMemo(() => getCutItems(animal, lang), [animal, lang]);
+  const selectedCut = cuts.find((item) => item.id === cut);
+
+  const currentDonenessOptions = getDonenessSelectOptions(animal, lang);
+  const showThickness = cut ? shouldShowThickness(cut) : true;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const stored = localStorage.getItem("parrillero_saved_menus");
+    if (stored) setSavedMenus(JSON.parse(stored) as SavedMenu[]);
+  }, []);
+
+  useEffect(() => {
+    if (!timerRunning) return;
+
+    const interval = setInterval(() => {
+      setTimeLeft((current) => {
+        if (current <= 1) {
+          clearInterval(interval);
+          setTimerRunning(false);
+          notifyStepFinished();
+
+          setTimeout(() => {
+            setCurrentStep((previous) => {
+              const next = Math.min(previous + 1, cookSteps.length - 1);
+              setTimeLeft(cookSteps[next]?.duration ?? 0);
+              return next;
+            });
+          }, 800);
+
+          return 0;
+        }
+
+        return current - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [timerRunning, currentStep, cookSteps.length]);
+
+  useEffect(() => {
+    if (mode === "coccion") setCookingStep("animal");
+  }, [mode]);
+
+  function notifyStepFinished() {
+    if (typeof window === "undefined") return;
+
+    const nextStep = cookSteps[Math.min(currentStep + 1, cookSteps.length - 1)];
+    const message = nextStep ? `Siguiente paso: ${nextStep.title}` : "Plan de cocción completado.";
+
+    try {
+      const audio = new Audio("/sounds/beep.mp3");
+      audio.play().catch(() => {});
+    } catch {}
+
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+
+    setCookingAlertMessage(message);
+    window.setTimeout(() => setCookingAlertMessage(""), 5000);
+
+    if (
+      cookingAlertsEnabled &&
+      "Notification" in window &&
+      Notification.permission === "granted"
+    ) {
+      try {
+        new Notification("Parrillero Pro", { body: message });
+      } catch {}
+    }
+  }
+
+  async function enableCookingAlerts() {
+    setCookingAlertsEnabled(true);
+
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      setNotificationPermission("unsupported");
+      return;
+    }
+
+    if (Notification.permission === "default") {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      return;
+    }
+
+    setNotificationPermission(Notification.permission);
+  }
+
+  function updateSavedMenus(nextMenus: SavedMenu[]) {
+    setSavedMenus(nextMenus);
+    if (typeof window === "undefined") return;
+
+    localStorage.setItem("parrillero_saved_menus", JSON.stringify(nextMenus));
+  }
+
+  async function saveCurrentMenu() {
+    if (typeof window === "undefined") return;
+    if (Object.keys(blocks).length === 0) return;
+
+    const now = new Date();
+    const menuName = `Menú Parrillero - ${now.toLocaleDateString(localeForLang(lang))}`;
+
+    setSaveMenuStatus("saving");
+    setSaveMenuMessage("");
+
+    try {
+      const savedMenu = await saveGeneratedMenu({
+        name: menuName,
+        lang,
+        people: parsePositiveInt(people),
+        data: {
+          type: "generated_menu",
+          generatedAt: now.toISOString(),
+          inputs: {
+            people,
+            eventType,
+            products: menuMeats,
+            sides,
+            budget,
+            difficulty,
+            equipment,
+          },
+          blocks,
+        },
+      });
+
+      const newMenu: SavedMenu = {
+        id: savedMenu.id,
+        title: savedMenu.name,
+        date: new Date(savedMenu.created_at).toLocaleDateString(localeForLang(lang)),
+        blocks,
+      };
+
+      updateSavedMenus([newMenu, ...savedMenus.filter((menu) => menu.id !== newMenu.id)]);
+      setSaveMenuStatus("success");
+      setSaveMenuMessage(t.menuSaved);
+    } catch {
+      setSaveMenuStatus("error");
+      setSaveMenuMessage(t.menuSaveError);
+    }
+  }
+
+  function deleteMenu(id: string) {
+    updateSavedMenus(savedMenus.filter((menu) => menu.id !== id));
+  }
+
+  function loadMenu(menu: SavedMenu) {
+    setBlocks(menu.blocks);
+    navigateMode("menu");
+  }
+
+  function handleAnimalChange(selectedAnimal: Animal) {
+    setAnimal(selectedAnimal);
+    setCut("");
+    setDoneness(getInitialDoneness(selectedAnimal));
+    setBlocks({});
+    setCheckedItems({});
+    setCookingStep("cut");
+    track({ name: "animal_selected", animal: selectedAnimal, lang });
+  }
+
+  function handleCutChange(selectedCutId: string) {
+    setCut(selectedCutId);
+    setBlocks({});
+    setCheckedItems({});
+    setCookingStep("details");
+    track({ name: "cut_selected", animal, cutId: selectedCutId, lang });
+  }
+
+  async function callAI(
+    message: string,
+    createCookSteps = false,
+    visualContext?: CookingVisualContext,
+  ): Promise<boolean> {
+    setLoading(true);
+    setBlocks({});
+    setCheckedItems({});
+    setSaveMenuStatus("idle");
+    setSaveMenuMessage("");
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+      });
+
+      if (!res.ok) {
+        if (createCookSteps) {
+          track({ name: "cooking_failure", where: "ai_http", status: res.status });
+        }
+        setLoading(false);
+        return false;
+      }
+
+      const data = await res.json();
+      const parsed = parseResponse(data.reply);
+
+      setBlocks(parsed);
+
+      if (createCookSteps) {
+        const baseSteps = buildCookStepsFromPlan(parsed);
+        const steps = visualContext ? withCookingStepImages(baseSteps, visualContext) : baseSteps;
+        setCookSteps(steps);
+        setCurrentStep(0);
+        setTimeLeft(steps[0].duration);
+        setTimerRunning(false);
+      }
+    } catch (e) {
+      if (createCookSteps) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (e instanceof TypeError) {
+          track({ name: "cooking_failure", where: "ai_network", message: msg });
+        } else {
+          track({ name: "cooking_failure", where: "ai_exception", message: msg });
+        }
+      }
+      setLoading(false);
+      return false;
+    }
+
+    setLoading(false);
+    return true;
+  }
+
+  async function generateCookingPlan() {
+    const visualContext = getCookingVisualContext(animal, cut);
+    const input = {
+      animal,
+      cut,
+      weightKg: weight,
+      thicknessCm: showThickness ? thickness : "2",
+      doneness,
+      equipment,
+      language: engineLang(lang),
+    };
+
+    const localPlan = generateLocalCookingPlan(input);
+    const localSteps = generateLocalCookingSteps(input);
+
+    if (localPlan && localSteps) {
+      track({ name: "cooking_plan_result", path: "local" });
+      const visualSteps = withCookingStepImages(localSteps, visualContext);
+      setBlocks(localPlan);
+      setCheckedItems({});
+      setCookSteps(visualSteps);
+      setCurrentStep(0);
+      setTimeLeft(visualSteps[0].duration);
+      setTimerRunning(false);
+      setCookingStep("result");
+      return;
+    }
+
+    track({ name: "cooking_ai_fallback" });
+    const ok = await callAI(
+      `
+Language: ${engineLang(lang) === "es" ? "Spanish" : "English"}.
+Animal: ${animal}
+Cut: ${selectedCut?.name ?? cut}
+Weight: ${weight} kg
+Thickness: ${showThickness ? thickness : "not relevant"} cm
+Doneness: ${doneness}
+Equipment: ${equipment}
+
+Return exact block titles:
+SETUP
+TIEMPOS
+TEMPERATURA
+PASOS
+ERROR
+`,
+      true,
+      visualContext,
+    );
+    if (ok) {
+      track({ name: "cooking_plan_result", path: "ai" });
+    }
+    setCookingStep("result");
+  }
+
+  async function generateMenuPlan() {
+    await callAI(`
+Language: ${engineLang(lang) === "es" ? "Spanish" : "English"}.
+
+Personas / People: ${people}
+Tipo de evento / Event type: ${eventType}
+Carnes/productos / Products: ${menuMeats}
+Acompañamientos / Sides: ${sides}
+Presupuesto / Budget: ${budget} €
+Nivel / Difficulty: ${difficulty}
+Equipo / Equipment: ${equipment}
+
+If Spanish:
+MENU
+CANTIDADES
+TIMING
+ORDEN
+COMPRA
+ERROR
+
+If English:
+MENU
+QUANTITIES
+TIMING
+ORDER
+SHOPPING
+ERROR
+`);
+  }
+
+  function generateParrillada() {
+    const plan = generateParrilladaPlan({
+      people: parrilladaPeople,
+      serveTime,
+      products: parrilladaProducts,
+      sides: parrilladaSides,
+      equipment,
+      language: engineLang(lang),
+    });
+
+    setBlocks(plan);
+    setCheckedItems({});
+  }
+
+  function nextCookStep() {
+    const next = Math.min(currentStep + 1, cookSteps.length - 1);
+    setCurrentStep(next);
+    setTimeLeft(cookSteps[next].duration);
+    setTimerRunning(false);
+  }
+
+  function previousCookStep() {
+    const previous = Math.max(currentStep - 1, 0);
+    setCurrentStep(previous);
+    setTimeLeft(cookSteps[previous].duration);
+    setTimerRunning(false);
+  }
+
+  function goToCookStep(stepIndex: number) {
+    const next = Math.max(0, Math.min(stepIndex, cookSteps.length - 1));
+    setCurrentStep(next);
+    setTimeLeft(cookSteps[next].duration);
+    setTimerRunning(false);
+  }
+
+  function resetCookMode() {
+    setCurrentStep(0);
+    setTimeLeft(cookSteps[0].duration);
+    setTimerRunning(false);
+  }
+
+  function handleLanguageChange(nextLang: Lang) {
+    setLang(nextLang);
+    setBlocks({});
+    setCheckedItems({});
+  }
+
+  function navigateMode(nextMode: Mode, trackHistory = true) {
+    if (nextMode === mode) return;
+    if (trackHistory) modeHistoryRef.current = [...modeHistoryRef.current.slice(-8), mode];
+    if (nextMode === "coccion") setCookingStep("animal");
+    setMode(nextMode);
+  }
+
+  function handleModeChange(nextMode: Mode) {
+    navigateMode(nextMode);
+  }
+
+  function handleSwipeNavigation(direction: SwipeDirection) {
+    if (direction === "back") {
+      if (mode === "coccion") {
+        if (cookingStep === "result") {
+          setCookingStep("details");
+          return;
+        }
+
+        if (cookingStep === "details") {
+          setCookingStep("cut");
+          return;
+        }
+
+        if (cookingStep === "cut") {
+          setCookingStep("animal");
+          return;
+        }
+
+        if (cookingStep === "animal") {
+          return;
+        }
+
+        return;
+      }
+
+      if (modeHistoryRef.current.length > 0) {
+        const previousMode = modeHistoryRef.current[modeHistoryRef.current.length - 1];
+        modeHistoryRef.current = modeHistoryRef.current.slice(0, -1);
+        navigateMode(previousMode, false);
+      }
+
+      return;
+    }
+
+    if (mode !== "coccion") return;
+
+    if (cookingStep === "animal" && animal) {
+      setCookingStep("cut");
+      return;
+    }
+
+    if (cookingStep === "cut" && selectedCut) {
+      setCookingStep("details");
+    }
+  }
+
+  function handleTouchStart(event: TouchEvent<HTMLElement>) {
+    if (!isMobileSwipeViewport() || isInteractiveSwipeTarget(event.target)) {
+      touchStartRef.current = null;
+      return;
+    }
+
+    const touch = event.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  }
+
+  function handleTouchEnd(event: TouchEvent<HTMLElement>) {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+
+    if (!start || !isMobileSwipeViewport() || isInteractiveSwipeTarget(event.target)) return;
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    const horizontalDistance = Math.abs(deltaX);
+    const verticalDistance = Math.abs(deltaY);
+
+    if (horizontalDistance < 60 || horizontalDistance <= verticalDistance) return;
+
+    handleSwipeNavigation(deltaX > 0 ? "back" : "forward");
+  }
+
+  return (
+    <main
+      className={`${ds.shell.page} px-3 pt-2 !pb-[max(9rem,calc(6.75rem+env(safe-area-inset-bottom,0px)))] sm:px-4 sm:pt-5 md:!pb-28`}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      <div className={ds.shell.container}>
+        <AppHeader lang={lang} onLangChange={handleLanguageChange} t={t} />
+        <DesktopModeTabs mode={mode} onModeChange={handleModeChange} t={t} />
+
+        {mode === "inicio" && (
+          <HomeScreen savedMenusCount={savedMenus.length} t={t} onModeChange={handleModeChange} />
+        )}
+
+        {mode === "coccion" && (
+          <CookingWizard
+            animal={animal}
+            cookingStep={cookingStep}
+            currentDonenessOptions={currentDonenessOptions}
+            cut={cut}
+            cuts={cuts}
+            equipment={equipment}
+            generateCookingPlan={generateCookingPlan}
+            getAnimalPreview={getAnimalPreview}
+            handleAnimalChange={handleAnimalChange}
+            handleCutChange={handleCutChange}
+            hasLocalEngine={hasLocalEngine}
+            lang={lang}
+            loading={loading}
+            selectedCut={selectedCut}
+            saveMenuMessage={saveMenuMessage}
+            saveMenuStatus={saveMenuStatus}
+            setCookingStep={setCookingStep}
+            setDoneness={setDoneness}
+            setEquipment={setEquipment}
+            setMode={setMode}
+            setTimerRunning={setTimerRunning}
+            setThickness={setThickness}
+            setWeight={setWeight}
+            showThickness={showThickness}
+            onSaveMenu={saveCurrentMenu}
+            t={t}
+            weight={weight}
+            thickness={thickness}
+            doneness={doneness}
+            blocks={blocks}
+            checkedItems={checkedItems}
+            setCheckedItems={setCheckedItems}
+          />
+        )}
+
+        {mode === "menu" && (
+          <Grid variant="split">
+            <div className={ds.panel.form}>
+              <h2 className="text-xl font-bold">{t.createMenu}</h2>
+
+              <Input label={t.people} value={people} onChange={setPeople} placeholder="Ej: 6" />
+              <Select
+                label={t.eventType}
+                value={eventType}
+                onChange={setEventType}
+                options={[
+                  "cena con amigos",
+                  "comida familiar",
+                  "barbacoa informal",
+                  "celebración especial",
+                  "menú premium",
+                ]}
+              />
+              <Input
+                label={t.meats}
+                value={menuMeats}
+                onChange={setMenuMeats}
+                placeholder="Ej: chuletón, secreto, maíz"
+              />
+              <Input
+                label={t.sides}
+                value={sides}
+                onChange={setSides}
+                placeholder="Ej: patatas, ensalada, chimichurri"
+              />
+              <Input label={t.budget} value={budget} onChange={setBudget} placeholder="Ej: 200" />
+              <Select
+                label={t.difficulty}
+                value={difficulty}
+                onChange={setDifficulty}
+                options={["fácil", "medio", "avanzado"]}
+              />
+              <Select
+                label={t.equipment}
+                value={equipment}
+                onChange={setEquipment}
+                options={equipmentOptions}
+              />
+
+              <PrimaryButton
+                onClick={generateMenuPlan}
+                loading={loading}
+                text={t.createMenu}
+                loadingText={t.creating}
+              />
+
+              {(blocks.MENU || blocks.COMPRA || blocks.SHOPPING) && (
+                <Button
+                  className="px-5 py-4 font-bold"
+                  fullWidth
+                  onClick={saveCurrentMenu}
+                  disabled={saveMenuStatus === "saving"}
+                  variant="outlineAccent"
+                >
+                  {saveMenuStatus === "saving" ? t.savingMenu : t.saveMenu}
+                </Button>
+              )}
+
+              {saveMenuMessage && (
+                <p
+                  className={
+                    saveMenuStatus === "error"
+                      ? "text-sm text-red-300"
+                      : "text-sm text-emerald-300"
+                  }
+                >
+                  {saveMenuMessage}
+                </p>
+              )}
+            </div>
+
+            <ResultCards
+              blocks={blocks}
+              loading={loading}
+              checkedItems={checkedItems}
+              setCheckedItems={setCheckedItems}
+              onSaveMenu={blocks.MENU || blocks.COMPRA || blocks.SHOPPING ? saveCurrentMenu : undefined}
+              saveMenuStatus={saveMenuStatus}
+              saveMenuMessage={saveMenuMessage}
+              t={t}
+            />
+          </Grid>
+        )}
+
+        {mode === "parrillada" && (
+          <Grid variant="split">
+            <div className={ds.panel.form}>
+              <h2 className="text-xl font-bold">{t.parrilladaPro}</h2>
+
+              <Input
+                label={t.people}
+                value={parrilladaPeople}
+                onChange={setParrilladaPeople}
+                placeholder="Ej: 6"
+              />
+              <Input
+                label={t.serveTime}
+                value={serveTime}
+                onChange={setServeTime}
+                placeholder="Ej: 18:00"
+              />
+              <Input
+                label={t.products}
+                value={parrilladaProducts}
+                onChange={setParrilladaProducts}
+                placeholder="Ej: costillas, chuletón, secreto"
+              />
+              <Input
+                label={t.sides}
+                value={parrilladaSides}
+                onChange={setParrilladaSides}
+                placeholder="Ej: patatas, ensalada, chimichurri"
+              />
+              <Select
+                label={t.equipment}
+                value={equipment}
+                onChange={setEquipment}
+                options={equipmentOptions}
+              />
+
+              <Button className="px-5 py-4 font-bold" fullWidth onClick={generateParrillada}>
+                {t.createParrillada}
+              </Button>
+            </div>
+
+            <ResultCards
+              blocks={blocks}
+              loading={loading}
+              checkedItems={checkedItems}
+              setCheckedItems={setCheckedItems}
+              t={t}
+            />
+          </Grid>
+        )}
+
+        {mode === "cocina" && (
+          <CookingLiveMode
+            context={[animal, selectedCut?.name, equipment].filter(Boolean).join(" · ")}
+            lang={lang}
+            cookSteps={cookSteps}
+            currentStep={currentStep}
+            cookingAlertsEnabled={cookingAlertsEnabled}
+            cookingAlertMessage={cookingAlertMessage}
+            hasCookingPlan={Boolean(blocks.PASOS || blocks.STEPS)}
+            timeLeft={timeLeft}
+            timerRunning={timerRunning}
+            notificationPermission={notificationPermission}
+            onBackToPlan={() => navigateMode("coccion")}
+            onEnableAlerts={enableCookingAlerts}
+            onNextStep={nextCookStep}
+            onPreviousStep={previousCookStep}
+            setTimerRunning={setTimerRunning}
+            onGoToStep={goToCookStep}
+            onCompleteStep={nextCookStep}
+            onReset={resetCookMode}
+          />
+        )}
+
+        {mode === "guardados" && (
+          <SavedMenusSection
+            lang={lang}
+            menus={savedMenus}
+            onCopy={copySavedMenu}
+            onDelete={deleteMenu}
+            onOpen={loadMenu}
+            t={t}
+          />
+        )}
+      </div>
+
+      {mode !== "cocina" && <BottomNavigation mode={mode} onModeChange={handleModeChange} t={t} />}
+    </main>
+  );
+}
+
+function copySavedMenu(menu: SavedMenu) {
+  if (typeof window === "undefined" || !navigator.clipboard) return;
+
+  navigator.clipboard.writeText(buildText(menu.blocks));
+}
+
+function SavedMenusSection({
+  lang,
+  menus,
+  onCopy,
+  onDelete,
+  onOpen,
+  t,
+}: {
+  lang: Lang;
+  menus: SavedMenu[];
+  onCopy: (menu: SavedMenu) => void;
+  onDelete: (id: string) => void;
+  onOpen: (menu: SavedMenu) => void;
+  t: AppText;
+}) {
+  return (
+    <Section eyebrow={`${menus.length} ${t.saved}`} title={t.savedMenus}>
+      {menus.length === 0 && <Card tone="empty">{t.noSaved}</Card>}
+
+      <Grid>
+        {menus.map((menu) => (
+          <Card key={menu.id}>
+            <p className="text-sm font-medium text-orange-300">{t.savedMenus}</p>
+            <h3 className="mt-1 text-xl font-bold text-white">{menu.title}</h3>
+            <p className="mt-1 text-sm text-slate-400">{menu.date}</p>
+
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Button onClick={() => onOpen(menu)}>{lang === "es" ? "Abrir" : "Open"}</Button>
+              <Button onClick={() => onCopy(menu)} variant="secondary">
+                {t.copy}
+              </Button>
+              <Button onClick={() => onDelete(menu.id)} variant="danger">
+                {lang === "es" ? "Borrar" : "Delete"}
+              </Button>
+            </div>
+          </Card>
+        ))}
+      </Grid>
+    </Section>
+  );
+}
+import CookingLiveMode from "@/components/CookingLiveMode";
+import {
+  CookingWizard,
+  Input,
+  PrimaryButton,
+  ResultCards,
+  Select,
+  equipmentOptions,
+  type Blocks,
+  type CookingWizardStep,
+  type SaveMenuStatus,
+  type SelectOption,
+} from "@/components/cooking/CookingWizard";
+import { HomeScreen } from "@/components/home/HomeScreen";
+import {
+  AppHeader,
+  BottomNavigation,
+  DesktopModeTabs,
+  type Mode,
+} from "@/components/navigation/AppHeader";
+import { Button, Card, Grid, Section } from "@/components/ui";
+import { track } from "@/lib/analytics";
+import type { AnimalId, CookingMethod, CookingStep, ProductCut } from "@/lib/cookingCatalog";
+import { getCookingStepImage } from "@/lib/cookingVisuals";
+import {
+  generateCookingPlan as generateLocalCookingPlan,
+  generateCookingSteps as generateLocalCookingSteps,
+  getCutById,
+  getCutsByAnimal,
+  getDonenessOptions,
+  shouldShowThickness,
+} from "@/lib/cookingRules";
+import { ds } from "@/lib/design-system";
+import { texts, type AppText, type Lang } from "@/lib/i18n/texts";
+import { animalIdsByLabel, type Animal } from "@/lib/media/animalMedia";
+import { cutImages } from "@/lib/media/cutImages";
+import { generateParrilladaPlan } from "@/lib/parrilladaEngine";
+import { type TouchEvent, useEffect, useMemo, useRef, useState } from "react";
+
+type EngineLang = "es" | "en";
+type CookingVisualContext = {
+  animalId?: AnimalId;
+  cutId?: string;
+  method?: CookingMethod;
+};
+
+type SwipeDirection = "back" | "forward";
+type TouchPoint = {
+  x: number;
+  y: number;
+};
+
+type SavedMenu = {
+  id: string;
+  title: string;
+  date: string;
+  blocks: Blocks;
+};
+
+type CutItem = {
+  id: string;
+  name: string;
+  image: string;
+  description: string;
+};
+
+const defaultCookSteps: CookingStep[] = [
+  {
+    title: "Precalentar",
+    duration: 600,
+    description: "Precalienta la parrilla con tapa cerrada.",
+    image: getCookingStepImage({ stepTitle: "Precalentar" }),
+    tips: ["Parrilla caliente", "Tapa cerrada", "Rejillas limpias"],
+  },
+  {
+    title: "Sellar lado 1",
+    duration: 180,
+    description: "Carne en zona directa. No mover.",
+    image: getCookingStepImage({ stepTitle: "Sellar lado 1" }),
+    tips: ["No tocar", "Buscar costra", "No aplastar"],
+  },
+  {
+    title: "Reposo",
+    duration: 300,
+    description: "Reposar antes de cortar.",
+    image: getCookingStepImage({ stepTitle: "Reposo" }),
+    tips: ["No cortar al momento", "Estabilizar jugos", "Cortar después del reposo"],
+  },
+];
+
+function engineLang(lang: Lang): EngineLang {
+  return lang === "es" ? "es" : "en";
+}
+
+function hasLocalEngine(animal: Animal) {
+  return Boolean(animalIdsByLabel[animal]);
+}
+
+function getInitialDoneness(animal: Animal) {
+  return getDonenessOptions(animalIdsByLabel[animal])[0]?.id ?? "";
+}
+
+function getDonenessSelectOptions(animal: Animal, lang: Lang): SelectOption[] {
+  const labelLang = lang === "fi" ? "en" : lang;
+
+  return getDonenessOptions(animalIdsByLabel[animal]).map((option) => ({
+    value: option.id,
+    label: option.names[labelLang],
+  }));
+}
+
+function catalogLang(lang: Lang) {
+  return lang;
+}
+
+function getCutName(cut: ProductCut, lang: Lang) {
+  return cut.names[catalogLang(lang)] ?? cut.names.es;
+}
+
+function getCutDescription(cut: ProductCut, lang: Lang) {
+  return cut.notes?.[catalogLang(lang)] ?? cut.error[engineLang(lang)] ?? "";
+}
+
+function getCutItems(animal: Animal, lang: Lang): CutItem[] {
+  return getCutsByAnimal(animalIdsByLabel[animal]).map((cut) => ({
+    id: cut.id,
+    name: getCutName(cut, lang),
+    image: cutImages[cut.id] ?? "/cuts/placeholder.jpg",
+    description: getCutDescription(cut, lang),
+  }));
+}
+
+function getAnimalPreview(animal: Animal, lang: Lang) {
+  return getCutItems(animal, lang)
+    .slice(0, 2)
+    .map((cut) => cut.name)
+    .join(", ");
+}
+
+function isInteractiveSwipeTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false;
+
+  return Boolean(target.closest("input, select, textarea, a, label"));
+}
+
+function isMobileSwipeViewport() {
+  if (typeof window === "undefined") return false;
+
+  return window.innerWidth < 768;
+}
+
+function getCookingVisualContext(animal: Animal, cutId?: string): CookingVisualContext {
+  const cut = cutId ? getCutById(cutId) : undefined;
+
+  return {
+    animalId: animalIdsByLabel[animal],
+    cutId,
+    method: cut?.defaultMethod,
+  };
+}
+
+function withCookingStepImages(steps: CookingStep[], context: CookingVisualContext): CookingStep[] {
+  return steps.map((step) => ({
+    ...step,
+    image: getCookingStepImage({
+      animalId: context.animalId,
+      cutId: context.cutId,
+      method: context.method,
+      stepTitle: `${step.title} ${step.description}`,
+    }),
+  }));
+}
+
+function parseResponse(text: string): Blocks {
+  const blocks: Blocks = {};
+  const sections = text.split(/\n(?=[A-ZÁÉÍÓÚ]+)/);
+
+  sections.forEach((section) => {
+    const [title, ...rest] = section.trim().split("\n");
+    const content = rest.join("\n").trim();
+    if (title && content) blocks[title.trim()] = content;
+  });
+
+  return blocks;
+}
+
+function buildCookStepsFromPlan(blocks: Blocks): CookingStep[] {
+  const text = blocks.PASOS || blocks.STEPS || blocks.ORDEN || blocks.ORDER || "";
+  const lines = text
+    .split("\n")
+    .map((line) => line.replace(/^[-•*\d.)\s]+/, "").trim())
+    .filter(Boolean);
+
+  if (lines.length === 0) return defaultCookSteps;
+
+  return lines.map((line) => {
+    const lower = line.toLowerCase();
+    let duration = 300;
+    const image = getCookingStepImage({ stepTitle: line });
+
+    if (lower.includes("precal") || lower.includes("preheat")) {
+      duration = 600;
+    }
+
+    if (lower.includes("indirect")) {
+      duration = 300;
+    }
+
+    if (lower.includes("repos") || lower.includes("rest")) {
+      duration = 300;
+    }
+
+    return {
+      title: line.length > 32 ? line.slice(0, 32) + "..." : line,
+      duration,
+      description: line,
+      image,
+      tips: [],
+    };
+  });
+}
+
+function buildText(blocks: Blocks) {
+  return Object.keys(blocks)
+    .map((key) => `${key}\n${blocks[key]}`)
+    .join("\n\n");
+}
+
+function localeForLang(lang: Lang) {
+  if (lang === "en") return "en-US";
+  if (lang === "fi") return "fi-FI";
+  return "es-ES";
+}
+
+function parsePositiveInt(value: string) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+export default function Home() {
+  const [lang, setLang] = useState<Lang>("es");
+  const t = texts[lang];
+
+  const [mode, setMode] = useState<Mode>("inicio");
+  const [cookingStep, setCookingStep] = useState<CookingWizardStep>("animal");
+
+  const [animal, setAnimal] = useState<Animal>("Vacuno");
+  const [cut, setCut] = useState("");
+  const [weight, setWeight] = useState("1");
+  const [thickness, setThickness] = useState("5");
+  const [doneness, setDoneness] = useState("rare");
+  const [equipment, setEquipment] = useState("parrilla gas");
+
+  const [people, setPeople] = useState("6");
+  const [eventType, setEventType] = useState("cena con amigos");
+  const [menuMeats, setMenuMeats] = useState("chuletón, secreto ibérico");
+  const [sides, setSides] = useState("patatas, ensalada, chimichurri");
+  const [budget, setBudget] = useState("200");
+  const [difficulty, setDifficulty] = useState("medio");
+
+  const [parrilladaPeople, setParrilladaPeople] = useState("6");
+  const [serveTime, setServeTime] = useState("18:00");
+  const [parrilladaProducts, setParrilladaProducts] = useState(
+    "costillas, chuletón, secreto ibérico, maíz",
+  );
+  const [parrilladaSides, setParrilladaSides] = useState("patatas, ensalada, chimichurri");
+
+  const [blocks, setBlocks] = useState<Blocks>({});
+  const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
+  const [savedMenus, setSavedMenus] = useState<SavedMenu[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [saveMenuStatus, setSaveMenuStatus] = useState<SaveMenuStatus>("idle");
+  const [saveMenuMessage, setSaveMenuMessage] = useState("");
+
+  const [cookSteps, setCookSteps] = useState<CookingStep[]>(defaultCookSteps);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(defaultCookSteps[0].duration);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [cookingAlertsEnabled, setCookingAlertsEnabled] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState<
+    NotificationPermission | "unsupported"
+  >("default");
+  const [cookingAlertMessage, setCookingAlertMessage] = useState("");
+  const touchStartRef = useRef<TouchPoint | null>(null);
+  const modeHistoryRef = useRef<Mode[]>([]);
+
+  const cuts = useMemo(() => getCutItems(animal, lang), [animal, lang]);
+  const selectedCut = cuts.find((item) => item.id === cut);
+
+  const currentDonenessOptions = getDonenessSelectOptions(animal, lang);
+  const showThickness = cut ? shouldShowThickness(cut) : true;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const stored = localStorage.getItem("parrillero_saved_menus");
+    if (stored) setSavedMenus(JSON.parse(stored) as SavedMenu[]);
+  }, []);
+
+  useEffect(() => {
+    if (!timerRunning) return;
+
+    const interval = setInterval(() => {
+      setTimeLeft((current) => {
+        if (current <= 1) {
+          clearInterval(interval);
+          setTimerRunning(false);
+          notifyStepFinished();
+
+          setTimeout(() => {
+            setCurrentStep((previous) => {
+              const next = Math.min(previous + 1, cookSteps.length - 1);
+              setTimeLeft(cookSteps[next]?.duration ?? 0);
+              return next;
+            });
+          }, 800);
+
+          return 0;
+        }
+
+        return current - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [timerRunning, currentStep, cookSteps.length]);
+
+  useEffect(() => {
+    if (mode === "coccion") setCookingStep("animal");
+  }, [mode]);
+
+  function notifyStepFinished() {
+    if (typeof window === "undefined") return;
+
+    const nextStep = cookSteps[Math.min(currentStep + 1, cookSteps.length - 1)];
+    const message = nextStep ? `Siguiente paso: ${nextStep.title}` : "Plan de cocción completado.";
+
+    try {
+      const audio = new Audio("/sounds/beep.mp3");
+      audio.play().catch(() => {});
+    } catch {}
+
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+
+    setCookingAlertMessage(message);
+    window.setTimeout(() => setCookingAlertMessage(""), 5000);
+
+    if (
+      cookingAlertsEnabled &&
+      "Notification" in window &&
+      Notification.permission === "granted"
+    ) {
+      try {
+        new Notification("Parrillero Pro", { body: message });
+      } catch {}
+    }
+  }
+
+  async function enableCookingAlerts() {
+    setCookingAlertsEnabled(true);
+
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      setNotificationPermission("unsupported");
+      return;
+    }
+
+    if (Notification.permission === "default") {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      return;
+    }
+
+    setNotificationPermission(Notification.permission);
+  }
+
+  function updateSavedMenus(nextMenus: SavedMenu[]) {
+    setSavedMenus(nextMenus);
+    if (typeof window === "undefined") return;
+
+    localStorage.setItem("parrillero_saved_menus", JSON.stringify(nextMenus));
+  }
+
+  async function saveCurrentMenu() {
+    if (typeof window === "undefined") return;
+    if (Object.keys(blocks).length === 0) return;
+
+    const now = new Date();
+    const menuName = `Menú Parrillero - ${now.toLocaleDateString(localeForLang(lang))}`;
+
+    setSaveMenuStatus("saving");
+    setSaveMenuMessage("");
+
+    try {
+      const savedMenu = await saveGeneratedMenu({
+        name: menuName,
+        lang,
+        people: parsePositiveInt(people),
+        data: {
+          type: "generated_menu",
+          generatedAt: now.toISOString(),
+          inputs: {
+            people,
+            eventType,
+            products: menuMeats,
+            sides,
+            budget,
+            difficulty,
+            equipment,
+          },
+          blocks,
+        },
+      });
+
+      const newMenu: SavedMenu = {
+        id: savedMenu.id,
+        title: savedMenu.name,
+        date: new Date(savedMenu.created_at).toLocaleDateString(localeForLang(lang)),
+        blocks,
+      };
+
+      updateSavedMenus([newMenu, ...savedMenus.filter((menu) => menu.id !== newMenu.id)]);
+      setSaveMenuStatus("success");
+      setSaveMenuMessage(t.menuSaved);
+    } catch {
+      setSaveMenuStatus("error");
+      setSaveMenuMessage(t.menuSaveError);
+    }
+  }
+
+  function deleteMenu(id: string) {
+    updateSavedMenus(savedMenus.filter((menu) => menu.id !== id));
+  }
+
+  function loadMenu(menu: SavedMenu) {
+    setBlocks(menu.blocks);
+    navigateMode("menu");
+  }
+
+  function handleAnimalChange(selectedAnimal: Animal) {
+    setAnimal(selectedAnimal);
+    setCut("");
+    setDoneness(getInitialDoneness(selectedAnimal));
+    setBlocks({});
+    setCheckedItems({});
+    setCookingStep("cut");
+    track({ name: "animal_selected", animal: selectedAnimal, lang });
+  }
+
+  function handleCutChange(selectedCutId: string) {
+    setCut(selectedCutId);
+    setBlocks({});
+    setCheckedItems({});
+    setCookingStep("details");
+    track({ name: "cut_selected", animal, cutId: selectedCutId, lang });
+  }
+
+  async function callAI(
+    message: string,
+    createCookSteps = false,
+    visualContext?: CookingVisualContext,
+  ): Promise<boolean> {
+    setLoading(true);
+    setBlocks({});
+    setCheckedItems({});
+    setSaveMenuStatus("idle");
+    setSaveMenuMessage("");
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+      });
+
+      if (!res.ok) {
+        if (createCookSteps) {
+          track({ name: "cooking_failure", where: "ai_http", status: res.status });
+        }
+        setLoading(false);
+        return false;
+      }
+
+      const data = await res.json();
+      const parsed = parseResponse(data.reply);
+
+      setBlocks(parsed);
+
+      if (createCookSteps) {
+        const baseSteps = buildCookStepsFromPlan(parsed);
+        const steps = visualContext ? withCookingStepImages(baseSteps, visualContext) : baseSteps;
+        setCookSteps(steps);
+        setCurrentStep(0);
+        setTimeLeft(steps[0].duration);
+        setTimerRunning(false);
+      }
+    } catch (e) {
+      if (createCookSteps) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (e instanceof TypeError) {
+          track({ name: "cooking_failure", where: "ai_network", message: msg });
+        } else {
+          track({ name: "cooking_failure", where: "ai_exception", message: msg });
+        }
+      }
+      setLoading(false);
+      return false;
+    }
+
+    setLoading(false);
+    return true;
+  }
+
+  async function generateCookingPlan() {
+    const visualContext = getCookingVisualContext(animal, cut);
+    const input = {
+      animal,
+      cut,
+      weightKg: weight,
+      thicknessCm: showThickness ? thickness : "2",
+      doneness,
+      equipment,
+      language: engineLang(lang),
+    };
+
+    const localPlan = generateLocalCookingPlan(input);
+    const localSteps = generateLocalCookingSteps(input);
+
+    if (localPlan && localSteps) {
+      track({ name: "cooking_plan_result", path: "local" });
+      const visualSteps = withCookingStepImages(localSteps, visualContext);
+      setBlocks(localPlan);
+      setCheckedItems({});
+      setCookSteps(visualSteps);
+      setCurrentStep(0);
+      setTimeLeft(visualSteps[0].duration);
+      setTimerRunning(false);
+      setCookingStep("result");
+      return;
+    }
+
+    track({ name: "cooking_ai_fallback" });
+    const ok = await callAI(
+      `
+Language: ${engineLang(lang) === "es" ? "Spanish" : "English"}.
+Animal: ${animal}
+Cut: ${selectedCut?.name ?? cut}
+Weight: ${weight} kg
+Thickness: ${showThickness ? thickness : "not relevant"} cm
+Doneness: ${doneness}
+Equipment: ${equipment}
+
+Return exact block titles:
+SETUP
+TIEMPOS
+TEMPERATURA
+PASOS
+ERROR
+`,
+      true,
+      visualContext,
+    );
+    if (ok) {
+      track({ name: "cooking_plan_result", path: "ai" });
+    }
+    setCookingStep("result");
+  }
+
+  async function generateMenuPlan() {
+    await callAI(`
+Language: ${engineLang(lang) === "es" ? "Spanish" : "English"}.
+
+Personas / People: ${people}
+Tipo de evento / Event type: ${eventType}
+Carnes/productos / Products: ${menuMeats}
+Acompañamientos / Sides: ${sides}
+Presupuesto / Budget: ${budget} €
+Nivel / Difficulty: ${difficulty}
+Equipo / Equipment: ${equipment}
+
+If Spanish:
+MENU
+CANTIDADES
+TIMING
+ORDEN
+COMPRA
+ERROR
+
+If English:
+MENU
+QUANTITIES
+TIMING
+ORDER
+SHOPPING
+ERROR
+`);
+  }
+
+  function generateParrillada() {
+    const plan = generateParrilladaPlan({
+      people: parrilladaPeople,
+      serveTime,
+      products: parrilladaProducts,
+      sides: parrilladaSides,
+      equipment,
+      language: engineLang(lang),
+    });
+
+    setBlocks(plan);
+    setCheckedItems({});
+  }
+
+  function nextCookStep() {
+    const next = Math.min(currentStep + 1, cookSteps.length - 1);
+    setCurrentStep(next);
+    setTimeLeft(cookSteps[next].duration);
+    setTimerRunning(false);
+  }
+
+  function previousCookStep() {
+    const previous = Math.max(currentStep - 1, 0);
+    setCurrentStep(previous);
+    setTimeLeft(cookSteps[previous].duration);
+    setTimerRunning(false);
+  }
+
+  function goToCookStep(stepIndex: number) {
+    const next = Math.max(0, Math.min(stepIndex, cookSteps.length - 1));
+    setCurrentStep(next);
+    setTimeLeft(cookSteps[next].duration);
+    setTimerRunning(false);
+  }
+
+  function resetCookMode() {
+    setCurrentStep(0);
+    setTimeLeft(cookSteps[0].duration);
+    setTimerRunning(false);
+  }
+
+  function handleLanguageChange(nextLang: Lang) {
+    setLang(nextLang);
+    setBlocks({});
+    setCheckedItems({});
+  }
+
+  function navigateMode(nextMode: Mode, trackHistory = true) {
+    if (nextMode === mode) return;
+    if (trackHistory) modeHistoryRef.current = [...modeHistoryRef.current.slice(-8), mode];
+    if (nextMode === "coccion") setCookingStep("animal");
+    setMode(nextMode);
+  }
+
+  function handleModeChange(nextMode: Mode) {
+    navigateMode(nextMode);
+  }
+
+  function handleSwipeNavigation(direction: SwipeDirection) {
+    if (direction === "back") {
+      if (mode === "coccion") {
+        if (cookingStep === "result") {
+          setCookingStep("details");
+          return;
+        }
+
+        if (cookingStep === "details") {
+          setCookingStep("cut");
+          return;
+        }
+
+        if (cookingStep === "cut") {
+          setCookingStep("animal");
+          return;
+        }
+
+        if (cookingStep === "animal") {
+          return;
+        }
+
+        return;
+      }
+
+      if (modeHistoryRef.current.length > 0) {
+        const previousMode = modeHistoryRef.current[modeHistoryRef.current.length - 1];
+        modeHistoryRef.current = modeHistoryRef.current.slice(0, -1);
+        navigateMode(previousMode, false);
+      }
+
+      return;
+    }
+
+    if (mode !== "coccion") return;
+
+    if (cookingStep === "animal" && animal) {
+      setCookingStep("cut");
+      return;
+    }
+
+    if (cookingStep === "cut" && selectedCut) {
+      setCookingStep("details");
+    }
+  }
+
+  function handleTouchStart(event: TouchEvent<HTMLElement>) {
+    if (!isMobileSwipeViewport() || isInteractiveSwipeTarget(event.target)) {
+      touchStartRef.current = null;
+      return;
+    }
+
+    const touch = event.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  }
+
+  function handleTouchEnd(event: TouchEvent<HTMLElement>) {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+
+    if (!start || !isMobileSwipeViewport() || isInteractiveSwipeTarget(event.target)) return;
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    const horizontalDistance = Math.abs(deltaX);
+    const verticalDistance = Math.abs(deltaY);
+
+    if (horizontalDistance < 60 || horizontalDistance <= verticalDistance) return;
+
+    handleSwipeNavigation(deltaX > 0 ? "back" : "forward");
+  }
+
+  return (
+    <main
+      className={`${ds.shell.page} px-3 pt-2 !pb-[max(9rem,calc(6.75rem+env(safe-area-inset-bottom,0px)))] sm:px-4 sm:pt-5 md:!pb-28`}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      <div className={ds.shell.container}>
+        <AppHeader lang={lang} onLangChange={handleLanguageChange} t={t} />
+        <DesktopModeTabs mode={mode} onModeChange={handleModeChange} t={t} />
+
+        {mode === "inicio" && (
+          <HomeScreen savedMenusCount={savedMenus.length} t={t} onModeChange={handleModeChange} />
+        )}
+
+        {mode === "coccion" && (
+          <CookingWizard
+            animal={animal}
+            cookingStep={cookingStep}
+            currentDonenessOptions={currentDonenessOptions}
+            cut={cut}
+            cuts={cuts}
+            equipment={equipment}
+            generateCookingPlan={generateCookingPlan}
+            getAnimalPreview={getAnimalPreview}
+            handleAnimalChange={handleAnimalChange}
+            handleCutChange={handleCutChange}
+            hasLocalEngine={hasLocalEngine}
+            lang={lang}
+            loading={loading}
+            selectedCut={selectedCut}
+            saveMenuMessage={saveMenuMessage}
+            saveMenuStatus={saveMenuStatus}
+            setCookingStep={setCookingStep}
+            setDoneness={setDoneness}
+            setEquipment={setEquipment}
+            setMode={setMode}
+            setTimerRunning={setTimerRunning}
+            setThickness={setThickness}
+            setWeight={setWeight}
+            showThickness={showThickness}
+            onSaveMenu={saveCurrentMenu}
+            t={t}
+            weight={weight}
+            thickness={thickness}
+            doneness={doneness}
+            blocks={blocks}
+            checkedItems={checkedItems}
+            setCheckedItems={setCheckedItems}
+          />
+        )}
+
+        {mode === "menu" && (
+          <Grid variant="split">
+            <div className={ds.panel.form}>
+              <h2 className="text-xl font-bold">{t.createMenu}</h2>
+
+              <Input label={t.people} value={people} onChange={setPeople} placeholder="Ej: 6" />
+              <Select
+                label={t.eventType}
+                value={eventType}
+                onChange={setEventType}
+                options={[
+                  "cena con amigos",
+                  "comida familiar",
+                  "barbacoa informal",
+                  "celebración especial",
+                  "menú premium",
+                ]}
+              />
+              <Input
+                label={t.meats}
+                value={menuMeats}
+                onChange={setMenuMeats}
+                placeholder="Ej: chuletón, secreto, maíz"
+              />
+              <Input
+                label={t.sides}
+                value={sides}
+                onChange={setSides}
+                placeholder="Ej: patatas, ensalada, chimichurri"
+              />
+              <Input label={t.budget} value={budget} onChange={setBudget} placeholder="Ej: 200" />
+              <Select
+                label={t.difficulty}
+                value={difficulty}
+                onChange={setDifficulty}
+                options={["fácil", "medio", "avanzado"]}
+              />
+              <Select
+                label={t.equipment}
+                value={equipment}
+                onChange={setEquipment}
+                options={equipmentOptions}
+              />
+
+              <PrimaryButton
+                onClick={generateMenuPlan}
+                loading={loading}
+                text={t.createMenu}
+                loadingText={t.creating}
+              />
+
+              {(blocks.MENU || blocks.COMPRA || blocks.SHOPPING) && (
+                <Button
+                  className="px-5 py-4 font-bold"
+                  fullWidth
+                  onClick={saveCurrentMenu}
+                  disabled={saveMenuStatus === "saving"}
+                  variant="outlineAccent"
+                >
+                  {saveMenuStatus === "saving" ? t.savingMenu : t.saveMenu}
+                </Button>
+              )}
+
+              {saveMenuMessage && (
+                <p
+                  className={
+                    saveMenuStatus === "error"
+                      ? "text-sm text-red-300"
+                      : "text-sm text-emerald-300"
+                  }
+                >
+                  {saveMenuMessage}
+                </p>
+              )}
+            </div>
+
+            <ResultCards
+              blocks={blocks}
+              loading={loading}
+              checkedItems={checkedItems}
+              setCheckedItems={setCheckedItems}
+              onSaveMenu={blocks.MENU || blocks.COMPRA || blocks.SHOPPING ? saveCurrentMenu : undefined}
+              saveMenuStatus={saveMenuStatus}
+              saveMenuMessage={saveMenuMessage}
+              t={t}
+            />
+          </Grid>
+        )}
+
+        {mode === "parrillada" && (
+          <Grid variant="split">
+            <div className={ds.panel.form}>
+              <h2 className="text-xl font-bold">{t.parrilladaPro}</h2>
+
+              <Input
+                label={t.people}
+                value={parrilladaPeople}
+                onChange={setParrilladaPeople}
+                placeholder="Ej: 6"
+              />
+              <Input
+                label={t.serveTime}
+                value={serveTime}
+                onChange={setServeTime}
+                placeholder="Ej: 18:00"
+              />
+              <Input
+                label={t.products}
+                value={parrilladaProducts}
+                onChange={setParrilladaProducts}
+                placeholder="Ej: costillas, chuletón, secreto"
+              />
+              <Input
+                label={t.sides}
+                value={parrilladaSides}
+                onChange={setParrilladaSides}
+                placeholder="Ej: patatas, ensalada, chimichurri"
+              />
+              <Select
+                label={t.equipment}
+                value={equipment}
+                onChange={setEquipment}
+                options={equipmentOptions}
+              />
+
+              <Button className="px-5 py-4 font-bold" fullWidth onClick={generateParrillada}>
+                {t.createParrillada}
+              </Button>
+            </div>
+
+            <ResultCards
+              blocks={blocks}
+              loading={loading}
+              checkedItems={checkedItems}
+              setCheckedItems={setCheckedItems}
+              t={t}
+            />
+          </Grid>
+        )}
+
+        {mode === "cocina" && (
+          <CookingLiveMode
+            context={[animal, selectedCut?.name, equipment].filter(Boolean).join(" · ")}
+            lang={lang}
+            cookSteps={cookSteps}
+            currentStep={currentStep}
+            cookingAlertsEnabled={cookingAlertsEnabled}
+            cookingAlertMessage={cookingAlertMessage}
+            hasCookingPlan={Boolean(blocks.PASOS || blocks.STEPS)}
+            timeLeft={timeLeft}
+            timerRunning={timerRunning}
+            notificationPermission={notificationPermission}
+            onBackToPlan={() => navigateMode("coccion")}
+            onEnableAlerts={enableCookingAlerts}
+            onNextStep={nextCookStep}
+            onPreviousStep={previousCookStep}
+            setTimerRunning={setTimerRunning}
+            onGoToStep={goToCookStep}
+            onCompleteStep={nextCookStep}
+            onReset={resetCookMode}
+          />
+        )}
+
+        {mode === "guardados" && (
+          <SavedMenusSection
+            lang={lang}
+            menus={savedMenus}
+            onCopy={copySavedMenu}
+            onDelete={deleteMenu}
+            onOpen={loadMenu}
+            t={t}
+          />
+        )}
+      </div>
+
+      {mode !== "cocina" && <BottomNavigation mode={mode} onModeChange={handleModeChange} t={t} />}
+    </main>
+  );
+}
+
+function copySavedMenu(menu: SavedMenu) {
+  if (typeof window === "undefined" || !navigator.clipboard) return;
+
+  navigator.clipboard.writeText(buildText(menu.blocks));
+}
+
+function SavedMenusSection({
+  lang,
+  menus,
+  onCopy,
+  onDelete,
+  onOpen,
+  t,
+}: {
+  lang: Lang;
+  menus: SavedMenu[];
+  onCopy: (menu: SavedMenu) => void;
+  onDelete: (id: string) => void;
+  onOpen: (menu: SavedMenu) => void;
+  t: AppText;
+}) {
+  return (
+    <Section eyebrow={`${menus.length} ${t.saved}`} title={t.savedMenus}>
+      {menus.length === 0 && <Card tone="empty">{t.noSaved}</Card>}
+
+      <Grid>
+        {menus.map((menu) => (
+          <Card key={menu.id}>
+            <p className="text-sm font-medium text-orange-300">{t.savedMenus}</p>
+            <h3 className="mt-1 text-xl font-bold text-white">{menu.title}</h3>
+            <p className="mt-1 text-sm text-slate-400">{menu.date}</p>
+
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Button onClick={() => onOpen(menu)}>{lang === "es" ? "Abrir" : "Open"}</Button>
+              <Button onClick={() => onCopy(menu)} variant="secondary">
+                {t.copy}
+              </Button>
+              <Button onClick={() => onDelete(menu.id)} variant="danger">
+                {lang === "es" ? "Borrar" : "Delete"}
+              </Button>
+            </div>
+          </Card>
+        ))}
+      </Grid>
+    </Section>
+  );
+}
+
+import { track } from "@/lib/analytics";
+import { saveGeneratedMenu } from "@/app/actions/savedMenus";
+import CookingLiveMode from "@/components/CookingLiveMode";
+import {
+  CookingWizard,
+  Input,
+  PrimaryButton,
+  ResultCards,
+  Select,
+  equipmentOptions,
+  type Blocks,
+  type CookingWizardStep,
+  type SaveMenuStatus,
+  type SelectOption,
+} from "@/components/cooking/CookingWizard";
+import { HomeScreen } from "@/components/home/HomeScreen";
+import {
+  AppHeader,
+  BottomNavigation,
+  DesktopModeTabs,
+  type Mode,
+} from "@/components/navigation/AppHeader";
+import { Button, Card, Grid, Section } from "@/components/ui";
+import {
+  generateCookingPlan as generateLocalCookingPlan,
+  generateCookingSteps as generateLocalCookingSteps,
+  getCutById,
+  getCutsByAnimal,
+  getDonenessOptions,
+  shouldShowThickness,
+} from "@/lib/cookingRules";
+import type {
+  AnimalId,
+  CookingMethod,
+  CookingStep,
+  ProductCut,
+} from "@/lib/cookingCatalog";
+import { getCookingStepImage } from "@/lib/cookingVisuals";
+import { ds } from "@/lib/design-system";
+import { texts, type Lang } from "@/lib/i18n/texts";
+import { animalIdsByLabel, type Animal } from "@/lib/media/animalMedia";
+import { cutImages } from "@/lib/media/cutImages";
+import { generateParrilladaPlan } from "@/lib/parrilladaEngine";
+import { type TouchEvent, useEffect, useMemo, useRef, useState } from "react";
+
+type EngineLang = "es" | "en";
+type CookingVisualContext = {
+  animalId?: AnimalId;
+  cutId?: string;
+  method?: CookingMethod;
+};
+
+type SwipeDirection = "back" | "forward";
+type TouchPoint = {
+  x: number;
+  y: number;
+};
+
+type SavedMenu = {
+  id: string;
+  title: string;
+  date: string;
+  blocks: Blocks;
+};
+
+type CutItem = {
+  id: string;
+  name: string;
+  image: string;
+  description: string;
+};
 
 const defaultCookSteps: CookingStep[] = [
   {
@@ -395,18 +3206,6 @@ function withCookingStepImages(steps: CookingStep[], context: CookingVisualConte
   }));
 }
 
-function getStepLabel(title: string) {
-  const value = title.toLowerCase();
-
-  if (value.includes("precal") || value.includes("preheat")) return "Preheat";
-  if (value.includes("sell") || value.includes("sear")) return "Direct heat";
-  if (value.includes("indirect")) return "Indirect";
-  if (value.includes("repos") || value.includes("rest")) return "Rest";
-  if (value.includes("grasa") || value.includes("fat")) return "Fat cap";
-
-  return "Cooking";
-}
-
 function parseResponse(text: string): Blocks {
   const blocks: Blocks = {};
   const sections = text.split(/\n(?=[A-ZÁÉÍÓÚ]+)/);
@@ -455,12 +3254,6 @@ function buildCookStepsFromPlan(blocks: Blocks): CookingStep[] {
 
 function buildText(blocks: Blocks) {
   return Object.keys(blocks).map((key) => `${key}\n${blocks[key]}`).join("\n\n");
-}
-
-function formatTime(seconds: number) {
-  const min = Math.floor(seconds / 60);
-  const sec = seconds % 60;
-  return `${min}:${sec.toString().padStart(2, "0")}`;
 }
 
 function localeForLang(lang: Lang) {
@@ -984,8 +3777,10 @@ ERROR
             cuts={cuts}
             equipment={equipment}
             generateCookingPlan={generateCookingPlan}
+            getAnimalPreview={getAnimalPreview}
             handleAnimalChange={handleAnimalChange}
             handleCutChange={handleCutChange}
+            hasLocalEngine={hasLocalEngine}
             lang={lang}
             loading={loading}
             selectedCut={selectedCut}
@@ -1124,7 +3919,7 @@ function copySavedMenu(menu: SavedMenu) {
   navigator.clipboard.writeText(buildText(menu.blocks));
 }
 
-/* COMPONENTS */
+COMPONENTS
 
 function CookingStepTransition({ stepKey, children }: { stepKey: CookingWizardStep; children: ReactNode }) {
   const [entered, setEntered] = useState(false);
@@ -2414,3 +5209,4 @@ function Select({ label, value, onChange, options }: { label: string; value: str
     </div>
   );
 }
+*/

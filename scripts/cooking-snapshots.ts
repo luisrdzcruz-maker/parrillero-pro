@@ -9,15 +9,26 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { animalCatalog, type AnimalId, type CookingInput, type CookingPlan, type CookingStep } from "../lib/cookingCatalog";
-import { generateCookingPlan, generateCookingSteps, getCutsByAnimal, getDonenessOptions } from "../lib/cookingEngine";
+import {
+  animalCatalog,
+  type AnimalId,
+  type CookingInput,
+  type CookingPlan,
+  type CookingStep,
+} from "../lib/cookingCatalog";
+import {
+  generateCookingPlan,
+  generateCookingSteps,
+  getCutsByAnimal,
+  getDonenessOptions,
+} from "../lib/cookingEngine";
 
 const SNAPSHOT_VERSION = 1 as const;
 const SNAPSHOT_PATH = join(process.cwd(), "tests", "snapshots", "cooking-engine.json");
 
 const THICKNESS_CM = { thin: "2", medium: "5", thick: "8" } as const;
 const EQUIPMENT = ["parrilla gas", "parrilla carbón", "kamado", "cocina interior"] as const;
-const LANGUAGE: "es" = "es";
+const LANGUAGE = "es" as const;
 const WEIGHT_KG = "1";
 
 type CaseRecord = {
@@ -37,7 +48,13 @@ function donenessListForAnimal(animalId: AnimalId): string[] {
   return ["medium"];
 }
 
-function caseKey(animalId: AnimalId, cutId: string, doneness: string, thicknessCm: string, equipment: string): string {
+function caseKey(
+  animalId: AnimalId,
+  cutId: string,
+  doneness: string,
+  thicknessCm: string,
+  equipment: string,
+): string {
   return [animalId, cutId, doneness, thicknessCm, equipment].join("|");
 }
 
@@ -121,11 +138,23 @@ function printDiffDetail(current: CaseRecord, baseline: CaseRecord | undefined) 
   const sBase = JSON.stringify(baseline, null, 2);
   if (sCur.length < 2000 && sBase.length < 2000) {
     console.log("  --- baseline");
-    console.log(sBase.split("\n").map((l) => "  " + l).join("\n"));
+    console.log(
+      sBase
+        .split("\n")
+        .map((l) => "  " + l)
+        .join("\n"),
+    );
     console.log("  +++ current");
-    console.log(sCur.split("\n").map((l) => "  " + l).join("\n"));
+    console.log(
+      sCur
+        .split("\n")
+        .map((l) => "  " + l)
+        .join("\n"),
+    );
   } else {
-    console.log("  (large payload; use a JSON diff on this case or `git diff` after a dry update.)");
+    console.log(
+      "  (large payload; use a JSON diff on this case or `git diff` after a dry update.)",
+    );
   }
 }
 
@@ -149,7 +178,9 @@ function main() {
     return;
   }
   if (loaded.version !== SNAPSHOT_VERSION) {
-    console.error(`Snapshot version ${loaded.version} != ${SNAPSHOT_VERSION}. Re-run with --update after reviewing.`);
+    console.error(
+      `Snapshot version ${loaded.version} != ${SNAPSHOT_VERSION}. Re-run with --update after reviewing.`,
+    );
     process.exitCode = 1;
     return;
   }

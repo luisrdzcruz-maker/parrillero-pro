@@ -6,6 +6,7 @@ Goal:
 Make the app feel like a paid native mobile app.
 
 Rules:
+
 - Preserve all business logic.
 - Do NOT change Supabase, API routes, cooking engine or data models.
 - Do NOT run terminal commands.
@@ -15,6 +16,7 @@ Rules:
 - Keep animations subtle and performant.
 
 Interaction principles:
+
 - Mobile-first.
 - Fast feedback.
 - No flashy animations.
@@ -24,6 +26,7 @@ Interaction principles:
 - Transitions should guide, not distract.
 
 Tasks:
+
 1. Add subtle entrance animations to screen sections.
 2. Add tap feedback to all primary interactive cards/buttons.
 3. Add selected-card feedback:

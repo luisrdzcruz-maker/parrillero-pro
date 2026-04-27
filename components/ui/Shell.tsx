@@ -17,11 +17,7 @@ export function Shell({ children, className = "", ...props }: ShellProps) {
   );
 }
 
-export function ShellContainer({
-  children,
-  className = "",
-  ...props
-}: ShellContainerProps) {
+export function ShellContainer({ children, className = "", ...props }: ShellContainerProps) {
   return (
     <div className={cx(ds.shell.container, className)} {...props}>
       {children}

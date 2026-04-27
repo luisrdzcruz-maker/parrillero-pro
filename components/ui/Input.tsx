@@ -6,13 +6,7 @@ type InputProps = InputHTMLAttributes<HTMLInputElement> & {
   label?: string;
 };
 
-export function Input({
-  className = "",
-  error,
-  id,
-  label,
-  ...props
-}: InputProps) {
+export function Input({ className = "", error, id, label, ...props }: InputProps) {
   const inputId = id ?? (label ? label.toLowerCase().replace(/\s+/g, "-") : undefined);
 
   return (
@@ -24,7 +18,11 @@ export function Input({
       )}
 
       <input
-        className={cx(ds.input.field, error && "border-red-500/50 focus:border-red-500/60 focus:ring-red-500/10", className)}
+        className={cx(
+          ds.input.field,
+          error && "border-red-500/50 focus:border-red-500/60 focus:ring-red-500/10",
+          className,
+        )}
         id={inputId}
         {...props}
       />

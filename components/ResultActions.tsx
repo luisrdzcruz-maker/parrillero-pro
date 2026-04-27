@@ -115,7 +115,7 @@ export default function ResultActions({
         setShareStatus("shared");
       } else if (navigator.clipboard) {
         await navigator.clipboard.writeText(
-          [shareData.title, shareData.text, shareData.url].filter(Boolean).join("\n\n")
+          [shareData.title, shareData.text, shareData.url].filter(Boolean).join("\n\n"),
         );
         setShareStatus("copied");
       } else {
@@ -137,9 +137,7 @@ export default function ResultActions({
           <Button
             aria-busy={status === "saving"}
             className={
-              compact || secondary
-                ? "px-3 py-2 text-xs font-bold"
-                : "px-5 py-3 font-black"
+              compact || secondary ? "px-3 py-2 text-xs font-bold" : "px-5 py-3 font-black"
             }
             onClick={handleSavePlan}
             disabled={status === "saving" || status === "success"}
@@ -150,7 +148,11 @@ export default function ResultActions({
         )}
 
         {actions.onCopy && (
-          <Button className={compact ? "px-3 py-2 text-xs" : undefined} onClick={actions.onCopy} variant="secondary">
+          <Button
+            className={compact ? "px-3 py-2 text-xs" : undefined}
+            onClick={actions.onCopy}
+            variant="secondary"
+          >
             {t.copy}
           </Button>
         )}
@@ -182,28 +184,31 @@ export default function ResultActions({
           </Badge>
         )}
 
-        {status === "success" && (
-          <Badge tone="success">
-            {isEnglish ? "Saved" : "Guardado"}
-          </Badge>
-        )}
+        {status === "success" && <Badge tone="success">{isEnglish ? "Saved" : "Guardado"}</Badge>}
 
         {status === "error" && (
-          <Badge tone="danger">
-            {isEnglish ? "Could not save" : "No se pudo guardar"}
-          </Badge>
+          <Badge tone="danger">{isEnglish ? "Could not save" : "No se pudo guardar"}</Badge>
         )}
 
-        {!compact && shareFeedback && status !== "saving" && status !== "success" && status !== "error" && (
-          <Badge className="transition-all duration-200" tone="success">
-            {shareFeedback}
-          </Badge>
-        )}
+        {!compact &&
+          shareFeedback &&
+          status !== "saving" &&
+          status !== "success" &&
+          status !== "error" && (
+            <Badge className="transition-all duration-200" tone="success">
+              {shareFeedback}
+            </Badge>
+          )}
       </div>
 
       {!compact && actions.onStartCooking && (
         <div className="pt-3 border-t border-white/5">
-          <Button className="py-3 font-black" fullWidth onClick={actions.onStartCooking} variant="outlineAccent">
+          <Button
+            className="py-3 font-black"
+            fullWidth
+            onClick={actions.onStartCooking}
+            variant="outlineAccent"
+          >
             {t.startCooking}
           </Button>
         </div>

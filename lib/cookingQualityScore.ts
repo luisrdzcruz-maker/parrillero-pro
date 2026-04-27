@@ -17,7 +17,13 @@ import {
   type TargetTemp,
 } from "./cookingCatalog";
 
-const MAX = { sections: 20, durations: 25, contradictions: 15, order: 20, temperature: 20 } as const;
+const MAX = {
+  sections: 20,
+  durations: 25,
+  contradictions: 15,
+  order: 20,
+  temperature: 20,
+} as const;
 
 function expectedTargetTemp(cut: ProductCut, doneness: DonenessId): TargetTemp | undefined {
   if (cut.targetTempsC?.[doneness]) return cut.targetTempsC[doneness];
@@ -88,7 +94,12 @@ function scoreContradictions(
 ): number {
   if (!plan) return 0;
   const setup = String(plan.SETUP ?? "");
-  const combined = [plan.TIEMPOS, plan.TEMPERATURA, plan.PASOS, ...((steps ?? []).map((s) => s.description))]
+  const combined = [
+    plan.TIEMPOS,
+    plan.TEMPERATURA,
+    plan.PASOS,
+    ...(steps ?? []).map((s) => s.description),
+  ]
     .filter(Boolean)
     .join(" \n ");
   const indoor = isIndoorEquipment(equipment);
@@ -117,7 +128,9 @@ function firstStepOrderScore(steps: CookingStep[] | null): number {
   if (!steps?.length) return 0;
   const t0 = (steps[0].title + " " + steps[0].description).toLowerCase();
   if (
-    /precalent|preheat|preparar verduras|prep |preparamos|encender|horno|sart[ée]n|indirecto|parrilla|zona/.test(t0)
+    /precalent|preheat|preparar verduras|prep |preparamos|encender|horno|sart[ée]n|indirecto|parrilla|zona/.test(
+      t0,
+    )
   ) {
     return 10;
   }
@@ -153,7 +166,8 @@ function scoreTemperature(plan: CookingPlan | null, cut: ProductCut, doneness: s
   const text = String(plan.TEMPERATURA ?? plan.TEMPERATURE ?? "");
   const parsed = parseTemperaturaC(text);
   if (!parsed) {
-    if (cut.style === "vegetable" && /textura tierna|bordes dorados/i.test(text)) return MAX.temperature;
+    if (cut.style === "vegetable" && /textura tierna|bordes dorados/i.test(text))
+      return MAX.temperature;
     if (!text.trim()) return 0;
     return 6;
   }
@@ -187,6 +201,18 @@ export function computeCookingQualityScore(
   const sCon = scoreContradictions(plan, cut, steps, input.equipment);
   const sOrder = scoreOrder(steps);
   const sTemp = scoreTemperature(plan, cut, input.doneness);
-  const sub = { sections: sSections, durations: sDur, contradictions: sCon, order: sOrder, temperature: sTemp };
-  return Math.max(0, Math.min(100, Object.values(sub).reduce((a, b) => a + b, 0)));
+  const sub = {
+    sections: sSections,
+    durations: sDur,
+    contradictions: sCon,
+    order: sOrder,
+    temperature: sTemp,
+  };
+  return Math.max(
+    0,
+    Math.min(
+      100,
+      Object.values(sub).reduce((a, b) => a + b, 0),
+    ),
+  );
 }

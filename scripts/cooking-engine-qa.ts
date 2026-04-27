@@ -30,7 +30,7 @@ const EQUIPMENT: readonly string[] = [
   "cocina interior",
 ];
 
-const LANGUAGE: "es" = "es";
+const LANGUAGE = "es" as const;
 const WEIGHT_KG = "1";
 
 type Failure = {

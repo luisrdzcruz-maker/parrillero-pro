@@ -36,7 +36,12 @@ function emptyFlags(): Record<CookingWarningCode, boolean> {
   return f;
 }
 
-function sectionKeys(lang: "es" | "en"): { setup: string; times: string; temp: string; steps: string } {
+function sectionKeys(lang: "es" | "en"): {
+  setup: string;
+  times: string;
+  temp: string;
+  steps: string;
+} {
   if (lang === "en") {
     return { setup: "SETUP", times: "TIMES", temp: "TEMPERATURE", steps: "STEPS" };
   }

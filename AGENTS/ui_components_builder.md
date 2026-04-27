@@ -12,6 +12,7 @@ Always ensure existence of:
 - Grid wrapper if needed
 
 Rules:
+
 - Use Tailwind
 - Keep consistent with design-system
 - Keep components simple and reusable

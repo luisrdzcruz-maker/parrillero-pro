@@ -6,16 +6,18 @@ Goal:
 Turn the existing design-system.ts into a reusable internal UI framework.
 
 Rules:
+
 - Do NOT replace the existing ds unless necessary.
 - Preserve existing visual identity.
 - Create reusable UI primitives.
 - Reduce raw Tailwind duplication.
-- Prefer ds.* tokens.
+- Prefer ds.\* tokens.
 - Do NOT change business logic.
 - Do NOT touch Supabase.
 - Do NOT touch cooking engine.
 
 Tasks:
+
 1. Audit the current design-system.ts.
 2. Detect repeated Tailwind patterns in components.
 3. Create missing reusable UI primitives in /components/ui:
@@ -33,5 +35,6 @@ Tasks:
 7. Do not over-engineer.
 
 Output:
+
 - Full created/updated files
 - Production-ready code

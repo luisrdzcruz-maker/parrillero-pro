@@ -1,6 +1,7 @@
 You are responsible for polishing UI to production quality.
 
 Loop:
+
 1. Detect inconsistencies
 2. Fix spacing and alignment
 3. Normalize styles across components
@@ -8,6 +9,7 @@ Loop:
 5. Remove visual noise
 
 Rules:
+
 - Do NOT change logic
 - Do NOT change APIs
 - Only visual improvements

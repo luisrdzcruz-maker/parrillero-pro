@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 
 type Doneness = "rare" | "medium_rare" | "medium" | "well_done";
@@ -80,10 +81,7 @@ function V4UI() {
   const [doneness, setDoneness] = useState<Doneness>("medium_rare");
   const [copied, setCopied] = useState(false);
 
-  const selectedCut = useMemo(
-    () => cuts.find((cut) => cut.id === cutId) ?? cuts[0],
-    [cutId]
-  );
+  const selectedCut = useMemo(() => cuts.find((cut) => cut.id === cutId) ?? cuts[0], [cutId]);
 
   const selectedDoneness = donenessOptions.find((item) => item.id === doneness);
   const temp = selectedCut.temp[doneness];
@@ -116,12 +114,12 @@ ${selectedCut.name} · ${selectedDoneness?.label}
 
       <section className="relative mx-auto max-w-7xl px-5 py-7">
         <header className="mb-8 flex items-center justify-between gap-4">
-          <a
+          <Link
             href="/"
             className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-xs font-black text-zinc-300 backdrop-blur hover:bg-white/10"
           >
             ← V1
-          </a>
+          </Link>
 
           <div className="rounded-full border border-orange-400/20 bg-orange-500/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-orange-200">
             Parrillero-Pro V4 · Share Engine
@@ -136,8 +134,8 @@ ${selectedCut.name} · ${selectedDoneness?.label}
                 Elige tu corte.
               </h1>
               <p className="mt-3 text-sm leading-relaxed text-zinc-400">
-                V4 está pensada para convertir: elegir rápido, obtener resultado
-                claro y compartir una tarjeta visual.
+                V4 está pensada para convertir: elegir rápido, obtener resultado claro y compartir
+                una tarjeta visual.
               </p>
             </div>
 
@@ -156,9 +154,7 @@ ${selectedCut.name} · ${selectedDoneness?.label}
                     <div className="text-4xl">{cut.emoji}</div>
                     <div>
                       <div className="text-lg font-black">{cut.name}</div>
-                      <div className="mt-1 text-sm text-zinc-400">
-                        {cut.subtitle}
-                      </div>
+                      <div className="mt-1 text-sm text-zinc-400">{cut.subtitle}</div>
                     </div>
                   </div>
                 </button>
@@ -201,8 +197,8 @@ ${selectedCut.name} · ${selectedDoneness?.label}
               </h2>
 
               <p className="mt-5 max-w-2xl text-lg leading-relaxed text-zinc-400">
-                El resultado no debe parecer texto generado. Debe parecer una
-                tarjeta premium: clara, útil y enseñable.
+                El resultado no debe parecer texto generado. Debe parecer una tarjeta premium:
+                clara, útil y enseñable.
               </p>
             </div>
 
@@ -211,29 +207,20 @@ ${selectedCut.name} · ${selectedDoneness?.label}
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <div className="text-8xl">{selectedCut.emoji}</div>
-                    <h3 className="mt-5 text-5xl font-black tracking-tight">
-                      {selectedCut.name}
-                    </h3>
-                    <p className="mt-2 text-zinc-400">
-                      {selectedDoneness?.label}
-                    </p>
+                    <h3 className="mt-5 text-5xl font-black tracking-tight">{selectedCut.name}</h3>
+                    <p className="mt-2 text-zinc-400">{selectedDoneness?.label}</p>
                   </div>
 
                   <div className="rounded-2xl border border-orange-400/20 bg-orange-500/10 px-4 py-3 text-right">
                     <div className="text-xs font-black uppercase tracking-[0.18em] text-orange-200">
                       Plan
                     </div>
-                    <div className="mt-1 text-2xl font-black text-orange-300">
-                      Pro
-                    </div>
+                    <div className="mt-1 text-2xl font-black text-orange-300">Pro</div>
                   </div>
                 </div>
 
                 <div className="mt-8 grid gap-3 sm:grid-cols-3">
-                  <CardMetric
-                    label="Temp"
-                    value={temp ? `${temp}ºC` : "Visual"}
-                  />
+                  <CardMetric label="Temp" value={temp ? `${temp}ºC` : "Visual"} />
                   <CardMetric label="Tiempo" value={selectedCut.time} />
                   <CardMetric label="Reposo" value={selectedCut.rest} />
                 </div>
@@ -242,26 +229,20 @@ ${selectedCut.name} · ${selectedDoneness?.label}
                   <div className="text-xs font-black uppercase tracking-[0.18em] text-orange-200">
                     Consejo Pro
                   </div>
-                  <p className="mt-3 text-lg leading-relaxed">
-                    {selectedCut.tip}
-                  </p>
+                  <p className="mt-3 text-lg leading-relaxed">{selectedCut.tip}</p>
                 </div>
 
                 <div className="mt-4 rounded-[1.5rem] border border-red-400/20 bg-red-500/10 p-5">
                   <div className="text-xs font-black uppercase tracking-[0.18em] text-red-200">
                     No hagas esto
                   </div>
-                  <p className="mt-3 text-lg leading-relaxed">
-                    {selectedCut.mistake}
-                  </p>
+                  <p className="mt-3 text-lg leading-relaxed">{selectedCut.mistake}</p>
                 </div>
 
                 <div className="mt-6 flex items-center justify-between gap-4 border-t border-white/10 pt-5">
                   <div>
                     <div className="text-sm font-black">Parrillero-Pro</div>
-                    <div className="text-xs text-zinc-500">
-                      AI Cooking Card
-                    </div>
+                    <div className="text-xs text-zinc-500">AI Cooking Card</div>
                   </div>
 
                   <div className="rounded-full bg-white px-4 py-2 text-xs font-black text-black">
@@ -279,8 +260,8 @@ ${selectedCut.name} · ${selectedDoneness?.label}
             </h2>
 
             <p className="mt-3 text-sm leading-relaxed text-zinc-400">
-              Esta versión prioriza viralidad: resultado claro, formato
-              compartible y copy listo para WhatsApp o redes.
+              Esta versión prioriza viralidad: resultado claro, formato compartible y copy listo
+              para WhatsApp o redes.
             </p>
 
             <button
@@ -316,9 +297,7 @@ ${selectedCut.name} · ${selectedDoneness?.label}
 function CardMetric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.06] p-4">
-      <div className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">
-        {label}
-      </div>
+      <div className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">{label}</div>
       <div className="mt-2 text-2xl font-black text-orange-300">{value}</div>
     </div>
   );

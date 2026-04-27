@@ -17,7 +17,8 @@ export default function DesignGalleryPage() {
             Parrillero Pro visual variants
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
-            Founder-only preview routes for comparing visual directions. These are not exposed as production theme choices.
+            Founder-only preview routes for comparing visual directions. These are not exposed as
+            production theme choices.
           </p>
         </div>
 
@@ -36,14 +37,16 @@ export default function DesignGalleryPage() {
                 <div
                   className="absolute inset-0"
                   style={{
-                    background:
-                      `radial-gradient(circle at 18% 0%, ${variant.colors.glow}, transparent 34%), linear-gradient(to top, ${variant.colors.bg}, rgba(2,6,23,0.2))`,
+                    background: `radial-gradient(circle at 18% 0%, ${variant.colors.glow}, transparent 34%), linear-gradient(to top, ${variant.colors.bg}, rgba(2,6,23,0.2))`,
                   }}
                 />
               </div>
 
               <div className="p-5">
-                <p className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: variant.colors.accent }}>
+                <p
+                  className="text-xs font-black uppercase tracking-[0.2em]"
+                  style={{ color: variant.colors.accent }}
+                >
                   {variant.mood}
                 </p>
                 <h2 className="mt-2 text-xl font-black">{variant.name}</h2>

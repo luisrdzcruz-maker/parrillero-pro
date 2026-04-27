@@ -17,16 +17,17 @@ import {
   type ProductCut,
   type TargetTemp,
 } from "../lib/cookingCatalog";
-import { generateCookingPlan, generateCookingSteps, getCutsByAnimal, getDonenessOptions, getCutForInput } from "../lib/cookingEngine";
+import {
+  generateCookingPlan,
+  generateCookingSteps,
+  getCutsByAnimal,
+  getDonenessOptions,
+  getCutForInput,
+} from "../lib/cookingEngine";
 
 const THICKNESS_CM = { thin: "2", medium: "5", thick: "8" } as const;
-const EQUIPMENT = [
-  "parrilla gas",
-  "parrilla carbón",
-  "kamado",
-  "cocina interior",
-] as const;
-const LANGUAGE: "es" = "es";
+const EQUIPMENT = ["parrilla gas", "parrilla carbón", "kamado", "cocina interior"] as const;
+const LANGUAGE = "es" as const;
 const WEIGHT_KG = "1";
 
 type Combo = {
@@ -48,7 +49,13 @@ type Subscores = {
 
 type Scored = Combo & { score: number; sub: Subscores };
 
-const MAX = { sections: 20, durations: 25, contradictions: 15, order: 20, temperature: 20 } as const;
+const MAX = {
+  sections: 20,
+  durations: 25,
+  contradictions: 15,
+  order: 20,
+  temperature: 20,
+} as const;
 
 function donenessListForAnimal(animalId: AnimalId): string[] {
   const options = getDonenessOptions(animalId);
@@ -126,7 +133,14 @@ function scoreContradictions(
 ): number {
   if (!plan) return 0;
   const setup = String(plan.SETUP ?? "");
-  const combined = [plan.TIEMPOS, plan.TEMPERATURA, plan.PASOS, ...((steps ?? []).map((s) => s.description))].filter(Boolean).join(" \n ");
+  const combined = [
+    plan.TIEMPOS,
+    plan.TEMPERATURA,
+    plan.PASOS,
+    ...(steps ?? []).map((s) => s.description),
+  ]
+    .filter(Boolean)
+    .join(" \n ");
 
   const indoor = isIndoorEquipment(equipment);
   const canOven = cut.allowedMethods.includes("oven_pan");
@@ -135,10 +149,16 @@ function scoreContradictions(
     const hasIndoorCues = /sart[ée]n|horno|horne|p[áa]n|oven|interior|plancha/i.test(setup);
     if (!hasIndoorCues) p -= 6;
   }
-  if (/\b(nunca|no)\b.*(muevas|mover|t[oó]c|toques)/i.test(combined) && /(a menudo|cada|muchas vuel|girando|vueltas|menudo)/i.test(combined)) {
+  if (
+    /\b(nunca|no)\b.*(muevas|mover|t[oó]c|toques)/i.test(combined) &&
+    /(a menudo|cada|muchas vuel|girando|vueltas|menudo)/i.test(combined)
+  ) {
     p -= 5;
   }
-  if (/\b(siempre|s[oó]lo)\b.*\b(fuego directo|directo|llama|parrilla)\b/i.test(combined) && /\b(only|solo)\b.*\b(horno|indirect|indirecto)\b/i.test(combined)) {
+  if (
+    /\b(siempre|s[oó]lo)\b.*\b(fuego directo|directo|llama|parrilla)\b/i.test(combined) &&
+    /\b(only|solo)\b.*\b(horno|indirect|indirecto)\b/i.test(combined)
+  ) {
     p -= 4;
   }
   return Math.max(0, p);
@@ -186,7 +206,8 @@ function scoreTemperature(plan: CookingPlan | null, cut: ProductCut, doneness: s
   const text = String(plan.TEMPERATURA ?? plan.TEMPERATURE ?? "");
   const parsed = parseTemperaturaC(text);
   if (!parsed) {
-    if (cut.style === "vegetable" && /textura tierna|bordes dorados/i.test(text)) return MAX.temperature;
+    if (cut.style === "vegetable" && /textura tierna|bordes dorados/i.test(text))
+      return MAX.temperature;
     if (!text.trim()) return 0;
     return 6;
   }
@@ -206,9 +227,7 @@ function scoreTemperature(plan: CookingPlan | null, cut: ProductCut, doneness: s
   return 10;
 }
 
-function buildInput(
-  c: Combo,
-): CookingInput {
+function buildInput(c: Combo): CookingInput {
   return {
     animal: c.animal,
     cut: c.cut,
@@ -224,7 +243,13 @@ function scoreOne(c: Combo): Scored {
   const input = buildInput(c);
   const cut = getCutForInput(input);
   if (!cut) {
-    const sub: Subscores = { sections: 0, durations: 0, contradictions: 0, order: 0, temperature: 0 };
+    const sub: Subscores = {
+      sections: 0,
+      durations: 0,
+      contradictions: 0,
+      order: 0,
+      temperature: 0,
+    };
     return { ...c, sub, score: 0 };
   }
   const plan = generateCookingPlan(input);
@@ -243,7 +268,13 @@ function scoreOne(c: Combo): Scored {
     order: sOrder,
     temperature: sTemp,
   };
-  const score = Math.max(0, Math.min(100, Object.values(sub).reduce((a, b) => a + b, 0)));
+  const score = Math.max(
+    0,
+    Math.min(
+      100,
+      Object.values(sub).reduce((a, b) => a + b, 0),
+    ),
+  );
   return { ...c, sub, score };
 }
 

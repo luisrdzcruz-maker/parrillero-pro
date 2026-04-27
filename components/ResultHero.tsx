@@ -49,16 +49,23 @@ export default function ResultHero({
           </div>
 
           {onEdit ? (
-            <Button className="shrink-0 rounded-full px-3 py-2 text-xs" onClick={onEdit} variant="secondary">
+            <Button
+              className="shrink-0 rounded-full px-3 py-2 text-xs"
+              onClick={onEdit}
+              variant="secondary"
+            >
               ← Editar plan
             </Button>
-          ) : (
-            null
-          )}
+          ) : null}
         </div>
 
         {actions.onStartCooking && (
-          <Button className="px-4 py-4 text-base font-black" fullWidth onClick={actions.onStartCooking} variant="outlineAccent">
+          <Button
+            className="px-4 py-4 text-base font-black"
+            fullWidth
+            onClick={actions.onStartCooking}
+            variant="outlineAccent"
+          >
             {t.startCooking}
           </Button>
         )}

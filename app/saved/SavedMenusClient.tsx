@@ -13,7 +13,8 @@ const texts = {
   es: {
     eyebrow: "Biblioteca",
     title: "Tus planes guardados",
-    subtitle: "Recupera menús, listas de compra y planes de cocción como si fueran recetas premium.",
+    subtitle:
+      "Recupera menús, listas de compra y planes de cocción como si fueran recetas premium.",
     back: "Crear plan",
     language: "Idioma",
     menus: "planes",
@@ -53,7 +54,8 @@ const texts = {
     delete: "Delete",
     deleting: "Deleting...",
     emptyTitle: "You do not have saved plans yet",
-    emptyText: "Create a plan from the generator and save it so your best BBQs are ready to repeat.",
+    emptyText:
+      "Create a plan from the generator and save it so your best BBQs are ready to repeat.",
     createFirst: "Create first plan",
     deleteError: "Could not delete the menu. Try again.",
     summary: "Summary",
@@ -81,7 +83,8 @@ const texts = {
     delete: "Poista",
     deleting: "Poistetaan...",
     emptyTitle: "Sinulla ei ole vielä tallennettuja suunnitelmia",
-    emptyText: "Luo suunnitelma generaattorissa ja tallenna parhaat grillaukset toistamista varten.",
+    emptyText:
+      "Luo suunnitelma generaattorissa ja tallenna parhaat grillaukset toistamista varten.",
     createFirst: "Luo ensimmäinen",
     deleteError: "Menun poistaminen epäonnistui. Yritä uudelleen.",
     summary: "Yhteenveto",
@@ -108,11 +111,7 @@ const langOptions: Array<{ value: Lang; label: string }> = [
   { value: "fi", label: "FI" },
 ];
 
-export default function SavedMenusClient({
-  initialMenus,
-}: {
-  initialMenus: SavedMenu[];
-}) {
+export default function SavedMenusClient({ initialMenus }: { initialMenus: SavedMenu[] }) {
   const router = useRouter();
   const [lang, setLang] = useState<Lang>("es");
   const [menus, setMenus] = useState(initialMenus);
@@ -133,13 +132,15 @@ export default function SavedMenusClient({
     if (!normalizedQuery) return menuModels;
 
     return menuModels.filter(({ menu, meta }) =>
-      normalizeSearch([
-        menu.name,
-        meta.summary,
-        meta.cut,
-        meta.products,
-        Object.values(meta.blocks).join(" "),
-      ].join(" ")).includes(normalizedQuery),
+      normalizeSearch(
+        [
+          menu.name,
+          meta.summary,
+          meta.cut,
+          meta.products,
+          Object.values(meta.blocks).join(" "),
+        ].join(" "),
+      ).includes(normalizedQuery),
     );
   }, [menuModels, query]);
 
@@ -323,15 +324,16 @@ function SavedMenuCard({
           <h2 className="line-clamp-2 text-2xl font-black tracking-tight text-white">
             {menu.name || t.untitled}
           </h2>
-          <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-300">
-            {meta.summary}
-          </p>
+          <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-300">{meta.summary}</p>
         </div>
       </div>
 
       <div className="space-y-4 p-5">
         <div className="grid grid-cols-2 gap-3">
-          <InfoPill label={t.people} value={menu.people ? `${menu.people} ${t.people}` : t.noPeople} />
+          <InfoPill
+            label={t.people}
+            value={menu.people ? `${menu.people} ${t.people}` : t.noPeople}
+          />
           <InfoPill label={t.cut} value={meta.cut || "—"} />
           <InfoPill label={t.products} value={meta.products || "—"} />
           <InfoPill label={t.language} value={menu.lang.toUpperCase()} />
@@ -392,9 +394,7 @@ function Metric({ value, label }: { value: string; label: string }) {
 function InfoPill({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0 rounded-2xl border border-white/10 bg-black/25 p-3">
-      <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">
-        {label}
-      </p>
+      <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">{label}</p>
       <p className="mt-1 truncate text-sm font-bold text-slate-100">{value}</p>
     </div>
   );
@@ -436,7 +436,12 @@ function NoMatchesState({ onClear, t }: { onClear: () => void; t: (typeof texts)
 function getMenuMeta(menu: SavedMenu, t: (typeof texts)[Lang]): SavedMenuMeta {
   const blocks = getBlocks(menu.data);
   const cut = getInputValue(menu.data, ["cut", "cutId", "selectedCut"]);
-  const products = getInputValue(menu.data, ["products", "meats", "menuMeats", "parrilladaProducts"]);
+  const products = getInputValue(menu.data, [
+    "products",
+    "meats",
+    "menuMeats",
+    "parrilladaProducts",
+  ]);
 
   return {
     blocks,

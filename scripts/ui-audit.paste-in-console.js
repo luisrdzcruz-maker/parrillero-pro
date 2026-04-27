@@ -25,7 +25,11 @@
       if (!(el instanceof HTMLElement)) continue;
       const r = el.getBoundingClientRect();
       if (r.width > vw + 2) {
-        wide.push({ tag: el.tagName, className: (el.className && String(el.className).slice(0, 80)) || "", w: Math.round(r.width) });
+        wide.push({
+          tag: el.tagName,
+          className: (el.className && String(el.className).slice(0, 80)) || "",
+          w: Math.round(r.width),
+        });
       }
     }
     console.warn("[ui-audit] elements wider than viewport (sample, max 15):", wide.slice(0, 15));
@@ -53,7 +57,9 @@
   const navHint = bottomNavBars(fixedBottom, vh, vw);
   console.log("[ui-audit] fixed bottom elements (count):", fixedBottom.length, navHint);
 
-  const interactive = body.querySelectorAll('button, a[href], [role="button"], input, select, textarea, .cursor-pointer');
+  const interactive = body.querySelectorAll(
+    'button, a[href], [role="button"], input, select, textarea, .cursor-pointer',
+  );
   const tooSmall = [];
   interactive.forEach((el) => {
     if (!(el instanceof HTMLElement)) return;
@@ -64,7 +70,10 @@
     }
   });
   if (tooSmall.length) {
-    console.info("[ui-audit] tappable areas < 40px (sample; review design, max 20):", tooSmall.slice(0, 20));
+    console.info(
+      "[ui-audit] tappable areas < 40px (sample; review design, max 20):",
+      tooSmall.slice(0, 20),
+    );
   } else {
     console.log("[ui-audit] no tiny interactive targets in quick scan (threshold 40px).");
   }
@@ -86,14 +95,19 @@
         navBars: navs.length,
         lastContentBottom: Math.round(r.bottom),
         spaceBelowLastContentPx: Math.round(clear),
-        manualCheck: clear < minNavH ? "Last content may sit under the bottom bar — verify scroll padding" : "Looks OK; still verify visually.",
+        manualCheck:
+          clear < minNavH
+            ? "Last content may sit under the bottom bar — verify scroll padding"
+            : "Looks OK; still verify visually.",
       };
     }
     return { navBars: navs.length, note: "could not find obvious main content to compare" };
   }
 
   function findBottomMostContent(root) {
-    const candidates = root.querySelectorAll("main, [role=main], article, section, .prose, .px-3, .px-4");
+    const candidates = root.querySelectorAll(
+      "main, [role=main], article, section, .prose, .px-3, .px-4",
+    );
     let best = null;
     let bestBottom = -1;
     candidates.forEach((el) => {

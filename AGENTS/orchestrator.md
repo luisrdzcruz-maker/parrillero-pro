@@ -7,6 +7,7 @@ Parrillero Pro is a premium mobile-first real-time BBQ cooking assistant.
 It is NOT a recipe app.
 
 It is:
+
 - a decision engine
 - a guided cooking flow
 - a live cooking assistant
@@ -25,6 +26,7 @@ Main wizard state:
 cookingStep = "animal" | "cut" | "details" | "result"
 
 Current product direction:
+
 - Mobile-first always
 - Premium dark BBQ interface
 - Orange as primary accent
@@ -68,6 +70,7 @@ Current product direction:
 If a task requires system access, ignore that part.
 
 Only modify application code:
+
 - React
 - Next.js
 - TypeScript
@@ -95,10 +98,13 @@ Every change must improve real user experience.
 ## DESIGN PRINCIPLES
 
 ### Mobile-first
+
 Mobile is the priority. Desktop must not degrade, but mobile drives decisions.
 
 ### Selection screens
+
 Selection screens must be compact and fast:
+
 - 2-column grid on mobile
 - image-first cards
 - no unnecessary icon overlays
@@ -106,7 +112,9 @@ Selection screens must be compact and fast:
 - strong touch feedback
 
 ### Result screen
+
 Result screen must be practical:
+
 - compact header
 - no big hero
 - no long marketing copy
@@ -114,7 +122,9 @@ Result screen must be practical:
 - result content should be immediately accessible
 
 ### Cooking mode
+
 Cooking mode should feel like a premium fitness app:
+
 - current step
 - large timer
 - next step preview
@@ -123,7 +133,9 @@ Cooking mode should feel like a premium fitness app:
 - minimal clutter
 
 ### Images
+
 Images should only appear when they add value:
+
 - no clutter
 - lazy loaded
 - use placeholders safely
@@ -136,18 +148,20 @@ Images should only appear when they add value:
 Always prefer existing design system tokens and primitives when available.
 
 Use:
-- ds.button.*
-- ds.panel.*
-- ds.text.*
-- ds.spacing.*
-- ds.layout.*
-- ds.badge.*
-- ds.notice.*
-- ds.nav.*
+
+- ds.button.\*
+- ds.panel.\*
+- ds.text.\*
+- ds.spacing.\*
+- ds.layout.\*
+- ds.badge.\*
+- ds.notice.\*
+- ds.nav.\*
 
 Avoid random Tailwind duplication if an existing ds token exists.
 
 Allowed visual style:
+
 - dark premium base
 - orange accent
 - glass panels
@@ -157,6 +171,7 @@ Allowed visual style:
 - tactile transitions
 
 Avoid:
+
 - heavy decoration
 - random colors
 - excessive shadows
@@ -168,12 +183,14 @@ Avoid:
 ## COMPONENT RULES
 
 Buttons:
+
 - one primary action per screen
 - secondary actions lighter
 - strong touch feedback
 - disabled states clear
 
 Cards:
+
 - rounded-2xl or rounded-3xl depending on existing ds
 - soft border
 - subtle gradient/glass
@@ -181,12 +198,14 @@ Cards:
 - no visual clutter
 
 Text:
+
 - titles bold and tight
 - body readable
 - muted text for secondary info
 - avoid long paragraphs in mobile flows
 
 Layout:
+
 - consistent spacing
 - reduce vertical waste
 - no random margins
@@ -200,17 +219,21 @@ Layout:
 The cooking wizard must behave like this:
 
 animal:
+
 - show only animal cards
 
 cut:
+
 - show only cuts for selected animal
 - show back button to animal
 
 details:
+
 - show only configuration form
 - show back button to cut
 
 result:
+
 - show only result screen/components
 - hide animal cards
 - hide cut cards
@@ -218,9 +241,11 @@ result:
 - show “Editar plan” to return to details
 
 When generation succeeds:
+
 - set cookingStep to "result"
 
 Swipe back behavior:
+
 - result → details
 - details → cut
 - cut → animal
@@ -243,9 +268,9 @@ If working on setup visuals:
 Expected helper:
 
 getSetupImage({
-  equipment,
-  method,
-  heatType
+equipment,
+method,
+heatType
 })
 
 Expected paths:
@@ -265,6 +290,7 @@ Expected paths:
 Sharing should feel native and premium.
 
 Use:
+
 - navigator.share when available
 - clipboard fallback when not available
 
@@ -277,14 +303,18 @@ Do not use WhatsApp as the primary sharing method.
 When a task is given:
 
 ### 1. Understand target
+
 Identify the exact file/component/screen being modified.
 
 If the target is unclear:
+
 - ask for the target path
 - or infer safely from context
 
 ### 2. Analyze
+
 Detect:
+
 - UX issues
 - layout problems
 - duplicated styles
@@ -293,19 +323,23 @@ Detect:
 - possible regressions
 
 ### 3. Improve safely
+
 Prefer minimal safe changes unless the task explicitly asks for larger refactor.
 
 For bug fixes:
+
 - fix only the bug
 - do not redesign
 
 For UI improvement:
+
 - improve hierarchy
 - improve spacing
 - improve component structure
 - preserve behavior
 
 For new features:
+
 - integrate without breaking current flow
 - keep it modular
 - avoid overengineering
@@ -350,6 +384,7 @@ Do not overuse delegation if the change is simple.
 ## OUTPUT RULES
 
 Always return:
+
 - full updated file(s)
 - production-ready code
 - clean TypeScript
@@ -360,6 +395,7 @@ Always return:
 - no explanations unless critical
 
 If multiple files are needed:
+
 - clearly label each file path
 - provide the full content for each
 
@@ -385,6 +421,7 @@ You are not building a demo.
 You are building a real premium product.
 
 Every component must feel:
+
 - intentional
 - clean
 - expensive

@@ -55,7 +55,10 @@ function parseEncodedBlocks(value: string | null): ResultBlock[] {
     if (!decoded || typeof decoded !== "object" || Array.isArray(decoded)) return [];
 
     return Object.entries(decoded)
-      .filter((entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].trim().length > 0)
+      .filter(
+        (entry): entry is [string, string] =>
+          typeof entry[1] === "string" && entry[1].trim().length > 0,
+      )
       .map(([title, content]) => ({ title, content }));
   } catch {
     try {
@@ -63,7 +66,10 @@ function parseEncodedBlocks(value: string | null): ResultBlock[] {
       if (!decoded || typeof decoded !== "object" || Array.isArray(decoded)) return [];
 
       return Object.entries(decoded)
-        .filter((entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].trim().length > 0)
+        .filter(
+          (entry): entry is [string, string] =>
+            typeof entry[1] === "string" && entry[1].trim().length > 0,
+        )
         .map(([title, content]) => ({ title, content }));
     } catch {
       return [];
@@ -90,7 +96,10 @@ function SummaryItem({ label, value }: { label: string; value: string }) {
 }
 
 function ResultBlockCard({ block }: { block: ResultBlock }) {
-  const lines = block.content.split("\n").map((line) => line.trim()).filter(Boolean);
+  const lines = block.content
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
 
   return (
     <article className="overflow-hidden rounded-[1.5rem] border border-white/10 bg-slate-900/80 shadow-xl shadow-black/20">
@@ -116,13 +125,17 @@ export default function ShareClient() {
   const doneness = getFirstParam(searchParams, ["doneness", "point", "punto"]);
   const thickness = getFirstParam(searchParams, ["thickness", "grosor"]);
   const blocks = useMemo(() => getResultBlocks(searchParams), [searchParams]);
-  const hasAnyContent = Boolean(animal || cut || method || people || language || doneness || thickness || blocks.length);
+  const hasAnyContent = Boolean(
+    animal || cut || method || people || language || doneness || thickness || blocks.length,
+  );
 
   const shareText = [
     "Parrillero Pro",
     "Plan de parrilla compartido",
     animal || cut ? `${animal || "Producto"}${cut ? ` · ${cut}` : ""}` : "",
-  ].filter(Boolean).join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   async function copyCurrentUrl() {
     try {
@@ -207,7 +220,8 @@ export default function ShareClient() {
           <section className="mt-5 rounded-[2rem] border border-dashed border-white/15 bg-white/[0.03] p-6 text-center">
             <h2 className="text-xl font-black text-white">No encontramos datos del plan</h2>
             <p className="mt-2 text-sm leading-6 text-slate-400">
-              El enlace puede estar incompleto o haber sido modificado. Puedes crear un plan nuevo en segundos.
+              El enlace puede estar incompleto o haber sido modificado. Puedes crear un plan nuevo
+              en segundos.
             </p>
             <Link
               href="/"
@@ -219,7 +233,10 @@ export default function ShareClient() {
         ) : (
           <>
             <section className="mt-5 grid gap-3 sm:grid-cols-2">
-              <SummaryItem label="Animal / corte" value={[animal, cut].filter(Boolean).join(" · ")} />
+              <SummaryItem
+                label="Animal / corte"
+                value={[animal, cut].filter(Boolean).join(" · ")}
+              />
               <SummaryItem label="Personas" value={people} />
               <SummaryItem label="Método" value={method} />
               <SummaryItem label="Idioma" value={language} />
@@ -229,12 +246,18 @@ export default function ShareClient() {
 
             <section className="mt-5 grid gap-4">
               {blocks.length > 0 ? (
-                blocks.map((block) => <ResultBlockCard key={`${block.title}-${block.content.slice(0, 12)}`} block={block} />)
+                blocks.map((block) => (
+                  <ResultBlockCard
+                    key={`${block.title}-${block.content.slice(0, 12)}`}
+                    block={block}
+                  />
+                ))
               ) : (
                 <ResultBlockCard
                   block={{
                     title: "Resumen",
-                    content: "Este enlace contiene la configuración básica del plan. Crea tu propia versión para ver tiempos, setup y pasos completos.",
+                    content:
+                      "Este enlace contiene la configuración básica del plan. Crea tu propia versión para ver tiempos, setup y pasos completos.",
                   }}
                 />
               )}

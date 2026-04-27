@@ -98,12 +98,21 @@ export const animalCatalog: CatalogAnimal[] = [
 export const donenessCatalog: Record<DonenessId, DonenessOption> = {
   blue: { id: "blue", names: { es: "blue", en: "blue", fi: "blue" } },
   rare: { id: "rare", names: { es: "poco hecho", en: "rare", fi: "rare" } },
-  medium_rare: { id: "medium_rare", names: { es: "medium rare", en: "medium rare", fi: "medium rare" } },
+  medium_rare: {
+    id: "medium_rare",
+    names: { es: "medium rare", en: "medium rare", fi: "medium rare" },
+  },
   medium: { id: "medium", names: { es: "medium", en: "medium", fi: "medium" } },
   medium_well: { id: "medium_well", names: { es: "hecho", en: "medium well", fi: "medium well" } },
   well_done: { id: "well_done", names: { es: "muy hecho", en: "well done", fi: "well done" } },
-  juicy_safe: { id: "juicy_safe", names: { es: "jugoso seguro", en: "juicy safe", fi: "mehevä turvallinen" } },
-  medium_safe: { id: "medium_safe", names: { es: "medio seguro", en: "medium safe", fi: "medium turvallinen" } },
+  juicy_safe: {
+    id: "juicy_safe",
+    names: { es: "jugoso seguro", en: "juicy safe", fi: "mehevä turvallinen" },
+  },
+  medium_safe: {
+    id: "medium_safe",
+    names: { es: "medio seguro", en: "medium safe", fi: "medium turvallinen" },
+  },
   safe: { id: "safe", names: { es: "seguro", en: "safe", fi: "turvallinen" } },
   juicy: { id: "juicy", names: { es: "jugoso", en: "juicy", fi: "mehevä" } },
 };
@@ -550,15 +559,17 @@ export const productCatalog: ProductCut[] = [
     },
     aliases: ["Dorada", "Sea bream"],
   },
-  ...([
-    ["maiz", "Maíz", "Corn", "Maissi", 25],
-    ["berenjena", "Berenjena", "Eggplant", "Munakoiso", 18],
-    ["patata", "Patata", "Potato", "Peruna", 45],
-    ["esparragos", "Espárragos", "Asparagus", "Parsa", 8],
-    ["pimientos", "Pimientos", "Peppers", "Paprikat", 14],
-    ["calabacin", "Calabacín", "Zucchini", "Kesäkurpitsa", 10],
-    ["setas", "Setas", "Mushrooms", "Sienet", 10],
-  ] satisfies VegetableSeed[]).map(
+  ...(
+    [
+      ["maiz", "Maíz", "Corn", "Maissi", 25],
+      ["berenjena", "Berenjena", "Eggplant", "Munakoiso", 18],
+      ["patata", "Patata", "Potato", "Peruna", 45],
+      ["esparragos", "Espárragos", "Asparagus", "Parsa", 8],
+      ["pimientos", "Pimientos", "Peppers", "Paprikat", 14],
+      ["calabacin", "Calabacín", "Zucchini", "Kesäkurpitsa", 10],
+      ["setas", "Setas", "Mushrooms", "Sienet", 10],
+    ] satisfies VegetableSeed[]
+  ).map(
     ([id, es, en, fi, minutes]) =>
       ({
         id,
@@ -585,6 +596,6 @@ export const productCatalog: ProductCut[] = [
           es: [`Tiempo base: ${minutes} min`, "Cortar uniforme", "Aceite antes de la parrilla"],
           en: [`Base time: ${minutes} min`, "Cut evenly", "Oil before grilling"],
         },
-      }) satisfies ProductCut
+      }) satisfies ProductCut,
   ),
 ];

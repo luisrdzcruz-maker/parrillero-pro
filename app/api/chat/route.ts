@@ -1,16 +1,48 @@
 import { NextResponse } from "next/server";
 
-function extractText(data: any): string {
+type JsonRecord = Record<string, unknown>;
+
+type OpenAiOutputContent = {
+  type?: unknown;
+  text?: unknown;
+};
+
+type OpenAiOutputItem = {
+  content?: unknown;
+};
+
+type OpenAiResponseBody = {
+  output_text?: unknown;
+  output?: unknown;
+  error?: {
+    message?: unknown;
+  };
+};
+
+function isRecord(value: unknown): value is JsonRecord {
+  return typeof value === "object" && value !== null;
+}
+
+function asOpenAiResponseBody(value: unknown): OpenAiResponseBody {
+  return isRecord(value) ? value : {};
+}
+
+function extractText(data: OpenAiResponseBody): string {
   if (typeof data.output_text === "string" && data.output_text.length > 0) {
     return data.output_text;
   }
 
   const parts: string[] = [];
+  const output = Array.isArray(data.output) ? data.output : [];
 
-  for (const item of data.output ?? []) {
-    for (const content of item.content ?? []) {
+  for (const item of output) {
+    const outputItem = (isRecord(item) ? item : {}) as OpenAiOutputItem;
+    const contents = Array.isArray(outputItem.content) ? outputItem.content : [];
+
+    for (const contentItem of contents) {
+      const content = (isRecord(contentItem) ? contentItem : {}) as OpenAiOutputContent;
       if (content.type === "output_text" && content.text) {
-        parts.push(content.text);
+        parts.push(String(content.text));
       }
     }
   }
@@ -21,7 +53,8 @@ function extractText(data: any): string {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const message = body.message ?? "";
+    const bodyRecord = isRecord(body) ? body : {};
+    const message = typeof bodyRecord.message === "string" ? bodyRecord.message : "";
 
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
@@ -72,13 +105,11 @@ ERROR
       }),
     });
 
-    const data = await response.json();
+    const data = asOpenAiResponseBody(await response.json());
 
     if (!response.ok) {
-      return NextResponse.json(
-        { reply: data.error?.message ?? "Error con IA" },
-        { status: 500 }
-      );
+      const message = typeof data.error?.message === "string" ? data.error.message : "Error con IA";
+      return NextResponse.json({ reply: message }, { status: 500 });
     }
 
     return NextResponse.json({

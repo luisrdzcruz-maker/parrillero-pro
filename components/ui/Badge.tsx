@@ -17,12 +17,7 @@ const toneClasses: Record<BadgeTone, string> = {
   danger: ds.badge.danger,
 };
 
-export function Badge({
-  children,
-  className = "",
-  tone = "accent",
-  ...props
-}: BadgeProps) {
+export function Badge({ children, className = "", tone = "accent", ...props }: BadgeProps) {
   return (
     <span className={cx(ds.badge.base, toneClasses[tone], className)} {...props}>
       {children}

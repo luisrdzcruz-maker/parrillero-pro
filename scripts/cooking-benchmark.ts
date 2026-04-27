@@ -8,11 +8,16 @@
 import { performance } from "node:perf_hooks";
 
 import { animalCatalog, type AnimalId, type CookingInput } from "../lib/cookingCatalog";
-import { generateCookingPlan, generateCookingSteps, getCutsByAnimal, getDonenessOptions } from "../lib/cookingEngine";
+import {
+  generateCookingPlan,
+  generateCookingSteps,
+  getCutsByAnimal,
+  getDonenessOptions,
+} from "../lib/cookingEngine";
 
 const THICKNESS_CM = { thin: "2", medium: "5", thick: "8" } as const;
 const EQUIPMENT = ["parrilla gas", "parrilla carbón", "kamado", "cocina interior"] as const;
-const LANGUAGE: "es" = "es";
+const LANGUAGE = "es" as const;
 const WEIGHT_KG = "1";
 
 function donenessListForAnimal(animalId: AnimalId): string[] {
