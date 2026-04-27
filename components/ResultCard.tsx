@@ -5,6 +5,8 @@ import {
   getResultCardIcon,
   getResultCardTitle,
 } from "@/lib/uiHelpers";
+import { Badge, Panel } from "@/components/ui";
+import { ds } from "@/lib/design-system";
 
 type ResultCardProps = {
   title: string;
@@ -12,7 +14,7 @@ type ResultCardProps = {
 };
 
 const cardClassName =
-  "group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/95 to-slate-900/65 shadow-lg shadow-black/20 ring-1 ring-inset ring-white/[0.03] transition-all duration-200 hover:scale-[1.01] hover:border-orange-500/30 hover:shadow-xl hover:shadow-orange-500/10 active:scale-[0.99]";
+  "group transition-all duration-200 hover:scale-[1.01] hover:border-orange-500/30 hover:shadow-xl hover:shadow-orange-500/10 active:scale-[0.99]";
 
 function ResultCardHeader({
   accent,
@@ -28,7 +30,7 @@ function ResultCardHeader({
   return (
     <div className="flex items-start justify-between gap-4">
       <div className="flex min-w-0 items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-base shadow-sm shadow-black/10">
+        <div className={ds.media.iconBox}>
           {icon}
         </div>
         <div className="min-w-0">
@@ -39,9 +41,9 @@ function ResultCardHeader({
         </div>
       </div>
 
-      <span className="shrink-0 rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[11px] font-medium text-slate-400">
+      <Badge className="shrink-0 text-[11px] font-medium" tone="glass">
         {lineCount}
-      </span>
+      </Badge>
     </div>
   );
 }
@@ -67,7 +69,7 @@ export default function ResultCard({ title, content }: ResultCardProps) {
   const contentLines = content.split("\n").map((line) => line.trim()).filter(Boolean);
 
   return (
-    <article className={cardClassName}>
+    <Panel as="article" className={cardClassName} tone="result">
       <div className={`absolute left-0 top-0 h-full w-[3px] rounded-l-2xl ${accent}`} />
       <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent blur-xl" />
@@ -82,6 +84,6 @@ export default function ResultCard({ title, content }: ResultCardProps) {
         />
         <ResultCardContent lines={contentLines} />
       </div>
-    </article>
+    </Panel>
   );
 }

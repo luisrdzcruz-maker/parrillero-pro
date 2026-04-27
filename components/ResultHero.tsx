@@ -2,6 +2,7 @@
 
 import ResultActions from "@/components/ResultActions";
 import ResultHeader from "@/components/ResultHeader";
+import { Panel } from "@/components/ui";
 
 type SaveMenuStatus = "idle" | "saving" | "success" | "error";
 
@@ -29,7 +30,7 @@ export default function ResultHero({
   };
 }) {
   return (
-    <section className="relative mb-6 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-950 p-5 shadow-xl shadow-black/20 ring-1 ring-inset ring-white/[0.03] sm:p-6">
+    <Panel as="section" className="relative mb-6 p-5 sm:p-6" tone="hero">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400/40 to-transparent" />
       <div className="pointer-events-none absolute -right-12 -top-16 h-36 w-36 rounded-full bg-orange-500/15 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-20 left-1/4 h-32 w-32 rounded-full bg-red-500/10 blur-3xl" />
@@ -51,6 +52,6 @@ export default function ResultHero({
           />
         </div>
       </div>
-    </section>
+    </Panel>
   );
 }

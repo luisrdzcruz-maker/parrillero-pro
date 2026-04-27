@@ -1,5 +1,7 @@
 "use client";
 
+import { Badge, Card, Grid } from "@/components/ui";
+import { ds } from "@/lib/design-system";
 import { formatTitle, getGrillManagerLineClass, getShoppingItems } from "@/lib/uiHelpers";
 import ResultCard from "./ResultCard";
 import ResultTimeline from "./ResultTimeline";
@@ -7,7 +9,7 @@ import ResultTimeline from "./ResultTimeline";
 type Blocks = Record<string, string>;
 
 const fullWidthPanel =
-  "relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/95 to-slate-900/65 shadow-lg shadow-black/20 ring-1 ring-inset ring-white/[0.03] transition-all duration-200 md:col-span-2";
+  `${ds.panel.result} transition-all duration-200 md:col-span-2`;
 
 function ShoppingListCard({
   title,
@@ -27,7 +29,7 @@ function ShoppingListCard({
       <div className="absolute left-0 top-0 h-full w-[3px] rounded-l-2xl bg-emerald-400/70" />
       <div className="flex flex-col gap-3 border-b border-white/5 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-base">
+          <div className={ds.media.iconBox}>
             🛒
           </div>
           <div>
@@ -35,9 +37,9 @@ function ShoppingListCard({
             <h3 className="mt-1 text-sm font-semibold tracking-wide text-white">{title}</h3>
           </div>
         </div>
-        <span className="w-fit rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-medium text-slate-300">
+        <Badge className="w-fit font-medium" tone="glass">
           {items.length} items
-        </span>
+        </Badge>
       </div>
 
       <div className="grid gap-2.5 p-4 sm:grid-cols-2 sm:p-5">
@@ -65,7 +67,7 @@ function GrillManagerCard({ title, content }: { title: string; content: string }
       <div className="absolute left-0 top-0 h-full w-[3px] rounded-l-2xl bg-red-400/70" />
       <div className="mb-5 flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-base">
+          <div className={ds.media.iconBox}>
             🎛️
           </div>
           <div>
@@ -73,7 +75,7 @@ function GrillManagerCard({ title, content }: { title: string; content: string }
             <p className="mt-1 text-sm leading-relaxed text-slate-400">Control inteligente de zonas y prioridades</p>
           </div>
         </div>
-        <span className="rounded-full border border-red-400/20 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-200">PRO</span>
+        <Badge tone="danger">PRO</Badge>
       </div>
 
       <div className="grid gap-2.5 md:grid-cols-2">
@@ -89,18 +91,18 @@ function GrillManagerCard({ title, content }: { title: string; content: string }
 
 function ResultEmptyState({ text }: { text: string }) {
   return (
-    <div className="rounded-2xl border border-dashed border-white/10 bg-slate-900/60 p-8 text-center text-sm leading-relaxed text-slate-400 shadow-lg shadow-black/10 ring-1 ring-inset ring-white/[0.03] md:col-span-2">
+    <Card className="border-dashed bg-slate-900/60 p-8 text-center md:col-span-2">
       <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-2xl shadow-sm shadow-black/10">
         🍽️
       </div>
-      <p>{text}</p>
-    </div>
+      <p className={ds.text.muted}>{text}</p>
+    </Card>
   );
 }
 
 function ResultLoadingState({ text }: { text: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 text-orange-200 shadow-lg shadow-black/10 ring-1 ring-inset ring-white/[0.03] md:col-span-2">
+    <Card className="bg-slate-900/60 text-orange-200 md:col-span-2">
       <div className="flex items-center gap-4">
         <div className="h-10 w-10 animate-pulse rounded-xl border border-orange-400/20 bg-orange-400/20" />
         <div className="flex-1">
@@ -110,7 +112,7 @@ function ResultLoadingState({ text }: { text: string }) {
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -133,7 +135,7 @@ export default function ResultGrid({
   };
 }) {
   return (
-    <div className="mx-auto grid max-w-5xl gap-4 md:grid-cols-2 md:gap-5">
+    <Grid className="mx-auto max-w-5xl md:gap-5" variant="cards">
       {keys.map((key) =>
         key === "TIMELINE" ? (
           <ResultTimeline key={key} title="⏱️ Timeline Parrillada" content={blocks[key]} />
@@ -149,6 +151,6 @@ export default function ResultGrid({
       {!loading && keys.length === 0 && <ResultEmptyState text={t.noResult} />}
 
       {loading && <ResultLoadingState text={t.generating} />}
-    </div>
+    </Grid>
   );
 }

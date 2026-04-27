@@ -1,5 +1,7 @@
 "use client";
 
+import { Badge, Button, Panel } from "@/components/ui";
+import { ds } from "@/lib/design-system";
 import {
   buildTimelineView,
   getZoneClass,
@@ -7,15 +9,6 @@ import {
   secondsToClock,
 } from "@/lib/uiHelpers";
 import { useEffect, useState } from "react";
-
-const primaryButton =
-  "rounded-2xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-black shadow-lg shadow-orange-500/20 transition hover:bg-orange-400 active:scale-[0.98]";
-
-const secondaryButton =
-  "rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-orange-200 backdrop-blur transition hover:bg-white/10 active:scale-[0.98]";
-
-const dangerButton =
-  "rounded-2xl bg-red-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-red-500/20 transition hover:bg-red-400 active:scale-[0.98]";
 
 type TimelineItem = ReturnType<typeof buildTimelineView>["enriched"][number];
 type TimelineRowStatus = "active" | "next" | "idle";
@@ -52,7 +45,7 @@ function TimelineHeader({
     <div className="border-b border-white/5 p-4 sm:p-5">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="flex min-w-0 items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-base">
+          <div className={ds.media.iconBox}>
             ⏳
           </div>
           <div className="min-w-0">
@@ -62,19 +55,19 @@ function TimelineHeader({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <button
+          <Button
             onClick={onToggleLive}
-            className={live && !demoMode ? dangerButton : primaryButton}
+            variant={live && !demoMode ? "dangerSolid" : "primary"}
           >
             {live && !demoMode ? "Pausar live" : "Iniciar live"}
-          </button>
+          </Button>
 
-          <button
+          <Button
             onClick={onToggleDemo}
-            className={live && demoMode ? dangerButton : secondaryButton}
+            variant={live && demoMode ? "dangerSolid" : "secondary"}
           >
             {live && demoMode ? "Pausar demo" : "Demo: empezar ahora"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -91,28 +84,28 @@ function LiveStatusPanel({
   nextItem?: TimelineItem;
 }) {
   return (
-    <div className="m-4 rounded-2xl border border-orange-500/20 bg-orange-500/10 p-4 sm:m-5">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-300">
+    <Panel className="m-4 sm:m-5" tone="highlight">
+      <p className={ds.text.eyebrow}>
         {demoMode ? "Timeline Live · Demo" : "Timeline Live"}
       </p>
 
       {activeItem ? (
         <>
           <h4 className="mt-2 text-xl font-semibold text-white">Ahora: {activeItem.name}</h4>
-          <p className="mt-1 text-sm leading-relaxed text-slate-300">{activeItem.notes}</p>
+          <p className={`mt-1 ${ds.text.body}`}>{activeItem.notes}</p>
         </>
       ) : nextItem ? (
         <>
           <h4 className="mt-2 text-xl font-semibold text-white">Próximo: {nextItem.name}</h4>
-          <p className="mt-1 text-sm leading-relaxed text-slate-300">Empieza en {secondsToClock(nextItem.secondsUntil)}</p>
+          <p className={`mt-1 ${ds.text.body}`}>Empieza en {secondsToClock(nextItem.secondsUntil)}</p>
         </>
       ) : (
         <>
           <h4 className="mt-2 text-xl font-semibold text-white">Parrillada lista</h4>
-          <p className="mt-1 text-sm leading-relaxed text-slate-300">Todos los eventos del timeline han pasado.</p>
+          <p className={`mt-1 ${ds.text.body}`}>Todos los eventos del timeline han pasado.</p>
         </>
       )}
-    </div>
+    </Panel>
   );
 }
 
@@ -147,10 +140,10 @@ function TimelineRow({
           <h4 className="text-sm font-semibold tracking-wide text-white sm:text-base">{item.name}</h4>
 
           <div className="flex flex-wrap gap-2">
-            {isActive && <span className="rounded-full bg-green-500/20 px-3 py-1 text-xs font-semibold text-green-200">Ahora</span>}
-            {isNext && <span className="rounded-full bg-orange-500/20 px-3 py-1 text-xs font-semibold text-orange-200">En {secondsToClock(item.secondsUntil)}</span>}
-            <span className="rounded-full bg-black/20 px-3 py-1 text-xs font-medium text-slate-300">{getZoneLabel(item.zone)}</span>
-            {item.end !== "--" && <span className="rounded-full bg-black/20 px-3 py-1 text-xs text-slate-400">{item.start} → {item.end}</span>}
+            {isActive && <Badge tone="success">Ahora</Badge>}
+            {isNext && <Badge>En {secondsToClock(item.secondsUntil)}</Badge>}
+            <Badge className="font-medium" tone="glass">{getZoneLabel(item.zone)}</Badge>
+            {item.end !== "--" && <Badge className="text-slate-400" tone="glass">{item.start} → {item.end}</Badge>}
           </div>
         </div>
 
@@ -221,7 +214,7 @@ export default function ResultTimeline({
   const { enriched, activeItem, nextItem } = buildTimelineView(content, now, demoMode, demoStart);
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/95 to-slate-900/65 shadow-lg shadow-black/20 ring-1 ring-inset ring-white/[0.03] md:col-span-2">
+    <Panel as="section" className="md:col-span-2" tone="result">
       <div className="absolute left-0 top-0 h-full w-[3px] rounded-l-2xl bg-orange-400/70" />
 
       <TimelineHeader
@@ -235,6 +228,6 @@ export default function ResultTimeline({
       {live && <LiveStatusPanel activeItem={activeItem} demoMode={demoMode} nextItem={nextItem} />}
 
       <TimelineList items={enriched} live={live} nextItem={nextItem} />
-    </section>
+    </Panel>
   );
 }

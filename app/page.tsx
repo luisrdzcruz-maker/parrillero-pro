@@ -3,11 +3,13 @@
 import { saveGeneratedMenu } from "@/app/actions/savedMenus";
 import ResultGrid from "@/components/ResultGrid";
 import ResultHero from "@/components/ResultHero";
+import { Badge, Button, Card, Grid, Panel, Section } from "@/components/ui";
 import {
   generateCookingPlan as generateLocalCookingPlan,
   generateCookingSteps as generateLocalCookingSteps,
   type CookingStep,
 } from "@/lib/cookingEngine";
+import { ds } from "@/lib/design-system";
 import { generateParrilladaPlan } from "@/lib/parrilladaEngine";
 import { useEffect, useMemo, useState } from "react";
 
@@ -17,6 +19,7 @@ type Lang = "es" | "en" | "fi";
 type EngineLang = "es" | "en";
 type Blocks = Record<string, string>;
 type SaveMenuStatus = "idle" | "saving" | "success" | "error";
+type CookingWizardStep = "animal" | "cut" | "details";
 
 type SavedMenu = {
   id: string;
@@ -397,9 +400,10 @@ export default function Home() {
   const t = texts[lang];
 
   const [mode, setMode] = useState<Mode>("inicio");
+  const [cookingStep, setCookingStep] = useState<CookingWizardStep>("animal");
 
   const [animal, setAnimal] = useState<Animal>("Vacuno");
-  const [cut, setCut] = useState("Aguja / Chuck");
+  const [cut, setCut] = useState("");
   const [weight, setWeight] = useState("1");
   const [thickness, setThickness] = useState("5");
   const [doneness, setDoneness] = useState("poco hecho");
@@ -467,6 +471,10 @@ export default function Home() {
 
     return () => clearInterval(interval);
   }, [timerRunning, currentStep, cookSteps.length]);
+
+  useEffect(() => {
+    if (mode === "coccion") setCookingStep("animal");
+  }, [mode]);
 
   function notifyStepFinished() {
     if (typeof window === "undefined") return;
@@ -543,16 +551,18 @@ export default function Home() {
 
   function handleAnimalChange(selectedAnimal: Animal) {
     setAnimal(selectedAnimal);
-    setCut(animalData[selectedAnimal].cuts[0].name);
+    setCut("");
     setDoneness(selectedAnimal === "Cerdo" ? "jugoso seguro" : "poco hecho");
     setBlocks({});
     setCheckedItems({});
+    setCookingStep("cut");
   }
 
   function handleCutChange(selectedCutName: string) {
     setCut(selectedCutName);
     setBlocks({});
     setCheckedItems({});
+    setCookingStep("details");
   }
 
   async function callAI(message: string, createCookSteps = false) {
@@ -686,116 +696,67 @@ ERROR
     setTimerRunning(false);
   }
 
+  function handleLanguageChange(nextLang: Lang) {
+    setLang(nextLang);
+    setBlocks({});
+    setCheckedItems({});
+  }
+
+  function handleModeChange(nextMode: Mode) {
+    if (nextMode === "coccion") setCookingStep("animal");
+    setMode(nextMode);
+  }
+
   return (
-    <main className="min-h-screen bg-slate-950 px-4 pb-28 pt-5 text-white">
-      {/* 🔥 SWITCH VERSIONES PRO */}
-      <div className="fixed bottom-24 left-4 z-50 flex gap-2 rounded-full border border-white/10 bg-black/60 p-2 text-xs backdrop-blur">
-        <a href="/" className="px-2 py-1 hover:text-white">
-          V1
-        </a>
-        <a href="/v3" className="px-2 py-1 hover:text-orange-400">
-          V3
-        </a>
-        <a href="/v4" className="px-2 py-1 hover:text-orange-400">
-          V4
-        </a>
-      </div>
+    <main className={ds.shell.page}>
+      <VersionSwitcher />
 
-      <div className="mx-auto max-w-6xl">
-        <header className="mb-6 rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 p-6">
-          <div className="mb-4 flex justify-end">
-            <select
-              value={lang}
-              onChange={(e) => {
-                setLang(e.target.value as Lang);
-                setBlocks({});
-                setCheckedItems({});
-              }}
-              className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
-            >
-              <option value="es">🇪🇸 Español</option>
-              <option value="en">🇬🇧 English</option>
-              <option value="fi">🇫🇮 Suomi</option>
-            </select>
-          </div>
-
-          <p className="text-sm font-medium text-orange-400">{t.app}</p>
-          <h1 className="mt-2 text-3xl font-bold md:text-4xl">{t.title}</h1>
-          <p className="mt-3 max-w-2xl text-sm text-slate-300 md:text-base">
-            {t.subtitle}
-          </p>
-        </header>
+      <div className={ds.shell.container}>
+        <AppHeader lang={lang} onLangChange={handleLanguageChange} t={t} />
+        <DesktopModeTabs mode={mode} onModeChange={handleModeChange} t={t} />
 
         {mode === "inicio" && (
-          <section className="grid gap-4 md:grid-cols-5">
-            <HomeCard title={t.planCooking} description={t.configurePlan} emoji="🥩" onClick={() => setMode("coccion")} />
-            <HomeCard title={t.createMenu} description={`${t.people}, ${t.meats.toLowerCase()}`} emoji="🍽️" onClick={() => setMode("menu")} />
-            <HomeCard title={t.parrilladaPro} description="Timeline + Grill Manager" emoji="🔥" onClick={() => setMode("parrillada")} />
-            <HomeCard title={t.liveMode} description="Timer + steps" emoji="⏱️" onClick={() => setMode("cocina")} />
-            <HomeCard title={t.savedMenus} description={`${savedMenus.length}`} emoji="⭐" onClick={() => setMode("guardados")} />
-          </section>
+          <HomeScreen
+            savedMenusCount={savedMenus.length}
+            t={t}
+            onModeChange={handleModeChange}
+          />
         )}
 
         {mode === "coccion" && (
-          <>
-            <SelectionSections
-              lang={lang}
-              t={t}
-              animal={animal}
-              cut={cut}
-              cuts={cuts}
-              handleAnimalChange={handleAnimalChange}
-              handleCutChange={handleCutChange}
-            />
-
-            <section className="grid gap-5 md:grid-cols-[380px_1fr]">
-              <div className="space-y-4 rounded-3xl border border-slate-800 bg-slate-900 p-5">
-                <h2 className="text-xl font-bold">{t.configurePlan}</h2>
-
-                {selectedCut && (
-                  <div className="rounded-2xl border border-orange-500/30 bg-orange-500/10 p-4">
-                    <p className="text-sm text-orange-300">{animal}</p>
-                    <h3 className="font-bold">{selectedCut.name}</h3>
-                    <p className="mt-1 text-sm text-slate-300">
-                      {selectedCut.description}
-                    </p>
-                  </div>
-                )}
-
-                <Input label={t.weight} value={weight} onChange={setWeight} placeholder="Ej: 1.2" />
-
-                {showThickness && (
-                  <Input label={t.thickness} value={thickness} onChange={setThickness} placeholder="Ej: 5" />
-                )}
-
-                <Select label={t.doneness} value={doneness} onChange={setDoneness} options={currentDonenessOptions} />
-                <Select label={t.equipment} value={equipment} onChange={setEquipment} options={equipmentOptions} />
-
-                <PrimaryButton onClick={generateCookingPlan} loading={loading} text={t.generatePlan} loadingText={t.generating} />
-
-                <div className="rounded-2xl border border-blue-500/20 bg-blue-500/10 p-3 text-xs text-blue-200">
-                  {t.supabaseReady}: cooking_plans, cook_steps, user_profiles
-                </div>
-              </div>
-
-              <ResultCards
-                blocks={blocks}
-                loading={loading}
-                checkedItems={checkedItems}
-                setCheckedItems={setCheckedItems}
-                onStartCooking={() => {
-                  setMode("cocina");
-                  setTimerRunning(false);
-                }}
-                t={t}
-              />
-            </section>
-          </>
+          <CookingWizard
+            animal={animal}
+            cookingStep={cookingStep}
+            currentDonenessOptions={currentDonenessOptions}
+            cut={cut}
+            cuts={cuts}
+            equipment={equipment}
+            generateCookingPlan={generateCookingPlan}
+            handleAnimalChange={handleAnimalChange}
+            handleCutChange={handleCutChange}
+            loading={loading}
+            selectedCut={selectedCut}
+            setCookingStep={setCookingStep}
+            setDoneness={setDoneness}
+            setEquipment={setEquipment}
+            setMode={setMode}
+            setTimerRunning={setTimerRunning}
+            setThickness={setThickness}
+            setWeight={setWeight}
+            showThickness={showThickness}
+            t={t}
+            weight={weight}
+            thickness={thickness}
+            doneness={doneness}
+            blocks={blocks}
+            checkedItems={checkedItems}
+            setCheckedItems={setCheckedItems}
+          />
         )}
 
         {mode === "menu" && (
-          <section className="grid gap-5 md:grid-cols-[380px_1fr]">
-            <div className="space-y-4 rounded-3xl border border-slate-800 bg-slate-900 p-5">
+          <Grid variant="split">
+            <div className={ds.panel.form}>
               <h2 className="text-xl font-bold">{t.createMenu}</h2>
 
               <Input label={t.people} value={people} onChange={setPeople} placeholder="Ej: 6" />
@@ -809,13 +770,15 @@ ERROR
               <PrimaryButton onClick={generateMenuPlan} loading={loading} text={t.createMenu} loadingText={t.creating} />
 
               {(blocks.MENU || blocks.COMPRA || blocks.SHOPPING) && (
-                <button
+                <Button
+                  className="px-5 py-4 font-bold"
+                  fullWidth
                   onClick={saveCurrentMenu}
                   disabled={saveMenuStatus === "saving"}
-                  className="w-full rounded-2xl border border-orange-500 px-5 py-4 font-bold text-orange-300 disabled:cursor-not-allowed disabled:opacity-60"
+                  variant="outlineAccent"
                 >
                   {saveMenuStatus === "saving" ? t.savingMenu : t.saveMenu}
-                </button>
+                </Button>
               )}
 
               {saveMenuMessage && (
@@ -835,12 +798,12 @@ ERROR
               saveMenuMessage={saveMenuMessage}
               t={t}
             />
-          </section>
+          </Grid>
         )}
 
         {mode === "parrillada" && (
-          <section className="grid gap-5 md:grid-cols-[380px_1fr]">
-            <div className="space-y-4 rounded-3xl border border-slate-800 bg-slate-900 p-5">
+          <Grid variant="split">
+            <div className={ds.panel.form}>
               <h2 className="text-xl font-bold">{t.parrilladaPro}</h2>
 
               <Input label={t.people} value={parrilladaPeople} onChange={setParrilladaPeople} placeholder="Ej: 6" />
@@ -849,17 +812,17 @@ ERROR
               <Input label={t.sides} value={parrilladaSides} onChange={setParrilladaSides} placeholder="Ej: patatas, ensalada, chimichurri" />
               <Select label={t.equipment} value={equipment} onChange={setEquipment} options={equipmentOptions} />
 
-              <button onClick={generateParrillada} className="w-full rounded-2xl bg-orange-500 px-5 py-4 font-bold">
+              <Button className="px-5 py-4 font-bold" fullWidth onClick={generateParrillada}>
                 {t.createParrillada}
-              </button>
+              </Button>
 
-              <div className="rounded-2xl border border-blue-500/20 bg-blue-500/10 p-3 text-xs text-blue-200">
+              <div className={ds.notice.info}>
                 {t.supabaseReady}: bbq_events, bbq_timeline_items, grill_zones
               </div>
             </div>
 
             <ResultCards blocks={blocks} loading={loading} checkedItems={checkedItems} setCheckedItems={setCheckedItems} t={t} />
-          </section>
+          </Grid>
         )}
 
         {mode === "cocina" && (
@@ -877,55 +840,730 @@ ERROR
         )}
 
         {mode === "guardados" && (
-          <section>
-            <h2 className="mb-4 text-2xl font-bold">{t.savedMenus}</h2>
-
-            {savedMenus.length === 0 && (
-              <div className="rounded-3xl border border-slate-800 bg-slate-900 p-6 text-slate-400">
-                {t.noSaved}
-              </div>
-            )}
-
-            <div className="grid gap-4 md:grid-cols-2">
-              {savedMenus.map((menu) => (
-                <div key={menu.id} className="rounded-3xl border border-slate-800 bg-slate-900 p-5">
-                  <p className="text-sm text-orange-400">{t.savedMenus}</p>
-                  <h3 className="mt-1 text-xl font-bold">{menu.title}</h3>
-                  <p className="mt-1 text-sm text-slate-400">{menu.date}</p>
-
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    <button onClick={() => loadMenu(menu)} className="rounded-xl bg-orange-500 px-4 py-2 font-bold">
-                      {lang === "es" ? "Abrir" : "Open"}
-                    </button>
-                    <button onClick={() => navigator.clipboard.writeText(buildText(menu.blocks))} className="rounded-xl border border-slate-700 px-4 py-2">
-                      {t.copy}
-                    </button>
-                    <button onClick={() => deleteMenu(menu.id)} className="rounded-xl border border-red-500/60 px-4 py-2 text-red-300">
-                      {lang === "es" ? "Borrar" : "Delete"}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
+          <SavedMenusSection
+            lang={lang}
+            menus={savedMenus}
+            onCopy={(menu) => navigator.clipboard.writeText(buildText(menu.blocks))}
+            onDelete={deleteMenu}
+            onOpen={loadMenu}
+            t={t}
+          />
         )}
       </div>
 
-      <nav className="fixed bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950/95 px-3 py-3 backdrop-blur">
-        <div className="mx-auto grid max-w-4xl grid-cols-6 gap-2">
-          <Tab active={mode === "inicio"} label={t.start} emoji="🏠" onClick={() => setMode("inicio")} />
-          <Tab active={mode === "coccion"} label={t.cooking} emoji="🥩" onClick={() => setMode("coccion")} />
-          <Tab active={mode === "menu"} label={t.menu} emoji="🍽️" onClick={() => setMode("menu")} />
-          <Tab active={mode === "parrillada"} label={t.parrillada} emoji="🔥" onClick={() => setMode("parrillada")} />
-          <Tab active={mode === "cocina"} label={t.live} emoji="⏱️" onClick={() => setMode("cocina")} />
-          <Tab active={mode === "guardados"} label={t.saved} emoji="⭐" onClick={() => setMode("guardados")} />
-        </div>
-      </nav>
+      <BottomNavigation mode={mode} onModeChange={handleModeChange} t={t} />
     </main>
   );
 }
 
 /* COMPONENTS */
+
+function VersionSwitcher() {
+  return (
+    <div className={`${ds.nav.switcher} md:hidden`}>
+      {["/", "/v3", "/v4"].map((href, index) => (
+        <a
+          key={href}
+          href={href}
+          className={ds.nav.switcherLink}
+        >
+          V{index === 0 ? 1 : index + 2}
+        </a>
+      ))}
+    </div>
+  );
+}
+
+function AppHeader({
+  lang,
+  onLangChange,
+  t,
+}: {
+  lang: Lang;
+  onLangChange: (lang: Lang) => void;
+  t: typeof texts.es;
+}) {
+  return (
+    <header className="mb-4 flex items-center justify-between gap-4 rounded-3xl border border-white/10 bg-slate-950/50 px-4 py-3 shadow-lg shadow-black/10 backdrop-blur">
+      <div className="min-w-0">
+        <Badge className="uppercase tracking-[0.2em]">{t.app}</Badge>
+        <p className="mt-2 hidden text-sm text-slate-400 sm:block">{t.subtitle}</p>
+      </div>
+
+      <div className="shrink-0">
+        <select
+          value={lang}
+          onChange={(event) => onLangChange(event.target.value as Lang)}
+          className={ds.input.compactSelect}
+        >
+          <option value="es">🇪🇸 Español</option>
+          <option value="en">🇬🇧 English</option>
+          <option value="fi">🇫🇮 Suomi</option>
+        </select>
+      </div>
+    </header>
+  );
+}
+
+function DesktopModeTabs({
+  mode,
+  onModeChange,
+  t,
+}: {
+  mode: Mode;
+  onModeChange: (mode: Mode) => void;
+  t: typeof texts.es;
+}) {
+  return (
+    <nav className="mb-6 hidden rounded-3xl border border-white/10 bg-white/[0.03] p-2 shadow-lg shadow-black/10 backdrop-blur md:block">
+      <div className="grid grid-cols-6 gap-2">
+        <DesktopTab active={mode === "inicio"} label={t.start} emoji="🏠" onClick={() => onModeChange("inicio")} />
+        <DesktopTab active={mode === "coccion"} label={t.cooking} emoji="🥩" onClick={() => onModeChange("coccion")} />
+        <DesktopTab active={mode === "menu"} label={t.menu} emoji="🍽️" onClick={() => onModeChange("menu")} />
+        <DesktopTab active={mode === "parrillada"} label={t.parrillada} emoji="🔥" onClick={() => onModeChange("parrillada")} />
+        <DesktopTab active={mode === "cocina"} label={t.live} emoji="⏱️" onClick={() => onModeChange("cocina")} />
+        <DesktopTab active={mode === "guardados"} label={t.saved} emoji="⭐" onClick={() => onModeChange("guardados")} />
+      </div>
+    </nav>
+  );
+}
+
+function DesktopTab({
+  active,
+  emoji,
+  label,
+  onClick,
+}: {
+  active: boolean;
+  emoji: string;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={
+        active
+          ? "rounded-2xl bg-orange-500 px-3 py-3 text-sm font-bold text-black shadow-lg shadow-orange-500/20 transition active:scale-[0.98]"
+          : "rounded-2xl px-3 py-3 text-sm font-medium text-slate-400 transition hover:bg-white/5 hover:text-slate-100 active:scale-[0.98]"
+      }
+    >
+      <span className="mr-2">{emoji}</span>
+      {label}
+    </button>
+  );
+}
+
+function CookingWizard({
+  animal,
+  blocks,
+  checkedItems,
+  cookingStep,
+  currentDonenessOptions,
+  cut,
+  cuts,
+  doneness,
+  equipment,
+  generateCookingPlan,
+  handleAnimalChange,
+  handleCutChange,
+  loading,
+  selectedCut,
+  setCheckedItems,
+  setCookingStep,
+  setDoneness,
+  setEquipment,
+  setMode,
+  setThickness,
+  setTimerRunning,
+  setWeight,
+  showThickness,
+  t,
+  thickness,
+  weight,
+}: {
+  animal: Animal;
+  blocks: Blocks;
+  checkedItems: Record<string, boolean>;
+  cookingStep: CookingWizardStep;
+  currentDonenessOptions: string[];
+  cut: string;
+  cuts: CutItem[];
+  doneness: string;
+  equipment: string;
+  generateCookingPlan: () => Promise<void>;
+  handleAnimalChange: (animal: Animal) => void;
+  handleCutChange: (cut: string) => void;
+  loading: boolean;
+  selectedCut?: CutItem;
+  setCheckedItems: (value: Record<string, boolean>) => void;
+  setCookingStep: (step: CookingWizardStep) => void;
+  setDoneness: (value: string) => void;
+  setEquipment: (value: string) => void;
+  setMode: (mode: Mode) => void;
+  setThickness: (value: string) => void;
+  setTimerRunning: (value: boolean) => void;
+  setWeight: (value: string) => void;
+  showThickness: boolean;
+  t: typeof texts.es;
+  thickness: string;
+  weight: string;
+}) {
+  return (
+    <div className="space-y-6">
+      <CookingWizardHeader
+        animal={animal}
+        cookingStep={cookingStep}
+        selectedCut={selectedCut}
+        t={t}
+      />
+
+      {cookingStep === "animal" && (
+        <CookingAnimalStep
+          animal={animal}
+          onSelectAnimal={handleAnimalChange}
+          t={t}
+        />
+      )}
+
+      {cookingStep === "cut" && (
+        <CookingCutStep
+          animal={animal}
+          cut={cut}
+          cuts={cuts}
+          onBack={() => setCookingStep("animal")}
+          onSelectCut={handleCutChange}
+          t={t}
+        />
+      )}
+
+      {cookingStep === "details" && selectedCut && (
+        <CookingDetailsStep
+          animal={animal}
+          blocks={blocks}
+          checkedItems={checkedItems}
+          currentDonenessOptions={currentDonenessOptions}
+          doneness={doneness}
+          equipment={equipment}
+          generateCookingPlan={generateCookingPlan}
+          loading={loading}
+          onBack={() => setCookingStep("cut")}
+          selectedCut={selectedCut}
+          setCheckedItems={setCheckedItems}
+          setDoneness={setDoneness}
+          setEquipment={setEquipment}
+          setMode={setMode}
+          setThickness={setThickness}
+          setTimerRunning={setTimerRunning}
+          setWeight={setWeight}
+          showThickness={showThickness}
+          t={t}
+          thickness={thickness}
+          weight={weight}
+        />
+      )}
+    </div>
+  );
+}
+
+function CookingWizardHeader({
+  animal,
+  cookingStep,
+  selectedCut,
+  t,
+}: {
+  animal: Animal;
+  cookingStep: CookingWizardStep;
+  selectedCut?: CutItem;
+  t: typeof texts.es;
+}) {
+  return (
+    <Panel className="relative overflow-hidden p-5 sm:p-6" tone="hero">
+      <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-orange-500/15 blur-3xl" />
+      <div className="relative z-10 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <Badge className="uppercase tracking-[0.2em]">{t.planCooking}</Badge>
+          <h1 className="mt-4 text-3xl font-black tracking-tight text-white sm:text-4xl">
+            Cocina guiada paso a paso
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
+            Elige primero el animal, después el corte y finalmente ajusta los detalles de cocción.
+          </p>
+          {cookingStep !== "animal" && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Badge>{animal}</Badge>
+              {selectedCut && <Badge tone="glass">{selectedCut.name}</Badge>}
+            </div>
+          )}
+        </div>
+
+        <CookingStepIndicator currentStep={cookingStep} />
+      </div>
+    </Panel>
+  );
+}
+
+function CookingStepIndicator({ currentStep }: { currentStep: CookingWizardStep }) {
+  const steps: Array<{ id: CookingWizardStep; label: string; number: string }> = [
+    { id: "animal", label: "Animal", number: "1" },
+    { id: "cut", label: "Corte", number: "2" },
+    { id: "details", label: "Detalles", number: "3" },
+  ];
+  const currentIndex = steps.findIndex((step) => step.id === currentStep);
+
+  return (
+    <div className="grid min-w-full grid-cols-3 gap-2 rounded-2xl border border-white/10 bg-black/20 p-2 sm:min-w-[360px]">
+      {steps.map((step, index) => {
+        const isActive = step.id === currentStep;
+        const isComplete = index < currentIndex;
+
+        return (
+          <div
+            key={step.id}
+            className={
+              isActive
+                ? "rounded-xl bg-orange-500 px-3 py-2 text-center text-black shadow-lg shadow-orange-500/20"
+                : isComplete
+                  ? "rounded-xl border border-orange-500/20 bg-orange-500/10 px-3 py-2 text-center text-orange-200"
+                  : "rounded-xl px-3 py-2 text-center text-slate-500"
+            }
+          >
+            <p className="text-xs font-black">{step.number}</p>
+            <p className="mt-0.5 text-xs font-semibold">{step.label}</p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function CookingAnimalStep({
+  animal,
+  onSelectAnimal,
+  t,
+}: {
+  animal: Animal;
+  onSelectAnimal: (animal: Animal) => void;
+  t: typeof texts.es;
+}) {
+  return (
+    <Section eyebrow="Paso 1" title={t.chooseAnimal}>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {(Object.keys(animalData) as Animal[]).map((item) => (
+          <ImageCard
+            key={item}
+            active={animal === item}
+            title={item}
+            subtitle={animalData[item].cuts.slice(0, 2).map((cutItem) => cutItem.name).join(", ")}
+            emoji={animalData[item].icon}
+            image={animalData[item].image}
+            badge={hasLocalEngine(item) ? t.localEngine : t.aiFallback}
+            selectedLabel={t.selected}
+            onClick={() => onSelectAnimal(item)}
+          />
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+function CookingCutStep({
+  animal,
+  cut,
+  cuts,
+  onBack,
+  onSelectCut,
+  t,
+}: {
+  animal: Animal;
+  cut: string;
+  cuts: CutItem[];
+  onBack: () => void;
+  onSelectCut: (cut: string) => void;
+  t: typeof texts.es;
+}) {
+  return (
+    <Section className="space-y-5" eyebrow="Paso 2" title={t.chooseCut}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className={ds.panel.highlight}>
+          <p className="text-sm text-orange-300">{t.selected}</p>
+          <h2 className="font-bold text-white">{animal}</h2>
+        </div>
+        <Button onClick={onBack} variant="secondary">← {t.reset}</Button>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {cuts.map((item) => (
+          <CutCard
+            key={item.name}
+            active={cut === item.name}
+            cut={item}
+            badge={hasLocalEngine(animal) ? t.localEngine : t.aiFallback}
+            activeLabel={t.active}
+            onClick={() => onSelectCut(item.name)}
+          />
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+function CookingDetailsStep({
+  animal,
+  blocks,
+  checkedItems,
+  currentDonenessOptions,
+  doneness,
+  equipment,
+  generateCookingPlan,
+  loading,
+  onBack,
+  selectedCut,
+  setCheckedItems,
+  setDoneness,
+  setEquipment,
+  setMode,
+  setThickness,
+  setTimerRunning,
+  setWeight,
+  showThickness,
+  t,
+  thickness,
+  weight,
+}: {
+  animal: Animal;
+  blocks: Blocks;
+  checkedItems: Record<string, boolean>;
+  currentDonenessOptions: string[];
+  doneness: string;
+  equipment: string;
+  generateCookingPlan: () => Promise<void>;
+  loading: boolean;
+  onBack: () => void;
+  selectedCut: CutItem;
+  setCheckedItems: (value: Record<string, boolean>) => void;
+  setDoneness: (value: string) => void;
+  setEquipment: (value: string) => void;
+  setMode: (mode: Mode) => void;
+  setThickness: (value: string) => void;
+  setTimerRunning: (value: boolean) => void;
+  setWeight: (value: string) => void;
+  showThickness: boolean;
+  t: typeof texts.es;
+  thickness: string;
+  weight: string;
+}) {
+  return (
+    <Grid variant="split">
+      <Panel className="space-y-4" tone="form">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className={ds.text.eyebrow}>Paso 3</p>
+            <h2 className="mt-1 text-xl font-bold text-white">{t.configurePlan}</h2>
+          </div>
+          <Button onClick={onBack} variant="secondary">← {t.chooseCut}</Button>
+        </div>
+
+        <div className={ds.panel.highlight}>
+          <p className="text-sm text-orange-300">{animal}</p>
+          <h3 className="font-bold text-white">{selectedCut.name}</h3>
+          <p className="mt-1 text-sm text-slate-300">{selectedCut.description}</p>
+        </div>
+
+        <Input label={t.weight} value={weight} onChange={setWeight} placeholder="Ej: 1.2" />
+
+        {showThickness && (
+          <Input label={t.thickness} value={thickness} onChange={setThickness} placeholder="Ej: 5" />
+        )}
+
+        <Select label={t.doneness} value={doneness} onChange={setDoneness} options={currentDonenessOptions} />
+        <Select label={t.equipment} value={equipment} onChange={setEquipment} options={equipmentOptions} />
+
+        <PrimaryButton onClick={generateCookingPlan} loading={loading} text={t.generatePlan} loadingText={t.generating} />
+
+        <div className={ds.notice.info}>
+          {t.supabaseReady}: cooking_plans, cook_steps, user_profiles
+        </div>
+      </Panel>
+
+      <ResultCards
+        blocks={blocks}
+        loading={loading}
+        checkedItems={checkedItems}
+        setCheckedItems={setCheckedItems}
+        onStartCooking={() => {
+          setMode("cocina");
+          setTimerRunning(false);
+        }}
+        t={t}
+      />
+    </Grid>
+  );
+}
+
+function HomeScreen({
+  savedMenusCount,
+  onModeChange,
+  t,
+}: {
+  savedMenusCount: number;
+  onModeChange: (mode: Mode) => void;
+  t: typeof texts.es;
+}) {
+  const featureCards = [
+    {
+      active: true,
+      description: "Calcula punto, temperatura, equipo y pasos de cocción para cada corte.",
+      emoji: "🥩",
+      mode: "coccion" as const,
+      stat: "Motor local",
+      title: t.planCooking,
+    },
+    {
+      description: "Crea cantidades, compra y orden de servicio para cenas y eventos BBQ.",
+      emoji: "🍽️",
+      mode: "menu" as const,
+      stat: "Menú completo",
+      title: t.createMenu,
+    },
+    {
+      description: "Coordina productos, zonas, acompañamientos y timeline de parrillada.",
+      emoji: "🔥",
+      mode: "parrillada" as const,
+      stat: "Timeline + zonas",
+      title: t.parrilladaPro,
+    },
+    {
+      description: "Sigue el plan paso a paso con temporizador y guía de ejecución.",
+      emoji: "⏱️",
+      mode: "cocina" as const,
+      stat: "Live cooking",
+      title: t.liveMode,
+    },
+    {
+      description: "Recupera planes anteriores y vuelve a abrir tus mejores menús.",
+      emoji: "⭐",
+      mode: "guardados" as const,
+      stat: `${savedMenusCount} ${t.saved}`,
+      title: t.savedMenus,
+    },
+  ];
+
+  return (
+    <div className="space-y-8">
+      <section className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr] lg:items-stretch">
+        <Panel className="relative min-h-[420px] p-6 sm:p-8" tone="hero">
+          <div className="pointer-events-none absolute -left-20 -top-20 h-56 w-56 rounded-full bg-orange-500/15 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-28 right-10 h-64 w-64 rounded-full bg-red-500/10 blur-3xl" />
+
+          <div className="relative z-10 flex h-full flex-col justify-between gap-10">
+            <div>
+              <Badge className="uppercase tracking-[0.2em]">BBQ operating system</Badge>
+              <h1 className="mt-5 max-w-3xl text-4xl font-black tracking-[-0.04em] text-white sm:text-5xl lg:text-6xl">
+                {t.title}
+              </h1>
+              <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
+                {t.subtitle} Diseña el plan, coordina el fuego y cocina con una guía clara de principio a fin.
+              </p>
+
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Button className="px-6 py-4 text-base" onClick={() => onModeChange("coccion")}>
+                  {t.planCooking}
+                </Button>
+                <Button className="px-6 py-4 text-base" onClick={() => onModeChange("parrillada")} variant="secondary">
+                  {t.parrilladaPro}
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid gap-3 text-sm text-slate-300 sm:grid-cols-3">
+              <TrustItem label={t.localEngine} value="Cortes premium" />
+              <TrustItem label="Timeline live" value={t.liveMode} />
+              <TrustItem label={t.savedMenus} value={`${savedMenusCount} ${t.saved}`} />
+            </div>
+          </div>
+        </Panel>
+
+        <HomePreviewPanel
+          onOpenSaved={() => onModeChange("guardados")}
+          savedMenusCount={savedMenusCount}
+          t={t}
+        />
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+          <div>
+            <p className={ds.text.eyebrow}>Workflows</p>
+            <h2 className="mt-2 text-2xl font-black tracking-tight text-white">Elige cómo quieres cocinar hoy</h2>
+          </div>
+          <p className="max-w-xl text-sm leading-6 text-slate-400">
+            Cada modo comparte el mismo motor de planificación, pero está optimizado para un momento distinto de la parrillada.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          {featureCards.map((card) => (
+            <HomeCard
+              key={card.mode}
+              active={card.active}
+              description={card.description}
+              emoji={card.emoji}
+              onClick={() => onModeChange(card.mode)}
+              stat={card.stat}
+              title={card.title}
+            />
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function TrustItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 ring-1 ring-inset ring-white/[0.03]">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-300">{label}</p>
+      <p className="mt-1 font-medium text-white">{value}</p>
+    </div>
+  );
+}
+
+function HomePreviewPanel({
+  onOpenSaved,
+  savedMenusCount,
+  t,
+}: {
+  onOpenSaved: () => void;
+  savedMenusCount: number;
+  t: typeof texts.es;
+}) {
+  const timeline = [
+    { time: "17:10", title: "Sellado fuerte", zone: "Directo" },
+    { time: "17:22", title: "Indirecto controlado", zone: "Zona media" },
+    { time: "17:45", title: "Reposo y servicio", zone: "Mesa" },
+  ];
+
+  return (
+    <Panel className="relative overflow-hidden p-5 sm:p-6" tone="result">
+      <div className="pointer-events-none absolute right-0 top-0 h-40 w-40 rounded-full bg-orange-500/10 blur-3xl" />
+
+      <div className="relative z-10">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <Badge>Plan inteligente</Badge>
+            <h2 className="mt-4 text-2xl font-black tracking-tight text-white">Vista previa del servicio</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-400">
+              Un plan accionable con tiempos, zonas y próximos pasos antes de encender la parrilla.
+            </p>
+          </div>
+          <div className={ds.media.iconBox}>🔥</div>
+        </div>
+
+        <div className="mt-6 space-y-3">
+          {timeline.map((item, index) => (
+            <div key={item.time} className="relative flex gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+              <div className="flex h-12 w-14 shrink-0 items-center justify-center rounded-xl bg-orange-500/10 text-sm font-bold text-orange-200">
+                {item.time}
+              </div>
+              <div className="min-w-0">
+                <p className="font-semibold text-white">{item.title}</p>
+                <p className="mt-1 text-sm text-slate-400">{item.zone}</p>
+              </div>
+              {index === 0 && <Badge className="ml-auto h-fit" tone="success">Ahora</Badge>}
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+            <p className="text-3xl font-black text-white">{savedMenusCount}</p>
+            <p className="mt-1 text-sm text-slate-400">{t.savedMenus}</p>
+          </div>
+          <button
+            onClick={onOpenSaved}
+            className="rounded-2xl border border-orange-500/30 bg-orange-500/10 p-4 text-left transition hover:bg-orange-500/15 active:scale-[0.99]"
+          >
+            <p className="font-semibold text-orange-200">{t.savedMenus}</p>
+            <p className="mt-1 text-sm text-slate-400">Abrir biblioteca</p>
+          </button>
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
+function SavedMenusSection({
+  lang,
+  menus,
+  onCopy,
+  onDelete,
+  onOpen,
+  t,
+}: {
+  lang: Lang;
+  menus: SavedMenu[];
+  onCopy: (menu: SavedMenu) => void;
+  onDelete: (id: string) => void;
+  onOpen: (menu: SavedMenu) => void;
+  t: typeof texts.es;
+}) {
+  return (
+    <Section eyebrow={`${menus.length} ${t.saved}`} title={t.savedMenus}>
+
+      {menus.length === 0 && (
+        <Card tone="empty">
+          {t.noSaved}
+        </Card>
+      )}
+
+      <Grid>
+        {menus.map((menu) => (
+          <Card key={menu.id}>
+            <p className="text-sm font-medium text-orange-300">{t.savedMenus}</p>
+            <h3 className="mt-1 text-xl font-bold text-white">{menu.title}</h3>
+            <p className="mt-1 text-sm text-slate-400">{menu.date}</p>
+
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Button onClick={() => onOpen(menu)}>
+                {lang === "es" ? "Abrir" : "Open"}
+              </Button>
+              <Button onClick={() => onCopy(menu)} variant="secondary">
+                {t.copy}
+              </Button>
+              <Button onClick={() => onDelete(menu.id)} variant="danger">
+                {lang === "es" ? "Borrar" : "Delete"}
+              </Button>
+            </div>
+          </Card>
+        ))}
+      </Grid>
+    </Section>
+  );
+}
+
+function BottomNavigation({
+  mode,
+  onModeChange,
+  t,
+}: {
+  mode: Mode;
+  onModeChange: (mode: Mode) => void;
+  t: typeof texts.es;
+}) {
+  return (
+    <nav className={`${ds.nav.bottom} md:hidden`}>
+      <div className={ds.layout.navGrid}>
+        <Tab active={mode === "inicio"} label={t.start} emoji="🏠" onClick={() => onModeChange("inicio")} />
+        <Tab active={mode === "coccion"} label={t.cooking} emoji="🥩" onClick={() => onModeChange("coccion")} />
+        <Tab active={mode === "menu"} label={t.menu} emoji="🍽️" onClick={() => onModeChange("menu")} />
+        <Tab active={mode === "parrillada"} label={t.parrillada} emoji="🔥" onClick={() => onModeChange("parrillada")} />
+        <Tab active={mode === "cocina"} label={t.live} emoji="⏱️" onClick={() => onModeChange("cocina")} />
+        <Tab active={mode === "guardados"} label={t.saved} emoji="⭐" onClick={() => onModeChange("guardados")} />
+      </div>
+    </nav>
+  );
+}
 
 function SelectionSections({
   lang,
@@ -946,15 +1584,9 @@ function SelectionSections({
 }) {
   return (
     <>
-      <section className="mb-8">
-        <div className="mb-4 flex items-end justify-between gap-3">
-          <div>
-            <p className="text-sm font-semibold text-orange-400">{lang === "es" ? "Paso 1" : "Step 1"}</p>
-            <h2 className="text-2xl font-black">{t.chooseAnimal}</h2>
-          </div>
-        </div>
+      <Section className="mb-8" eyebrow={lang === "es" ? "Paso 1" : "Step 1"} title={t.chooseAnimal}>
 
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+        <Grid variant="home">
           {(Object.keys(animalData) as Animal[]).map((item) => (
             <ImageCard
               key={item}
@@ -968,18 +1600,12 @@ function SelectionSections({
               onClick={() => handleAnimalChange(item)}
             />
           ))}
-        </div>
-      </section>
+        </Grid>
+      </Section>
 
-      <section className="mb-8">
-        <div className="mb-4 flex items-end justify-between gap-3">
-          <div>
-            <p className="text-sm font-semibold text-orange-400">{lang === "es" ? "Paso 2" : "Step 2"}</p>
-            <h2 className="text-2xl font-black">{t.chooseCut}</h2>
-          </div>
-        </div>
+      <Section className="mb-8" eyebrow={lang === "es" ? "Paso 2" : "Step 2"} title={t.chooseCut}>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Grid className="sm:grid-cols-2 lg:grid-cols-4">
           {cuts.map((item) => (
             <CutCard
               key={item.name}
@@ -990,8 +1616,8 @@ function SelectionSections({
               onClick={() => handleCutChange(item.name)}
             />
           ))}
-        </div>
-      </section>
+        </Grid>
+      </Section>
     </>
   );
 }
@@ -1018,24 +1644,15 @@ function CookingMode({
   resetCookMode: () => void;
 }) {
   const step = cookSteps[currentStep];
+  const progress = Math.min(
+    100,
+    Math.max(0, ((step.duration - timeLeft) / step.duration) * 100)
+  );
 
   return (
     <section className="grid gap-5 md:grid-cols-[420px_1fr]">
-      <div className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900">
-        {step.image && (
-          <div className="relative h-52 overflow-hidden">
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{
-                backgroundImage: `linear-gradient(to top, rgba(2,6,23,0.95), rgba(2,6,23,0.25)), url(${step.image})`,
-              }}
-            />
-            <div className="absolute bottom-3 left-3 rounded bg-black/60 px-3 py-1 text-xs font-semibold text-white">
-              {getStepLabel(step.title)}
-            </div>
-          </div>
-        )}
-
+      <Card className="overflow-hidden p-0">
+        <StepImage image={step.image} title={step.title} />
         <div className="p-5">
           <p className="text-sm text-orange-400">
             {lang === "es" ? "Paso" : "Step"} {currentStep + 1} / {cookSteps.length}
@@ -1044,88 +1661,116 @@ function CookingMode({
           <h2 className="mt-2 text-3xl font-bold">{step.title}</h2>
           <p className="mt-3 text-slate-300">{step.description}</p>
 
-          <div className="mt-6 rounded-3xl bg-slate-950 p-8 text-center">
+          <div className={ds.panel.timer}>
             <p className="text-7xl font-bold text-orange-400">{formatTime(timeLeft)}</p>
 
-            <div className="mt-6 h-3 overflow-hidden rounded-full bg-slate-800">
+            <div className={ds.media.progressTrack}>
               <div
-                className="h-full rounded-full bg-orange-500 transition-[width] duration-1000 ease-linear"
-                style={{
-                  width: `${Math.min(
-                    100,
-                    Math.max(0, ((step.duration - timeLeft) / step.duration) * 100)
-                  )}%`,
-                }}
+                className={ds.media.progressBar}
+                style={{ width: `${progress}%` }}
               />
             </div>
           </div>
 
           {step.tips && step.tips.length > 0 && (
-            <div className="mt-5 rounded-3xl border border-orange-500/30 bg-orange-500/10 p-5">
+            <Card className="mt-5 border-orange-500/30 bg-orange-500/10" tone="glass">
               <h3 className="font-bold text-orange-300">{t.keyTips}</h3>
               <ul className="mt-3 space-y-2 text-sm text-slate-200">
                 {step.tips.map((tip) => (
                   <li key={tip}>• {tip}</li>
                 ))}
               </ul>
-            </div>
+            </Card>
           )}
 
           <div className="mt-5 grid grid-cols-2 gap-3">
-            <button onClick={() => setTimerRunning(!timerRunning)} className="rounded-2xl bg-orange-500 px-5 py-4 font-bold">
+            <Button onClick={() => setTimerRunning(!timerRunning)} fullWidth>
               {timerRunning ? t.pause : t.startTimer}
-            </button>
+            </Button>
 
-            <button onClick={nextCookStep} className="rounded-2xl border border-slate-700 px-5 py-4 font-bold">
+            <Button onClick={nextCookStep} fullWidth variant="secondary">
               {t.next}
-            </button>
+            </Button>
           </div>
 
-          <button onClick={resetCookMode} className="mt-3 w-full rounded-2xl border border-slate-700 px-5 py-4 text-slate-300">
+          <Button className="mt-3" fullWidth onClick={resetCookMode} variant="ghost">
             {t.reset}
-          </button>
+          </Button>
         </div>
-      </div>
+      </Card>
 
-      <div className="rounded-3xl border border-slate-800 bg-slate-900 p-5">
+      <Card>
         <h2 className="mb-4 text-xl font-bold">{t.planSequence}</h2>
 
         <div className="space-y-3">
           {cookSteps.map((item, index) => (
-            <div
+            <CookingStepPreview
               key={`${item.title}-${index}`}
-              className={
-                index === currentStep
-                  ? "scale-[1.02] overflow-hidden rounded-2xl border border-orange-500 bg-orange-500/20 shadow-lg"
-                  : "overflow-hidden rounded-2xl border border-slate-800 bg-slate-950"
-              }
-            >
-              {item.image && (
-                <div className="relative h-24 overflow-hidden">
-                  <div
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{
-                      backgroundImage: `linear-gradient(to top, rgba(2,6,23,0.9), rgba(2,6,23,0.25)), url(${item.image})`,
-                    }}
-                  />
-                  <div className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-1 text-[10px] font-semibold text-white">
-                    {getStepLabel(item.title)}
-                  </div>
-                </div>
-              )}
-
-              <div className="p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className="font-bold">{item.title}</h3>
-                  <span className="text-sm text-slate-400">{formatTime(item.duration)}</span>
-                </div>
-                <p className="mt-2 text-sm text-slate-400">{item.description}</p>
-              </div>
-            </div>
+              active={index === currentStep}
+              step={item}
+            />
           ))}
         </div>
-      </div>
+      </Card>
     </section>
+  );
+}
+
+function StepImage({ image, title }: { image?: string; title: string }) {
+  if (!image) return null;
+
+  return (
+    <div className="relative h-52 overflow-hidden">
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage: `linear-gradient(to top, rgba(2,6,23,0.95), rgba(2,6,23,0.25)), url(${image})`,
+        }}
+      />
+      <div className="absolute bottom-3 left-3 rounded bg-black/60 px-3 py-1 text-xs font-semibold text-white">
+        {getStepLabel(title)}
+      </div>
+    </div>
+  );
+}
+
+function CookingStepPreview({
+  active,
+  step,
+}: {
+  active: boolean;
+  step: CookingStep;
+}) {
+  return (
+    <div
+      className={
+        active
+          ? "scale-[1.02] overflow-hidden rounded-2xl border border-orange-500 bg-orange-500/20 shadow-lg"
+          : "overflow-hidden rounded-2xl border border-white/10 bg-slate-950/80"
+      }
+    >
+      {step.image && (
+        <div className="relative h-24 overflow-hidden">
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{
+              backgroundImage: `linear-gradient(to top, rgba(2,6,23,0.9), rgba(2,6,23,0.25)), url(${step.image})`,
+            }}
+          />
+          <div className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-1 text-[10px] font-semibold text-white">
+            {getStepLabel(step.title)}
+          </div>
+        </div>
+      )}
+
+      <div className="p-4">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="font-bold">{step.title}</h3>
+          <span className="text-sm text-slate-400">{formatTime(step.duration)}</span>
+        </div>
+        <p className="mt-2 text-sm text-slate-400">{step.description}</p>
+      </div>
+    </div>
   );
 }
 
@@ -1165,7 +1810,7 @@ function ResultCards({
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-5">
+    <div className={ds.layout.resultContainer}>
       <ResultHero
         actions={{
           onCopy: copyText,
@@ -1250,9 +1895,9 @@ function ImageCard({
 
         <div className="absolute left-4 top-4 rounded-2xl bg-black/55 px-3 py-2 text-3xl backdrop-blur">{emoji}</div>
 
-        {badge && <div className="absolute right-3 top-3 rounded-full bg-orange-500 px-3 py-1 text-[11px] font-bold text-white">{badge}</div>}
+        {badge && <Badge className="absolute right-3 top-3 text-[11px]" tone="solidAccent">{badge}</Badge>}
 
-        {active && <div className="absolute bottom-3 right-3 rounded-full bg-white px-3 py-1 text-xs font-black text-slate-950">✓ {selectedLabel}</div>}
+        {active && <Badge className="absolute bottom-3 right-3 font-black" tone="selected">✓ {selectedLabel}</Badge>}
       </div>
 
       <div className="p-4">
@@ -1293,8 +1938,8 @@ function CutCard({
           }}
         />
 
-        {badge && <div className="absolute left-3 top-3 rounded-full bg-black/60 px-3 py-1 text-[11px] font-bold text-white backdrop-blur">{badge}</div>}
-        {active && <div className="absolute right-3 top-3 rounded-full bg-orange-500 px-3 py-1 text-[11px] font-black text-white">✓ {activeLabel}</div>}
+        {badge && <Badge className="absolute left-3 top-3 text-[11px]" tone="glass">{badge}</Badge>}
+        {active && <Badge className="absolute right-3 top-3 text-[11px] font-black" tone="solidAccent">✓ {activeLabel}</Badge>}
 
         <div className="absolute bottom-0 left-0 right-0 p-4">
           <h3 className="text-xl font-black text-white">{cut.name}</h3>
@@ -1308,19 +1953,52 @@ function CutCard({
   );
 }
 
-function HomeCard({ title, description, emoji, onClick }: { title: string; description: string; emoji: string; onClick: () => void }) {
+function HomeCard({
+  active = false,
+  description,
+  emoji,
+  onClick,
+  stat,
+  title,
+}: {
+  active?: boolean;
+  description: string;
+  emoji: string;
+  onClick: () => void;
+  stat: string;
+  title: string;
+}) {
   return (
-    <button onClick={onClick} className="rounded-3xl border border-slate-800 bg-slate-900 p-6 text-left transition hover:border-orange-500">
-      <div className="text-4xl">{emoji}</div>
-      <h2 className="mt-4 text-xl font-bold">{title}</h2>
-      <p className="mt-2 text-sm text-slate-400">{description}</p>
+    <button
+      onClick={onClick}
+      className={
+        active
+          ? `${ds.panel.homeCard} border-orange-500/50 bg-gradient-to-br from-orange-500/15 to-slate-900/80 shadow-orange-500/10`
+          : ds.panel.homeCard
+      }
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className={ds.media.iconTile}>{emoji}</div>
+        <Badge className="shrink-0" tone={active ? "accent" : "glass"}>
+          {stat}
+        </Badge>
+      </div>
+      <h2 className="mt-6 text-xl font-bold tracking-tight text-white">{title}</h2>
+      <p className="mt-3 text-sm leading-6 text-slate-400">{description}</p>
+      <div className="mt-6 flex items-center text-sm font-semibold text-orange-300">
+        Abrir modo
+        <span className="ml-2 transition group-hover:translate-x-1">→</span>
+      </div>
     </button>
   );
 }
 
 function Tab({ active, label, emoji, onClick }: { active: boolean; label: string; emoji: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className={active ? "rounded-2xl bg-orange-500 px-2 py-2 text-xs font-bold text-white" : "rounded-2xl px-2 py-2 text-xs text-slate-400"}>
+    <button
+      onClick={onClick}
+      className={active ? ds.button.tabActive : ds.button.tabIdle}
+    >
       <div>{emoji}</div>
       <div>{label}</div>
     </button>
@@ -1329,17 +2007,22 @@ function Tab({ active, label, emoji, onClick }: { active: boolean; label: string
 
 function PrimaryButton({ onClick, loading, text, loadingText }: { onClick: () => void; loading: boolean; text: string; loadingText: string }) {
   return (
-    <button onClick={onClick} disabled={loading} className="w-full rounded-2xl bg-orange-500 px-5 py-4 font-bold disabled:opacity-60">
+    <Button fullWidth onClick={onClick} disabled={loading} className="px-5 py-4 font-bold">
       {loading ? loadingText : text}
-    </button>
+    </Button>
   );
 }
 
 function Input({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string }) {
   return (
     <div>
-      <label className="text-sm text-slate-400">{label}</label>
-      <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950 p-3" />
+      <label className={ds.input.label}>{label}</label>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className={ds.input.field}
+      />
     </div>
   );
 }
@@ -1347,8 +2030,12 @@ function Input({ label, value, onChange, placeholder }: { label: string; value: 
 function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: string[] }) {
   return (
     <div>
-      <label className="text-sm text-slate-400">{label}</label>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950 p-3">
+      <label className={ds.input.label}>{label}</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={ds.input.field}
+      >
         {options.map((item) => (
           <option key={item}>{item}</option>
         ))}
