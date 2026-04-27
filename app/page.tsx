@@ -27,7 +27,7 @@ type Lang = "es" | "en" | "fi";
 type EngineLang = "es" | "en";
 type Blocks = Record<string, string>;
 type SaveMenuStatus = "idle" | "saving" | "success" | "error";
-type CookingWizardStep = "animal" | "cut" | "details";
+type CookingWizardStep = "animal" | "cut" | "details" | "result";
 type SelectOption = string | { label: string; value: string };
 type CookingVisualContext = {
   animalId?: AnimalId;
@@ -698,6 +698,7 @@ export default function Home() {
       setCurrentStep(0);
       setTimeLeft(visualSteps[0].duration);
       setTimerRunning(false);
+      setCookingStep("result");
       return;
     }
 
@@ -721,6 +722,7 @@ ERROR
       true,
       visualContext
     );
+    setCookingStep("result");
   }
 
   async function generateMenuPlan() {
@@ -800,6 +802,11 @@ ERROR
   function handleSwipeNavigation(direction: SwipeDirection) {
     if (direction === "back") {
       if (mode === "coccion") {
+        if (cookingStep === "result") {
+          setCookingStep("details");
+          return;
+        }
+
         if (cookingStep === "details") {
           setCookingStep("cut");
           return;
@@ -1170,14 +1177,16 @@ function CookingWizard({
 }) {
   return (
     <div className="space-y-3 sm:space-y-6">
-      <CookingWizardHeader
-        animal={animal}
-        cookingStep={cookingStep}
-        selectedCut={selectedCut}
-        t={t}
-      />
+      {cookingStep !== "result" && (
+        <CookingWizardHeader
+          animal={animal}
+          cookingStep={cookingStep}
+          selectedCut={selectedCut}
+          t={t}
+        />
+      )}
 
-      {cookingStep !== "animal" && (
+      {cookingStep !== "animal" && cookingStep !== "result" && (
         <p className="px-1 text-center text-[11px] font-medium text-slate-500 md:hidden">
           Desliza para volver
         </p>
@@ -1206,8 +1215,6 @@ function CookingWizard({
       {cookingStep === "details" && selectedCut && (
         <CookingDetailsStep
           animal={animal}
-          blocks={blocks}
-          checkedItems={checkedItems}
           currentDonenessOptions={currentDonenessOptions}
           doneness={doneness}
           equipment={equipment}
@@ -1215,17 +1222,26 @@ function CookingWizard({
           loading={loading}
           onBack={() => setCookingStep("cut")}
           selectedCut={selectedCut}
-          setCheckedItems={setCheckedItems}
           setDoneness={setDoneness}
           setEquipment={setEquipment}
-          setMode={setMode}
           setThickness={setThickness}
-          setTimerRunning={setTimerRunning}
           setWeight={setWeight}
           showThickness={showThickness}
           t={t}
           thickness={thickness}
           weight={weight}
+        />
+      )}
+
+      {cookingStep === "result" && (
+        <CookingResultStep
+          blocks={blocks}
+          checkedItems={checkedItems}
+          onEdit={() => setCookingStep("details")}
+          setCheckedItems={setCheckedItems}
+          setMode={setMode}
+          setTimerRunning={setTimerRunning}
+          t={t}
         />
       )}
     </div>
@@ -1406,8 +1422,6 @@ function CookingCutStep({
 
 function CookingDetailsStep({
   animal,
-  blocks,
-  checkedItems,
   currentDonenessOptions,
   doneness,
   equipment,
@@ -1415,12 +1429,9 @@ function CookingDetailsStep({
   loading,
   onBack,
   selectedCut,
-  setCheckedItems,
   setDoneness,
   setEquipment,
-  setMode,
   setThickness,
-  setTimerRunning,
   setWeight,
   showThickness,
   t,
@@ -1428,8 +1439,6 @@ function CookingDetailsStep({
   weight,
 }: {
   animal: Animal;
-  blocks: Blocks;
-  checkedItems: Record<string, boolean>;
   currentDonenessOptions: SelectOption[];
   doneness: string;
   equipment: string;
@@ -1437,12 +1446,9 @@ function CookingDetailsStep({
   loading: boolean;
   onBack: () => void;
   selectedCut: CutItem;
-  setCheckedItems: (value: Record<string, boolean>) => void;
   setDoneness: (value: string) => void;
   setEquipment: (value: string) => void;
-  setMode: (mode: Mode) => void;
   setThickness: (value: string) => void;
-  setTimerRunning: (value: boolean) => void;
   setWeight: (value: string) => void;
   showThickness: boolean;
   t: typeof texts.es;
@@ -1451,7 +1457,7 @@ function CookingDetailsStep({
 }) {
   return (
     <Grid variant="split">
-      <Panel className="space-y-3 sm:space-y-4" tone="form">
+      <Panel className="space-y-3 sm:space-y-4 md:col-span-2" tone="form">
         <div className="flex items-start justify-between gap-2 sm:gap-3">
           <div>
             <p className={ds.text.eyebrow}>Paso 3</p>
@@ -1483,10 +1489,38 @@ function CookingDetailsStep({
           {t.supabaseReady}: cooking_plans, cook_steps, user_profiles
         </div>
       </Panel>
+    </Grid>
+  );
+}
+
+function CookingResultStep({
+  blocks,
+  checkedItems,
+  onEdit,
+  setCheckedItems,
+  setMode,
+  setTimerRunning,
+  t,
+}: {
+  blocks: Blocks;
+  checkedItems: Record<string, boolean>;
+  onEdit: () => void;
+  setCheckedItems: (value: Record<string, boolean>) => void;
+  setMode: (mode: Mode) => void;
+  setTimerRunning: (value: boolean) => void;
+  t: typeof texts.es;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-start">
+        <Button className="rounded-full px-4 py-2 text-sm" onClick={onEdit} variant="secondary">
+          ← Editar plan
+        </Button>
+      </div>
 
       <ResultCards
         blocks={blocks}
-        loading={loading}
+        loading={false}
         checkedItems={checkedItems}
         setCheckedItems={setCheckedItems}
         onStartCooking={() => {
@@ -1495,7 +1529,7 @@ function CookingDetailsStep({
         }}
         t={t}
       />
-    </Grid>
+    </div>
   );
 }
 
