@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import ResultCard from "@/components/ResultCard";
 import { getPublicSavedMenuBySlug, type Json, type SavedMenu } from "@/lib/db/savedMenus";
 import ShareActions from "./ShareActions";
@@ -14,10 +15,46 @@ type SavedMenuType = "cooking_plan" | "generated_menu" | "parrillada_plan";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata() {
+export async function generateMetadata({ params }: ShareSlugPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const menu = await getPublicSavedMenuBySlug(slug);
+
+  if (!menu) {
+    return {
+      title: "Plan no disponible | Parrillero Pro",
+      description: "Crea tu propio plan de parrilla en segundos.",
+    };
+  }
+
+  const title = `${menu.name} | Parrillero Pro`;
+  const description = getMetadataDescription(getMenuType(menu.data));
+  const shareUrl = getAbsoluteUrl(`/share/${slug}`);
+  const openGraphImageUrl = getAbsoluteUrl(`/share/${slug}/opengraph-image`);
+  const twitterImageUrl = getAbsoluteUrl(`/share/${slug}/twitter-image`);
+
   return {
-    title: "Plan de parrilla listo | Parrillero Pro",
-    description: "Organiza tu parrillada perfecta en segundos.",
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "article",
+      url: shareUrl,
+      images: [
+        {
+          url: openGraphImageUrl,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [twitterImageUrl],
+    },
   };
 }
 
@@ -230,6 +267,12 @@ function getBadgeLabel(type: SavedMenuType) {
   return "Menú BBQ";
 }
 
+function getMetadataDescription(type: SavedMenuType) {
+  if (type === "cooking_plan") return "Plan de cocción paso a paso creado con Parrillero Pro.";
+  if (type === "parrillada_plan") return "Parrillada organizada con tiempos, zonas y lista de compra.";
+  return "Menú BBQ completo con cantidades, timing y compra.";
+}
+
 function getHeroSubtitle(type: SavedMenuType, people: number | null) {
   if (type === "cooking_plan") return "Cocina perfecta paso a paso";
   if (type === "parrillada_plan") return "Organiza tu parrillada sin errores";
@@ -289,4 +332,13 @@ function toStringRecord(value: Record<string, Json | undefined>): Blocks {
 
 function isRecord(value: Json | undefined): value is Record<string, Json | undefined> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function getAbsoluteUrl(path: string) {
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://parrillero-pro.vercel.app").replace(
+    /\/$/,
+    "",
+  );
+
+  return `${siteUrl}${path}`;
 }
