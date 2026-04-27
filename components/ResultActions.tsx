@@ -7,6 +7,7 @@ type SaveMenuStatus = "idle" | "saving" | "success" | "error";
 
 export default function ResultActions({
   actions,
+  compact = false,
   hasResult,
   status: rawStatus,
   t,
@@ -17,6 +18,7 @@ export default function ResultActions({
     onShare?: () => void;
     onStartCooking?: () => void;
   };
+  compact?: boolean;
   hasResult: boolean;
   status?: SaveMenuStatus;
   t: {
@@ -93,10 +95,17 @@ export default function ResultActions({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className={compact ? "flex flex-col gap-2" : "flex flex-col gap-4"}>
+      {compact && actions.onStartCooking && (
+        <Button className="px-4 py-2.5 text-sm font-black" fullWidth onClick={actions.onStartCooking} variant="outlineAccent">
+          {t.startCooking}
+        </Button>
+      )}
+
       <div className="flex flex-wrap items-center gap-2">
         {actions.onSave && (
           <Button
+            className={compact ? "px-3 py-2 text-xs" : undefined}
             onClick={actions.onSave}
             disabled={status === "saving"}
           >
@@ -105,19 +114,19 @@ export default function ResultActions({
         )}
 
         {actions.onCopy && (
-          <Button onClick={actions.onCopy} variant="secondary">
+          <Button className={compact ? "px-3 py-2 text-xs" : undefined} onClick={actions.onCopy} variant="secondary">
             {t.copy}
           </Button>
         )}
 
         {actions.onShare && (
-          <Button onClick={handleNativeShare} disabled={shareStatus === "sharing"} variant="secondary">
+          <Button className={compact ? "px-3 py-2 text-xs" : undefined} onClick={handleNativeShare} disabled={shareStatus === "sharing"} variant="secondary">
             {shareLabel}
           </Button>
         )}
       </div>
 
-      <div className="h-4 flex items-center">
+      <div className={compact ? "flex min-h-4 items-center" : "h-4 flex items-center"}>
         {status === "saving" && (
           <Badge className="animate-pulse">
             Guardando...
@@ -137,7 +146,7 @@ export default function ResultActions({
         )}
       </div>
 
-      {actions.onStartCooking && (
+      {!compact && actions.onStartCooking && (
         <div className="pt-3 border-t border-white/5">
           <Button fullWidth onClick={actions.onStartCooking} variant="outlineAccent">
             {t.startCooking}

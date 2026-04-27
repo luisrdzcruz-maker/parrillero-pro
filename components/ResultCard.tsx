@@ -6,7 +6,7 @@ import {
   getResultCardIcon,
   getResultCardTitle,
 } from "@/lib/uiHelpers";
-import { getSetupImage } from "@/lib/setupVisuals";
+import { getSetupImage, SETUP_PLACEHOLDER_IMAGE } from "@/lib/setupVisuals";
 import { Badge, Button, Panel } from "@/components/ui";
 import { ds } from "@/lib/design-system";
 
@@ -75,14 +75,13 @@ function SetupVisualToggle({
 }) {
   const [open, setOpen] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
-  const setupImage = getSetupImage({ equipment: content, method: content });
+  const setupImage = getSetupImage({ equipment: content, heatType: content, method: content });
 
-  if (!isSetupCard(title) || !setupImage || imageFailed) return null;
+  if (!isSetupCard(title)) return null;
 
   function handleImageError(event: SyntheticEvent<HTMLImageElement>) {
-    event.currentTarget.src = "";
+    event.currentTarget.src = SETUP_PLACEHOLDER_IMAGE;
     setImageFailed(true);
-    setOpen(false);
   }
 
   return (
@@ -92,7 +91,7 @@ function SetupVisualToggle({
         onClick={() => setOpen((current) => !current)}
         variant="outlineAccent"
       >
-        {open ? "Ocultar setup" : "Ver setup 🔥"}
+        {open ? "Ocultar setup" : "Ver setup"}
       </Button>
 
       <div
@@ -110,23 +109,37 @@ function SetupVisualToggle({
                 : "mt-4 translate-y-2 transition-transform duration-300 ease-out"
             }
           >
-            <div className="relative overflow-hidden rounded-2xl border border-orange-400/20 bg-slate-950 shadow-2xl shadow-black/20">
-              <img
-                src={setupImage}
-                alt="Visual grill setup"
-                loading="lazy"
-                className="h-44 w-full object-cover sm:h-56"
-                onError={handleImageError}
-              />
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(251,146,60,0.26),transparent_34%),linear-gradient(to_top,rgba(2,6,23,0.86)_0%,rgba(2,6,23,0.32)_54%,rgba(255,255,255,0.08)_100%)]" />
-              <div className="absolute bottom-0 left-0 right-0 p-4">
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-300">
-                  Setup visual
-                </p>
-                <p className="mt-1 text-sm font-semibold text-white">
-                  Zonas de calor para este plan
-                </p>
-              </div>
+            <div className="relative overflow-hidden rounded-2xl border border-dashed border-orange-400/30 bg-slate-950 shadow-2xl shadow-black/20">
+              {!imageFailed && (
+                <img
+                  src={setupImage}
+                  alt="Visual grill setup"
+                  loading="lazy"
+                  className="h-44 w-full object-cover sm:h-56"
+                  onError={handleImageError}
+                />
+              )}
+              {imageFailed && (
+                <div className="flex h-44 w-full items-center justify-center bg-orange-500/10 p-5 text-center sm:h-56">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-300">
+                      Setup visual
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-white">
+                      Imagen del setup próximamente
+                    </p>
+                  </div>
+                </div>
+              )}
+              {!imageFailed && (
+                <>
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(251,146,60,0.26),transparent_34%),linear-gradient(to_top,rgba(2,6,23,0.86)_0%,rgba(2,6,23,0.32)_54%,rgba(255,255,255,0.08)_100%)]" />
+                  <div className="pointer-events-none absolute bottom-0 left-0 right-0 p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-300">Setup visual</p>
+                    <p className="mt-1 text-sm font-semibold text-white">Zonas de calor para este plan</p>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

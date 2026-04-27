@@ -2,13 +2,14 @@
 
 import ResultActions from "@/components/ResultActions";
 import ResultHeader from "@/components/ResultHeader";
-import { Panel } from "@/components/ui";
+import { Button, Panel } from "@/components/ui";
 
 type SaveMenuStatus = "idle" | "saving" | "success" | "error";
 
 export default function ResultHero({
   actions,
   hasResult,
+  onEdit,
   saveMenuStatus,
   t,
 }: {
@@ -19,6 +20,7 @@ export default function ResultHero({
     onStartCooking?: () => void;
   };
   hasResult: boolean;
+  onEdit?: () => void;
   saveMenuStatus?: SaveMenuStatus;
   t: {
     copy: string;
@@ -30,13 +32,55 @@ export default function ResultHero({
   };
 }) {
   return (
-    <Panel as="section" className="relative mb-6 p-5 sm:p-6" tone="hero">
+    <Panel as="section" className="relative mb-3 p-3 sm:mb-6 sm:p-6" tone="hero">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400/40 to-transparent" />
       <div className="pointer-events-none absolute -right-12 -top-16 h-36 w-36 rounded-full bg-orange-500/15 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-20 left-1/4 h-32 w-32 rounded-full bg-red-500/10 blur-3xl" />
 
-      <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-        <ResultHeader title={t.result} />
+      <div className="relative z-10 flex flex-col gap-3 sm:hidden">
+        <div className="flex items-start justify-between gap-3">
+          {onEdit ? (
+            <Button className="rounded-full px-3 py-2 text-xs" onClick={onEdit} variant="secondary">
+              ← Editar plan
+            </Button>
+          ) : (
+            <div />
+          )}
+          <div className="min-w-0 flex-1">
+            <ResultActions
+              actions={{ ...actions, onStartCooking: undefined }}
+              compact
+              hasResult={hasResult}
+              status={saveMenuStatus}
+              t={{
+                copy: t.copy,
+                save: t.save,
+                saving: t.saving,
+                share: t.share,
+                startCooking: t.startCooking,
+              }}
+            />
+          </div>
+        </div>
+
+        <h2 className="text-2xl font-black tracking-tight text-white">{t.result}</h2>
+
+        {actions.onStartCooking && (
+          <Button className="px-4 py-3 text-sm font-black" fullWidth onClick={actions.onStartCooking} variant="outlineAccent">
+            {t.startCooking}
+          </Button>
+        )}
+      </div>
+
+      <div className="relative z-10 hidden flex-col gap-6 sm:flex md:flex-row md:items-start md:justify-between">
+        <div className="space-y-4">
+          {onEdit && (
+            <Button className="rounded-full px-4 py-2 text-sm" onClick={onEdit} variant="secondary">
+              ← Editar plan
+            </Button>
+          )}
+          <ResultHeader title={t.result} />
+        </div>
         <div className="md:max-w-sm">
           <ResultActions
             actions={actions}

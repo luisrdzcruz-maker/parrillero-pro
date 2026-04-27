@@ -510,6 +510,9 @@ export default function Home() {
   const [currentStep, setCurrentStep] = useState(0);
   const [timeLeft, setTimeLeft] = useState(defaultCookSteps[0].duration);
   const [timerRunning, setTimerRunning] = useState(false);
+  const [cookingAlertsEnabled, setCookingAlertsEnabled] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | "unsupported">("default");
+  const [cookingAlertMessage, setCookingAlertMessage] = useState("");
   const touchStartRef = useRef<TouchPoint | null>(null);
   const modeHistoryRef = useRef<Mode[]>([]);
 
@@ -559,12 +562,47 @@ export default function Home() {
   function notifyStepFinished() {
     if (typeof window === "undefined") return;
 
+    const nextStep = cookSteps[Math.min(currentStep + 1, cookSteps.length - 1)];
+    const message = nextStep
+      ? `Siguiente paso: ${nextStep.title}`
+      : "Plan de cocción completado.";
+
     try {
       const audio = new Audio("/sounds/beep.mp3");
       audio.play().catch(() => {});
     } catch {}
 
     if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+
+    setCookingAlertMessage(message);
+    window.setTimeout(() => setCookingAlertMessage(""), 5000);
+
+    if (
+      cookingAlertsEnabled &&
+      "Notification" in window &&
+      Notification.permission === "granted"
+    ) {
+      try {
+        new Notification("Parrillero Pro", { body: message });
+      } catch {}
+    }
+  }
+
+  async function enableCookingAlerts() {
+    setCookingAlertsEnabled(true);
+
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      setNotificationPermission("unsupported");
+      return;
+    }
+
+    if (Notification.permission === "default") {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      return;
+    }
+
+    setNotificationPermission(Notification.permission);
   }
 
   function updateSavedMenus(nextMenus: SavedMenu[]) {
@@ -776,6 +814,20 @@ ERROR
     setTimerRunning(false);
   }
 
+  function previousCookStep() {
+    const previous = Math.max(currentStep - 1, 0);
+    setCurrentStep(previous);
+    setTimeLeft(cookSteps[previous].duration);
+    setTimerRunning(false);
+  }
+
+  function goToCookStep(stepIndex: number) {
+    const next = Math.max(0, Math.min(stepIndex, cookSteps.length - 1));
+    setCurrentStep(next);
+    setTimeLeft(cookSteps[next].duration);
+    setTimerRunning(false);
+  }
+
   function resetCookMode() {
     setCurrentStep(0);
     setTimeLeft(cookSteps[0].duration);
@@ -816,9 +868,11 @@ ERROR
           setCookingStep("animal");
           return;
         }
+
+        return;
       }
 
-      if (mode !== "coccion" && modeHistoryRef.current.length > 0) {
+      if (modeHistoryRef.current.length > 0) {
         const previousMode = modeHistoryRef.current[modeHistoryRef.current.length - 1];
         modeHistoryRef.current = modeHistoryRef.current.slice(0, -1);
         navigateMode(previousMode, false);
@@ -980,9 +1034,6 @@ ERROR
                 {t.createParrillada}
               </Button>
 
-              <div className={ds.notice.info}>
-                {t.supabaseReady}: bbq_events, bbq_timeline_items, grill_zones
-              </div>
             </div>
 
             <ResultCards blocks={blocks} loading={loading} checkedItems={checkedItems} setCheckedItems={setCheckedItems} t={t} />
@@ -995,9 +1046,17 @@ ERROR
             t={t}
             cookSteps={cookSteps}
             currentStep={currentStep}
+            cookingAlertsEnabled={cookingAlertsEnabled}
+            cookingAlertMessage={cookingAlertMessage}
+            hasCookingPlan={Boolean(blocks.PASOS || blocks.STEPS)}
             timeLeft={timeLeft}
             timerRunning={timerRunning}
+            notificationPermission={notificationPermission}
+            onCreatePlan={() => navigateMode("coccion")}
+            onEnableAlerts={enableCookingAlerts}
+            previousCookStep={previousCookStep}
             setTimerRunning={setTimerRunning}
+            goToCookStep={goToCookStep}
             nextCookStep={nextCookStep}
             resetCookMode={resetCookMode}
           />
@@ -1361,7 +1420,7 @@ function CookingAnimalStep({
 }) {
   return (
     <Section className="space-y-3 sm:space-y-5" eyebrow="Paso 1" title={t.chooseAnimal}>
-      <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
         {animalOptions.map((item) => (
           <ImageCard
             key={item}
@@ -1404,7 +1463,7 @@ function CookingCutStep({
         <Button className="rounded-full px-3 py-2 text-xs" onClick={onBack} variant="secondary">← {t.reset}</Button>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {cuts.map((item) => (
           <CutCard
             key={item.id}
@@ -1485,9 +1544,6 @@ function CookingDetailsStep({
 
         <PrimaryButton onClick={generateCookingPlan} loading={loading} text={t.generatePlan} loadingText={t.generating} />
 
-        <div className={ds.notice.info}>
-          {t.supabaseReady}: cooking_plans, cook_steps, user_profiles
-        </div>
       </Panel>
     </Grid>
   );
@@ -1512,16 +1568,11 @@ function CookingResultStep({
 }) {
   return (
     <div className="space-y-4">
-      <div className="flex justify-start">
-        <Button className="rounded-full px-4 py-2 text-sm" onClick={onEdit} variant="secondary">
-          ← Editar plan
-        </Button>
-      </div>
-
       <ResultCards
         blocks={blocks}
         loading={false}
         checkedItems={checkedItems}
+        onEdit={onEdit}
         setCheckedItems={setCheckedItems}
         onStartCooking={() => {
           setMode("cocina");
@@ -1856,14 +1907,32 @@ function SelectionSections({
   );
 }
 
+function getCookingZone(step: CookingStep) {
+  const value = `${step.title} ${step.description}`.toLowerCase();
+
+  if (value.includes("repos") || value.includes("rest")) return "Reposo";
+  if (value.includes("serv") || value.includes("serve")) return "Servir";
+  if (value.includes("indirect") || value.includes("indirecto") || value.includes("horno")) return "Indirecto";
+
+  return "Directo";
+}
+
 function CookingMode({
   lang,
   t,
   cookSteps,
   currentStep,
+  cookingAlertsEnabled,
+  cookingAlertMessage,
+  hasCookingPlan,
   timeLeft,
   timerRunning,
+  notificationPermission,
+  onCreatePlan,
+  onEnableAlerts,
+  previousCookStep,
   setTimerRunning,
+  goToCookStep,
   nextCookStep,
   resetCookMode,
 }: {
@@ -1871,76 +1940,199 @@ function CookingMode({
   t: typeof texts.es;
   cookSteps: CookingStep[];
   currentStep: number;
+  cookingAlertsEnabled: boolean;
+  cookingAlertMessage: string;
+  hasCookingPlan: boolean;
   timeLeft: number;
   timerRunning: boolean;
+  notificationPermission: NotificationPermission | "unsupported";
+  onCreatePlan: () => void;
+  onEnableAlerts: () => Promise<void>;
+  previousCookStep: () => void;
   setTimerRunning: (value: boolean) => void;
+  goToCookStep: (stepIndex: number) => void;
   nextCookStep: () => void;
   resetCookMode: () => void;
 }) {
+  if (!hasCookingPlan || cookSteps.length === 0) {
+    return (
+      <section className="pb-28">
+        <Panel className="overflow-hidden p-0" tone="hero">
+          <div className="relative min-h-[520px]">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(249,115,22,0.25),transparent_36%),linear-gradient(to_top,rgba(2,6,23,0.98),rgba(15,23,42,0.72),rgba(255,255,255,0.05))]" />
+            <div className="relative flex min-h-[520px] flex-col justify-end p-6 sm:p-8">
+              <Badge className="w-fit text-xs uppercase tracking-[0.2em]">Modo Cocina</Badge>
+              <h1 className="mt-5 text-4xl font-black tracking-tight text-white sm:text-5xl">
+                Tu sesión live empieza con un plan.
+              </h1>
+              <p className="mt-4 max-w-xl text-sm leading-6 text-slate-300 sm:text-base">
+                Genera primero un plan de cocción para activar la guía paso a paso, temporizador y progreso live.
+              </p>
+              <Button className="mt-6 px-5 py-4 font-black" onClick={onCreatePlan}>
+                Crear plan de cocción
+              </Button>
+            </div>
+          </div>
+        </Panel>
+      </section>
+    );
+  }
+
   const step = cookSteps[currentStep];
+  const nextStep = cookSteps[currentStep + 1];
+  const completedSteps = currentStep;
+  const totalSteps = cookSteps.length;
   const progress = Math.min(
     100,
     Math.max(0, ((step.duration - timeLeft) / step.duration) * 100)
   );
+  const sessionProgress = Math.round(((completedSteps + progress / 100) / totalSteps) * 100);
+  const stepLabel = lang === "es" ? "Paso" : "Step";
+  const completeLabel = lang === "es" ? "Completar paso" : "Complete step";
+  const previousLabel = lang === "es" ? "Anterior" : "Previous";
+  const nextLabel = lang === "es" ? "Siguiente" : "Next";
+  const pauseLabel = timerRunning ? t.pause : t.startTimer;
+  const zone = getCookingZone(step);
+  const alertsLabel = lang === "es" ? "Activar avisos" : "Enable alerts";
+  const alertsActiveLabel = lang === "es" ? "Avisos activados" : "Alerts enabled";
+  const alertsFallbackLabel =
+    notificationPermission === "denied"
+      ? lang === "es"
+        ? "Avisos en app activos"
+        : "In-app alerts active"
+      : notificationPermission === "unsupported"
+        ? lang === "es"
+          ? "Sonido y vibración activos"
+          : "Sound and vibration active"
+        : alertsActiveLabel;
 
   return (
-    <section className="grid gap-5 md:grid-cols-[420px_1fr]">
-      <Card className="overflow-hidden p-0">
-        <StepImage image={step.image} title={step.title} />
-        <div className="p-5">
-          <p className="text-sm text-orange-400">
-            {lang === "es" ? "Paso" : "Step"} {currentStep + 1} / {cookSteps.length}
-          </p>
+    <section className="space-y-5 pb-32">
+      <Panel className="overflow-hidden p-0" tone="hero">
+        <div className="grid md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+          <StepImage image={step.image} title={step.title} />
 
-          <h2 className="mt-2 text-3xl font-bold">{step.title}</h2>
-          <p className="mt-3 text-slate-300">{step.description}</p>
+          <div className="space-y-5 p-5 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <Badge className="text-xs uppercase tracking-[0.2em]">Live cooking</Badge>
+              <Badge tone="solidAccent">{zone}</Badge>
+            </div>
 
-          <div className={ds.panel.timer}>
-            <p className="text-7xl font-bold text-orange-400">{formatTime(timeLeft)}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              {cookingAlertsEnabled ? (
+                <Badge tone="success">{alertsFallbackLabel}</Badge>
+              ) : (
+                <Button className="rounded-full px-3 py-2 text-xs" onClick={onEnableAlerts} variant="outlineAccent">
+                  {alertsLabel}
+                </Button>
+              )}
 
-            <div className={ds.media.progressTrack}>
-              <div
-                className={ds.media.progressBar}
-                style={{ width: `${progress}%` }}
-              />
+              {cookingAlertMessage && (
+                <Badge className="animate-pulse" tone="accent">
+                  {cookingAlertMessage}
+                </Badge>
+              )}
+            </div>
+
+            <div>
+              <p className="text-sm font-semibold text-orange-300">
+                {stepLabel} {currentStep + 1} of {totalSteps} · {sessionProgress}%
+              </p>
+              <h1 className="mt-2 text-3xl font-black tracking-tight text-white sm:text-5xl">
+                {step.title}
+              </h1>
+              <p className="mt-3 text-sm leading-6 text-slate-300 sm:text-base">
+                {step.description}
+              </p>
+            </div>
+
+            <div className="rounded-[2rem] border border-orange-400/20 bg-black/35 p-5 text-center shadow-2xl shadow-black/20">
+              <p className="text-xs font-black uppercase tracking-[0.24em] text-orange-300">Countdown</p>
+              <p className="mt-2 font-mono text-7xl font-black tracking-tighter text-orange-300 sm:text-8xl">
+                {formatTime(timeLeft)}
+              </p>
+              <div className="mt-5 h-3 overflow-hidden rounded-full bg-white/10">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-orange-300 via-orange-500 to-red-500 transition-all duration-500"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+                    {lang === "es" ? "Siguiente" : "Next"}
+                  </p>
+                  <p className="mt-1 font-bold text-white">{nextStep?.title ?? (lang === "es" ? "Servir" : "Serve")}</p>
+                </div>
+                <span className="shrink-0 rounded-2xl bg-orange-500/15 px-3 py-2 text-sm font-bold text-orange-200">
+                  {nextStep ? formatTime(nextStep.duration) : "0:00"}
+                </span>
+              </div>
+            </div>
+
+            {step.tips && step.tips.length > 0 && (
+              <Card className="border-orange-500/30 bg-orange-500/10" tone="glass">
+                <h3 className="font-bold text-orange-300">{t.keyTips}</h3>
+                <ul className="mt-3 space-y-2 text-sm text-slate-200">
+                  {step.tips.map((tip) => (
+                    <li key={tip}>• {tip}</li>
+                  ))}
+                </ul>
+              </Card>
+            )}
+
+            <div className="grid gap-3">
+              <Button className="py-4 text-base font-black" fullWidth onClick={nextCookStep}>
+                {completeLabel}
+              </Button>
+
+              <div className="grid grid-cols-3 gap-2">
+                <Button onClick={previousCookStep} disabled={currentStep === 0} variant="secondary">
+                  {previousLabel}
+                </Button>
+                <Button onClick={() => setTimerRunning(!timerRunning)} variant="secondary">
+                  {pauseLabel}
+                </Button>
+                <Button onClick={nextCookStep} disabled={currentStep === totalSteps - 1} variant="secondary">
+                  {nextLabel}
+                </Button>
+              </div>
+
+              <Button fullWidth onClick={resetCookMode} variant="ghost">
+                {t.reset}
+              </Button>
             </div>
           </div>
-
-          {step.tips && step.tips.length > 0 && (
-            <Card className="mt-5 border-orange-500/30 bg-orange-500/10" tone="glass">
-              <h3 className="font-bold text-orange-300">{t.keyTips}</h3>
-              <ul className="mt-3 space-y-2 text-sm text-slate-200">
-                {step.tips.map((tip) => (
-                  <li key={tip}>• {tip}</li>
-                ))}
-              </ul>
-            </Card>
-          )}
-
-          <div className="mt-5 grid grid-cols-2 gap-3">
-            <Button onClick={() => setTimerRunning(!timerRunning)} fullWidth>
-              {timerRunning ? t.pause : t.startTimer}
-            </Button>
-
-            <Button onClick={nextCookStep} fullWidth variant="secondary">
-              {t.next}
-            </Button>
-          </div>
-
-          <Button className="mt-3" fullWidth onClick={resetCookMode} variant="ghost">
-            {t.reset}
-          </Button>
         </div>
-      </Card>
+      </Panel>
 
-      <Card>
-        <h2 className="mb-4 text-xl font-bold">{t.planSequence}</h2>
+      <Card className="p-4 sm:p-5">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-300">Timeline</p>
+            <h2 className="mt-1 text-xl font-bold">{t.planSequence}</h2>
+          </div>
+          <Badge tone="glass">{completedSteps}/{totalSteps} done</Badge>
+        </div>
 
-        <div className="space-y-3">
+        <div className="h-2 overflow-hidden rounded-full bg-white/10">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-orange-300 via-orange-500 to-red-500 transition-all duration-500"
+            style={{ width: `${sessionProgress}%` }}
+          />
+        </div>
+
+        <div className="mt-5 space-y-3">
           {cookSteps.map((item, index) => (
             <CookingStepPreview
               key={`${item.title}-${index}`}
               active={index === currentStep}
+              completed={index < currentStep}
+              index={index}
+              onClick={() => goToCookStep(index)}
               step={item}
             />
           ))}
@@ -1975,45 +2167,58 @@ function StepImage({ image, title }: { image?: string; title: string }) {
 
 function CookingStepPreview({
   active,
+  completed,
+  index,
+  onClick,
   step,
 }: {
   active: boolean;
+  completed: boolean;
+  index: number;
+  onClick: () => void;
   step: CookingStep;
 }) {
   return (
-    <div
+    <button
+      onClick={onClick}
       className={
         active
-          ? "scale-[1.02] overflow-hidden rounded-2xl border border-orange-500 bg-orange-500/20 shadow-lg"
-          : "overflow-hidden rounded-2xl border border-white/10 bg-slate-950/80"
+          ? "w-full scale-[1.01] overflow-hidden rounded-2xl border border-orange-500 bg-orange-500/20 text-left shadow-lg shadow-orange-500/10 transition active:scale-[0.99]"
+          : completed
+            ? "w-full overflow-hidden rounded-2xl border border-white/5 bg-slate-950/45 text-left opacity-60 transition hover:opacity-80 active:scale-[0.99]"
+            : "w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-950/80 text-left transition hover:border-orange-400/30 active:scale-[0.99]"
       }
     >
-      <div className="relative h-24 overflow-hidden">
-        <img
-          src={step.image ?? DEFAULT_COOKING_STEP_IMAGE}
-          alt={step.title}
-          loading="lazy"
-          sizes="(min-width: 768px) 50vw, 100vw"
-          onError={handleCookingImageError}
-          className="h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/35 to-white/10" />
-      </div>
-
-      <div className="p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-orange-300/80">
-              {getStepLabel(step.title)}
-            </p>
-            <h3 className="font-bold">{step.title}</h3>
+      <div className="grid grid-cols-[86px_1fr]">
+        <div className="relative min-h-full overflow-hidden">
+          <img
+            src={step.image ?? DEFAULT_COOKING_STEP_IMAGE}
+            alt={step.title}
+            loading="lazy"
+            sizes="86px"
+            onError={handleCookingImageError}
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 to-transparent" />
+          <div className="absolute left-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-xs font-black text-white">
+            {completed ? "✓" : index + 1}
           </div>
-          <span className="shrink-0 text-sm text-slate-400">{formatTime(step.duration)}</span>
         </div>
 
-        <p className="mt-1 text-sm text-slate-400">{step.description}</p>
+        <div className="p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-orange-300/80">
+                {getCookingZone(step)}
+              </p>
+              <h3 className="truncate font-bold text-white">{step.title}</h3>
+            </div>
+            <span className="shrink-0 text-sm text-slate-400">{formatTime(step.duration)}</span>
+          </div>
+          <p className="mt-1 line-clamp-2 text-sm text-slate-400">{step.description}</p>
+        </div>
       </div>
-    </div>
+    </button>
   );
 }
 function ResultCards({
@@ -2023,6 +2228,7 @@ function ResultCards({
   setCheckedItems,
   onStartCooking,
   onSaveMenu,
+  onEdit,
   saveMenuStatus = "idle",
   saveMenuMessage = "",
   t,
@@ -2033,6 +2239,7 @@ function ResultCards({
   setCheckedItems: (value: Record<string, boolean>) => void;
   onStartCooking?: () => void;
   onSaveMenu?: () => Promise<void>;
+  onEdit?: () => void;
   saveMenuStatus?: SaveMenuStatus;
   saveMenuMessage?: string;
   t: typeof texts.es;
@@ -2061,6 +2268,7 @@ function ResultCards({
           onStartCooking: canStartCooking ? onStartCooking : undefined,
         }}
         hasResult={hasResult}
+        onEdit={onEdit}
         saveMenuStatus={saveMenuStatus}
         t={{
           copy: t.copy,
@@ -2125,7 +2333,7 @@ function ImageCard({
           : "group relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 text-left shadow-[0_18px_50px_rgba(2,6,23,0.35)] transition-all duration-300 hover:-translate-y-1 hover:border-orange-400/60 hover:shadow-[0_24px_70px_rgba(249,115,22,0.16)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/60 active:scale-[0.98]"
       }
     >
-      <div className="relative min-h-48 overflow-hidden sm:min-h-60">
+      <div className="relative min-h-32 overflow-hidden sm:min-h-60">
         <div
           className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-105"
           style={{
@@ -2137,13 +2345,13 @@ function ImageCard({
         <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/10 to-transparent opacity-70" />
         <div className={active ? "absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-orange-300 via-orange-500 to-amber-300" : "absolute inset-x-0 bottom-0 h-px bg-white/10"} />
 
-        {badge && <Badge className="absolute right-3 top-3 text-[11px] shadow-lg shadow-black/20 backdrop-blur-md" tone="glass">{badge}</Badge>}
+        {badge && <Badge className="absolute right-2 top-2 text-[9px] shadow-lg shadow-black/20 backdrop-blur-md sm:right-3 sm:top-3 sm:text-[11px]" tone="glass">{badge}</Badge>}
 
-        {active && <Badge className="absolute bottom-4 right-4 font-black shadow-lg shadow-black/20" tone="selected">{selectedLabel}</Badge>}
+        {active && <Badge className="absolute bottom-2 right-2 text-[10px] font-black shadow-lg shadow-black/20 sm:bottom-4 sm:right-4 sm:text-xs" tone="selected">{selectedLabel}</Badge>}
 
-        <div className="absolute inset-x-0 bottom-0 p-4 pr-24 sm:p-5 sm:pr-28">
-          <h3 className="text-xl font-black tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)] sm:text-2xl">{title}</h3>
-          <p className="mt-2 line-clamp-2 max-w-[18rem] text-xs font-medium leading-5 text-slate-200/90 sm:text-sm">{subtitle}</p>
+        <div className="absolute inset-x-0 bottom-0 p-3 pr-12 sm:p-5 sm:pr-28">
+          <h3 className="line-clamp-2 text-base font-black leading-5 tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)] sm:text-2xl sm:leading-tight">{title}</h3>
+          <p className="mt-1 line-clamp-1 max-w-[18rem] text-[10px] font-medium leading-4 text-slate-200/90 sm:mt-2 sm:line-clamp-2 sm:text-sm sm:leading-5">{subtitle}</p>
         </div>
       </div>
     </button>
@@ -2172,7 +2380,7 @@ function CutCard({
           : "group relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 text-left shadow-[0_18px_50px_rgba(2,6,23,0.35)] transition-all duration-300 hover:-translate-y-1 hover:border-orange-400/60 hover:shadow-[0_24px_70px_rgba(249,115,22,0.16)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/60 active:scale-[0.98]"
       }
     >
-      <div className="relative min-h-60 overflow-hidden sm:min-h-72">
+      <div className="relative min-h-40 overflow-hidden sm:min-h-72">
         <div
           className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-105"
           style={{
@@ -2184,12 +2392,12 @@ function CutCard({
         <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/10 to-transparent opacity-70" />
         <div className={active ? "absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-orange-300 via-orange-500 to-amber-300" : "absolute inset-x-0 bottom-0 h-px bg-white/10"} />
 
-        {badge && <Badge className="absolute left-3 top-3 text-[11px] shadow-lg shadow-black/20 backdrop-blur-md" tone="glass">{badge}</Badge>}
-        {active && <Badge className="absolute right-3 top-3 text-[11px] font-black shadow-lg shadow-black/20" tone="solidAccent">{activeLabel}</Badge>}
+        {badge && <Badge className="absolute left-2 top-2 text-[9px] shadow-lg shadow-black/20 backdrop-blur-md sm:left-3 sm:top-3 sm:text-[11px]" tone="glass">{badge}</Badge>}
+        {active && <Badge className="absolute right-2 top-2 text-[9px] font-black shadow-lg shadow-black/20 sm:right-3 sm:top-3 sm:text-[11px]" tone="solidAccent">{activeLabel}</Badge>}
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
-          <h3 className="text-xl font-black tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)] sm:text-2xl">{cut.name}</h3>
-          <p className="mt-2 line-clamp-3 max-w-[24rem] text-xs leading-5 text-slate-200/90 sm:text-sm">{cut.description}</p>
+        <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-5">
+          <h3 className="line-clamp-2 text-base font-black leading-5 tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)] sm:text-2xl sm:leading-tight">{cut.name}</h3>
+          <p className="mt-1 line-clamp-2 max-w-[24rem] text-[10px] leading-4 text-slate-200/90 sm:mt-2 sm:line-clamp-3 sm:text-sm sm:leading-5">{cut.description}</p>
         </div>
       </div>
     </button>
