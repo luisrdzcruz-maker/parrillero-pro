@@ -135,6 +135,7 @@ export default function ResultActions({
       <div className={compact ? "grid grid-cols-3 gap-2" : "flex flex-wrap items-center gap-2"}>
         {actions.onSave && (
           <Button
+            aria-busy={status === "saving"}
             className={
               compact || secondary
                 ? "px-3 py-2 text-xs font-bold"
@@ -155,7 +156,13 @@ export default function ResultActions({
         )}
 
         {actions.onShare && (
-          <Button className={compact ? "px-3 py-2 text-xs" : undefined} onClick={handleNativeShare} disabled={shareStatus === "sharing"} variant="secondary">
+          <Button
+            aria-busy={shareStatus === "sharing"}
+            className={compact ? "px-3 py-2 text-xs" : undefined}
+            onClick={handleNativeShare}
+            disabled={shareStatus === "sharing"}
+            variant="secondary"
+          >
             {shareLabel}
           </Button>
         )}
@@ -163,7 +170,14 @@ export default function ResultActions({
 
       <div className={compact ? "flex min-h-0 items-center" : "flex min-h-5 items-center"}>
         {status === "saving" && (
-          <Badge className="animate-pulse">
+          <Badge
+            className="inline-flex items-center gap-2 border-orange-400/35 bg-orange-500/15 text-orange-100 shadow-sm shadow-black/10 motion-reduce:transition-none"
+            tone="glass"
+          >
+            <span
+              className="inline-block h-3 w-3 shrink-0 animate-spin rounded-full border-2 border-orange-400/35 border-t-orange-200 motion-reduce:animate-none"
+              aria-hidden
+            />
             {isEnglish ? "Saving..." : "Guardando..."}
           </Badge>
         )}

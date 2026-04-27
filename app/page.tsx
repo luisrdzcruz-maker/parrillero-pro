@@ -22,7 +22,7 @@ import type {
 import { getCookingStepImage } from "@/lib/cookingVisuals";
 import { ds } from "@/lib/design-system";
 import { generateParrilladaPlan } from "@/lib/parrilladaEngine";
-import { type TouchEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, type TouchEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 type Animal = "Vacuno" | "Cerdo" | "Pollo" | "Pescado" | "Verduras";
 type Mode = "inicio" | "coccion" | "menu" | "parrillada" | "cocina" | "guardados";
@@ -76,7 +76,7 @@ const texts = {
   es: {
     app: "IA Parrillero Pro",
     title: "Tu plan de cocción, claro y listo.",
-    subtitle: "Guía precisa para corte, fuego, tiempos y pasos.",
+    subtitle: "Como un chef profesional, pero sin pensar.",
     start: "Inicio",
     cooking: "Cocción",
     menu: "Menú",
@@ -131,7 +131,7 @@ const texts = {
   en: {
     app: "AI Grill Master Pro",
     title: "Your cooking plan, clear and ready.",
-    subtitle: "Precise guidance for cut, fire, timing and steps.",
+    subtitle: "Like a pro chef—without the mental load.",
     start: "Home",
     cooking: "Cooking",
     menu: "Menu",
@@ -186,7 +186,7 @@ const texts = {
   fi: {
     app: "Parrillero Pro",
     title: "Selkeä grillaussuunnitelma valmiina.",
-    subtitle: "Ohjeet palalle, lämmölle, ajoitukselle ja vaiheille.",
+    subtitle: "Kuin ammattikokki—ilman päänsärkyä.",
     start: "Alku",
     cooking: "Kypsennys",
     menu: "Menu",
@@ -929,7 +929,7 @@ ERROR
 
   return (
     <main
-      className={`${ds.shell.page} px-3 pt-3 pb-28 sm:px-4 sm:pt-5 md:pb-28`}
+      className={`${ds.shell.page} px-3 pt-2 !pb-[max(9rem,calc(6.75rem+env(safe-area-inset-bottom,0px)))] sm:px-4 sm:pt-5 md:!pb-28`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -1096,6 +1096,49 @@ function copySavedMenu(menu: SavedMenu) {
 
 /* COMPONENTS */
 
+function CookingStepTransition({ stepKey, children }: { stepKey: CookingWizardStep; children: ReactNode }) {
+  const [entered, setEntered] = useState(false);
+
+  useLayoutEffect(() => {
+    setEntered(false);
+    const id = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setEntered(true));
+    });
+    return () => cancelAnimationFrame(id);
+  }, [stepKey]);
+
+  return (
+    <div
+      className={`motion-reduce:transition-none motion-reduce:translate-y-0 motion-reduce:opacity-100 ${
+        entered ? "translate-y-0 opacity-100" : "translate-y-1.5 opacity-0"
+      } transition-[opacity,transform] duration-300 ease-out`}
+    >
+      {children}
+    </div>
+  );
+}
+
+function FadeInSection({ children }: { children: ReactNode }) {
+  const [entered, setEntered] = useState(false);
+
+  useLayoutEffect(() => {
+    const id = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setEntered(true));
+    });
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  return (
+    <div
+      className={`motion-reduce:transition-none motion-reduce:translate-y-0 motion-reduce:opacity-100 ${
+        entered ? "translate-y-0 opacity-100" : "translate-y-1.5 opacity-0"
+      } transition-[opacity,transform] duration-300 ease-out`}
+    >
+      {children}
+    </div>
+  );
+}
+
 function AppHeader({
   lang,
   onLangChange,
@@ -1106,17 +1149,17 @@ function AppHeader({
   t: typeof texts.es;
 }) {
   return (
-    <header className="mb-2 flex items-center justify-between gap-2 rounded-2xl border border-white/10 bg-slate-950/50 px-2.5 py-2 shadow-lg shadow-black/10 backdrop-blur sm:mb-4 sm:rounded-3xl sm:px-4 sm:py-3">
+    <header className="mb-1.5 flex items-center justify-between gap-2 border-b border-white/10 pb-2 pt-0.5 sm:mb-3 sm:rounded-2xl sm:border sm:border-white/10 sm:bg-slate-950/50 sm:px-3 sm:py-2 sm:shadow-lg sm:shadow-black/10 sm:backdrop-blur md:rounded-3xl md:px-4 md:py-2.5">
       <div className="min-w-0">
-        <Badge className="px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] sm:px-3 sm:py-1 sm:text-xs sm:tracking-[0.2em]">{t.app}</Badge>
-        <p className="mt-2 hidden text-sm text-slate-400 sm:block">{t.subtitle}</p>
+        <Badge className="px-1.5 py-0.5 text-[8px] uppercase tracking-[0.12em] sm:px-2.5 sm:py-0.5 sm:text-[10px] sm:tracking-[0.16em] md:text-xs md:tracking-[0.2em]">{t.app}</Badge>
+        <p className="mt-1 hidden text-xs leading-snug text-slate-400 sm:block md:text-sm">{t.subtitle}</p>
       </div>
 
       <div className="shrink-0">
         <select
           value={lang}
           onChange={(event) => onLangChange(event.target.value as Lang)}
-          className={`${ds.input.compactSelect} max-w-[112px] rounded-xl px-2 py-1.5 text-[11px] sm:max-w-none sm:rounded-2xl sm:px-3 sm:py-2 sm:text-sm`}
+          className={`${ds.input.compactSelect} max-w-[100px] rounded-lg px-1.5 py-1 text-[10px] sm:max-w-none sm:rounded-xl sm:px-2.5 sm:py-1.5 sm:text-xs md:rounded-2xl md:px-3 md:py-2 md:text-sm`}
         >
           <option value="es">🇪🇸 Español</option>
           <option value="en">🇬🇧 English</option>
@@ -1166,8 +1209,8 @@ function DesktopTab({
       onClick={onClick}
       className={
         active
-          ? "rounded-2xl bg-orange-500 px-3 py-3 text-sm font-bold text-black shadow-lg shadow-orange-500/20 transition active:scale-[0.98]"
-          : "rounded-2xl px-3 py-3 text-sm font-medium text-slate-400 transition hover:bg-white/5 hover:text-slate-100 active:scale-[0.98]"
+          ? "rounded-2xl bg-orange-500 px-3 py-2.5 text-sm font-bold text-black shadow-lg shadow-orange-500/25 transition-all duration-200 active:scale-[0.98]"
+          : "rounded-2xl px-3 py-2.5 text-sm font-medium text-slate-400 transition-all duration-200 hover:bg-white/5 hover:text-slate-100 active:scale-[0.98]"
       }
     >
       <span className="mr-2">{emoji}</span>
@@ -1250,7 +1293,7 @@ function CookingWizard({
       : cookingStep;
 
   return (
-    <div className="space-y-3 sm:space-y-6">
+    <div className="space-y-2 sm:space-y-6">
       {visibleCookingStep !== "result" && (
         <CookingWizardHeader
           animal={animal}
@@ -1266,63 +1309,59 @@ function CookingWizard({
         </p>
       )}
 
-      {visibleCookingStep === "animal" && (
-        <CookingAnimalStep
-          animal={animal}
-          lang={lang}
-          onSelectAnimal={handleAnimalChange}
-          t={t}
-        />
-      )}
-
-      {visibleCookingStep === "cut" && (
-        <CookingCutStep
-          animal={animal}
-          cut={cut}
-          cuts={cuts}
-          onBack={() => setCookingStep("animal")}
-          onSelectCut={handleCutChange}
-          t={t}
-        />
-      )}
-
-      {visibleCookingStep === "details" && selectedCut && (
-        <CookingDetailsStep
-          animal={animal}
-          currentDonenessOptions={currentDonenessOptions}
-          doneness={doneness}
-          equipment={equipment}
-          generateCookingPlan={generateCookingPlan}
-          loading={loading}
-          onBack={() => setCookingStep("cut")}
-          selectedCut={selectedCut}
-          setDoneness={setDoneness}
-          setEquipment={setEquipment}
-          setThickness={setThickness}
-          setWeight={setWeight}
-          showThickness={showThickness}
-          t={t}
-          thickness={thickness}
-          weight={weight}
-        />
-      )}
-
-      {visibleCookingStep === "result" && (
-        <CookingResultStep
-          animal={animal}
-          blocks={blocks}
-          checkedItems={checkedItems}
-          equipment={equipment}
-          onEdit={() => setCookingStep("details")}
-          onSaveMenu={onSaveMenu}
-          saveMenuMessage={saveMenuMessage}
-          saveMenuStatus={saveMenuStatus}
-          setCheckedItems={setCheckedItems}
-          setMode={setMode}
-          setTimerRunning={setTimerRunning}
-          t={t}
-        />
-      )}
+      <CookingStepTransition stepKey={visibleCookingStep}>
+        {visibleCookingStep === "animal" ? (
+          <CookingAnimalStep
+            animal={animal}
+            lang={lang}
+            onSelectAnimal={handleAnimalChange}
+            t={t}
+          />
+        ) : visibleCookingStep === "cut" ? (
+          <CookingCutStep
+            animal={animal}
+            cut={cut}
+            cuts={cuts}
+            onBack={() => setCookingStep("animal")}
+            onSelectCut={handleCutChange}
+            t={t}
+          />
+        ) : visibleCookingStep === "details" && selectedCut ? (
+          <CookingDetailsStep
+            animal={animal}
+            currentDonenessOptions={currentDonenessOptions}
+            doneness={doneness}
+            equipment={equipment}
+            generateCookingPlan={generateCookingPlan}
+            loading={loading}
+            onBack={() => setCookingStep("cut")}
+            selectedCut={selectedCut}
+            setDoneness={setDoneness}
+            setEquipment={setEquipment}
+            setThickness={setThickness}
+            setWeight={setWeight}
+            showThickness={showThickness}
+            t={t}
+            thickness={thickness}
+            weight={weight}
+          />
+        ) : visibleCookingStep === "result" ? (
+          <CookingResultStep
+            animal={animal}
+            blocks={blocks}
+            checkedItems={checkedItems}
+            equipment={equipment}
+            onEdit={() => setCookingStep("details")}
+            onSaveMenu={onSaveMenu}
+            saveMenuMessage={saveMenuMessage}
+            saveMenuStatus={saveMenuStatus}
+            setCheckedItems={setCheckedItems}
+            setMode={setMode}
+            setTimerRunning={setTimerRunning}
+            t={t}
+          />
+        ) : null}
+      </CookingStepTransition>
     </div>
   );
 }
@@ -1353,26 +1392,29 @@ function CookingWizardHeader({
 
   return (
     <>
-      <div className="sticky top-2 z-30 mb-2 rounded-2xl border border-white/10 bg-slate-950/92 p-2.5 shadow-xl shadow-black/30 backdrop-blur sm:hidden">
-        <div className="mb-2 flex items-center justify-between gap-3">
+      <div className="sticky top-2 z-30 mb-2 rounded-xl border border-white/10 bg-slate-950/95 px-3 py-2 shadow-lg shadow-black/30 backdrop-blur sm:hidden">
+        <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h1 className="text-base font-black tracking-tight text-white">Cocción guiada</h1>
-              <Badge className="px-2 py-0.5 text-[10px]">Premium</Badge>
-            </div>
-            <p className="mt-0.5 text-[11px] text-slate-400">{title}</p>
+            <h1 className="text-sm font-bold text-white">{t.cooking}</h1>
+            <p className="truncate text-[10px] text-slate-400">{title}</p>
           </div>
-          {cookingStep !== "animal" && <Badge className="shrink-0" tone="glass">{animal}</Badge>}
+          {cookingStep !== "animal" && (
+            <Badge className="max-w-[130px] shrink-0 truncate px-2 py-1 text-[10px]" tone="glass">
+              {selectedCut?.name ?? animal}
+            </Badge>
+          )}
         </div>
-        <CookingStepIndicator currentStep={cookingStep} />
+        <div className="mt-2">
+          <CookingStepIndicator currentStep={cookingStep} />
+        </div>
       </div>
 
-      <Panel className="relative hidden overflow-hidden p-5 sm:block" tone="hero">
+      <Panel className="relative hidden overflow-hidden p-4 sm:block md:p-5" tone="hero">
         <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-orange-500/15 blur-3xl" />
         <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <Badge className="text-xs uppercase tracking-[0.2em]">Cocción guiada</Badge>
-            <h1 className="mt-3 text-3xl font-black tracking-tight text-white">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-orange-300/90">{t.cooking}</p>
+            <h1 className="mt-1 text-2xl font-black tracking-tight text-white md:text-3xl">
               {title}
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
@@ -1402,7 +1444,7 @@ function CookingStepIndicator({ currentStep }: { currentStep: CookingWizardStep 
   const currentIndex = steps.findIndex((step) => step.id === currentStep);
 
   return (
-    <div className="grid min-w-full grid-cols-3 gap-1 rounded-xl border border-white/10 bg-black/30 p-1 shadow-inner shadow-black/20 sm:min-w-[360px] sm:rounded-2xl sm:gap-2 sm:p-2">
+    <div className="flex min-w-0 gap-0.5 rounded-lg border border-white/10 bg-black/40 p-0.5 shadow-inner shadow-black/25 sm:min-w-[320px] sm:gap-1 sm:rounded-xl sm:p-1 md:min-w-[360px]">
       {steps.map((step, index) => {
         const isActive = step.id === currentStep;
         const isComplete = index < currentIndex;
@@ -1412,14 +1454,34 @@ function CookingStepIndicator({ currentStep }: { currentStep: CookingWizardStep 
             key={step.id}
             className={
               isActive
-                ? "rounded-lg bg-orange-500 px-2 py-1 text-center text-black shadow-lg shadow-orange-500/20 transition-all duration-200 active:scale-[0.98] sm:rounded-xl sm:px-3 sm:py-2"
+                ? "flex min-w-0 flex-1 flex-col items-center justify-center rounded-md bg-orange-500 px-1 py-1 text-center shadow-md shadow-orange-500/30 transition-all duration-200 sm:rounded-lg sm:px-2 sm:py-1.5"
                 : isComplete
-                  ? "rounded-lg border border-orange-500/20 bg-orange-500/10 px-2 py-1 text-center text-orange-200 transition-all duration-200 sm:rounded-xl sm:px-3 sm:py-2"
-                  : "rounded-lg px-2 py-1 text-center text-slate-500 transition-all duration-200 sm:rounded-xl sm:px-3 sm:py-2"
+                  ? "flex min-w-0 flex-1 flex-col items-center justify-center rounded-md border border-orange-500/25 bg-orange-500/10 px-1 py-1 text-center transition-all duration-200 sm:rounded-lg sm:px-2 sm:py-1.5"
+                  : "flex min-w-0 flex-1 flex-col items-center justify-center rounded-md bg-white/[0.04] px-1 py-1 text-center transition-all duration-200 sm:rounded-lg sm:px-2 sm:py-1.5"
             }
           >
-            <p className="hidden text-[10px] font-black sm:block sm:text-xs">{step.number}</p>
-            <p className="text-[11px] font-semibold leading-4 sm:mt-0.5 sm:text-xs">{step.label}</p>
+            <span
+              className={
+                isActive
+                  ? "text-[9px] font-black leading-none text-black/80 sm:text-[10px]"
+                  : isComplete
+                    ? "text-[9px] font-black leading-none text-orange-200/90 sm:text-[10px]"
+                    : "text-[9px] font-black leading-none text-slate-500 sm:text-[10px]"
+              }
+            >
+              {step.number}
+            </span>
+            <span
+              className={
+                isActive
+                  ? "mt-0.5 text-[10px] font-bold leading-tight text-black sm:text-xs"
+                  : isComplete
+                    ? "mt-0.5 text-[10px] font-bold leading-tight text-orange-100 sm:text-xs"
+                    : "mt-0.5 text-[10px] font-semibold leading-tight text-slate-500 sm:text-xs"
+              }
+            >
+              {step.label}
+            </span>
           </div>
         );
       })}
@@ -1439,8 +1501,8 @@ function CookingAnimalStep({
   t: typeof texts.es;
 }) {
   return (
-    <Section className="space-y-3 sm:space-y-5" eyebrow="Paso 1" title={t.chooseAnimal}>
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
+    <Section className="space-y-2 sm:space-y-5" eyebrow="Paso 1" title={t.chooseAnimal}>
+      <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-5">
         {animalOptions.map((item) => (
           <ImageCard
             key={item}
@@ -1474,16 +1536,16 @@ function CookingCutStep({
   t: typeof texts.es;
 }) {
   return (
-    <Section className="space-y-3 sm:space-y-5" eyebrow="Paso 2" title={t.chooseCut}>
+    <Section className="space-y-2 sm:space-y-5" eyebrow="Paso 2" title={t.chooseCut}>
       <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
-        <div className={`${ds.panel.highlight} px-3 py-2 sm:p-4`}>
-          <p className="text-sm text-orange-300">{t.selected}</p>
-          <h2 className="font-bold text-white">{animal}</h2>
+        <div className={`${ds.panel.highlight} px-2.5 py-1.5 sm:p-4`}>
+          <p className="text-xs text-orange-300 sm:text-sm">{t.selected}</p>
+          <h2 className="text-sm font-bold text-white sm:text-base">{animal}</h2>
         </div>
-        <Button className="rounded-full px-3 py-2 text-xs" onClick={onBack} variant="secondary">← {t.reset}</Button>
+        <Button className="rounded-full px-3 py-2 text-xs transition-all duration-200 active:scale-[0.98]" onClick={onBack} variant="secondary">← {t.reset}</Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-4">
         {cuts.map((item) => (
           <CutCard
             key={item.id}
@@ -1536,16 +1598,16 @@ function CookingDetailsStep({
 }) {
   return (
     <Grid variant="split">
-      <Panel className="space-y-3 sm:space-y-4 md:col-span-2" tone="form">
+      <Panel className="space-y-2.5 sm:space-y-4 md:col-span-2" tone="form">
         <div className="flex items-start justify-between gap-2 sm:gap-3">
           <div>
             <p className={ds.text.eyebrow}>Paso 3</p>
             <h2 className="mt-1 text-lg font-bold text-white sm:text-xl">{t.configurePlan}</h2>
           </div>
-          <Button className="rounded-full px-3 py-2 text-xs" onClick={onBack} variant="secondary">← {t.chooseCut}</Button>
+          <Button className="rounded-full px-3 py-2 text-xs transition-all duration-200 active:scale-[0.98]" onClick={onBack} variant="secondary">← {t.chooseCut}</Button>
         </div>
 
-        <div className={`${ds.panel.highlight} p-3 sm:p-4`}>
+        <div className={`${ds.panel.highlight} p-2.5 sm:p-4`}>
           <p className="text-sm text-orange-300">{animal}</p>
           <h3 className="font-bold text-white">{selectedCut.name}</h3>
           <p className="mt-1 text-sm text-slate-300">{selectedCut.description}</p>
@@ -1663,46 +1725,45 @@ function HomeScreen({
   ];
 
   return (
-    <div className="space-y-2.5 sm:space-y-7">
-      <section className="grid gap-2.5 lg:grid-cols-[1.05fr_0.95fr] lg:items-stretch">
-        <Panel className="relative p-2.5 sm:p-7 lg:min-h-[360px]" tone="hero">
+    <div className="space-y-2 sm:space-y-7">
+      <section className="grid gap-2 lg:grid-cols-[1.05fr_0.95fr] lg:items-stretch">
+        <Panel className="relative p-2 sm:p-7 lg:min-h-[360px]" tone="hero">
           <div className="pointer-events-none absolute -left-16 -top-20 h-48 w-48 rounded-full bg-orange-500/15 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-24 right-8 h-56 w-56 rounded-full bg-red-500/10 blur-3xl" />
 
-          <div className="relative z-10 flex h-full flex-col justify-between gap-2.5 sm:gap-7">
-            <div>
-              <div className="hidden flex-wrap items-center gap-2 sm:flex">
-                <Badge className="uppercase tracking-[0.16em] sm:tracking-[0.2em]">Parrillero Pro</Badge>
-                <Badge className="border-orange-400/20 bg-black/25 text-[11px] text-orange-200" tone="glass">
-                  Corte → Fuego → Pasos
-                </Badge>
+          <FadeInSection>
+            <div className="relative z-10 flex h-full flex-col justify-between gap-2 sm:gap-7">
+              <div>
+                <div className="hidden flex-wrap items-center gap-2 sm:flex">
+                  <Badge className="uppercase tracking-[0.16em] sm:tracking-[0.2em]">Parrillero Pro</Badge>
+                  <Badge className="border-orange-400/20 bg-black/25 text-[11px] text-orange-200" tone="glass">
+                    Corte → Fuego → Pasos
+                  </Badge>
+                </div>
+
+                <h1 className="mt-0 max-w-2xl text-[1.45rem] font-black leading-[1.05] tracking-[-0.045em] text-white sm:mt-5 sm:text-5xl lg:text-6xl">
+                  {t.title}
+                </h1>
+                <p className="mt-1 max-w-xl text-[12px] leading-snug text-slate-300 sm:mt-4 sm:text-lg sm:leading-7">
+                  {t.subtitle}
+                </p>
+
+                <div className="mt-2 grid gap-2 sm:mt-7 sm:flex sm:gap-3">
+                  <Button className="touch-manipulation px-5 py-2.5 text-sm font-black shadow-orange-500/30 transition-all duration-200 active:scale-[0.97] active:brightness-95 sm:px-7 sm:py-4 sm:text-base" fullWidth onClick={() => onModeChange("coccion")}>
+                    {t.planCooking} <span aria-hidden="true">→</span>
+                  </Button>
+                </div>
               </div>
 
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-300 sm:hidden">
-                Plan guiado
-              </p>
-              <h1 className="mt-0.5 max-w-2xl text-[1.6rem] font-black leading-[1.02] tracking-[-0.045em] text-white sm:mt-5 sm:text-5xl lg:text-6xl">
-                {t.title}
-              </h1>
-              <p className="mt-1.5 max-w-xl text-[13px] leading-5 text-slate-300 sm:mt-4 sm:text-lg sm:leading-7">
-                {t.subtitle}
-              </p>
+              <HomeFlowPreview />
 
-              <div className="mt-2.5 grid gap-2 sm:mt-7 sm:flex sm:gap-3">
-                <Button className="px-5 py-3 text-sm font-black shadow-orange-500/30 sm:px-7 sm:py-4 sm:text-base" fullWidth onClick={() => onModeChange("coccion")}>
-                  {t.planCooking} <span aria-hidden="true">→</span>
-                </Button>
+              <div className="hidden grid-cols-3 gap-2 text-sm text-slate-300 sm:grid sm:gap-3">
+                <TrustItem label={t.localEngine} value="Cortes premium" />
+                <TrustItem label="Timeline live" value={t.liveMode} />
+                <TrustItem label={t.savedMenus} value={`${savedMenusCount} ${t.saved}`} />
               </div>
             </div>
-
-            <HomeFlowPreview />
-
-            <div className="hidden grid-cols-3 gap-2 text-sm text-slate-300 sm:grid sm:gap-3">
-              <TrustItem label={t.localEngine} value="Cortes premium" />
-              <TrustItem label="Timeline live" value={t.liveMode} />
-              <TrustItem label={t.savedMenus} value={`${savedMenusCount} ${t.saved}`} />
-            </div>
-          </div>
+          </FadeInSection>
         </Panel>
 
         <div className="hidden lg:block">
@@ -1745,21 +1806,46 @@ function HomeScreen({
 }
 
 function HomeFlowPreview() {
-  const steps = ["Corte", "Punto", "Fuego", "Pasos"];
+  const steps = [
+    { label: "Corte", n: 1 },
+    { label: "Punto", n: 2 },
+    { label: "Fuego", n: 3 },
+    { label: "Pasos", n: 4 },
+  ];
 
   return (
-    <div className="rounded-xl border border-white/10 bg-black/20 p-1 ring-1 ring-inset ring-white/[0.03] sm:rounded-2xl sm:p-2">
-      <div className="grid grid-cols-4 gap-1">
+    <div className="rounded-lg border border-white/10 bg-black/30 p-1 ring-1 ring-inset ring-white/[0.04] sm:rounded-xl sm:p-1.5">
+      <p className="mb-0.5 px-1 text-[8px] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:text-[9px]">
+        Tu flujo
+      </p>
+      <div className="grid grid-cols-4 gap-px rounded-md bg-white/10 p-px sm:gap-0.5 sm:rounded-lg sm:p-px">
         {steps.map((step, index) => (
           <div
-            key={step}
+            key={step.label}
             className={
               index === 0
-                ? "rounded-lg bg-orange-500 px-1.5 py-1 text-center text-[9px] font-black text-black sm:rounded-xl sm:px-2 sm:py-2 sm:text-xs"
-                : "rounded-lg bg-white/[0.04] px-1.5 py-1 text-center text-[9px] font-semibold text-slate-300 sm:rounded-xl sm:px-2 sm:py-2 sm:text-xs"
+                ? "rounded-[5px] bg-orange-500 px-1 py-1.5 text-center sm:rounded-md sm:py-2"
+                : "rounded-[5px] bg-slate-950/90 px-1 py-1.5 text-center sm:rounded-md sm:py-2"
             }
           >
-            {step}
+            <span
+              className={
+                index === 0
+                  ? "block text-[8px] font-black text-black/70"
+                  : "block text-[8px] font-black text-slate-500"
+              }
+            >
+              {step.n}
+            </span>
+            <span
+              className={
+                index === 0
+                  ? "mt-0.5 block text-[9px] font-bold leading-tight text-black sm:text-[10px]"
+                  : "mt-0.5 block text-[9px] font-semibold leading-tight text-slate-400 sm:text-[10px]"
+              }
+            >
+              {step.label}
+            </span>
           </div>
         ))}
       </div>
@@ -1899,7 +1985,7 @@ function BottomNavigation({
   t: typeof texts.es;
 }) {
   return (
-    <nav className={`${ds.nav.bottom} px-2 py-2 md:hidden`}>
+    <nav className={`${ds.nav.bottom} px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] pt-1.5 md:hidden`}>
       <div className={`${ds.layout.navGrid} rounded-2xl bg-slate-950/70 p-1`}>
         <Tab active={mode === "inicio"} label={t.start} emoji="🏠" onClick={() => onModeChange("inicio")} />
         <Tab active={mode === "coccion"} label={t.cooking} emoji="🥩" onClick={() => onModeChange("coccion")} />
@@ -2080,16 +2166,17 @@ function ImageCard({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className={
         active
-          ? "group relative overflow-hidden rounded-[2rem] border border-orange-400/80 bg-slate-950 text-left shadow-[0_24px_70px_rgba(249,115,22,0.24)] ring-1 ring-orange-200/25 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/70 active:scale-[0.98]"
-          : "group relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 text-left shadow-[0_18px_50px_rgba(2,6,23,0.35)] transition-all duration-300 hover:-translate-y-1 hover:border-orange-400/60 hover:shadow-[0_24px_70px_rgba(249,115,22,0.16)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/60 active:scale-[0.98]"
+          ? "group relative touch-manipulation select-none overflow-hidden rounded-[2rem] border-2 border-orange-400/90 bg-slate-950 text-left shadow-[0_20px_55px_rgba(249,115,22,0.35)] shadow-orange-500/15 ring-2 ring-orange-400/40 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/70 active:scale-[0.97] active:brightness-[0.98]"
+          : "group relative touch-manipulation select-none overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 text-left shadow-[0_14px_40px_rgba(2,6,23,0.32)] transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-400/45 hover:shadow-[0_18px_48px_rgba(249,115,22,0.12)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/50 active:scale-[0.97] active:brightness-[0.98]"
       }
     >
       <div className="relative min-h-32 overflow-hidden sm:min-h-60">
         <div
-          className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-105"
+          className="absolute inset-0 bg-cover bg-center transition-all duration-200 group-hover:scale-105"
           style={{
             backgroundImage: `url(${image})`,
           }}
@@ -2099,11 +2186,19 @@ function ImageCard({
         <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/10 to-transparent opacity-70" />
         <div className={active ? "absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-orange-300 via-orange-500 to-amber-300" : "absolute inset-x-0 bottom-0 h-px bg-white/10"} />
 
-        {badge && <Badge className="absolute right-2 top-2 text-[9px] shadow-lg shadow-black/20 backdrop-blur-md sm:right-3 sm:top-3 sm:text-[11px]" tone="glass">{badge}</Badge>}
+        {badge && <Badge className="absolute right-2 top-2 z-10 text-[9px] shadow-lg shadow-black/20 backdrop-blur-md sm:right-3 sm:top-3 sm:text-[11px]" tone="glass">{badge}</Badge>}
 
-        {active && <Badge className="absolute bottom-2 right-2 text-[10px] font-black shadow-lg shadow-black/20 sm:bottom-4 sm:right-4 sm:text-xs" tone="selected">{selectedLabel}</Badge>}
+        {active && (
+          <span
+            className="absolute bottom-2 right-2 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-orange-500 text-[11px] font-black leading-none text-black shadow-lg shadow-orange-500/50 ring-2 ring-white/25 sm:bottom-3 sm:right-3 sm:h-7 sm:w-7 sm:text-xs"
+            title={selectedLabel}
+            aria-label={selectedLabel}
+          >
+            ✓
+          </span>
+        )}
 
-        <div className="absolute inset-x-0 bottom-0 p-3 pr-12 sm:p-5 sm:pr-28">
+        <div className={`absolute inset-x-0 bottom-0 p-3 sm:p-5 ${active ? "pr-14 sm:pr-16" : "pr-12 sm:pr-28"}`}>
           <h3 className="line-clamp-2 text-base font-black leading-5 tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)] sm:text-2xl sm:leading-tight">{title}</h3>
           <p className="mt-1 line-clamp-1 max-w-[18rem] text-[10px] font-medium leading-4 text-slate-200/90 sm:mt-2 sm:line-clamp-2 sm:text-sm sm:leading-5">{subtitle}</p>
         </div>
@@ -2127,16 +2222,17 @@ function CutCard({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className={
         active
-          ? "group relative overflow-hidden rounded-[2rem] border border-orange-400/80 bg-slate-950 text-left shadow-[0_24px_70px_rgba(249,115,22,0.24)] ring-1 ring-orange-200/25 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/70 active:scale-[0.98]"
-          : "group relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 text-left shadow-[0_18px_50px_rgba(2,6,23,0.35)] transition-all duration-300 hover:-translate-y-1 hover:border-orange-400/60 hover:shadow-[0_24px_70px_rgba(249,115,22,0.16)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/60 active:scale-[0.98]"
+          ? "group relative touch-manipulation select-none overflow-hidden rounded-[2rem] border-2 border-orange-400/90 bg-slate-950 text-left shadow-[0_20px_55px_rgba(249,115,22,0.35)] shadow-orange-500/15 ring-2 ring-orange-400/40 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/70 active:scale-[0.97] active:brightness-[0.98]"
+          : "group relative touch-manipulation select-none overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 text-left shadow-[0_14px_40px_rgba(2,6,23,0.32)] transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-400/45 hover:shadow-[0_18px_48px_rgba(249,115,22,0.12)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/50 active:scale-[0.97] active:brightness-[0.98]"
       }
     >
       <div className="relative min-h-40 overflow-hidden sm:min-h-72">
         <div
-          className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-105"
+          className="absolute inset-0 bg-cover bg-center transition-all duration-200 group-hover:scale-105"
           style={{
             backgroundImage: `url(${cut.image})`,
           }}
@@ -2146,8 +2242,16 @@ function CutCard({
         <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/10 to-transparent opacity-70" />
         <div className={active ? "absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-orange-300 via-orange-500 to-amber-300" : "absolute inset-x-0 bottom-0 h-px bg-white/10"} />
 
-        {badge && <Badge className="absolute left-2 top-2 text-[9px] shadow-lg shadow-black/20 backdrop-blur-md sm:left-3 sm:top-3 sm:text-[11px]" tone="glass">{badge}</Badge>}
-        {active && <Badge className="absolute right-2 top-2 text-[9px] font-black shadow-lg shadow-black/20 sm:right-3 sm:top-3 sm:text-[11px]" tone="solidAccent">{activeLabel}</Badge>}
+        {badge && <Badge className="absolute left-2 top-2 z-10 text-[9px] shadow-lg shadow-black/20 backdrop-blur-md sm:left-3 sm:top-3 sm:text-[11px]" tone="glass">{badge}</Badge>}
+        {active && (
+          <span
+            className="absolute right-2 top-2 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-orange-500 text-[11px] font-black leading-none text-black shadow-lg shadow-orange-500/50 ring-2 ring-white/25 sm:right-3 sm:top-3 sm:h-7 sm:w-7 sm:text-xs"
+            title={activeLabel}
+            aria-label={activeLabel}
+          >
+            ✓
+          </span>
+        )}
 
         <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-5">
           <h3 className="line-clamp-2 text-base font-black leading-5 tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)] sm:text-2xl sm:leading-tight">{cut.name}</h3>
@@ -2177,14 +2281,15 @@ function HomeCard({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className={
         active
-          ? `${ds.panel.homeCard} relative overflow-hidden border-orange-500/50 bg-gradient-to-br from-orange-500/15 via-slate-900/90 to-slate-950 p-3 shadow-orange-500/10 ring-1 ring-orange-300/15 active:scale-[0.98] sm:p-6`
-          : `${ds.panel.homeCard} relative overflow-hidden rounded-2xl border-white/5 bg-white/[0.025] p-2.5 opacity-90 active:scale-[0.98] sm:rounded-3xl sm:p-5`
+          ? `group ${ds.panel.homeCard} relative touch-manipulation overflow-hidden border-orange-500/55 bg-gradient-to-br from-orange-500/15 via-slate-900/90 to-slate-950 p-3 shadow-orange-500/20 ring-2 ring-orange-400/25 transition-all duration-200 active:scale-[0.97] active:brightness-[0.98] sm:p-6`
+          : `group ${ds.panel.homeCard} relative touch-manipulation overflow-hidden rounded-2xl border-white/5 bg-white/[0.025] p-2.5 opacity-90 transition-all duration-200 hover:border-white/12 active:scale-[0.97] active:brightness-[0.98] sm:rounded-3xl sm:p-5`
       }
     >
-      <div className="pointer-events-none absolute -right-12 -top-12 h-24 w-24 rounded-full bg-orange-500/0 blur-2xl transition group-hover:bg-orange-500/10 sm:h-28 sm:w-28" />
+      <div className="pointer-events-none absolute -right-12 -top-12 h-24 w-24 rounded-full bg-orange-500/0 blur-2xl transition-all duration-200 group-hover:bg-orange-500/10 sm:h-28 sm:w-28" />
       <div className="relative z-10 flex items-start justify-between gap-2">
         <div className={active ? `${ds.media.iconTile} h-10 w-10 rounded-xl border-orange-400/40 bg-orange-500/15 text-2xl sm:h-12 sm:w-12 sm:rounded-2xl sm:text-3xl` : `${ds.media.iconTile} h-8 w-8 rounded-lg bg-white/[0.04] text-lg opacity-80 sm:h-11 sm:w-11 sm:rounded-2xl sm:text-2xl`}>{emoji}</div>
         <Badge className="hidden max-w-[132px] shrink-0 truncate sm:inline-flex" tone={active ? "accent" : "glass"}>
@@ -2200,7 +2305,7 @@ function HomeCard({
 
       <div className={`relative z-10 mt-2 flex items-center justify-between text-[11px] font-semibold sm:mt-5 sm:text-sm ${active ? "text-orange-300" : "text-slate-400"}`}>
         <span>Abrir</span>
-        <span className={`flex h-6 w-6 items-center justify-center rounded-full border transition group-hover:translate-x-1 sm:h-8 sm:w-8 ${active ? "border-orange-400/20 bg-orange-500/10 group-hover:bg-orange-500/15" : "border-white/10 bg-white/[0.03] group-hover:bg-white/[0.06]"}`}>→</span>
+        <span className={`flex h-6 w-6 items-center justify-center rounded-full border transition-all duration-200 group-hover:translate-x-1 sm:h-8 sm:w-8 ${active ? "border-orange-400/20 bg-orange-500/10 group-hover:bg-orange-500/15" : "border-white/10 bg-white/[0.03] group-hover:bg-white/[0.06]"}`}>→</span>
       </div>
     </button>
   );
@@ -2209,11 +2314,13 @@ function HomeCard({
 function Tab({ active, label, emoji, onClick }: { active: boolean; label: string; emoji: string; onClick: () => void }) {
   return (
     <button
+      type="button"
       onClick={onClick}
+      aria-current={active ? "page" : undefined}
       className={
         active
-          ? `${ds.button.tabActive} px-1.5 py-1.5 text-[10px] ring-1 ring-orange-200/30`
-          : `${ds.button.tabIdle} px-1.5 py-1.5 text-[10px] opacity-70 hover:opacity-100`
+          ? "touch-manipulation rounded-xl bg-orange-500 px-1 py-1 text-[9px] font-black leading-tight text-black shadow-lg shadow-orange-500/40 ring-2 ring-orange-200/45 transition-all duration-200 motion-reduce:transition-none active:scale-[0.96] motion-reduce:active:scale-100 active:brightness-95"
+          : "touch-manipulation rounded-xl px-1 py-1 text-[9px] leading-tight text-slate-500 opacity-50 transition-all duration-200 motion-reduce:transition-none hover:bg-white/5 hover:text-slate-300 hover:opacity-80 active:scale-[0.96] motion-reduce:active:scale-100 active:bg-white/10"
       }
     >
       <div>{emoji}</div>
@@ -2224,8 +2331,23 @@ function Tab({ active, label, emoji, onClick }: { active: boolean; label: string
 
 function PrimaryButton({ onClick, loading, text, loadingText }: { onClick: () => void; loading: boolean; text: string; loadingText: string }) {
   return (
-    <Button fullWidth onClick={onClick} disabled={loading} className="px-5 py-4 font-bold">
-      {loading ? loadingText : text}
+    <Button
+      fullWidth
+      onClick={onClick}
+      disabled={loading}
+      className="inline-flex min-h-[3.25rem] touch-manipulation items-center justify-center gap-2 px-5 py-4 font-bold transition-all duration-200 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-85 disabled:active:scale-100"
+    >
+      {loading ? (
+        <>
+          <span
+            className="inline-block h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-black/25 border-t-black"
+            aria-hidden
+          />
+          <span className="tabular-nums">{loadingText}</span>
+        </>
+      ) : (
+        text
+      )}
     </Button>
   );
 }

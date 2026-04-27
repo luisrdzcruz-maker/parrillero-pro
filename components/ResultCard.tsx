@@ -17,7 +17,7 @@ type ResultCardProps = {
 };
 
 const cardClassName =
-  "group transition-all duration-300 hover:-translate-y-0.5 hover:border-orange-500/30 hover:shadow-xl hover:shadow-orange-500/10 active:scale-[0.99]";
+  "group transition-all duration-300 motion-reduce:transition-none [@media(hover:hover)]:hover:-translate-y-0.5 motion-reduce:[@media(hover:hover)]:hover:translate-y-0 [@media(hover:hover)]:hover:border-orange-500/30 [@media(hover:hover)]:hover:shadow-xl [@media(hover:hover)]:hover:shadow-orange-500/10 active:scale-[0.99] motion-reduce:active:scale-100";
 
 function ResultCardHeader({
   accent,
