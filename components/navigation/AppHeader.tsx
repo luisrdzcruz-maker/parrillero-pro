@@ -2,7 +2,14 @@ import { Badge } from "@/components/ui";
 import { ds } from "@/lib/design-system";
 import type { AppText, Lang } from "@/lib/i18n/texts";
 
-export type Mode = "inicio" | "coccion" | "menu" | "parrillada" | "cocina" | "guardados";
+export type Mode =
+  | "inicio"
+  | "coccion"
+  | "plan"
+  | "menu"
+  | "parrillada"
+  | "cocina"
+  | "guardados";
 
 export function AppHeader({
   lang,
@@ -50,7 +57,7 @@ export function DesktopModeTabs({
 }) {
   return (
     <nav className="mb-6 hidden rounded-3xl border border-white/10 bg-white/[0.03] p-2 shadow-lg shadow-black/10 backdrop-blur md:block">
-      <div className="grid grid-cols-6 gap-2">
+      <div className="grid grid-cols-5 gap-2">
         <DesktopTab
           active={mode === "inicio"}
           label={t.start}
@@ -59,21 +66,15 @@ export function DesktopModeTabs({
         />
         <DesktopTab
           active={mode === "coccion"}
-          label={t.cooking}
+          label="Cocina"
           emoji="🥩"
           onClick={() => onModeChange("coccion")}
         />
         <DesktopTab
-          active={mode === "menu"}
-          label={t.menu}
-          emoji="🍽️"
-          onClick={() => onModeChange("menu")}
-        />
-        <DesktopTab
-          active={mode === "parrillada"}
-          label={t.parrillada}
-          emoji="🔥"
-          onClick={() => onModeChange("parrillada")}
+          active={mode === "plan" || mode === "menu" || mode === "parrillada"}
+          label="Plan"
+          emoji="🧭"
+          onClick={() => onModeChange("plan")}
         />
         <DesktopTab
           active={mode === "cocina"}
@@ -129,7 +130,7 @@ export function BottomNavigation({
 }) {
   return (
     <nav
-      className={`${ds.nav.bottom} z-50 min-h-[70px] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 md:hidden`}
+      className={`${ds.nav.bottom} z-50 min-h-[72px] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 md:hidden`}
     >
       <div className={`${ds.layout.navGrid} gap-1.5 rounded-[1.6rem] border border-white/10 bg-slate-950/90 p-1.5 shadow-2xl shadow-black/50`}>
         <Tab
@@ -140,21 +141,15 @@ export function BottomNavigation({
         />
         <Tab
           active={mode === "coccion"}
-          label={t.cooking}
+          label="Cocina"
           emoji="🥩"
           onClick={() => onModeChange("coccion")}
         />
         <Tab
-          active={mode === "menu"}
-          label={t.menu}
-          emoji="🍽️"
-          onClick={() => onModeChange("menu")}
-        />
-        <Tab
-          active={mode === "parrillada"}
-          label={t.parrillada}
-          emoji="🔥"
-          onClick={() => onModeChange("parrillada")}
+          active={mode === "plan" || mode === "menu" || mode === "parrillada"}
+          label="Plan"
+          emoji="🧭"
+          onClick={() => onModeChange("plan")}
         />
         <Tab
           active={mode === "cocina"}
@@ -191,7 +186,7 @@ function Tab({
       aria-current={active ? "page" : undefined}
       className={
         active
-          ? "min-h-[54px] touch-manipulation rounded-2xl bg-orange-500 px-1.5 py-1.5 text-[10px] font-black leading-tight text-black shadow-lg shadow-orange-500/45 ring-2 ring-orange-200/45 transition-all duration-200 motion-reduce:transition-none active:scale-[0.96] motion-reduce:active:scale-100 active:brightness-95"
+          ? "min-h-[54px] touch-manipulation rounded-2xl bg-gradient-to-br from-orange-300 via-orange-500 to-orange-600 px-1.5 py-1.5 text-[10px] font-black leading-tight text-black shadow-lg shadow-orange-500/45 ring-2 ring-orange-200/45 transition-all duration-200 motion-reduce:transition-none active:scale-[0.96] motion-reduce:active:scale-100 active:brightness-95"
           : "min-h-[54px] touch-manipulation rounded-2xl px-1.5 py-1.5 text-[10px] font-bold leading-tight text-slate-400 opacity-75 transition-all duration-200 motion-reduce:transition-none hover:bg-white/5 hover:text-slate-200 hover:opacity-100 active:scale-[0.96] motion-reduce:active:scale-100 active:bg-white/10"
       }
     >

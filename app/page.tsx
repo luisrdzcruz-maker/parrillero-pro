@@ -25,6 +25,7 @@ import {
   DesktopModeTabs,
   type Mode,
 } from "@/components/navigation/AppHeader";
+import { PlanHub, type PlanMode } from "@/components/planning/PlanHub";
 import { Button, Card, Grid, Section } from "@/components/ui";
 import { track } from "@/lib/analytics";
 import type { AnimalId, CookingMethod, CookingStep, ProductCut } from "@/lib/cookingCatalog";
@@ -216,23 +217,6 @@ function parseResponse(text: string): Blocks {
   return blocks;
 }
 
-function fallbackMenuBlocks(): Blocks {
-  return {
-    MENU:
-      "Principal parrillero con carnes o productos seleccionados, verduras a la parrilla, pan y salsa.",
-    CANTIDADES:
-      "Por persona: 350-450 g de proteína, 180-220 g de verduras, 80-120 g de pan o papas y 40-60 g de salsa.",
-    TIMING:
-      "T - 60 min preparar compra y mise en place. T - 45 min encender fuego. T - 30 min sazonar. T - 20 min empezar cortes gruesos. T - 10 min guarniciones. T servir por tandas.",
-    ORDEN:
-      "1. Estabiliza la parrilla. 2. Cocina lo más grueso primero. 3. Sella cortes medianos. 4. Cocina verduras y pan al final. 5. Reposa carnes y sirve.",
-    COMPRA:
-      "Proteínas, verduras, pan o papas, ensalada, chimichurri o salsa BBQ, sal gruesa, pimienta, aceite, limón y carbón o gas suficiente.",
-    ERROR:
-      "Menú fallback estructurado porque la respuesta original no pasó validación.",
-  };
-}
-
 function parseMenuReply(reply: string): Blocks {
   const parsed = parseBlocks(reply);
   const normalized = normalizeBlocks(parsed, REQUIRED_MENU_BLOCKS, "generated_menu");
@@ -355,6 +339,9 @@ export default function Home() {
   const [sides, setSides] = useState("patatas, ensalada, chimichurri");
   const [budget, setBudget] = useState("200");
   const [difficulty, setDifficulty] = useState("medio");
+  const [planMode, setPlanMode] = useState<PlanMode>("rapido");
+  const [planProduct, setPlanProduct] = useState("chuletón");
+  const [planGenerated, setPlanGenerated] = useState(false);
 
   const [parrilladaPeople, setParrilladaPeople] = useState("6");
   const [serveTime, setServeTime] = useState("18:00");
@@ -505,7 +492,11 @@ export default function Home() {
     const now = new Date();
     const dateLabel = now.toLocaleDateString(localeForLang(lang));
     const savedType: SavedMenuType =
-      mode === "coccion" ? "cooking_plan" : mode === "parrillada" ? "parrillada_plan" : "generated_menu";
+      mode === "coccion"
+        ? "cooking_plan"
+        : mode === "parrillada" || (mode === "plan" && planMode === "evento")
+          ? "parrillada_plan"
+          : "generated_menu";
     const cutName = selectedCut?.name ?? cut;
     const menuName =
       savedType === "cooking_plan"
@@ -517,6 +508,7 @@ export default function Home() {
       savedType === "cooking_plan"
         ? null
         : parsePositiveInt(savedType === "parrillada_plan" ? parrilladaPeople : people);
+    const planProducts = planMode === "rapido" ? planProduct : menuMeats;
 
     setSaveMenuStatus("saving");
     setSaveMenuMessage("");
@@ -551,11 +543,12 @@ export default function Home() {
             : {
                 people,
                 eventType,
-                products: menuMeats,
-                menuMeats,
-                sides,
+                planMode,
+                products: planProducts,
+                menuMeats: planProducts,
+                sides: planMode === "rapido" ? "guarnición simple" : sides,
                 budget,
-                difficulty,
+                difficulty: planMode === "rapido" ? "fácil" : difficulty,
                 equipment,
               };
 
@@ -845,6 +838,68 @@ ERROR
 `, false, undefined, true);
   }
 
+  async function generatePlanExperience() {
+    setPlanGenerated(false);
+    setBlocks({});
+    setCheckedItems({});
+    resetSaveMenuState();
+
+    if (planMode === "evento") {
+      generateParrillada();
+      setPlanGenerated(true);
+      return;
+    }
+
+    const productInput = planMode === "rapido" ? planProduct : menuMeats;
+    const sidesInput = planMode === "rapido" ? "guarnición simple" : sides;
+    const difficultyInput = planMode === "rapido" ? "fácil" : difficulty;
+
+    const ok = await callAI(`
+Language: ${engineLang(lang) === "es" ? "Spanish" : "English"}.
+
+Plan mode: ${planMode}
+Personas / People: ${people}
+Tipo de evento / Event type: ${planMode === "rapido" ? "plan rápido" : eventType}
+Carnes/productos / Products: ${productInput}
+Acompañamientos / Sides: ${sidesInput}
+Presupuesto / Budget: ${budget} €
+Nivel / Difficulty: ${difficultyInput}
+Equipo / Equipment: ${equipment}
+
+If Spanish:
+MENU
+CANTIDADES
+TIMING
+ORDEN
+COMPRA
+ERROR
+
+If English:
+MENU
+QUANTITIES
+TIMING
+ORDER
+SHOPPING
+ERROR
+`, false, undefined, true);
+
+    if (ok) setPlanGenerated(true);
+  }
+
+  function editPlanExperience() {
+    setPlanGenerated(false);
+    resetSaveMenuState();
+  }
+
+  function copyCurrentPlan() {
+    if (typeof window === "undefined" || !navigator.clipboard) return;
+    navigator.clipboard.writeText(buildText(blocks));
+  }
+
+  async function shareCurrentPlan() {
+    await copyCurrentPlan();
+  }
+
   function generateParrillada() {
     const plan = generateParrilladaPlan({
       people: parrilladaPeople,
@@ -891,6 +946,7 @@ ERROR
     setLang(nextLang);
     setBlocks({});
     setCheckedItems({});
+    setPlanGenerated(false);
     resetSaveMenuState();
   }
 
@@ -991,6 +1047,41 @@ ERROR
 
         {mode === "inicio" && (
           <HomeScreen savedMenusCount={savedMenus.length} t={t} onModeChange={handleModeChange} />
+        )}
+
+        {mode === "plan" && (
+          <PlanHub
+            blocks={blocks}
+            difficulty={difficulty}
+            equipment={equipment}
+            loading={loading}
+            menuMeats={menuMeats}
+            onCopy={copyCurrentPlan}
+            onEdit={editPlanExperience}
+            onGenerate={generatePlanExperience}
+            onSave={saveCurrentMenu}
+            onShare={shareCurrentPlan}
+            parrilladaPeople={parrilladaPeople}
+            parrilladaProducts={parrilladaProducts}
+            parrilladaSides={parrilladaSides}
+            planGenerated={planGenerated}
+            planMode={planMode}
+            planProduct={planProduct}
+            saveMenuMessage={saveMenuMessage}
+            saveMenuStatus={saveMenuStatus}
+            serveTime={serveTime}
+            setDifficulty={setDifficulty}
+            setEquipment={setEquipment}
+            setMenuMeats={setMenuMeats}
+            setParrilladaPeople={setParrilladaPeople}
+            setParrilladaProducts={setParrilladaProducts}
+            setParrilladaSides={setParrilladaSides}
+            setPlanMode={setPlanMode}
+            setPlanProduct={setPlanProduct}
+            setServeTime={setServeTime}
+            setSides={setSides}
+            sides={sides}
+          />
         )}
 
         {mode === "coccion" && (

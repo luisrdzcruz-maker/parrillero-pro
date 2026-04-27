@@ -47,20 +47,12 @@ export function HomeScreen({
 
   const featureCards = [
     {
-      description: "Cantidades y compra para eventos.",
-      emoji: "🍽️",
-      mode: "menu" as const,
-      priority: "Menú",
-      stat: "Menú completo",
-      title: t.createMenu,
-    },
-    {
-      description: "Zonas y tiempos para grupos.",
-      emoji: "🔥",
-      mode: "parrillada" as const,
-      priority: "Parrillada",
-      stat: "Timeline + zonas",
-      title: t.parrilladaPro,
+      description: "Menú rápido o parrillada detallada desde un solo lugar.",
+      emoji: "🧭",
+      mode: "plan" as const,
+      priority: "Plan",
+      stat: "Menú o timeline",
+      title: "Planificar",
     },
     {
       description: "Temporizador del plan activo.",
@@ -154,7 +146,7 @@ export function HomeScreen({
             </h2>
           </div>
           <p className="hidden max-w-xl text-sm leading-6 text-slate-400 sm:block">
-            Herramientas extra para menús, grupos, cocina en vivo y planes guardados.
+            Herramientas extra para planificar, cocinar en vivo y repetir planes guardados.
           </p>
         </div>
 
