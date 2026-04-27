@@ -15,6 +15,9 @@ type ResultCardProps = {
 const cardClassName =
   "group transition-all duration-300 motion-reduce:transition-none [@media(hover:hover)]:hover:-translate-y-0.5 motion-reduce:[@media(hover:hover)]:hover:translate-y-0 [@media(hover:hover)]:hover:border-orange-500/30 [@media(hover:hover)]:hover:shadow-xl [@media(hover:hover)]:hover:shadow-orange-500/10 active:scale-[0.99] motion-reduce:active:scale-100";
 
+const inlineFallbackImage =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='700' viewBox='0 0 1200 700'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='30%25' r='70%25'%3E%3Cstop offset='0%25' stop-color='%23f97316' stop-opacity='.45'/%3E%3Cstop offset='60%25' stop-color='%230f172a'/%3E%3Cstop offset='100%25' stop-color='%23020617'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='1200' height='700' fill='url(%23g)'/%3E%3Cpath d='M280 470h640' stroke='%23fb923c' stroke-width='18' stroke-linecap='round' opacity='.55'/%3E%3Cpath d='M340 405h520' stroke='%23fed7aa' stroke-width='10' stroke-linecap='round' opacity='.38'/%3E%3Ccircle cx='600' cy='300' r='105' fill='%23f97316' opacity='.18'/%3E%3C/svg%3E";
+
 function ResultCardHeader({
   accent,
   icon,
@@ -99,14 +102,18 @@ function isSetupCard(title: string) {
 
 function SetupVisualToggle({ content, title }: { content: string; title: string }) {
   const [open, setOpen] = useState(false);
-  const [imageFailed, setImageFailed] = useState(false);
   const setupImage = getSetupImage({ equipment: content, heatType: content, method: content });
 
   if (!isSetupCard(title)) return null;
 
   function handleImageError(event: SyntheticEvent<HTMLImageElement>) {
+    if (event.currentTarget.getAttribute("src") === SETUP_PLACEHOLDER_IMAGE) {
+      event.currentTarget.onerror = null;
+      event.currentTarget.src = inlineFallbackImage;
+      return;
+    }
+
     event.currentTarget.src = SETUP_PLACEHOLDER_IMAGE;
-    setImageFailed(true);
   }
 
   return (
@@ -147,49 +154,26 @@ function SetupVisualToggle({ content, title }: { content: string; title: string 
             }
           >
             <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950 shadow-2xl shadow-black/25">
-              {!imageFailed && (
-                <img
-                  src={setupImage}
-                  alt="Visual grill setup"
-                  loading="lazy"
-                  className="h-44 w-full object-cover sm:h-56"
-                  onError={handleImageError}
-                />
-              )}
+              <img
+                src={setupImage || SETUP_PLACEHOLDER_IMAGE}
+                alt="Visual grill setup"
+                loading="lazy"
+                className="h-44 w-full object-cover sm:h-56"
+                onError={handleImageError}
+              />
 
-              {imageFailed && (
-                <div className="flex h-44 w-full items-center justify-center border border-dashed border-orange-400/30 bg-[radial-gradient(circle_at_center,rgba(249,115,22,0.18),transparent_48%)] p-5 text-center sm:h-56">
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-300">
-                      Imagen pendiente
-                    </p>
-                    <p className="mt-2 text-sm font-semibold text-white">
-                      Setup visual listo para conectar asset WebP
-                    </p>
-                    <p className="mx-auto mt-2 max-w-xs text-xs leading-5 text-slate-400">
-                      El plan sigue funcionando con la guía textual mientras se añade la imagen
-                      final.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {!imageFailed && (
-                <>
-                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(251,146,60,0.28),transparent_34%),linear-gradient(to_top,rgba(2,6,23,0.9)_0%,rgba(2,6,23,0.38)_54%,rgba(255,255,255,0.08)_100%)]" />
-                  <div className="pointer-events-none absolute bottom-0 left-0 right-0 p-4">
-                    <Badge
-                      className="border-orange-400/30 bg-black/45 text-orange-200"
-                      tone="glass"
-                    >
-                      Setup del fuego
-                    </Badge>
-                    <p className="mt-2 text-sm font-semibold text-white">
-                      Visualiza zonas antes de cocinar
-                    </p>
-                  </div>
-                </>
-              )}
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(251,146,60,0.28),transparent_34%),linear-gradient(to_top,rgba(2,6,23,0.9)_0%,rgba(2,6,23,0.38)_54%,rgba(255,255,255,0.08)_100%)]" />
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 p-4">
+                <Badge
+                  className="border-orange-400/30 bg-black/45 text-orange-200"
+                  tone="glass"
+                >
+                  Setup del fuego
+                </Badge>
+                <p className="mt-2 text-sm font-semibold text-white">
+                  Visualiza zonas antes de cocinar
+                </p>
+              </div>
             </div>
           </div>
         </div>

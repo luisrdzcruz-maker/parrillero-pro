@@ -7,7 +7,7 @@ import type { Mode } from "@/components/navigation/AppHeader";
 import { ds } from "@/lib/design-system";
 import type { AppText, Lang } from "@/lib/i18n/texts";
 import { animalMedia, animalOptions, type Animal } from "@/lib/media/animalMedia";
-import { type ReactNode, useLayoutEffect, useState } from "react";
+import { type ReactNode, type SyntheticEvent, useLayoutEffect, useState } from "react";
 
 export type Blocks = Record<string, string>;
 export type SaveMenuStatus = "idle" | "saving" | "success" | "error";
@@ -29,10 +29,24 @@ export const equipmentOptions = [
   "Napoleon Rogue 525-2",
 ];
 
+const IMAGE_FALLBACK_SRC = "/visuals/setup/setup-placeholder.webp";
+const INLINE_FALLBACK_IMAGE =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='700' viewBox='0 0 1200 700'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='30%25' r='70%25'%3E%3Cstop offset='0%25' stop-color='%23f97316' stop-opacity='.45'/%3E%3Cstop offset='60%25' stop-color='%230f172a'/%3E%3Cstop offset='100%25' stop-color='%23020617'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='1200' height='700' fill='url(%23g)'/%3E%3Cpath d='M280 470h640' stroke='%23fb923c' stroke-width='18' stroke-linecap='round' opacity='.55'/%3E%3Cpath d='M340 405h520' stroke='%23fed7aa' stroke-width='10' stroke-linecap='round' opacity='.38'/%3E%3Ccircle cx='600' cy='300' r='105' fill='%23f97316' opacity='.18'/%3E%3C/svg%3E";
+
 function buildText(blocks: Blocks) {
   return Object.keys(blocks)
     .map((key) => `${key}\n${blocks[key]}`)
     .join("\n\n");
+}
+
+function handleImageFallback(event: SyntheticEvent<HTMLImageElement>) {
+  if (event.currentTarget.getAttribute("src") === IMAGE_FALLBACK_SRC) {
+    event.currentTarget.onerror = null;
+    event.currentTarget.src = INLINE_FALLBACK_IMAGE;
+    return;
+  }
+
+  event.currentTarget.src = IMAGE_FALLBACK_SRC;
 }
 
 function CookingStepTransition({
@@ -708,11 +722,12 @@ export function ImageCard({
       }
     >
       <div className="relative min-h-32 overflow-hidden sm:min-h-60">
-        <div
-          className="absolute inset-0 bg-cover bg-center transition-all duration-200 group-hover:scale-105"
-          style={{
-            backgroundImage: `url(${image})`,
-          }}
+        <img
+          src={image || IMAGE_FALLBACK_SRC}
+          alt=""
+          loading="lazy"
+          className="absolute inset-0 h-full w-full object-cover object-center transition-all duration-200 group-hover:scale-105"
+          onError={handleImageFallback}
         />
 
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(251,146,60,0.36),transparent_34%),linear-gradient(to_top,rgba(2,6,23,0.98)_0%,rgba(2,6,23,0.68)_36%,rgba(2,6,23,0.14)_72%,rgba(255,255,255,0.08)_100%)]" />
@@ -783,11 +798,12 @@ function CutCard({
       }
     >
       <div className="relative min-h-40 overflow-hidden sm:min-h-72">
-        <div
-          className="absolute inset-0 bg-cover bg-center transition-all duration-200 group-hover:scale-105"
-          style={{
-            backgroundImage: `url(${cut.image})`,
-          }}
+        <img
+          src={cut.image || IMAGE_FALLBACK_SRC}
+          alt=""
+          loading="lazy"
+          className="absolute inset-0 h-full w-full object-cover object-center transition-all duration-200 group-hover:scale-105"
+          onError={handleImageFallback}
         />
 
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(251,146,60,0.32),transparent_34%),linear-gradient(to_top,rgba(2,6,23,0.99)_0%,rgba(2,6,23,0.72)_40%,rgba(2,6,23,0.18)_74%,rgba(255,255,255,0.08)_100%)]" />

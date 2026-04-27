@@ -12,6 +12,7 @@ import { useMemo, useState, useTransition } from "react";
 
 type Lang = "es" | "en" | "fi";
 type Blocks = Record<string, string>;
+type SavedMenuType = "cooking_plan" | "generated_menu" | "parrillada_plan";
 
 const texts = {
   es: {
@@ -47,6 +48,9 @@ const texts = {
     clearSearch: "Limpiar búsqueda",
     cut: "Corte",
     products: "Productos",
+    typeCooking: "Cocción",
+    typeMenu: "Menú",
+    typeParrillada: "Parrillada",
   },
   en: {
     eyebrow: "Library",
@@ -81,6 +85,9 @@ const texts = {
     clearSearch: "Clear search",
     cut: "Cut",
     products: "Products",
+    typeCooking: "Cooking",
+    typeMenu: "Menu",
+    typeParrillada: "Parrillada",
   },
   fi: {
     eyebrow: "Kirjasto",
@@ -115,6 +122,9 @@ const texts = {
     clearSearch: "Tyhjennä haku",
     cut: "Leikkaus",
     products: "Tuotteet",
+    typeCooking: "Kypsennys",
+    typeMenu: "Menu",
+    typeParrillada: "Parrillada",
   },
 } satisfies Record<Lang, Record<string, string>>;
 
@@ -338,6 +348,7 @@ type SavedMenuMeta = {
   cut: string;
   products: string;
   summary: string;
+  type: SavedMenuType;
 };
 
 function SavedMenuCard({
@@ -381,7 +392,7 @@ function SavedMenuCard({
         <div className="relative">
           <div className="mb-5 flex items-start justify-between gap-4">
             <div className="rounded-full border border-orange-400/25 bg-orange-500/15 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-orange-300">
-              {menu.lang.toUpperCase()}
+              {getTypeLabel(meta.type, t)}
             </div>
             <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-xs font-bold text-slate-300">
               {formatDate(menu.created_at, lang)}
@@ -404,6 +415,7 @@ function SavedMenuCard({
           <InfoPill label={t.cut} value={meta.cut || "—"} />
           <InfoPill label={t.products} value={meta.products || "—"} />
           <InfoPill label={t.language} value={menu.lang.toUpperCase()} />
+          <InfoPill label="Tipo" value={getTypeLabel(meta.type, t)} />
         </div>
 
         <div className="flex gap-3">
@@ -536,7 +548,25 @@ function getMenuMeta(menu: SavedMenu, t: (typeof texts)[Lang]): SavedMenuMeta {
     cut,
     products,
     summary: getSummary(blocks, t),
+    type: getMenuType(menu.data),
   };
+}
+
+function getMenuType(data: Json): SavedMenuType {
+  if (!isRecord(data)) return "generated_menu";
+
+  const value = data.type;
+  if (value === "cooking_plan" || value === "parrillada_plan" || value === "generated_menu") {
+    return value;
+  }
+
+  return "generated_menu";
+}
+
+function getTypeLabel(type: SavedMenuType, t: (typeof texts)[Lang]) {
+  if (type === "cooking_plan") return t.typeCooking;
+  if (type === "parrillada_plan") return t.typeParrillada;
+  return t.typeMenu;
 }
 
 function getBlocks(data: Json): Blocks {

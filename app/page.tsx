@@ -37,6 +37,13 @@ import { ds } from "@/lib/design-system";
 import { texts, type AppText, type Lang } from "@/lib/i18n/texts";
 import { animalIdsByLabel, type Animal } from "@/lib/media/animalMedia";
 import { cutImages } from "@/lib/media/cutImages";
+import {
+  REQUIRED_COOKING_BLOCKS,
+  REQUIRED_MENU_BLOCKS,
+  REQUIRED_PARRILLADA_BLOCKS,
+  normalizeBlocks,
+} from "@/lib/parser/normalizeBlocks";
+import { parseBlocks } from "@/lib/parser/parseBlocks";
 import { generateParrilladaPlan } from "@/lib/parrilladaEngine";
 import { type TouchEvent, useEffect, useMemo, useRef, useState } from "react";
 
@@ -58,7 +65,21 @@ type SavedMenu = {
   title: string;
   date: string;
   blocks: Blocks;
+  type?: SavedMenuType;
 };
+
+type SavedMenuType = "cooking_plan" | "generated_menu" | "parrillada_plan";
+
+type SavedMenuActionMenu = {
+  id: string;
+  name: string;
+  created_at: string;
+};
+
+type SaveGeneratedMenuResponse =
+  | { ok: true; menu: SavedMenuActionMenu }
+  | { ok: false; error?: string }
+  | SavedMenuActionMenu;
 
 type CutItem = {
   id: string;
@@ -187,6 +208,72 @@ function parseResponse(text: string): Blocks {
   return blocks;
 }
 
+function fallbackMenuBlocks(): Blocks {
+  return {
+    MENU:
+      "Principal parrillero con carnes o productos seleccionados, verduras a la parrilla, pan y salsa.",
+    CANTIDADES:
+      "Por persona: 350-450 g de proteína, 180-220 g de verduras, 80-120 g de pan o papas y 40-60 g de salsa.",
+    TIMING:
+      "T - 60 min preparar compra y mise en place. T - 45 min encender fuego. T - 30 min sazonar. T - 20 min empezar cortes gruesos. T - 10 min guarniciones. T servir por tandas.",
+    ORDEN:
+      "1. Estabiliza la parrilla. 2. Cocina lo más grueso primero. 3. Sella cortes medianos. 4. Cocina verduras y pan al final. 5. Reposa carnes y sirve.",
+    COMPRA:
+      "Proteínas, verduras, pan o papas, ensalada, chimichurri o salsa BBQ, sal gruesa, pimienta, aceite, limón y carbón o gas suficiente.",
+    ERROR:
+      "Menú fallback estructurado porque la respuesta original no pasó validación.",
+  };
+}
+
+function parseMenuReply(reply: string): Blocks {
+  const parsed = parseBlocks(reply);
+  const normalized = normalizeBlocks(parsed, REQUIRED_MENU_BLOCKS, "generated_menu");
+
+  if (process.env.NODE_ENV === "development") {
+    console.log("[blocks] parsed", parsed);
+    console.log("[blocks] normalized", normalized);
+  }
+
+  return normalized;
+}
+
+function hasSavableBlocks(currentBlocks: unknown): currentBlocks is Blocks {
+  if (!currentBlocks || typeof currentBlocks !== "object" || Array.isArray(currentBlocks)) return false;
+
+  return Object.entries(currentBlocks).some(
+    ([key, value]) =>
+      key.trim().toUpperCase() !== "ERR" &&
+      typeof value === "string" &&
+      Boolean(value.trim()) &&
+      value.trim().toUpperCase() !== "ERR",
+  );
+}
+
+function getSafeBlocksForSave(currentBlocks: Blocks, savedType: SavedMenuType): Blocks {
+  const sanitized = Object.fromEntries(
+    Object.entries(currentBlocks).filter(([key]) => key.trim().toUpperCase() !== "ERR"),
+  ) as Blocks;
+
+  const required =
+    savedType === "cooking_plan"
+      ? REQUIRED_COOKING_BLOCKS
+      : savedType === "parrillada_plan"
+        ? REQUIRED_PARRILLADA_BLOCKS
+        : REQUIRED_MENU_BLOCKS;
+
+  return normalizeBlocks(sanitized, required, savedType);
+}
+
+function getSavedMenuTypeLabel(type: SavedMenuType, lang: Lang) {
+  if (type === "cooking_plan") return lang === "es" ? "Cocción" : "Cooking";
+  if (type === "parrillada_plan") return "Parrillada";
+  return lang === "es" ? "Menú" : "Menu";
+}
+
+function getSavedMenuType(menu: SavedMenu): SavedMenuType {
+  return menu.type ?? "generated_menu";
+}
+
 function buildCookStepsFromPlan(blocks: Blocks): CookingStep[] {
   const text = blocks.PASOS || blocks.STEPS || blocks.ORDEN || blocks.ORDER || "";
   const lines = text
@@ -271,6 +358,7 @@ export default function Home() {
   const [blocks, setBlocks] = useState<Blocks>({});
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [savedMenus, setSavedMenus] = useState<SavedMenu[]>([]);
+  const [selectedSavedMenu, setSelectedSavedMenu] = useState<SavedMenu | null>(null);
   const [loading, setLoading] = useState(false);
   const [saveMenuStatus, setSaveMenuStatus] = useState<SaveMenuStatus>("idle");
   const [saveMenuMessage, setSaveMenuMessage] = useState("");
@@ -390,57 +478,107 @@ export default function Home() {
     localStorage.setItem("parrillero_saved_menus", JSON.stringify(nextMenus));
   }
 
+  function resetSaveMenuState() {
+    setSaveMenuStatus("idle");
+    setSaveMenuMessage("");
+  }
+
   async function saveCurrentMenu() {
     if (typeof window === "undefined") return;
-    if (Object.keys(blocks).length === 0) return;
+    if (!hasSavableBlocks(blocks)) {
+      setSaveMenuStatus("error");
+      setSaveMenuMessage(t.menuSaveError);
+      return;
+    }
 
     const now = new Date();
-    const menuName = `Menú Parrillero - ${now.toLocaleDateString(localeForLang(lang))}`;
+    const dateLabel = now.toLocaleDateString(localeForLang(lang));
+    const savedType: SavedMenuType =
+      mode === "coccion" ? "cooking_plan" : mode === "parrillada" ? "parrillada_plan" : "generated_menu";
+    const cutName = selectedCut?.name ?? cut;
+    const menuName =
+      savedType === "cooking_plan"
+        ? `Cocción - ${animal} ${cutName} - ${dateLabel}`
+        : savedType === "parrillada_plan"
+          ? `Parrillada - ${parrilladaPeople} personas - ${dateLabel}`
+          : `Menú BBQ - ${people} personas - ${dateLabel}`;
+    const peopleValue =
+      savedType === "cooking_plan"
+        ? null
+        : parsePositiveInt(savedType === "parrillada_plan" ? parrilladaPeople : people);
 
     setSaveMenuStatus("saving");
     setSaveMenuMessage("");
 
     try {
-      const savedMenuResult = await saveGeneratedMenu({
+      const safeBlocks = getSafeBlocksForSave(blocks, savedType);
+      if (Object.keys(safeBlocks).length === 0) {
+        setSaveMenuStatus("error");
+        setSaveMenuMessage(t.menuSaveError);
+        return;
+      }
+
+      const inputs =
+        savedType === "cooking_plan"
+          ? {
+              animal,
+              cut,
+              cutName,
+              weight,
+              thickness,
+              doneness,
+              equipment,
+            }
+          : savedType === "parrillada_plan"
+            ? {
+                parrilladaPeople,
+                serveTime,
+                parrilladaProducts,
+                parrilladaSides,
+                equipment,
+              }
+            : {
+                people,
+                eventType,
+                products: menuMeats,
+                menuMeats,
+                sides,
+                budget,
+                difficulty,
+                equipment,
+              };
+
+      const savedMenuResult = (await saveGeneratedMenu({
         name: menuName,
         lang,
-        people: parsePositiveInt(people),
+        people: peopleValue,
         data: {
-          type: "generated_menu",
+          type: savedType,
           generatedAt: now.toISOString(),
-          inputs: {
-            people,
-            eventType,
-            products: menuMeats,
-            sides,
-            budget,
-            difficulty,
-            equipment,
-          },
-          blocks,
+          inputs,
+          blocks: safeBlocks,
         },
-      });
+      })) as SaveGeneratedMenuResponse;
 
-      const fallbackId = `local-${now.getTime()}`;
-      const savedMenu =
-        savedMenuResult.ok
-          ? savedMenuResult.menu
-          : {
-              id: fallbackId,
-              name: menuName,
-              created_at: now.toISOString(),
-            };
+      if ("ok" in savedMenuResult && !savedMenuResult.ok) {
+        setSaveMenuStatus("error");
+        setSaveMenuMessage(savedMenuResult.error || t.menuSaveError);
+        return;
+      }
+
+      const savedMenu = "ok" in savedMenuResult ? savedMenuResult.menu : savedMenuResult;
 
       const newMenu: SavedMenu = {
         id: savedMenu.id,
         title: savedMenu.name,
         date: new Date(savedMenu.created_at).toLocaleDateString(localeForLang(lang)),
-        blocks,
+        blocks: safeBlocks,
+        type: savedType,
       };
 
       updateSavedMenus([newMenu, ...savedMenus.filter((menu) => menu.id !== newMenu.id)]);
-      setSaveMenuStatus(savedMenuResult.ok ? "success" : "error");
-      setSaveMenuMessage(savedMenuResult.ok ? t.menuSaved : `${t.menuSaveError} Guardado localmente.`);
+      setSaveMenuStatus("success");
+      setSaveMenuMessage(t.menuSaved);
     } catch {
       setSaveMenuStatus("error");
       setSaveMenuMessage(t.menuSaveError);
@@ -449,11 +587,13 @@ export default function Home() {
 
   function deleteMenu(id: string) {
     updateSavedMenus(savedMenus.filter((menu) => menu.id !== id));
+    if (selectedSavedMenu?.id === id) setSelectedSavedMenu(null);
   }
 
   function loadMenu(menu: SavedMenu) {
-    setBlocks(menu.blocks);
-    navigateMode("menu");
+    setSelectedSavedMenu(menu);
+    resetSaveMenuState();
+    navigateMode("guardados");
   }
 
   function handleAnimalChange(selectedAnimal: Animal) {
@@ -462,6 +602,7 @@ export default function Home() {
     setDoneness(getInitialDoneness(selectedAnimal));
     setBlocks({});
     setCheckedItems({});
+    resetSaveMenuState();
     setCookingStep("cut");
     track({ name: "animal_selected", animal: selectedAnimal, lang });
   }
@@ -470,6 +611,7 @@ export default function Home() {
     setCut(selectedCutId);
     setBlocks({});
     setCheckedItems({});
+    resetSaveMenuState();
     setCookingStep("details");
     track({ name: "cut_selected", animal, cutId: selectedCutId, lang });
   }
@@ -478,12 +620,12 @@ export default function Home() {
     message: string,
     createCookSteps = false,
     visualContext?: CookingVisualContext,
+    parseAsMenu = false,
   ): Promise<boolean> {
     setLoading(true);
     setBlocks({});
     setCheckedItems({});
-    setSaveMenuStatus("idle");
-    setSaveMenuMessage("");
+    resetSaveMenuState();
 
     try {
       const res = await fetch("/api/chat", {
@@ -501,12 +643,21 @@ export default function Home() {
       }
 
       const data = await res.json();
-      const parsed = parseResponse(data.reply);
+      const reply = typeof data.reply === "string" ? data.reply : "";
+      const parsed = parseAsMenu ? parseMenuReply(reply) : parseResponse(reply);
+      const normalized = parseAsMenu
+        ? parsed
+        : normalizeBlocks(parsed, REQUIRED_COOKING_BLOCKS, "cooking_plan");
 
-      setBlocks(parsed);
+      if (!parseAsMenu && process.env.NODE_ENV === "development") {
+        console.log("[blocks] parsed", parsed);
+        console.log("[blocks] normalized", normalized);
+      }
+
+      setBlocks(normalized);
 
       if (createCookSteps) {
-        const baseSteps = buildCookStepsFromPlan(parsed);
+        const baseSteps = buildCookStepsFromPlan(normalized);
         const steps = visualContext ? withCookingStepImages(baseSteps, visualContext) : baseSteps;
         setCookSteps(steps);
         setCurrentStep(0);
@@ -547,9 +698,11 @@ export default function Home() {
 
     if (localPlan && localSteps) {
       track({ name: "cooking_plan_result", path: "local" });
+      const normalizedPlan = normalizeBlocks(localPlan, REQUIRED_COOKING_BLOCKS, "cooking_plan");
       const visualSteps = withCookingStepImages(localSteps, visualContext);
-      setBlocks(localPlan);
+      setBlocks(normalizedPlan);
       setCheckedItems({});
+      resetSaveMenuState();
       setCookSteps(visualSteps);
       setCurrentStep(0);
       setTimeLeft(visualSteps[0].duration);
@@ -612,7 +765,7 @@ TIMING
 ORDER
 SHOPPING
 ERROR
-`);
+`, false, undefined, true);
   }
 
   function generateParrillada() {
@@ -625,8 +778,9 @@ ERROR
       language: engineLang(lang),
     });
 
-    setBlocks(plan);
+    setBlocks(normalizeBlocks(plan, REQUIRED_PARRILLADA_BLOCKS, "parrillada_plan"));
     setCheckedItems({});
+    resetSaveMenuState();
   }
 
   function nextCookStep() {
@@ -660,12 +814,14 @@ ERROR
     setLang(nextLang);
     setBlocks({});
     setCheckedItems({});
+    resetSaveMenuState();
   }
 
   function navigateMode(nextMode: Mode, trackHistory = true) {
     if (nextMode === mode) return;
     if (trackHistory) modeHistoryRef.current = [...modeHistoryRef.current.slice(-8), mode];
     if (nextMode === "coccion") setCookingStep("animal");
+    if (nextMode !== "guardados") setSelectedSavedMenu(null);
     setMode(nextMode);
   }
 
@@ -779,12 +935,24 @@ ERROR
             saveMenuMessage={saveMenuMessage}
             saveMenuStatus={saveMenuStatus}
             setCookingStep={setCookingStep}
-            setDoneness={setDoneness}
-            setEquipment={setEquipment}
+            setDoneness={(value) => {
+              setDoneness(value);
+              resetSaveMenuState();
+            }}
+            setEquipment={(value) => {
+              setEquipment(value);
+              resetSaveMenuState();
+            }}
             setMode={setMode}
             setTimerRunning={setTimerRunning}
-            setThickness={setThickness}
-            setWeight={setWeight}
+            setThickness={(value) => {
+              setThickness(value);
+              resetSaveMenuState();
+            }}
+            setWeight={(value) => {
+              setWeight(value);
+              resetSaveMenuState();
+            }}
             showThickness={showThickness}
             onSaveMenu={saveCurrentMenu}
             t={t}
@@ -931,6 +1099,9 @@ ERROR
               blocks={blocks}
               loading={loading}
               checkedItems={checkedItems}
+              onSaveMenu={Object.keys(blocks).length > 0 ? saveCurrentMenu : undefined}
+              saveMenuMessage={saveMenuMessage}
+              saveMenuStatus={saveMenuStatus}
               setCheckedItems={setCheckedItems}
               t={t}
             />
@@ -961,14 +1132,26 @@ ERROR
         )}
 
         {mode === "guardados" && (
-          <SavedMenusSection
-            lang={lang}
-            menus={savedMenus}
-            onCopy={copySavedMenu}
-            onDelete={deleteMenu}
-            onOpen={loadMenu}
-            t={t}
-          />
+          selectedSavedMenu ? (
+            <SavedMenuDetail
+              checkedItems={checkedItems}
+              lang={lang}
+              menu={selectedSavedMenu}
+              onBack={() => setSelectedSavedMenu(null)}
+              onCopy={copySavedMenu}
+              setCheckedItems={setCheckedItems}
+              t={t}
+            />
+          ) : (
+            <SavedMenusSection
+              lang={lang}
+              menus={savedMenus}
+              onCopy={copySavedMenu}
+              onDelete={deleteMenu}
+              onOpen={loadMenu}
+              t={t}
+            />
+          )
         )}
       </div>
 
@@ -1005,7 +1188,9 @@ function SavedMenusSection({
       <Grid>
         {menus.map((menu) => (
           <Card key={menu.id}>
-            <p className="text-sm font-medium text-orange-300">{t.savedMenus}</p>
+            <p className="text-sm font-medium text-orange-300">
+              {getSavedMenuTypeLabel(getSavedMenuType(menu), lang)}
+            </p>
             <h3 className="mt-1 text-xl font-bold text-white">{menu.title}</h3>
             <p className="mt-1 text-sm text-slate-400">{menu.date}</p>
 
@@ -1022,6 +1207,59 @@ function SavedMenusSection({
         ))}
       </Grid>
     </Section>
+  );
+}
+
+function SavedMenuDetail({
+  checkedItems,
+  lang,
+  menu,
+  onBack,
+  onCopy,
+  setCheckedItems,
+  t,
+}: {
+  checkedItems: Record<string, boolean>;
+  lang: Lang;
+  menu: SavedMenu;
+  onBack: () => void;
+  onCopy: (menu: SavedMenu) => void;
+  setCheckedItems: (value: Record<string, boolean>) => void;
+  t: AppText;
+}) {
+  const type = getSavedMenuType(menu);
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-sm font-medium text-orange-300">{getSavedMenuTypeLabel(type, lang)}</p>
+            <h2 className="mt-1 text-2xl font-black text-white">{menu.title}</h2>
+            <p className="mt-1 text-sm text-slate-400">{menu.date}</p>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <Button onClick={onBack} variant="secondary">
+              {lang === "es" ? "Volver" : "Back"}
+            </Button>
+            <Button onClick={() => onCopy(menu)} variant="outlineAccent">
+              {t.copy}
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      <ResultCards
+        blocks={menu.blocks}
+        checkedItems={checkedItems}
+        loading={false}
+        saveMenuMessage=""
+        saveMenuStatus="idle"
+        setCheckedItems={setCheckedItems}
+        t={t}
+      />
+    </div>
   );
 }
 /*
@@ -1061,6 +1299,13 @@ import { ds } from "@/lib/design-system";
 import { texts, type AppText, type Lang } from "@/lib/i18n/texts";
 import { animalIdsByLabel, type Animal } from "@/lib/media/animalMedia";
 import { cutImages } from "@/lib/media/cutImages";
+import {
+  REQUIRED_COOKING_BLOCKS,
+  REQUIRED_MENU_BLOCKS,
+  REQUIRED_PARRILLADA_BLOCKS,
+  normalizeBlocks,
+} from "@/lib/parser/normalizeBlocks";
+import { parseBlocks } from "@/lib/parser/parseBlocks";
 import { generateParrilladaPlan } from "@/lib/parrilladaEngine";
 import { type TouchEvent, useEffect, useMemo, useRef, useState } from "react";
 
@@ -1407,57 +1652,107 @@ export default function Home() {
     localStorage.setItem("parrillero_saved_menus", JSON.stringify(nextMenus));
   }
 
+  function resetSaveMenuState() {
+    setSaveMenuStatus("idle");
+    setSaveMenuMessage("");
+  }
+
   async function saveCurrentMenu() {
     if (typeof window === "undefined") return;
-    if (Object.keys(blocks).length === 0) return;
+    if (!hasSavableBlocks(blocks)) {
+      setSaveMenuStatus("error");
+      setSaveMenuMessage(t.menuSaveError);
+      return;
+    }
 
     const now = new Date();
-    const menuName = `Menú Parrillero - ${now.toLocaleDateString(localeForLang(lang))}`;
+    const dateLabel = now.toLocaleDateString(localeForLang(lang));
+    const savedType: SavedMenuType =
+      mode === "coccion" ? "cooking_plan" : mode === "parrillada" ? "parrillada_plan" : "generated_menu";
+    const cutName = selectedCut?.name ?? cut;
+    const menuName =
+      savedType === "cooking_plan"
+        ? `Cocción - ${animal} ${cutName} - ${dateLabel}`
+        : savedType === "parrillada_plan"
+          ? `Parrillada - ${parrilladaPeople} personas - ${dateLabel}`
+          : `Menú BBQ - ${people} personas - ${dateLabel}`;
+    const peopleValue =
+      savedType === "cooking_plan"
+        ? null
+        : parsePositiveInt(savedType === "parrillada_plan" ? parrilladaPeople : people);
 
     setSaveMenuStatus("saving");
     setSaveMenuMessage("");
 
     try {
-      const savedMenuResult = await saveGeneratedMenu({
+      const safeBlocks = getSafeBlocksForSave(blocks, savedType);
+      if (Object.keys(safeBlocks).length === 0) {
+        setSaveMenuStatus("error");
+        setSaveMenuMessage(t.menuSaveError);
+        return;
+      }
+
+      const inputs =
+        savedType === "cooking_plan"
+          ? {
+              animal,
+              cut,
+              cutName,
+              weight,
+              thickness,
+              doneness,
+              equipment,
+            }
+          : savedType === "parrillada_plan"
+            ? {
+                parrilladaPeople,
+                serveTime,
+                parrilladaProducts,
+                parrilladaSides,
+                equipment,
+              }
+            : {
+                people,
+                eventType,
+                products: menuMeats,
+                menuMeats,
+                sides,
+                budget,
+                difficulty,
+                equipment,
+              };
+
+      const savedMenuResult = (await saveGeneratedMenu({
         name: menuName,
         lang,
-        people: parsePositiveInt(people),
+        people: peopleValue,
         data: {
-          type: "generated_menu",
+          type: savedType,
           generatedAt: now.toISOString(),
-          inputs: {
-            people,
-            eventType,
-            products: menuMeats,
-            sides,
-            budget,
-            difficulty,
-            equipment,
-          },
-          blocks,
+          inputs,
+          blocks: safeBlocks,
         },
-      });
+      })) as SaveGeneratedMenuResponse;
 
-      const fallbackId = `local-${now.getTime()}`;
-      const savedMenu =
-        savedMenuResult.ok
-          ? savedMenuResult.menu
-          : {
-              id: fallbackId,
-              name: menuName,
-              created_at: now.toISOString(),
-            };
+      if ("ok" in savedMenuResult && !savedMenuResult.ok) {
+        setSaveMenuStatus("error");
+        setSaveMenuMessage(savedMenuResult.error || t.menuSaveError);
+        return;
+      }
+
+      const savedMenu = "ok" in savedMenuResult ? savedMenuResult.menu : savedMenuResult;
 
       const newMenu: SavedMenu = {
         id: savedMenu.id,
         title: savedMenu.name,
         date: new Date(savedMenu.created_at).toLocaleDateString(localeForLang(lang)),
-        blocks,
+        blocks: safeBlocks,
+        type: savedType,
       };
 
       updateSavedMenus([newMenu, ...savedMenus.filter((menu) => menu.id !== newMenu.id)]);
-      setSaveMenuStatus(savedMenuResult.ok ? "success" : "error");
-      setSaveMenuMessage(savedMenuResult.ok ? t.menuSaved : `${t.menuSaveError} Guardado localmente.`);
+      setSaveMenuStatus("success");
+      setSaveMenuMessage(t.menuSaved);
     } catch {
       setSaveMenuStatus("error");
       setSaveMenuMessage(t.menuSaveError);
@@ -1466,11 +1761,13 @@ export default function Home() {
 
   function deleteMenu(id: string) {
     updateSavedMenus(savedMenus.filter((menu) => menu.id !== id));
+    if (selectedSavedMenu?.id === id) setSelectedSavedMenu(null);
   }
 
   function loadMenu(menu: SavedMenu) {
-    setBlocks(menu.blocks);
-    navigateMode("menu");
+    setSelectedSavedMenu(menu);
+    resetSaveMenuState();
+    navigateMode("guardados");
   }
 
   function handleAnimalChange(selectedAnimal: Animal) {
@@ -1479,6 +1776,7 @@ export default function Home() {
     setDoneness(getInitialDoneness(selectedAnimal));
     setBlocks({});
     setCheckedItems({});
+    resetSaveMenuState();
     setCookingStep("cut");
     track({ name: "animal_selected", animal: selectedAnimal, lang });
   }
@@ -1487,6 +1785,7 @@ export default function Home() {
     setCut(selectedCutId);
     setBlocks({});
     setCheckedItems({});
+    resetSaveMenuState();
     setCookingStep("details");
     track({ name: "cut_selected", animal, cutId: selectedCutId, lang });
   }
@@ -1495,12 +1794,12 @@ export default function Home() {
     message: string,
     createCookSteps = false,
     visualContext?: CookingVisualContext,
+    parseAsMenu = false,
   ): Promise<boolean> {
     setLoading(true);
     setBlocks({});
     setCheckedItems({});
-    setSaveMenuStatus("idle");
-    setSaveMenuMessage("");
+    resetSaveMenuState();
 
     try {
       const res = await fetch("/api/chat", {
@@ -1518,12 +1817,21 @@ export default function Home() {
       }
 
       const data = await res.json();
-      const parsed = parseResponse(data.reply);
+      const reply = typeof data.reply === "string" ? data.reply : "";
+      const parsed = parseAsMenu ? parseMenuReply(reply) : parseResponse(reply);
+      const normalized = parseAsMenu
+        ? parsed
+        : normalizeBlocks(parsed, REQUIRED_COOKING_BLOCKS, "cooking_plan");
 
-      setBlocks(parsed);
+      if (!parseAsMenu && process.env.NODE_ENV === "development") {
+        console.log("[blocks] parsed", parsed);
+        console.log("[blocks] normalized", normalized);
+      }
+
+      setBlocks(normalized);
 
       if (createCookSteps) {
-        const baseSteps = buildCookStepsFromPlan(parsed);
+        const baseSteps = buildCookStepsFromPlan(normalized);
         const steps = visualContext ? withCookingStepImages(baseSteps, visualContext) : baseSteps;
         setCookSteps(steps);
         setCurrentStep(0);
@@ -1564,9 +1872,11 @@ export default function Home() {
 
     if (localPlan && localSteps) {
       track({ name: "cooking_plan_result", path: "local" });
+      const normalizedPlan = normalizeBlocks(localPlan, REQUIRED_COOKING_BLOCKS, "cooking_plan");
       const visualSteps = withCookingStepImages(localSteps, visualContext);
-      setBlocks(localPlan);
+      setBlocks(normalizedPlan);
       setCheckedItems({});
+      resetSaveMenuState();
       setCookSteps(visualSteps);
       setCurrentStep(0);
       setTimeLeft(visualSteps[0].duration);
@@ -1629,7 +1939,7 @@ TIMING
 ORDER
 SHOPPING
 ERROR
-`);
+`, false, undefined, true);
   }
 
   function generateParrillada() {
@@ -1642,8 +1952,9 @@ ERROR
       language: engineLang(lang),
     });
 
-    setBlocks(plan);
+    setBlocks(normalizeBlocks(plan, REQUIRED_PARRILLADA_BLOCKS, "parrillada_plan"));
     setCheckedItems({});
+    resetSaveMenuState();
   }
 
   function nextCookStep() {
@@ -1677,6 +1988,7 @@ ERROR
     setLang(nextLang);
     setBlocks({});
     setCheckedItems({});
+    resetSaveMenuState();
   }
 
   function navigateMode(nextMode: Mode, trackHistory = true) {
@@ -1796,12 +2108,24 @@ ERROR
             saveMenuMessage={saveMenuMessage}
             saveMenuStatus={saveMenuStatus}
             setCookingStep={setCookingStep}
-            setDoneness={setDoneness}
-            setEquipment={setEquipment}
+            setDoneness={(value) => {
+              setDoneness(value);
+              resetSaveMenuState();
+            }}
+            setEquipment={(value) => {
+              setEquipment(value);
+              resetSaveMenuState();
+            }}
             setMode={setMode}
             setTimerRunning={setTimerRunning}
-            setThickness={setThickness}
-            setWeight={setWeight}
+            setThickness={(value) => {
+              setThickness(value);
+              resetSaveMenuState();
+            }}
+            setWeight={(value) => {
+              setWeight(value);
+              resetSaveMenuState();
+            }}
             showThickness={showThickness}
             onSaveMenu={saveCurrentMenu}
             t={t}
@@ -2022,7 +2346,9 @@ function SavedMenusSection({
       <Grid>
         {menus.map((menu) => (
           <Card key={menu.id}>
-            <p className="text-sm font-medium text-orange-300">{t.savedMenus}</p>
+            <p className="text-sm font-medium text-orange-300">
+              {getSavedMenuTypeLabel(getSavedMenuType(menu), lang)}
+            </p>
             <h3 className="mt-1 text-xl font-bold text-white">{menu.title}</h3>
             <p className="mt-1 text-sm text-slate-400">{menu.date}</p>
 
@@ -2077,6 +2403,13 @@ import { ds } from "@/lib/design-system";
 import { texts, type AppText, type Lang } from "@/lib/i18n/texts";
 import { animalIdsByLabel, type Animal } from "@/lib/media/animalMedia";
 import { cutImages } from "@/lib/media/cutImages";
+import {
+  REQUIRED_COOKING_BLOCKS,
+  REQUIRED_MENU_BLOCKS,
+  REQUIRED_PARRILLADA_BLOCKS,
+  normalizeBlocks,
+} from "@/lib/parser/normalizeBlocks";
+import { parseBlocks } from "@/lib/parser/parseBlocks";
 import { generateParrilladaPlan } from "@/lib/parrilladaEngine";
 import { type TouchEvent, useEffect, useMemo, useRef, useState } from "react";
 
@@ -2423,57 +2756,107 @@ export default function Home() {
     localStorage.setItem("parrillero_saved_menus", JSON.stringify(nextMenus));
   }
 
+  function resetSaveMenuState() {
+    setSaveMenuStatus("idle");
+    setSaveMenuMessage("");
+  }
+
   async function saveCurrentMenu() {
     if (typeof window === "undefined") return;
-    if (Object.keys(blocks).length === 0) return;
+    if (!hasSavableBlocks(blocks)) {
+      setSaveMenuStatus("error");
+      setSaveMenuMessage(t.menuSaveError);
+      return;
+    }
 
     const now = new Date();
-    const menuName = `Menú Parrillero - ${now.toLocaleDateString(localeForLang(lang))}`;
+    const dateLabel = now.toLocaleDateString(localeForLang(lang));
+    const savedType: SavedMenuType =
+      mode === "coccion" ? "cooking_plan" : mode === "parrillada" ? "parrillada_plan" : "generated_menu";
+    const cutName = selectedCut?.name ?? cut;
+    const menuName =
+      savedType === "cooking_plan"
+        ? `Cocción - ${animal} ${cutName} - ${dateLabel}`
+        : savedType === "parrillada_plan"
+          ? `Parrillada - ${parrilladaPeople} personas - ${dateLabel}`
+          : `Menú BBQ - ${people} personas - ${dateLabel}`;
+    const peopleValue =
+      savedType === "cooking_plan"
+        ? null
+        : parsePositiveInt(savedType === "parrillada_plan" ? parrilladaPeople : people);
 
     setSaveMenuStatus("saving");
     setSaveMenuMessage("");
 
     try {
-      const savedMenuResult = await saveGeneratedMenu({
+      const safeBlocks = getSafeBlocksForSave(blocks, savedType);
+      if (Object.keys(safeBlocks).length === 0) {
+        setSaveMenuStatus("error");
+        setSaveMenuMessage(t.menuSaveError);
+        return;
+      }
+
+      const inputs =
+        savedType === "cooking_plan"
+          ? {
+              animal,
+              cut,
+              cutName,
+              weight,
+              thickness,
+              doneness,
+              equipment,
+            }
+          : savedType === "parrillada_plan"
+            ? {
+                parrilladaPeople,
+                serveTime,
+                parrilladaProducts,
+                parrilladaSides,
+                equipment,
+              }
+            : {
+                people,
+                eventType,
+                products: menuMeats,
+                menuMeats,
+                sides,
+                budget,
+                difficulty,
+                equipment,
+              };
+
+      const savedMenuResult = (await saveGeneratedMenu({
         name: menuName,
         lang,
-        people: parsePositiveInt(people),
+        people: peopleValue,
         data: {
-          type: "generated_menu",
+          type: savedType,
           generatedAt: now.toISOString(),
-          inputs: {
-            people,
-            eventType,
-            products: menuMeats,
-            sides,
-            budget,
-            difficulty,
-            equipment,
-          },
-          blocks,
+          inputs,
+          blocks: safeBlocks,
         },
-      });
+      })) as SaveGeneratedMenuResponse;
 
-      const fallbackId = `local-${now.getTime()}`;
-      const savedMenu =
-        savedMenuResult.ok
-          ? savedMenuResult.menu
-          : {
-              id: fallbackId,
-              name: menuName,
-              created_at: now.toISOString(),
-            };
+      if ("ok" in savedMenuResult && !savedMenuResult.ok) {
+        setSaveMenuStatus("error");
+        setSaveMenuMessage(savedMenuResult.error || t.menuSaveError);
+        return;
+      }
+
+      const savedMenu = "ok" in savedMenuResult ? savedMenuResult.menu : savedMenuResult;
 
       const newMenu: SavedMenu = {
         id: savedMenu.id,
         title: savedMenu.name,
         date: new Date(savedMenu.created_at).toLocaleDateString(localeForLang(lang)),
-        blocks,
+        blocks: safeBlocks,
+        type: savedType,
       };
 
       updateSavedMenus([newMenu, ...savedMenus.filter((menu) => menu.id !== newMenu.id)]);
-      setSaveMenuStatus(savedMenuResult.ok ? "success" : "error");
-      setSaveMenuMessage(savedMenuResult.ok ? t.menuSaved : `${t.menuSaveError} Guardado localmente.`);
+      setSaveMenuStatus("success");
+      setSaveMenuMessage(t.menuSaved);
     } catch {
       setSaveMenuStatus("error");
       setSaveMenuMessage(t.menuSaveError);
@@ -2482,11 +2865,13 @@ export default function Home() {
 
   function deleteMenu(id: string) {
     updateSavedMenus(savedMenus.filter((menu) => menu.id !== id));
+    if (selectedSavedMenu?.id === id) setSelectedSavedMenu(null);
   }
 
   function loadMenu(menu: SavedMenu) {
-    setBlocks(menu.blocks);
-    navigateMode("menu");
+    setSelectedSavedMenu(menu);
+    resetSaveMenuState();
+    navigateMode("guardados");
   }
 
   function handleAnimalChange(selectedAnimal: Animal) {
@@ -2495,6 +2880,7 @@ export default function Home() {
     setDoneness(getInitialDoneness(selectedAnimal));
     setBlocks({});
     setCheckedItems({});
+    resetSaveMenuState();
     setCookingStep("cut");
     track({ name: "animal_selected", animal: selectedAnimal, lang });
   }
@@ -2503,6 +2889,7 @@ export default function Home() {
     setCut(selectedCutId);
     setBlocks({});
     setCheckedItems({});
+    resetSaveMenuState();
     setCookingStep("details");
     track({ name: "cut_selected", animal, cutId: selectedCutId, lang });
   }
@@ -2511,12 +2898,12 @@ export default function Home() {
     message: string,
     createCookSteps = false,
     visualContext?: CookingVisualContext,
+    parseAsMenu = false,
   ): Promise<boolean> {
     setLoading(true);
     setBlocks({});
     setCheckedItems({});
-    setSaveMenuStatus("idle");
-    setSaveMenuMessage("");
+    resetSaveMenuState();
 
     try {
       const res = await fetch("/api/chat", {
@@ -2534,12 +2921,21 @@ export default function Home() {
       }
 
       const data = await res.json();
-      const parsed = parseResponse(data.reply);
+      const reply = typeof data.reply === "string" ? data.reply : "";
+      const parsed = parseAsMenu ? parseMenuReply(reply) : parseResponse(reply);
+      const normalized = parseAsMenu
+        ? parsed
+        : normalizeBlocks(parsed, REQUIRED_COOKING_BLOCKS, "cooking_plan");
 
-      setBlocks(parsed);
+      if (!parseAsMenu && process.env.NODE_ENV === "development") {
+        console.log("[blocks] parsed", parsed);
+        console.log("[blocks] normalized", normalized);
+      }
+
+      setBlocks(normalized);
 
       if (createCookSteps) {
-        const baseSteps = buildCookStepsFromPlan(parsed);
+        const baseSteps = buildCookStepsFromPlan(normalized);
         const steps = visualContext ? withCookingStepImages(baseSteps, visualContext) : baseSteps;
         setCookSteps(steps);
         setCurrentStep(0);
@@ -2580,9 +2976,11 @@ export default function Home() {
 
     if (localPlan && localSteps) {
       track({ name: "cooking_plan_result", path: "local" });
+      const normalizedPlan = normalizeBlocks(localPlan, REQUIRED_COOKING_BLOCKS, "cooking_plan");
       const visualSteps = withCookingStepImages(localSteps, visualContext);
-      setBlocks(localPlan);
+      setBlocks(normalizedPlan);
       setCheckedItems({});
+      resetSaveMenuState();
       setCookSteps(visualSteps);
       setCurrentStep(0);
       setTimeLeft(visualSteps[0].duration);
@@ -2645,7 +3043,7 @@ TIMING
 ORDER
 SHOPPING
 ERROR
-`);
+`, false, undefined, true);
   }
 
   function generateParrillada() {
@@ -2658,8 +3056,9 @@ ERROR
       language: engineLang(lang),
     });
 
-    setBlocks(plan);
+    setBlocks(normalizeBlocks(plan, REQUIRED_PARRILLADA_BLOCKS, "parrillada_plan"));
     setCheckedItems({});
+    resetSaveMenuState();
   }
 
   function nextCookStep() {
@@ -2693,6 +3092,7 @@ ERROR
     setLang(nextLang);
     setBlocks({});
     setCheckedItems({});
+    resetSaveMenuState();
   }
 
   function navigateMode(nextMode: Mode, trackHistory = true) {
@@ -2812,12 +3212,24 @@ ERROR
             saveMenuMessage={saveMenuMessage}
             saveMenuStatus={saveMenuStatus}
             setCookingStep={setCookingStep}
-            setDoneness={setDoneness}
-            setEquipment={setEquipment}
+            setDoneness={(value) => {
+              setDoneness(value);
+              resetSaveMenuState();
+            }}
+            setEquipment={(value) => {
+              setEquipment(value);
+              resetSaveMenuState();
+            }}
             setMode={setMode}
             setTimerRunning={setTimerRunning}
-            setThickness={setThickness}
-            setWeight={setWeight}
+            setThickness={(value) => {
+              setThickness(value);
+              resetSaveMenuState();
+            }}
+            setWeight={(value) => {
+              setWeight(value);
+              resetSaveMenuState();
+            }}
             showThickness={showThickness}
             onSaveMenu={saveCurrentMenu}
             t={t}
@@ -3038,7 +3450,9 @@ function SavedMenusSection({
       <Grid>
         {menus.map((menu) => (
           <Card key={menu.id}>
-            <p className="text-sm font-medium text-orange-300">{t.savedMenus}</p>
+            <p className="text-sm font-medium text-orange-300">
+              {getSavedMenuTypeLabel(getSavedMenuType(menu), lang)}
+            </p>
             <h3 className="mt-1 text-xl font-bold text-white">{menu.title}</h3>
             <p className="mt-1 text-sm text-slate-400">{menu.date}</p>
 
@@ -3100,6 +3514,13 @@ import { ds } from "@/lib/design-system";
 import { texts, type Lang } from "@/lib/i18n/texts";
 import { animalIdsByLabel, type Animal } from "@/lib/media/animalMedia";
 import { cutImages } from "@/lib/media/cutImages";
+import {
+  REQUIRED_COOKING_BLOCKS,
+  REQUIRED_MENU_BLOCKS,
+  REQUIRED_PARRILLADA_BLOCKS,
+  normalizeBlocks,
+} from "@/lib/parser/normalizeBlocks";
+import { parseBlocks } from "@/lib/parser/parseBlocks";
 import { generateParrilladaPlan } from "@/lib/parrilladaEngine";
 import { type TouchEvent, useEffect, useMemo, useRef, useState } from "react";
 
@@ -3438,57 +3859,107 @@ export default function Home() {
     localStorage.setItem("parrillero_saved_menus", JSON.stringify(nextMenus));
   }
 
+  function resetSaveMenuState() {
+    setSaveMenuStatus("idle");
+    setSaveMenuMessage("");
+  }
+
   async function saveCurrentMenu() {
     if (typeof window === "undefined") return;
-    if (Object.keys(blocks).length === 0) return;
+    if (!hasSavableBlocks(blocks)) {
+      setSaveMenuStatus("error");
+      setSaveMenuMessage(t.menuSaveError);
+      return;
+    }
 
     const now = new Date();
-    const menuName = `Menú Parrillero - ${now.toLocaleDateString(localeForLang(lang))}`;
+    const dateLabel = now.toLocaleDateString(localeForLang(lang));
+    const savedType: SavedMenuType =
+      mode === "coccion" ? "cooking_plan" : mode === "parrillada" ? "parrillada_plan" : "generated_menu";
+    const cutName = selectedCut?.name ?? cut;
+    const menuName =
+      savedType === "cooking_plan"
+        ? `Cocción - ${animal} ${cutName} - ${dateLabel}`
+        : savedType === "parrillada_plan"
+          ? `Parrillada - ${parrilladaPeople} personas - ${dateLabel}`
+          : `Menú BBQ - ${people} personas - ${dateLabel}`;
+    const peopleValue =
+      savedType === "cooking_plan"
+        ? null
+        : parsePositiveInt(savedType === "parrillada_plan" ? parrilladaPeople : people);
 
     setSaveMenuStatus("saving");
     setSaveMenuMessage("");
 
     try {
-      const savedMenuResult = await saveGeneratedMenu({
+      const safeBlocks = getSafeBlocksForSave(blocks, savedType);
+      if (Object.keys(safeBlocks).length === 0) {
+        setSaveMenuStatus("error");
+        setSaveMenuMessage(t.menuSaveError);
+        return;
+      }
+
+      const inputs =
+        savedType === "cooking_plan"
+          ? {
+              animal,
+              cut,
+              cutName,
+              weight,
+              thickness,
+              doneness,
+              equipment,
+            }
+          : savedType === "parrillada_plan"
+            ? {
+                parrilladaPeople,
+                serveTime,
+                parrilladaProducts,
+                parrilladaSides,
+                equipment,
+              }
+            : {
+                people,
+                eventType,
+                products: menuMeats,
+                menuMeats,
+                sides,
+                budget,
+                difficulty,
+                equipment,
+              };
+
+      const savedMenuResult = (await saveGeneratedMenu({
         name: menuName,
         lang,
-        people: parsePositiveInt(people),
+        people: peopleValue,
         data: {
-          type: "generated_menu",
+          type: savedType,
           generatedAt: now.toISOString(),
-          inputs: {
-            people,
-            eventType,
-            products: menuMeats,
-            sides,
-            budget,
-            difficulty,
-            equipment,
-          },
-          blocks,
+          inputs,
+          blocks: safeBlocks,
         },
-      });
+      })) as SaveGeneratedMenuResponse;
 
-      const fallbackId = `local-${now.getTime()}`;
-      const savedMenu =
-        savedMenuResult.ok
-          ? savedMenuResult.menu
-          : {
-              id: fallbackId,
-              name: menuName,
-              created_at: now.toISOString(),
-            };
+      if ("ok" in savedMenuResult && !savedMenuResult.ok) {
+        setSaveMenuStatus("error");
+        setSaveMenuMessage(savedMenuResult.error || t.menuSaveError);
+        return;
+      }
+
+      const savedMenu = "ok" in savedMenuResult ? savedMenuResult.menu : savedMenuResult;
 
       const newMenu: SavedMenu = {
         id: savedMenu.id,
         title: savedMenu.name,
         date: new Date(savedMenu.created_at).toLocaleDateString(localeForLang(lang)),
-        blocks,
+        blocks: safeBlocks,
+        type: savedType,
       };
 
       updateSavedMenus([newMenu, ...savedMenus.filter((menu) => menu.id !== newMenu.id)]);
-      setSaveMenuStatus(savedMenuResult.ok ? "success" : "error");
-      setSaveMenuMessage(savedMenuResult.ok ? t.menuSaved : `${t.menuSaveError} Guardado localmente.`);
+      setSaveMenuStatus("success");
+      setSaveMenuMessage(t.menuSaved);
     } catch {
       setSaveMenuStatus("error");
       setSaveMenuMessage(t.menuSaveError);
@@ -3497,11 +3968,13 @@ export default function Home() {
 
   function deleteMenu(id: string) {
     updateSavedMenus(savedMenus.filter((menu) => menu.id !== id));
+    if (selectedSavedMenu?.id === id) setSelectedSavedMenu(null);
   }
 
   function loadMenu(menu: SavedMenu) {
-    setBlocks(menu.blocks);
-    navigateMode("menu");
+    setSelectedSavedMenu(menu);
+    resetSaveMenuState();
+    navigateMode("guardados");
   }
 
   function handleAnimalChange(selectedAnimal: Animal) {
@@ -3510,6 +3983,7 @@ export default function Home() {
     setDoneness(getInitialDoneness(selectedAnimal));
     setBlocks({});
     setCheckedItems({});
+    resetSaveMenuState();
     setCookingStep("cut");
     track({ name: "animal_selected", animal: selectedAnimal, lang });
   }
@@ -3518,16 +3992,21 @@ export default function Home() {
     setCut(selectedCutId);
     setBlocks({});
     setCheckedItems({});
+    resetSaveMenuState();
     setCookingStep("details");
     track({ name: "cut_selected", animal, cutId: selectedCutId, lang });
   }
 
-  async function callAI(message: string, createCookSteps = false, visualContext?: CookingVisualContext): Promise<boolean> {
+  async function callAI(
+    message: string,
+    createCookSteps = false,
+    visualContext?: CookingVisualContext,
+    parseAsMenu = false,
+  ): Promise<boolean> {
     setLoading(true);
     setBlocks({});
     setCheckedItems({});
-    setSaveMenuStatus("idle");
-    setSaveMenuMessage("");
+    resetSaveMenuState();
 
     try {
       const res = await fetch("/api/chat", {
@@ -3545,12 +4024,21 @@ export default function Home() {
       }
 
       const data = await res.json();
-      const parsed = parseResponse(data.reply);
+      const reply = typeof data.reply === "string" ? data.reply : "";
+      const parsed = parseAsMenu ? parseMenuReply(reply) : parseResponse(reply);
+      const normalized = parseAsMenu
+        ? parsed
+        : normalizeBlocks(parsed, REQUIRED_COOKING_BLOCKS, "cooking_plan");
 
-      setBlocks(parsed);
+      if (!parseAsMenu && process.env.NODE_ENV === "development") {
+        console.log("[blocks] parsed", parsed);
+        console.log("[blocks] normalized", normalized);
+      }
+
+      setBlocks(normalized);
 
       if (createCookSteps) {
-        const baseSteps = buildCookStepsFromPlan(parsed);
+        const baseSteps = buildCookStepsFromPlan(normalized);
         const steps = visualContext ? withCookingStepImages(baseSteps, visualContext) : baseSteps;
         setCookSteps(steps);
         setCurrentStep(0);
@@ -3591,9 +4079,11 @@ export default function Home() {
 
     if (localPlan && localSteps) {
       track({ name: "cooking_plan_result", path: "local" });
+      const normalizedPlan = normalizeBlocks(localPlan, REQUIRED_COOKING_BLOCKS, "cooking_plan");
       const visualSteps = withCookingStepImages(localSteps, visualContext);
-      setBlocks(localPlan);
+      setBlocks(normalizedPlan);
       setCheckedItems({});
+      resetSaveMenuState();
       setCookSteps(visualSteps);
       setCurrentStep(0);
       setTimeLeft(visualSteps[0].duration);
@@ -3656,7 +4146,7 @@ TIMING
 ORDER
 SHOPPING
 ERROR
-`);
+`, false, undefined, true);
   }
 
   function generateParrillada() {
@@ -3669,8 +4159,9 @@ ERROR
       language: engineLang(lang),
     });
 
-    setBlocks(plan);
+    setBlocks(normalizeBlocks(plan, REQUIRED_PARRILLADA_BLOCKS, "parrillada_plan"));
     setCheckedItems({});
+    resetSaveMenuState();
   }
 
   function nextCookStep() {
@@ -3704,6 +4195,7 @@ ERROR
     setLang(nextLang);
     setBlocks({});
     setCheckedItems({});
+    resetSaveMenuState();
   }
 
   function navigateMode(nextMode: Mode, trackHistory = true) {
@@ -3827,12 +4319,24 @@ ERROR
             saveMenuMessage={saveMenuMessage}
             saveMenuStatus={saveMenuStatus}
             setCookingStep={setCookingStep}
-            setDoneness={setDoneness}
-            setEquipment={setEquipment}
+            setDoneness={(value) => {
+              setDoneness(value);
+              resetSaveMenuState();
+            }}
+            setEquipment={(value) => {
+              setEquipment(value);
+              resetSaveMenuState();
+            }}
             setMode={setMode}
             setTimerRunning={setTimerRunning}
-            setThickness={setThickness}
-            setWeight={setWeight}
+            setThickness={(value) => {
+              setThickness(value);
+              resetSaveMenuState();
+            }}
+            setWeight={(value) => {
+              setWeight(value);
+              resetSaveMenuState();
+            }}
             showThickness={showThickness}
             onSaveMenu={saveCurrentMenu}
             t={t}
@@ -4818,7 +5322,9 @@ function SavedMenusSection({
       <Grid>
         {menus.map((menu) => (
           <Card key={menu.id}>
-            <p className="text-sm font-medium text-orange-300">{t.savedMenus}</p>
+            <p className="text-sm font-medium text-orange-300">
+              {getSavedMenuTypeLabel(getSavedMenuType(menu), lang)}
+            </p>
             <h3 className="mt-1 text-xl font-bold text-white">{menu.title}</h3>
             <p className="mt-1 text-sm text-slate-400">{menu.date}</p>
 

@@ -9,7 +9,7 @@ export type { Json } from "@/lib/db/types";
 export type SavedMenu = {
   id: string;
   created_at: string;
-  updated_at?: string;
+  updated_at: string;
   user_id: string | null;
   name: string;
   lang: string;
@@ -17,7 +17,6 @@ export type SavedMenu = {
   data: Json;
   is_public: boolean;
   share_slug: string | null;
-  published_at: string | null;
 };
 
 export type SaveMenuInput = {
@@ -27,13 +26,17 @@ export type SaveMenuInput = {
   data: Json;
 };
 
-type SavedMenuRow = Partial<SavedMenu> & {
+type SavedMenuRow = {
   id: string;
   created_at: string;
+  updated_at: string | null;
+  user_id?: string | null;
   name: string;
   lang: string;
   people: number | null;
   data: Json;
+  is_public: boolean | null;
+  share_slug: string | null;
 };
 
 function createShareSlug() {
@@ -56,7 +59,6 @@ function createFallbackSavedMenu(input: SaveMenuInput): SavedMenu {
     data: input.data,
     is_public: false,
     share_slug: null,
-    published_at: null,
   };
 }
 
@@ -70,15 +72,13 @@ async function safeGetCurrentUserId(): Promise<string | null> {
 }
 
 const savedMenuSelect =
-  "id, created_at, updated_at, user_id, name, lang, people, data, is_public, share_slug, published_at";
-
-const legacySavedMenuSelect = "id, created_at, name, lang, people, data";
+  "id, user_id, created_at, updated_at, name, lang, people, data, is_public, share_slug";
 
 function toSavedMenu(row: SavedMenuRow): SavedMenu {
   return {
     id: row.id,
     created_at: row.created_at,
-    updated_at: row.updated_at,
+    updated_at: row.updated_at ?? row.created_at,
     user_id: row.user_id ?? null,
     name: row.name,
     lang: row.lang,
@@ -86,7 +86,6 @@ function toSavedMenu(row: SavedMenuRow): SavedMenu {
     data: row.data,
     is_public: row.is_public ?? false,
     share_slug: row.share_slug ?? null,
-    published_at: row.published_at ?? null,
   };
 }
 
@@ -99,6 +98,8 @@ export async function saveMenu(input: SaveMenuInput): Promise<SavedMenu> {
       lang: input.lang,
       people: input.people ?? null,
       data: input.data,
+      is_public: false,
+      share_slug: null,
     };
 
     if (userId) {
@@ -108,7 +109,7 @@ export async function saveMenu(input: SaveMenuInput): Promise<SavedMenu> {
     const result = await supabase
       .from("saved_menus")
       .insert(insertPayload)
-      .select(legacySavedMenuSelect)
+      .select(savedMenuSelect)
       .single();
 
     if (result.error || !result.data) {
@@ -134,40 +135,25 @@ export async function getSavedMenus(): Promise<SavedMenu[]> {
   }
 
   const userId = await safeGetCurrentUserId();
+  if (!userId) return [];
 
-  let query = supabase
+  const { data, error } = await supabase
     .from("saved_menus")
     .select(savedMenuSelect)
+    .eq("user_id", userId)
     .order("created_at", { ascending: false });
-
-  if (userId) {
-    query = query.or(`user_id.eq.${userId},user_id.is.null`);
-  } else {
-    query = query.is("user_id", null);
-  }
-
-  const { data, error } = await query;
 
   if (!error) {
     return ((data ?? []) as SavedMenuRow[]).map(toSavedMenu);
   }
 
-  console.error("[savedMenus] Modern get failed; trying legacy select", error);
-
-  const legacyResult = await supabase
-    .from("saved_menus")
-    .select(legacySavedMenuSelect)
-    .order("created_at", { ascending: false });
-
-  if (legacyResult.error) {
-    console.error("[savedMenus] Failed to get saved menus", legacyResult.error);
-    return [];
-  }
-
-  return ((legacyResult.data ?? []) as SavedMenuRow[]).map(toSavedMenu);
+  console.error("[savedMenus] Failed to get saved menus", error);
+  return [];
 }
 
 export async function deleteSavedMenu(id: string): Promise<void> {
+  if (id.startsWith("local_")) return;
+
   let supabase: Awaited<ReturnType<typeof createClient>>;
 
   try {
@@ -180,82 +166,102 @@ export async function deleteSavedMenu(id: string): Promise<void> {
   const { error } = await supabase.from("saved_menus").delete().eq("id", id);
 
   if (error) {
-    throw new Error(`Failed to delete saved menu: ${error.message}`);
+    console.error("[savedMenus] Failed to delete saved menu", error);
   }
 }
 
 export async function publishSavedMenu(id: string): Promise<SavedMenu> {
-  const supabase = await createClient();
-  const { data: existingMenu, error: existingError } = await supabase
-    .from("saved_menus")
-    .select("share_slug")
-    .eq("id", id)
-    .single();
-
-  if (existingError) {
-    console.error("[savedMenus] Failed to read menu before publish", existingError);
-    throw new Error(`Failed to publish saved menu: ${existingError.message}`);
+  if (id.startsWith("local_")) {
+    throw new Error("Local saved menus cannot be published until Supabase save succeeds.");
   }
 
-  const slug =
-    typeof existingMenu?.share_slug === "string" && existingMenu.share_slug
-      ? existingMenu.share_slug
-      : createShareSlug();
+  try {
+    const supabase = await createClient();
+    const { data: existingMenu, error: existingError } = await supabase
+      .from("saved_menus")
+      .select("share_slug")
+      .eq("id", id)
+      .single();
 
-  const { data, error } = await supabase
-    .from("saved_menus")
-    .update({
-      is_public: true,
-      share_slug: slug,
-      published_at: new Date().toISOString(),
-    })
-    .eq("id", id)
-    .select(savedMenuSelect)
-    .single();
+    if (existingError) {
+      console.error("[savedMenus] Failed to read menu before publish", existingError);
+      throw new Error(`Failed to publish saved menu: ${existingError.message}`);
+    }
 
-  if (error) {
+    const slug =
+      typeof existingMenu?.share_slug === "string" && existingMenu.share_slug
+        ? existingMenu.share_slug
+        : createShareSlug();
+
+    const { data, error } = await supabase
+      .from("saved_menus")
+      .update({
+        is_public: true,
+        share_slug: slug,
+      })
+      .eq("id", id)
+      .select(savedMenuSelect)
+      .single();
+
+    if (error || !data) {
+      console.error("[savedMenus] Failed to publish menu", error);
+      throw new Error(`Failed to publish saved menu: ${error?.message ?? "No row returned"}`);
+    }
+
+    return toSavedMenu(data as SavedMenuRow);
+  } catch (error) {
     console.error("[savedMenus] Failed to publish menu", error);
-    throw new Error(`Failed to publish saved menu: ${error.message}`);
+    throw error;
   }
-
-  return toSavedMenu(data as SavedMenuRow);
 }
 
 export async function unpublishSavedMenu(id: string): Promise<SavedMenu> {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("saved_menus")
-    .update({
-      is_public: false,
-      published_at: null,
-    })
-    .eq("id", id)
-    .select(savedMenuSelect)
-    .single();
-
-  if (error) {
-    console.error("[savedMenus] Failed to unpublish menu", error);
-    throw new Error(`Failed to unpublish saved menu: ${error.message}`);
+  if (id.startsWith("local_")) {
+    throw new Error("Local saved menus cannot be unpublished.");
   }
 
-  return toSavedMenu(data as SavedMenuRow);
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("saved_menus")
+      .update({
+        is_public: false,
+      })
+      .eq("id", id)
+      .select(savedMenuSelect)
+      .single();
+
+    if (error || !data) {
+      console.error("[savedMenus] Failed to unpublish menu", error);
+      throw new Error(`Failed to unpublish saved menu: ${error?.message ?? "No row returned"}`);
+    }
+
+    return toSavedMenu(data as SavedMenuRow);
+  } catch (error) {
+    console.error("[savedMenus] Failed to unpublish menu", error);
+    throw error;
+  }
 }
 
 export async function getPublicSavedMenuBySlug(slug: string): Promise<SavedMenu | null> {
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("saved_menus")
-    .select(savedMenuSelect)
-    .eq("share_slug", slug)
-    .eq("is_public", true)
-    .maybeSingle();
+    const { data, error } = await supabase
+      .from("saved_menus")
+      .select(savedMenuSelect)
+      .eq("share_slug", slug)
+      .eq("is_public", true)
+      .maybeSingle();
 
-  if (error) {
+    if (error) {
+      console.error("[savedMenus] Failed to get public saved menu", error);
+      return null;
+    }
+
+    return data ? toSavedMenu(data as SavedMenuRow) : null;
+  } catch (error) {
     console.error("[savedMenus] Failed to get public saved menu", error);
     return null;
   }
-
-  return data ? toSavedMenu(data as SavedMenuRow) : null;
 }
