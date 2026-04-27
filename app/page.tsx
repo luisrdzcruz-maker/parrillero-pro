@@ -75,15 +75,15 @@ const animalOptions: Animal[] = ["Vacuno", "Cerdo", "Pollo", "Pescado", "Verdura
 const texts = {
   es: {
     app: "IA Parrillero Pro",
-    title: "Cocina mejor a la parrilla 🔥",
-    subtitle: "Motor BBQ con cocción, parrilladas, timeline live y modo cocina.",
+    title: "Tu plan de cocción, claro y listo.",
+    subtitle: "Guía precisa para corte, fuego, tiempos y pasos.",
     start: "Inicio",
     cooking: "Cocción",
     menu: "Menú",
     parrillada: "Parrillada",
     live: "Cocina",
     saved: "Guardados",
-    planCooking: "Planificar cocción",
+    planCooking: "Crear plan de cocción",
     createMenu: "Crear menú BBQ",
     parrilladaPro: "Parrillada Pro",
     liveMode: "Modo cocina",
@@ -130,15 +130,15 @@ const texts = {
   },
   en: {
     app: "AI Grill Master Pro",
-    title: "Cook better on the grill 🔥",
-    subtitle: "BBQ engine with cooking, grill planning, live timeline and cooking mode.",
+    title: "Your cooking plan, clear and ready.",
+    subtitle: "Precise guidance for cut, fire, timing and steps.",
     start: "Home",
     cooking: "Cooking",
     menu: "Menu",
     parrillada: "BBQ Pro",
     live: "Cook",
     saved: "Saved",
-    planCooking: "Plan cooking",
+    planCooking: "Create cooking plan",
     createMenu: "Create BBQ menu",
     parrilladaPro: "BBQ Planner Pro",
     liveMode: "Live cooking",
@@ -185,15 +185,15 @@ const texts = {
   },
   fi: {
     app: "Parrillero Pro",
-    title: "Grillaa paremmin 🔥",
-    subtitle: "BBQ-moottori: kypsennys, grillijuhlat, live-aikajana ja kokkaustila.",
+    title: "Selkeä grillaussuunnitelma valmiina.",
+    subtitle: "Ohjeet palalle, lämmölle, ajoitukselle ja vaiheille.",
     start: "Alku",
     cooking: "Kypsennys",
     menu: "Menu",
     parrillada: "BBQ Pro",
     live: "Kokkaus",
     saved: "Tallennetut",
-    planCooking: "Suunnittele kypsennys",
+    planCooking: "Luo kypsennyssuunnitelma",
     createMenu: "Luo BBQ-menu",
     parrilladaPro: "BBQ Planner Pro",
     liveMode: "Live-kokkaus",
@@ -933,8 +933,6 @@ ERROR
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <VersionSwitcher />
-
       <div className={ds.shell.container}>
         <AppHeader lang={lang} onLangChange={handleLanguageChange} t={t} />
         <DesktopModeTabs mode={mode} onModeChange={handleModeChange} t={t} />
@@ -1052,6 +1050,7 @@ ERROR
 
         {mode === "cocina" && (
           <CookingLiveMode
+            context={[animal, selectedCut?.name, equipment].filter(Boolean).join(" · ")}
             lang={lang}
             cookSteps={cookSteps}
             currentStep={currentStep}
@@ -1063,6 +1062,7 @@ ERROR
             notificationPermission={notificationPermission}
             onBackToPlan={() => navigateMode("coccion")}
             onEnableAlerts={enableCookingAlerts}
+            onNextStep={nextCookStep}
             onPreviousStep={previousCookStep}
             setTimerRunning={setTimerRunning}
             onGoToStep={goToCookStep}
@@ -1083,7 +1083,7 @@ ERROR
         )}
       </div>
 
-      <BottomNavigation mode={mode} onModeChange={handleModeChange} t={t} />
+      {mode !== "cocina" && <BottomNavigation mode={mode} onModeChange={handleModeChange} t={t} />}
     </main>
   );
 }
@@ -1095,22 +1095,6 @@ function copySavedMenu(menu: SavedMenu) {
 }
 
 /* COMPONENTS */
-
-function VersionSwitcher() {
-  return (
-    <div className="hidden">
-      {["/", "/v3", "/v4"].map((href, index) => (
-        <a
-          key={href}
-          href={href}
-          className={ds.nav.switcherLink}
-        >
-          V{index === 0 ? 1 : index + 2}
-        </a>
-      ))}
-    </div>
-  );
-}
 
 function AppHeader({
   lang,
@@ -1645,40 +1629,31 @@ function HomeScreen({
 }) {
   const featureCards = [
     {
-      active: true,
-      description: "Animal, corte, punto y pasos listos para cocinar.",
-      emoji: "🥩",
-      mode: "coccion" as const,
-      priority: "Principal",
-      stat: "Motor local",
-      title: t.planCooking,
-    },
-    {
-      description: "Cantidades, compra y servicio para eventos.",
+      description: "Cantidades y compra para eventos.",
       emoji: "🍽️",
       mode: "menu" as const,
-      priority: "Evento",
+      priority: "Menú",
       stat: "Menú completo",
       title: t.createMenu,
     },
     {
-      description: "Productos, zonas y timeline de parrillada.",
+      description: "Zonas y tiempos para grupos.",
       emoji: "🔥",
       mode: "parrillada" as const,
-      priority: "Grupo",
+      priority: "Parrillada",
       stat: "Timeline + zonas",
       title: t.parrilladaPro,
     },
     {
-      description: "Temporizador y guía paso a paso.",
+      description: "Temporizador del plan activo.",
       emoji: "⏱️",
       mode: "cocina" as const,
-      priority: "Live",
+      priority: "En vivo",
       stat: "Live cooking",
       title: t.liveMode,
     },
     {
-      description: "Planes guardados para repetir.",
+      description: "Repite tus planes favoritos.",
       emoji: "⭐",
       mode: "guardados" as const,
       priority: "Biblioteca",
@@ -1688,43 +1663,36 @@ function HomeScreen({
   ];
 
   return (
-    <div className="space-y-3 sm:space-y-8">
+    <div className="space-y-3 sm:space-y-7">
       <section className="grid gap-3 lg:grid-cols-[1.08fr_0.92fr] lg:items-stretch">
-        <Panel className="relative p-3.5 sm:p-8 lg:min-h-[420px]" tone="hero">
+        <Panel className="relative p-3.5 sm:p-8 lg:min-h-[390px]" tone="hero">
           <div className="pointer-events-none absolute -left-20 -top-20 h-56 w-56 rounded-full bg-orange-500/15 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-28 right-10 h-64 w-64 rounded-full bg-red-500/10 blur-3xl" />
 
           <div className="relative z-10 flex h-full flex-col justify-between gap-3 sm:gap-8">
             <div>
               <div className="hidden flex-wrap items-center gap-2 sm:flex">
-                <Badge className="uppercase tracking-[0.16em] sm:tracking-[0.2em]">BBQ app</Badge>
+                <Badge className="uppercase tracking-[0.16em] sm:tracking-[0.2em]">Parrillero Pro</Badge>
                 <Badge className="border-orange-400/20 bg-black/25 text-[11px] text-orange-200" tone="glass">
-                  Animal → Corte → Cocina
+                  Corte → Fuego → Pasos
                 </Badge>
               </div>
 
               <p className="text-[11px] font-black uppercase tracking-[0.2em] text-orange-300 sm:hidden">
-                Cocción guiada
+                Plan guiado
               </p>
-              <h1 className="mt-1 max-w-3xl text-2xl font-black tracking-[-0.04em] text-white sm:mt-5 sm:text-5xl lg:text-6xl">
+              <h1 className="mt-1 max-w-3xl text-3xl font-black tracking-[-0.04em] text-white sm:mt-5 sm:text-5xl lg:text-6xl">
                 {t.title}
               </h1>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300 sm:mt-4 sm:text-lg sm:leading-7">
+                {t.subtitle}
+              </p>
 
-              <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-8 sm:flex sm:gap-3">
-                <Button className="col-span-2 px-5 py-3 text-sm font-black sm:col-span-1 sm:px-6 sm:py-4 sm:text-base" onClick={() => onModeChange("coccion")}>
+              <div className="mt-4 grid gap-2 sm:mt-7 sm:flex sm:gap-3">
+                <Button className="px-5 py-4 text-base font-black sm:px-7 sm:py-4" fullWidth onClick={() => onModeChange("coccion")}>
                   {t.planCooking}
                 </Button>
-                <Button className="px-5 py-3 text-sm sm:px-6 sm:py-4 sm:text-base" onClick={() => onModeChange("parrillada")} variant="secondary">
-                  {t.parrilladaPro}
-                </Button>
-                <Button className="px-5 py-3 text-sm sm:hidden" onClick={() => onModeChange("guardados")} variant="secondary">
-                  {t.saved}
-                </Button>
               </div>
-
-              <p className="mt-3 hidden max-w-2xl text-sm leading-6 text-slate-300 sm:mt-5 sm:block sm:text-lg sm:leading-7">
-                {t.subtitle} Diseña el plan, coordina el fuego y cocina con una guía clara de principio a fin.
-              </p>
             </div>
 
             <HomeFlowPreview />
@@ -1749,19 +1717,19 @@ function HomeScreen({
       <section className="space-y-3 sm:space-y-4">
         <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
           <div>
-            <p className={`${ds.text.eyebrow} hidden sm:block`}>Workflows</p>
-            <h2 className="text-base font-black tracking-tight text-white sm:mt-2 sm:text-2xl">Más modos</h2>
+            <p className={`${ds.text.eyebrow} hidden sm:block`}>Modos secundarios</p>
+            <h2 className="text-base font-black tracking-tight text-white sm:mt-2 sm:text-2xl">También puedes</h2>
           </div>
           <p className="hidden max-w-xl text-sm leading-6 text-slate-400 sm:block">
-            Cada modo comparte el mismo motor de planificación, pero está optimizado para un momento distinto de la parrillada.
+            Herramientas extra para menús, grupos, cocina en vivo y planes guardados.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-4 xl:grid-cols-5">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
           {featureCards.map((card) => (
             <HomeCard
               key={card.mode}
-              active={card.active}
+              active={false}
               description={card.description}
               emoji={card.emoji}
               onClick={() => onModeChange(card.mode)}
@@ -2213,12 +2181,12 @@ function HomeCard({
       className={
         active
           ? `${ds.panel.homeCard} relative overflow-hidden border-orange-500/50 bg-gradient-to-br from-orange-500/15 via-slate-900/90 to-slate-950 p-3 shadow-orange-500/10 ring-1 ring-orange-300/15 active:scale-[0.98] sm:p-6`
-          : `${ds.panel.homeCard} relative overflow-hidden p-3 active:scale-[0.98] sm:p-6`
+          : `${ds.panel.homeCard} relative overflow-hidden border-white/5 bg-white/[0.025] p-3 opacity-90 active:scale-[0.98] sm:p-5`
       }
     >
       <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-orange-500/0 blur-2xl transition group-hover:bg-orange-500/10" />
       <div className="relative z-10 flex items-start justify-between gap-2">
-        <div className={active ? `${ds.media.iconTile} h-10 w-10 rounded-xl border-orange-400/40 bg-orange-500/15 text-2xl sm:h-12 sm:w-12 sm:rounded-2xl sm:text-3xl` : `${ds.media.iconTile} h-10 w-10 rounded-xl text-2xl sm:h-12 sm:w-12 sm:rounded-2xl sm:text-3xl`}>{emoji}</div>
+        <div className={active ? `${ds.media.iconTile} h-10 w-10 rounded-xl border-orange-400/40 bg-orange-500/15 text-2xl sm:h-12 sm:w-12 sm:rounded-2xl sm:text-3xl` : `${ds.media.iconTile} h-9 w-9 rounded-xl bg-white/[0.04] text-xl opacity-80 sm:h-11 sm:w-11 sm:rounded-2xl sm:text-2xl`}>{emoji}</div>
         <Badge className="hidden max-w-[132px] shrink-0 truncate sm:inline-flex" tone={active ? "accent" : "glass"}>
           {stat}
         </Badge>
@@ -2230,9 +2198,9 @@ function HomeCard({
         <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-400 sm:mt-3 sm:line-clamp-none sm:text-sm sm:leading-6">{description}</p>
       </div>
 
-      <div className="relative z-10 mt-3 flex items-center justify-between text-xs font-semibold text-orange-300 sm:mt-6 sm:text-sm">
+      <div className={`relative z-10 mt-3 flex items-center justify-between text-xs font-semibold sm:mt-5 sm:text-sm ${active ? "text-orange-300" : "text-slate-400"}`}>
         <span>Abrir</span>
-        <span className="flex h-7 w-7 items-center justify-center rounded-full border border-orange-400/20 bg-orange-500/10 transition group-hover:translate-x-1 group-hover:bg-orange-500/15 sm:h-8 sm:w-8">→</span>
+        <span className={`flex h-7 w-7 items-center justify-center rounded-full border transition group-hover:translate-x-1 sm:h-8 sm:w-8 ${active ? "border-orange-400/20 bg-orange-500/10 group-hover:bg-orange-500/15" : "border-white/10 bg-white/[0.03] group-hover:bg-white/[0.06]"}`}>→</span>
       </div>
     </button>
   );
