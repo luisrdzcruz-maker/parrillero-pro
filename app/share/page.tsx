@@ -1,33 +1,27 @@
-type SearchParams = Promise<{
-  animal?: string;
-  cut?: string;
-  method?: string;
-  doneness?: string;
-  thickness?: string;
-}>;
+import { Suspense } from "react";
+import ShareClient from "./ShareClient";
 
-export default async function SharePage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
-  const params = await searchParams;
+export const metadata = {
+  title: "Plan de parrilla compartido | Parrillero Pro",
+  description: "Abre este plan de cocción creado con Parrillero Pro.",
+};
 
+function ShareLoading() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-950 p-6 text-slate-100">
-      <div className="w-full max-w-xl rounded-3xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
-        <h1 className="mb-4 text-3xl font-black">
-          🔥 Parrillero Pro - Share
-        </h1>
-
-        <div className="space-y-3 text-slate-300">
-          <p><strong className="text-orange-400">Animal:</strong> {params.animal || "—"}</p>
-          <p><strong className="text-orange-400">Corte:</strong> {params.cut || "—"}</p>
-          <p><strong className="text-orange-400">Método:</strong> {params.method || "—"}</p>
-          <p><strong className="text-orange-400">Punto:</strong> {params.doneness || "—"}</p>
-          <p><strong className="text-orange-400">Grosor:</strong> {params.thickness ? `${params.thickness} cm` : "—"}</p>
-        </div>
+    <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100">
+      <div className="mx-auto max-w-md animate-pulse rounded-[2rem] border border-white/10 bg-white/[0.03] p-6">
+        <div className="h-4 w-40 rounded-full bg-orange-400/20" />
+        <div className="mt-5 h-10 w-64 rounded-2xl bg-white/10" />
+        <div className="mt-3 h-4 w-full rounded-full bg-white/10" />
       </div>
     </main>
+  );
+}
+
+export default function SharePage() {
+  return (
+    <Suspense fallback={<ShareLoading />}>
+      <ShareClient />
+    </Suspense>
   );
 }

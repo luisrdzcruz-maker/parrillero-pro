@@ -19,7 +19,7 @@ import {
 import { DEFAULT_COOKING_STEP_IMAGE, getCookingStepImage } from "@/lib/cookingVisuals";
 import { ds } from "@/lib/design-system";
 import { generateParrilladaPlan } from "@/lib/parrilladaEngine";
-import { type SyntheticEvent, useEffect, useMemo, useState } from "react";
+import { type SyntheticEvent, type TouchEvent, useEffect, useMemo, useRef, useState } from "react";
 
 type Animal = "Vacuno" | "Cerdo" | "Pollo" | "Pescado" | "Verduras";
 type Mode = "inicio" | "coccion" | "menu" | "parrillada" | "cocina" | "guardados";
@@ -33,6 +33,12 @@ type CookingVisualContext = {
   animalId?: AnimalId;
   cutId?: string;
   method?: CookingMethod;
+};
+
+type SwipeDirection = "back" | "forward";
+type TouchPoint = {
+  x: number;
+  y: number;
 };
 
 type SavedMenu = {
@@ -352,6 +358,20 @@ function getAnimalPreview(animal: Animal, lang: Lang) {
   return getCutItems(animal, lang).slice(0, 2).map((cut) => cut.name).join(", ");
 }
 
+function isInteractiveSwipeTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false;
+
+  return Boolean(
+    target.closest("button, input, select, textarea, a, label, [role='button']")
+  );
+}
+
+function isMobileSwipeViewport() {
+  if (typeof window === "undefined") return false;
+
+  return window.innerWidth < 768;
+}
+
 function getCookingVisualContext(animal: Animal, cutId?: string): CookingVisualContext {
   const cut = cutId ? getCutById(cutId) : undefined;
 
@@ -490,6 +510,8 @@ export default function Home() {
   const [currentStep, setCurrentStep] = useState(0);
   const [timeLeft, setTimeLeft] = useState(defaultCookSteps[0].duration);
   const [timerRunning, setTimerRunning] = useState(false);
+  const touchStartRef = useRef<TouchPoint | null>(null);
+  const modeHistoryRef = useRef<Mode[]>([]);
 
   const cuts = useMemo(() => getCutItems(animal, lang), [animal, lang]);
   const selectedCut = cuts.find((item) => item.id === cut);
@@ -604,7 +626,7 @@ export default function Home() {
 
   function loadMenu(menu: SavedMenu) {
     setBlocks(menu.blocks);
-    setMode("menu");
+    navigateMode("menu");
   }
 
   function handleAnimalChange(selectedAnimal: Animal) {
@@ -764,13 +786,85 @@ ERROR
     setCheckedItems({});
   }
 
-  function handleModeChange(nextMode: Mode) {
+  function navigateMode(nextMode: Mode, trackHistory = true) {
+    if (nextMode === mode) return;
+    if (trackHistory) modeHistoryRef.current = [...modeHistoryRef.current.slice(-8), mode];
     if (nextMode === "coccion") setCookingStep("animal");
     setMode(nextMode);
   }
 
+  function handleModeChange(nextMode: Mode) {
+    navigateMode(nextMode);
+  }
+
+  function handleSwipeNavigation(direction: SwipeDirection) {
+    if (direction === "back") {
+      if (mode === "coccion") {
+        if (cookingStep === "details") {
+          setCookingStep("cut");
+          return;
+        }
+
+        if (cookingStep === "cut") {
+          setCookingStep("animal");
+          return;
+        }
+      }
+
+      if (mode !== "coccion" && modeHistoryRef.current.length > 0) {
+        const previousMode = modeHistoryRef.current[modeHistoryRef.current.length - 1];
+        modeHistoryRef.current = modeHistoryRef.current.slice(0, -1);
+        navigateMode(previousMode, false);
+      }
+
+      return;
+    }
+
+    if (mode !== "coccion") return;
+
+    if (cookingStep === "animal" && animal) {
+      setCookingStep("cut");
+      return;
+    }
+
+    if (cookingStep === "cut" && selectedCut) {
+      setCookingStep("details");
+    }
+  }
+
+  function handleTouchStart(event: TouchEvent<HTMLElement>) {
+    if (!isMobileSwipeViewport() || isInteractiveSwipeTarget(event.target)) {
+      touchStartRef.current = null;
+      return;
+    }
+
+    const touch = event.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  }
+
+  function handleTouchEnd(event: TouchEvent<HTMLElement>) {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+
+    if (!start || !isMobileSwipeViewport() || isInteractiveSwipeTarget(event.target)) return;
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    const horizontalDistance = Math.abs(deltaX);
+    const verticalDistance = Math.abs(deltaY);
+
+    if (horizontalDistance < 60 || horizontalDistance <= verticalDistance) return;
+
+    handleSwipeNavigation(deltaX > 0 ? "back" : "forward");
+  }
+
   return (
-    <main className={`${ds.shell.page} pb-36 md:pb-28`}>
+    <main
+      className={`${ds.shell.page} pb-36 md:pb-28`}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       <VersionSwitcher />
 
       <div className={ds.shell.container}>
@@ -1082,6 +1176,12 @@ function CookingWizard({
         selectedCut={selectedCut}
         t={t}
       />
+
+      {cookingStep !== "animal" && (
+        <p className="px-1 text-center text-[11px] font-medium text-slate-500 md:hidden">
+          Desliza para volver
+        </p>
+      )}
 
       {cookingStep === "animal" && (
         <CookingAnimalStep
