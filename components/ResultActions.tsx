@@ -32,6 +32,18 @@ export default function ResultActions({
   const status = rawStatus ?? "idle";
   const [shareStatus, setShareStatus] = useState<"idle" | "sharing" | "shared" | "copied">("idle");
   const isEnglish = t.copy.toLowerCase().includes("copy");
+  const saveLabel =
+    status === "saving"
+      ? isEnglish
+        ? "Saving..."
+        : "Guardando..."
+      : status === "success"
+        ? isEnglish
+          ? "Saved"
+          : "Guardado"
+        : isEnglish
+          ? "Save"
+          : "Guardar";
   const shareLabel =
     shareStatus === "sharing"
       ? isEnglish
@@ -95,51 +107,51 @@ export default function ResultActions({
   }
 
   return (
-    <div className={compact ? "flex flex-col gap-1.5" : "flex flex-col gap-4"}>
-      {compact && actions.onStartCooking && (
-        <Button className="px-3 py-2 text-sm font-black" fullWidth onClick={actions.onStartCooking} variant="outlineAccent">
-          {t.startCooking}
-        </Button>
-      )}
-
-      <div className={compact ? "flex flex-wrap items-center justify-end gap-1.5" : "flex flex-wrap items-center gap-2"}>
+    <div className={compact ? "flex flex-col gap-2" : "flex flex-col gap-4"}>
+      <div className={compact ? "grid grid-cols-2 gap-2" : "flex flex-wrap items-center gap-2"}>
         {actions.onSave && (
           <Button
-            className={compact ? "px-2.5 py-1.5 text-xs" : undefined}
+            className={compact ? "col-span-2 px-3 py-2.5 text-sm font-black" : "px-5 py-3 font-black"}
             onClick={actions.onSave}
-            disabled={status === "saving"}
+            disabled={status === "saving" || status === "success"}
           >
-            {status === "saving" ? t.saving : t.save}
+            {saveLabel}
           </Button>
         )}
 
         {actions.onCopy && (
-          <Button className={compact ? "px-2.5 py-1.5 text-xs" : undefined} onClick={actions.onCopy} variant="secondary">
+          <Button className={compact ? "px-3 py-2 text-xs" : undefined} onClick={actions.onCopy} variant="secondary">
             {t.copy}
           </Button>
         )}
 
         {actions.onShare && (
-          <Button className={compact ? "px-2.5 py-1.5 text-xs" : undefined} onClick={handleNativeShare} disabled={shareStatus === "sharing"} variant="secondary">
+          <Button className={compact ? "px-3 py-2 text-xs" : undefined} onClick={handleNativeShare} disabled={shareStatus === "sharing"} variant="secondary">
             {shareLabel}
           </Button>
         )}
       </div>
 
-      <div className={compact ? "flex min-h-0 items-center" : "h-4 flex items-center"}>
+      <div className={compact ? "flex min-h-0 items-center" : "flex min-h-5 items-center"}>
         {status === "saving" && (
           <Badge className="animate-pulse">
-            Guardando...
+            {isEnglish ? "Saving..." : "Guardando..."}
           </Badge>
         )}
 
         {status === "success" && (
           <Badge tone="success">
-            ✔ Guardado
+            {isEnglish ? "Saved" : "Guardado"}
           </Badge>
         )}
 
-        {!compact && shareFeedback && status !== "saving" && status !== "success" && (
+        {status === "error" && (
+          <Badge tone="danger">
+            {isEnglish ? "Could not save" : "No se pudo guardar"}
+          </Badge>
+        )}
+
+        {!compact && shareFeedback && status !== "saving" && status !== "success" && status !== "error" && (
           <Badge className="transition-all duration-200" tone="success">
             {shareFeedback}
           </Badge>
@@ -148,7 +160,7 @@ export default function ResultActions({
 
       {!compact && actions.onStartCooking && (
         <div className="pt-3 border-t border-white/5">
-          <Button fullWidth onClick={actions.onStartCooking} variant="outlineAccent">
+          <Button className="py-3 font-black" fullWidth onClick={actions.onStartCooking} variant="outlineAccent">
             {t.startCooking}
           </Button>
         </div>

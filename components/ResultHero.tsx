@@ -37,7 +37,7 @@ export default function ResultHero({
       <div className="pointer-events-none absolute -right-12 -top-16 h-36 w-36 rounded-full bg-orange-500/15 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-20 left-1/4 h-32 w-32 rounded-full bg-red-500/10 blur-3xl" />
 
-      <div className="relative z-10 flex flex-col gap-2 sm:hidden">
+      <div className="relative z-10 flex flex-col gap-3 sm:hidden">
         <div className="flex items-start justify-between gap-2">
           {onEdit ? (
             <Button className="rounded-full px-2.5 py-1.5 text-xs" onClick={onEdit} variant="secondary">
@@ -46,24 +46,23 @@ export default function ResultHero({
           ) : (
             <div />
           )}
-          <div className="min-w-0 flex-1">
-            <ResultActions
-              actions={{ ...actions, onStartCooking: undefined }}
-              compact
-              hasResult={hasResult}
-              status={saveMenuStatus}
-              t={{
-                copy: t.copy,
-                save: t.save,
-                saving: t.saving,
-                share: t.share,
-                startCooking: t.startCooking,
-              }}
-            />
-          </div>
         </div>
 
         <h2 className="text-xl font-black tracking-tight text-white">{t.result}</h2>
+
+        <ResultActions
+          actions={{ ...actions, onStartCooking: undefined }}
+          compact
+          hasResult={hasResult}
+          status={saveMenuStatus}
+          t={{
+            copy: t.copy,
+            save: t.save,
+            saving: t.saving,
+            share: t.share,
+            startCooking: t.startCooking,
+          }}
+        />
 
         {actions.onStartCooking && (
           <Button className="px-3 py-2.5 text-sm font-black" fullWidth onClick={actions.onStartCooking} variant="outlineAccent">

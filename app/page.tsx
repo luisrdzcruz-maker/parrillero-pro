@@ -610,7 +610,7 @@ export default function Home() {
   }
 
   async function saveCurrentMenu() {
-    if (!blocks.MENU && !blocks.COMPRA && !blocks.SHOPPING) return;
+    if (Object.keys(blocks).length === 0) return;
 
     const now = new Date();
     const menuName = `Menú Parrillero - ${now.toLocaleDateString(localeForLang(lang))}`;
@@ -957,6 +957,8 @@ ERROR
             lang={lang}
             loading={loading}
             selectedCut={selectedCut}
+            saveMenuMessage={saveMenuMessage}
+            saveMenuStatus={saveMenuStatus}
             setCookingStep={setCookingStep}
             setDoneness={setDoneness}
             setEquipment={setEquipment}
@@ -965,6 +967,7 @@ ERROR
             setThickness={setThickness}
             setWeight={setWeight}
             showThickness={showThickness}
+            onSaveMenu={saveCurrentMenu}
             t={t}
             weight={weight}
             thickness={thickness}
@@ -1195,7 +1198,10 @@ function CookingWizard({
   handleCutChange,
   lang,
   loading,
+  onSaveMenu,
   selectedCut,
+  saveMenuMessage,
+  saveMenuStatus,
   setCheckedItems,
   setCookingStep,
   setDoneness,
@@ -1223,7 +1229,10 @@ function CookingWizard({
   handleCutChange: (cut: string) => void;
   lang: Lang;
   loading: boolean;
+  onSaveMenu: () => Promise<void>;
   selectedCut?: CutItem;
+  saveMenuMessage: string;
+  saveMenuStatus: SaveMenuStatus;
   setCheckedItems: (value: Record<string, boolean>) => void;
   setCookingStep: (step: CookingWizardStep) => void;
   setDoneness: (value: string) => void;
@@ -1310,6 +1319,9 @@ function CookingWizard({
           blocks={blocks}
           checkedItems={checkedItems}
           onEdit={() => setCookingStep("details")}
+          onSaveMenu={onSaveMenu}
+          saveMenuMessage={saveMenuMessage}
+          saveMenuStatus={saveMenuStatus}
           setCheckedItems={setCheckedItems}
           setMode={setMode}
           setTimerRunning={setTimerRunning}
@@ -1346,33 +1358,33 @@ function CookingWizardHeader({
 
   return (
     <>
-      <div className="sticky top-2 z-30 mb-2 rounded-2xl border border-white/10 bg-slate-950/90 p-3 shadow-xl shadow-black/30 backdrop-blur sm:hidden">
+      <div className="sticky top-2 z-30 mb-2 rounded-2xl border border-white/10 bg-slate-950/92 p-2.5 shadow-xl shadow-black/30 backdrop-blur sm:hidden">
         <div className="mb-2 flex items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-black tracking-tight text-white">Cocción</h1>
-              <Badge className="px-2 py-0.5 text-[10px]">Paso guiado</Badge>
+              <h1 className="text-base font-black tracking-tight text-white">Cocción guiada</h1>
+              <Badge className="px-2 py-0.5 text-[10px]">Premium</Badge>
             </div>
-            <p className="mt-0.5 text-xs text-slate-400">Animal → Corte → Detalles</p>
+            <p className="mt-0.5 text-[11px] text-slate-400">{title}</p>
           </div>
           {cookingStep !== "animal" && <Badge className="shrink-0" tone="glass">{animal}</Badge>}
         </div>
         <CookingStepIndicator currentStep={cookingStep} />
       </div>
 
-      <Panel className="relative hidden overflow-hidden p-6 sm:block" tone="hero">
+      <Panel className="relative hidden overflow-hidden p-5 sm:block" tone="hero">
         <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-orange-500/15 blur-3xl" />
-        <div className="relative z-10 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <Badge className="text-xs uppercase tracking-[0.2em]">Paso guiado</Badge>
-            <h1 className="mt-4 text-4xl font-black tracking-tight text-white">
+            <Badge className="text-xs uppercase tracking-[0.2em]">Cocción guiada</Badge>
+            <h1 className="mt-3 text-3xl font-black tracking-tight text-white">
               {title}
             </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
               {subtitle}
             </p>
             {cookingStep !== "animal" && (
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 <Badge>{animal}</Badge>
                 {selectedCut && <Badge tone="glass">{selectedCut.name}</Badge>}
               </div>
@@ -1566,6 +1578,9 @@ function CookingResultStep({
   blocks,
   checkedItems,
   onEdit,
+  onSaveMenu,
+  saveMenuMessage,
+  saveMenuStatus,
   setCheckedItems,
   setMode,
   setTimerRunning,
@@ -1574,6 +1589,9 @@ function CookingResultStep({
   blocks: Blocks;
   checkedItems: Record<string, boolean>;
   onEdit: () => void;
+  onSaveMenu: () => Promise<void>;
+  saveMenuMessage: string;
+  saveMenuStatus: SaveMenuStatus;
   setCheckedItems: (value: Record<string, boolean>) => void;
   setMode: (mode: Mode) => void;
   setTimerRunning: (value: boolean) => void;
@@ -1586,6 +1604,9 @@ function CookingResultStep({
         loading={false}
         checkedItems={checkedItems}
         onEdit={onEdit}
+        onSaveMenu={onSaveMenu}
+        saveMenuMessage={saveMenuMessage}
+        saveMenuStatus={saveMenuStatus}
         setCheckedItems={setCheckedItems}
         onStartCooking={() => {
           setMode("cocina");
@@ -1609,7 +1630,7 @@ function HomeScreen({
   const featureCards = [
     {
       active: true,
-      description: "Calcula punto, temperatura, equipo y pasos de cocción para cada corte.",
+      description: "Animal, corte, punto y pasos listos para cocinar.",
       emoji: "🥩",
       mode: "coccion" as const,
       priority: "Principal",
@@ -1617,7 +1638,7 @@ function HomeScreen({
       title: t.planCooking,
     },
     {
-      description: "Crea cantidades, compra y orden de servicio para cenas y eventos BBQ.",
+      description: "Cantidades, compra y servicio para eventos.",
       emoji: "🍽️",
       mode: "menu" as const,
       priority: "Evento",
@@ -1625,7 +1646,7 @@ function HomeScreen({
       title: t.createMenu,
     },
     {
-      description: "Coordina productos, zonas, acompañamientos y timeline de parrillada.",
+      description: "Productos, zonas y timeline de parrillada.",
       emoji: "🔥",
       mode: "parrillada" as const,
       priority: "Grupo",
@@ -1633,7 +1654,7 @@ function HomeScreen({
       title: t.parrilladaPro,
     },
     {
-      description: "Sigue el plan paso a paso con temporizador y guía de ejecución.",
+      description: "Temporizador y guía paso a paso.",
       emoji: "⏱️",
       mode: "cocina" as const,
       priority: "Live",
@@ -1641,7 +1662,7 @@ function HomeScreen({
       title: t.liveMode,
     },
     {
-      description: "Recupera planes anteriores y vuelve a abrir tus mejores menús.",
+      description: "Planes guardados para repetir.",
       emoji: "⭐",
       mode: "guardados" as const,
       priority: "Biblioteca",
@@ -1651,31 +1672,30 @@ function HomeScreen({
   ];
 
   return (
-    <div className="space-y-4 sm:space-y-8">
-      <section className="grid gap-4 lg:grid-cols-[1.08fr_0.92fr] lg:items-stretch">
-        <Panel className="relative p-4 sm:p-8 lg:min-h-[420px]" tone="hero">
+    <div className="space-y-3 sm:space-y-8">
+      <section className="grid gap-3 lg:grid-cols-[1.08fr_0.92fr] lg:items-stretch">
+        <Panel className="relative p-3.5 sm:p-8 lg:min-h-[420px]" tone="hero">
           <div className="pointer-events-none absolute -left-20 -top-20 h-56 w-56 rounded-full bg-orange-500/15 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-28 right-10 h-64 w-64 rounded-full bg-red-500/10 blur-3xl" />
 
-          <div className="relative z-10 flex h-full flex-col justify-between gap-5 sm:gap-8">
+          <div className="relative z-10 flex h-full flex-col justify-between gap-3 sm:gap-8">
             <div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="hidden flex-wrap items-center gap-2 sm:flex">
                 <Badge className="uppercase tracking-[0.16em] sm:tracking-[0.2em]">BBQ app</Badge>
                 <Badge className="border-orange-400/20 bg-black/25 text-[11px] text-orange-200" tone="glass">
                   Animal → Corte → Cocina
                 </Badge>
               </div>
 
-              <h1 className="mt-3 max-w-3xl text-3xl font-black tracking-[-0.04em] text-white sm:mt-5 sm:text-5xl lg:text-6xl">
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-orange-300 sm:hidden">
+                Cocción guiada
+              </p>
+              <h1 className="mt-1 max-w-3xl text-2xl font-black tracking-[-0.04em] text-white sm:mt-5 sm:text-5xl lg:text-6xl">
                 {t.title}
               </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:mt-5 sm:text-lg sm:leading-7">
-                <span className="sm:hidden">Elige un modo y empieza a cocinar mejor.</span>
-                <span className="hidden sm:inline">{t.subtitle} Diseña el plan, coordina el fuego y cocina con una guía clara de principio a fin.</span>
-              </p>
 
-              <div className="mt-5 grid grid-cols-2 gap-2 sm:mt-8 sm:flex sm:gap-3">
-                <Button className="col-span-2 px-5 py-3 text-sm sm:col-span-1 sm:px-6 sm:py-4 sm:text-base" onClick={() => onModeChange("coccion")}>
+              <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-8 sm:flex sm:gap-3">
+                <Button className="col-span-2 px-5 py-3 text-sm font-black sm:col-span-1 sm:px-6 sm:py-4 sm:text-base" onClick={() => onModeChange("coccion")}>
                   {t.planCooking}
                 </Button>
                 <Button className="px-5 py-3 text-sm sm:px-6 sm:py-4 sm:text-base" onClick={() => onModeChange("parrillada")} variant="secondary">
@@ -1685,11 +1705,15 @@ function HomeScreen({
                   {t.saved}
                 </Button>
               </div>
+
+              <p className="mt-3 hidden max-w-2xl text-sm leading-6 text-slate-300 sm:mt-5 sm:block sm:text-lg sm:leading-7">
+                {t.subtitle} Diseña el plan, coordina el fuego y cocina con una guía clara de principio a fin.
+              </p>
             </div>
 
             <HomeFlowPreview />
 
-            <div className="grid grid-cols-3 gap-2 text-sm text-slate-300 sm:gap-3">
+            <div className="hidden grid-cols-3 gap-2 text-sm text-slate-300 sm:grid sm:gap-3">
               <TrustItem label={t.localEngine} value="Cortes premium" />
               <TrustItem label="Timeline live" value={t.liveMode} />
               <TrustItem label={t.savedMenus} value={`${savedMenusCount} ${t.saved}`} />
@@ -1707,17 +1731,17 @@ function HomeScreen({
       </section>
 
       <section className="space-y-3 sm:space-y-4">
-        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+        <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
           <div>
-            <p className={ds.text.eyebrow}>Workflows</p>
-            <h2 className="mt-1 text-xl font-black tracking-tight text-white sm:mt-2 sm:text-2xl">Elige cómo quieres cocinar hoy</h2>
+            <p className={`${ds.text.eyebrow} hidden sm:block`}>Workflows</p>
+            <h2 className="text-base font-black tracking-tight text-white sm:mt-2 sm:text-2xl">Más modos</h2>
           </div>
           <p className="hidden max-w-xl text-sm leading-6 text-slate-400 sm:block">
             Cada modo comparte el mismo motor de planificación, pero está optimizado para un momento distinto de la parrillada.
           </p>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-5">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-4 xl:grid-cols-5">
           {featureCards.map((card) => (
             <HomeCard
               key={card.mode}
@@ -1740,15 +1764,15 @@ function HomeFlowPreview() {
   const steps = ["Animal", "Corte", "Plan", "Live"];
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/20 p-2 ring-1 ring-inset ring-white/[0.03] sm:hidden">
+    <div className="rounded-2xl border border-white/10 bg-black/20 p-1.5 ring-1 ring-inset ring-white/[0.03] sm:hidden">
       <div className="grid grid-cols-4 gap-1">
         {steps.map((step, index) => (
           <div
             key={step}
             className={
               index === 0
-                ? "rounded-xl bg-orange-500 px-2 py-2 text-center text-[11px] font-black text-black"
-                : "rounded-xl bg-white/[0.04] px-2 py-2 text-center text-[11px] font-semibold text-slate-300"
+                ? "rounded-xl bg-orange-500 px-2 py-1.5 text-center text-[10px] font-black text-black"
+                : "rounded-xl bg-white/[0.04] px-2 py-1.5 text-center text-[10px] font-semibold text-slate-300"
             }
           >
             {step}
@@ -2326,8 +2350,8 @@ function ResultCards({
         t={{
           copy: t.copy,
           result: t.result,
-          save: t.saveMenu,
-          saving: t.savingMenu,
+          save: "Guardar",
+          saving: "Guardando...",
           share: t.whatsapp,
           startCooking: t.startCooking,
         }}
@@ -2479,27 +2503,27 @@ function HomeCard({
       onClick={onClick}
       className={
         active
-          ? `${ds.panel.homeCard} relative overflow-hidden border-orange-500/50 bg-gradient-to-br from-orange-500/15 via-slate-900/90 to-slate-950 p-4 shadow-orange-500/10 ring-1 ring-orange-300/15 active:scale-[0.98] sm:p-6`
-          : `${ds.panel.homeCard} relative overflow-hidden p-4 active:scale-[0.98] sm:p-6`
+          ? `${ds.panel.homeCard} relative overflow-hidden border-orange-500/50 bg-gradient-to-br from-orange-500/15 via-slate-900/90 to-slate-950 p-3 shadow-orange-500/10 ring-1 ring-orange-300/15 active:scale-[0.98] sm:p-6`
+          : `${ds.panel.homeCard} relative overflow-hidden p-3 active:scale-[0.98] sm:p-6`
       }
     >
       <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-orange-500/0 blur-2xl transition group-hover:bg-orange-500/10" />
-      <div className="relative z-10 flex items-start justify-between gap-3">
-        <div className={active ? `${ds.media.iconTile} border-orange-400/40 bg-orange-500/15` : ds.media.iconTile}>{emoji}</div>
-        <Badge className="max-w-[132px] shrink-0 truncate" tone={active ? "accent" : "glass"}>
+      <div className="relative z-10 flex items-start justify-between gap-2">
+        <div className={active ? `${ds.media.iconTile} h-10 w-10 rounded-xl border-orange-400/40 bg-orange-500/15 text-2xl sm:h-12 sm:w-12 sm:rounded-2xl sm:text-3xl` : `${ds.media.iconTile} h-10 w-10 rounded-xl text-2xl sm:h-12 sm:w-12 sm:rounded-2xl sm:text-3xl`}>{emoji}</div>
+        <Badge className="hidden max-w-[132px] shrink-0 truncate sm:inline-flex" tone={active ? "accent" : "glass"}>
           {stat}
         </Badge>
       </div>
 
-      <div className="relative z-10 mt-4 sm:mt-6">
-        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-orange-300/90">{priority}</p>
-        <h2 className="mt-2 text-lg font-bold tracking-tight text-white sm:text-xl">{title}</h2>
-        <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-400 sm:mt-3 sm:line-clamp-none">{description}</p>
+      <div className="relative z-10 mt-3 sm:mt-6">
+        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-orange-300/90 sm:text-[11px] sm:tracking-[0.18em]">{priority}</p>
+        <h2 className="mt-1 line-clamp-2 text-sm font-bold tracking-tight text-white sm:mt-2 sm:text-xl">{title}</h2>
+        <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-400 sm:mt-3 sm:line-clamp-none sm:text-sm sm:leading-6">{description}</p>
       </div>
 
-      <div className="relative z-10 mt-4 flex items-center justify-between text-sm font-semibold text-orange-300 sm:mt-6">
-        <span>Abrir modo</span>
-        <span className="flex h-8 w-8 items-center justify-center rounded-full border border-orange-400/20 bg-orange-500/10 transition group-hover:translate-x-1 group-hover:bg-orange-500/15">→</span>
+      <div className="relative z-10 mt-3 flex items-center justify-between text-xs font-semibold text-orange-300 sm:mt-6 sm:text-sm">
+        <span>Abrir</span>
+        <span className="flex h-7 w-7 items-center justify-center rounded-full border border-orange-400/20 bg-orange-500/10 transition group-hover:translate-x-1 group-hover:bg-orange-500/15 sm:h-8 sm:w-8">→</span>
       </div>
     </button>
   );
