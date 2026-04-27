@@ -860,7 +860,7 @@ ERROR
 
 function VersionSwitcher() {
   return (
-    <div className={`${ds.nav.switcher} md:hidden`}>
+    <div className="hidden">
       {["/", "/v3", "/v4"].map((href, index) => (
         <a
           key={href}
@@ -884,9 +884,9 @@ function AppHeader({
   t: typeof texts.es;
 }) {
   return (
-    <header className="mb-4 flex items-center justify-between gap-4 rounded-3xl border border-white/10 bg-slate-950/50 px-4 py-3 shadow-lg shadow-black/10 backdrop-blur">
+    <header className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-950/50 px-3 py-2.5 shadow-lg shadow-black/10 backdrop-blur sm:mb-4 sm:rounded-3xl sm:px-4 sm:py-3">
       <div className="min-w-0">
-        <Badge className="uppercase tracking-[0.2em]">{t.app}</Badge>
+        <Badge className="text-[10px] uppercase tracking-[0.16em] sm:text-xs sm:tracking-[0.2em]">{t.app}</Badge>
         <p className="mt-2 hidden text-sm text-slate-400 sm:block">{t.subtitle}</p>
       </div>
 
@@ -894,7 +894,7 @@ function AppHeader({
         <select
           value={lang}
           onChange={(event) => onLangChange(event.target.value as Lang)}
-          className={ds.input.compactSelect}
+          className={`${ds.input.compactSelect} max-w-[132px] py-1.5 text-xs sm:max-w-none sm:py-2 sm:text-sm`}
         >
           <option value="es">🇪🇸 Español</option>
           <option value="en">🇬🇧 English</option>
@@ -1010,7 +1010,7 @@ function CookingWizard({
   weight: string;
 }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-6">
       <CookingWizardHeader
         animal={animal}
         cookingStep={cookingStep}
@@ -1077,20 +1077,33 @@ function CookingWizardHeader({
   selectedCut?: CutItem;
   t: typeof texts.es;
 }) {
+  const title =
+    cookingStep === "animal"
+      ? t.chooseAnimal
+      : cookingStep === "cut"
+        ? t.chooseCut
+        : t.configurePlan;
+  const subtitle =
+    cookingStep === "animal"
+      ? "Empieza eligiendo la proteína principal."
+      : cookingStep === "cut"
+        ? "Ahora selecciona el corte exacto."
+        : "Ajusta peso, punto y equipo.";
+
   return (
-    <Panel className="relative overflow-hidden p-5 sm:p-6" tone="hero">
+    <Panel className="relative overflow-hidden p-3 sm:p-6" tone="hero">
       <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-orange-500/15 blur-3xl" />
-      <div className="relative z-10 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+      <div className="relative z-10 flex flex-col gap-2.5 sm:gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <Badge className="uppercase tracking-[0.2em]">{t.planCooking}</Badge>
-          <h1 className="mt-4 text-3xl font-black tracking-tight text-white sm:text-4xl">
-            Cocina guiada paso a paso
+          <Badge className="text-[10px] uppercase tracking-[0.16em] sm:text-xs sm:tracking-[0.2em]">Paso guiado</Badge>
+          <h1 className="mt-2 text-xl font-black tracking-tight text-white sm:mt-4 sm:text-4xl">
+            {title}
           </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
-            Elige primero el animal, después el corte y finalmente ajusta los detalles de cocción.
+          <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-300 sm:mt-3 sm:text-sm sm:leading-6">
+            {subtitle}
           </p>
           {cookingStep !== "animal" && (
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-2 flex flex-wrap gap-2 sm:mt-4">
               <Badge>{animal}</Badge>
               {selectedCut && <Badge tone="glass">{selectedCut.name}</Badge>}
             </div>
@@ -1112,7 +1125,7 @@ function CookingStepIndicator({ currentStep }: { currentStep: CookingWizardStep 
   const currentIndex = steps.findIndex((step) => step.id === currentStep);
 
   return (
-    <div className="grid min-w-full grid-cols-3 gap-2 rounded-2xl border border-white/10 bg-black/20 p-2 sm:min-w-[360px]">
+    <div className="grid min-w-full grid-cols-3 gap-1 rounded-2xl border border-white/10 bg-black/20 p-1 sm:min-w-[360px] sm:gap-2 sm:p-2">
       {steps.map((step, index) => {
         const isActive = step.id === currentStep;
         const isComplete = index < currentIndex;
@@ -1122,14 +1135,14 @@ function CookingStepIndicator({ currentStep }: { currentStep: CookingWizardStep 
             key={step.id}
             className={
               isActive
-                ? "rounded-xl bg-orange-500 px-3 py-2 text-center text-black shadow-lg shadow-orange-500/20"
+                ? "rounded-xl bg-orange-500 px-2 py-1 text-center text-black shadow-lg shadow-orange-500/20 sm:px-3 sm:py-2"
                 : isComplete
-                  ? "rounded-xl border border-orange-500/20 bg-orange-500/10 px-3 py-2 text-center text-orange-200"
-                  : "rounded-xl px-3 py-2 text-center text-slate-500"
+                  ? "rounded-xl border border-orange-500/20 bg-orange-500/10 px-2 py-1 text-center text-orange-200 sm:px-3 sm:py-2"
+                  : "rounded-xl px-2 py-1 text-center text-slate-500 sm:px-3 sm:py-2"
             }
           >
-            <p className="text-xs font-black">{step.number}</p>
-            <p className="mt-0.5 text-xs font-semibold">{step.label}</p>
+            <p className="text-[10px] font-black sm:text-xs">{step.number}</p>
+            <p className="mt-0.5 text-[10px] font-semibold sm:text-xs">{step.label}</p>
           </div>
         );
       })}
@@ -1147,8 +1160,8 @@ function CookingAnimalStep({
   t: typeof texts.es;
 }) {
   return (
-    <Section eyebrow="Paso 1" title={t.chooseAnimal}>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    <Section className="space-y-3 sm:space-y-5" eyebrow="Paso 1" title={t.chooseAnimal}>
+      <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-5">
         {(Object.keys(animalData) as Animal[]).map((item) => (
           <ImageCard
             key={item}
@@ -1183,16 +1196,16 @@ function CookingCutStep({
   t: typeof texts.es;
 }) {
   return (
-    <Section className="space-y-5" eyebrow="Paso 2" title={t.chooseCut}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className={ds.panel.highlight}>
+    <Section className="space-y-3 sm:space-y-5" eyebrow="Paso 2" title={t.chooseCut}>
+      <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
+        <div className={`${ds.panel.highlight} px-3 py-2 sm:p-4`}>
           <p className="text-sm text-orange-300">{t.selected}</p>
           <h2 className="font-bold text-white">{animal}</h2>
         </div>
         <Button onClick={onBack} variant="secondary">← {t.reset}</Button>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
         {cuts.map((item) => (
           <CutCard
             key={item.name}
@@ -1255,16 +1268,16 @@ function CookingDetailsStep({
 }) {
   return (
     <Grid variant="split">
-      <Panel className="space-y-4" tone="form">
-        <div className="flex items-start justify-between gap-3">
+      <Panel className="space-y-3 sm:space-y-4" tone="form">
+        <div className="flex items-start justify-between gap-2 sm:gap-3">
           <div>
             <p className={ds.text.eyebrow}>Paso 3</p>
-            <h2 className="mt-1 text-xl font-bold text-white">{t.configurePlan}</h2>
+            <h2 className="mt-1 text-lg font-bold text-white sm:text-xl">{t.configurePlan}</h2>
           </div>
           <Button onClick={onBack} variant="secondary">← {t.chooseCut}</Button>
         </div>
 
-        <div className={ds.panel.highlight}>
+        <div className={`${ds.panel.highlight} p-3 sm:p-4`}>
           <p className="text-sm text-orange-300">{animal}</p>
           <h3 className="font-bold text-white">{selectedCut.name}</h3>
           <p className="mt-1 text-sm text-slate-300">{selectedCut.description}</p>
@@ -1350,33 +1363,34 @@ function HomeScreen({
   ];
 
   return (
-    <div className="space-y-8">
-      <section className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr] lg:items-stretch">
-        <Panel className="relative min-h-[420px] p-6 sm:p-8" tone="hero">
+    <div className="space-y-5 sm:space-y-8">
+      <section className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr] lg:items-stretch">
+        <Panel className="relative p-4 sm:p-8 lg:min-h-[420px]" tone="hero">
           <div className="pointer-events-none absolute -left-20 -top-20 h-56 w-56 rounded-full bg-orange-500/15 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-28 right-10 h-64 w-64 rounded-full bg-red-500/10 blur-3xl" />
 
-          <div className="relative z-10 flex h-full flex-col justify-between gap-10">
+          <div className="relative z-10 flex h-full flex-col justify-between gap-5 sm:gap-10">
             <div>
-              <Badge className="uppercase tracking-[0.2em]">BBQ operating system</Badge>
-              <h1 className="mt-5 max-w-3xl text-4xl font-black tracking-[-0.04em] text-white sm:text-5xl lg:text-6xl">
+              <Badge className="uppercase tracking-[0.16em] sm:tracking-[0.2em]">BBQ app</Badge>
+              <h1 className="mt-3 max-w-3xl text-2xl font-black tracking-[-0.035em] text-white sm:mt-5 sm:text-5xl lg:text-6xl">
                 {t.title}
               </h1>
-              <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-                {t.subtitle} Diseña el plan, coordina el fuego y cocina con una guía clara de principio a fin.
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:mt-5 sm:text-lg sm:leading-7">
+                <span className="sm:hidden">Elige un modo y empieza a cocinar mejor.</span>
+                <span className="hidden sm:inline">{t.subtitle} Diseña el plan, coordina el fuego y cocina con una guía clara de principio a fin.</span>
               </p>
 
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Button className="px-6 py-4 text-base" onClick={() => onModeChange("coccion")}>
+              <div className="mt-5 flex flex-col gap-2 sm:mt-8 sm:flex-row sm:gap-3">
+                <Button className="px-5 py-3 text-sm sm:px-6 sm:py-4 sm:text-base" onClick={() => onModeChange("coccion")}>
                   {t.planCooking}
                 </Button>
-                <Button className="px-6 py-4 text-base" onClick={() => onModeChange("parrillada")} variant="secondary">
+                <Button className="px-5 py-3 text-sm sm:px-6 sm:py-4 sm:text-base" onClick={() => onModeChange("parrillada")} variant="secondary">
                   {t.parrilladaPro}
                 </Button>
               </div>
             </div>
 
-            <div className="grid gap-3 text-sm text-slate-300 sm:grid-cols-3">
+            <div className="hidden gap-3 text-sm text-slate-300 sm:grid sm:grid-cols-3">
               <TrustItem label={t.localEngine} value="Cortes premium" />
               <TrustItem label="Timeline live" value={t.liveMode} />
               <TrustItem label={t.savedMenus} value={`${savedMenusCount} ${t.saved}`} />
@@ -1384,25 +1398,27 @@ function HomeScreen({
           </div>
         </Panel>
 
-        <HomePreviewPanel
-          onOpenSaved={() => onModeChange("guardados")}
-          savedMenusCount={savedMenusCount}
-          t={t}
-        />
+        <div className="hidden lg:block">
+          <HomePreviewPanel
+            onOpenSaved={() => onModeChange("guardados")}
+            savedMenusCount={savedMenusCount}
+            t={t}
+          />
+        </div>
       </section>
 
-      <section className="space-y-4">
+      <section className="space-y-3 sm:space-y-4">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
           <div>
             <p className={ds.text.eyebrow}>Workflows</p>
-            <h2 className="mt-2 text-2xl font-black tracking-tight text-white">Elige cómo quieres cocinar hoy</h2>
+            <h2 className="mt-1 text-xl font-black tracking-tight text-white sm:mt-2 sm:text-2xl">Elige cómo quieres cocinar hoy</h2>
           </div>
-          <p className="max-w-xl text-sm leading-6 text-slate-400">
+          <p className="hidden max-w-xl text-sm leading-6 text-slate-400 sm:block">
             Cada modo comparte el mismo motor de planificación, pero está optimizado para un momento distinto de la parrillada.
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-5">
           {featureCards.map((card) => (
             <HomeCard
               key={card.mode}
@@ -1881,11 +1897,11 @@ function ImageCard({
       onClick={onClick}
       className={
         active
-          ? "group relative overflow-hidden rounded-[28px] border border-orange-500 bg-orange-500/20 text-left shadow-[0_0_35px_rgba(249,115,22,0.25)]"
-          : "group relative overflow-hidden rounded-[28px] border border-slate-800 bg-slate-900 text-left transition hover:-translate-y-1 hover:border-orange-500/70 hover:shadow-[0_0_30px_rgba(249,115,22,0.15)]"
+          ? "group relative overflow-hidden rounded-3xl border border-orange-500 bg-orange-500/20 text-left shadow-[0_0_35px_rgba(249,115,22,0.25)]"
+          : "group relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-900 text-left transition hover:-translate-y-1 hover:border-orange-500/70 hover:shadow-[0_0_30px_rgba(249,115,22,0.15)]"
       }
     >
-      <div className="relative h-40 overflow-hidden">
+      <div className="relative h-28 overflow-hidden sm:h-40">
         <div
           className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-110"
           style={{
@@ -1893,16 +1909,16 @@ function ImageCard({
           }}
         />
 
-        <div className="absolute left-4 top-4 rounded-2xl bg-black/55 px-3 py-2 text-3xl backdrop-blur">{emoji}</div>
+        <div className="absolute left-3 top-3 rounded-2xl bg-black/55 px-3 py-2 text-2xl backdrop-blur sm:left-4 sm:top-4 sm:text-3xl">{emoji}</div>
 
         {badge && <Badge className="absolute right-3 top-3 text-[11px]" tone="solidAccent">{badge}</Badge>}
 
         {active && <Badge className="absolute bottom-3 right-3 font-black" tone="selected">✓ {selectedLabel}</Badge>}
       </div>
 
-      <div className="p-4">
-        <h3 className="text-lg font-black">{title}</h3>
-        <p className="mt-1 line-clamp-2 text-xs text-slate-400">{subtitle}</p>
+      <div className="p-3 sm:p-4">
+        <h3 className="text-base font-black sm:text-lg">{title}</h3>
+        <p className="mt-1 line-clamp-1 text-xs text-slate-400 sm:line-clamp-2">{subtitle}</p>
       </div>
     </button>
   );
@@ -1926,11 +1942,11 @@ function CutCard({
       onClick={onClick}
       className={
         active
-          ? "group relative overflow-hidden rounded-[28px] border border-orange-500 bg-orange-500/20 text-left shadow-[0_0_35px_rgba(249,115,22,0.25)]"
-          : "group relative overflow-hidden rounded-[28px] border border-slate-800 bg-slate-900 text-left transition hover:-translate-y-1 hover:border-orange-500/70 hover:shadow-[0_0_30px_rgba(249,115,22,0.15)]"
+          ? "group relative overflow-hidden rounded-3xl border border-orange-500 bg-orange-500/20 text-left shadow-[0_0_35px_rgba(249,115,22,0.25)]"
+          : "group relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-900 text-left transition hover:-translate-y-1 hover:border-orange-500/70 hover:shadow-[0_0_30px_rgba(249,115,22,0.15)]"
       }
     >
-      <div className="relative h-44 overflow-hidden">
+      <div className="relative h-32 overflow-hidden sm:h-44">
         <div
           className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-110"
           style={{
@@ -1941,13 +1957,13 @@ function CutCard({
         {badge && <Badge className="absolute left-3 top-3 text-[11px]" tone="glass">{badge}</Badge>}
         {active && <Badge className="absolute right-3 top-3 text-[11px] font-black" tone="solidAccent">✓ {activeLabel}</Badge>}
 
-        <div className="absolute bottom-0 left-0 right-0 p-4">
-          <h3 className="text-xl font-black text-white">{cut.name}</h3>
+        <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
+          <h3 className="text-lg font-black text-white sm:text-xl">{cut.name}</h3>
         </div>
       </div>
 
-      <div className="p-4">
-        <p className="line-clamp-3 text-sm text-slate-400">{cut.description}</p>
+      <div className="p-3 sm:p-4">
+        <p className="line-clamp-2 text-xs leading-5 text-slate-400 sm:line-clamp-3 sm:text-sm">{cut.description}</p>
       </div>
     </button>
   );
@@ -1973,8 +1989,8 @@ function HomeCard({
       onClick={onClick}
       className={
         active
-          ? `${ds.panel.homeCard} border-orange-500/50 bg-gradient-to-br from-orange-500/15 to-slate-900/80 shadow-orange-500/10`
-          : ds.panel.homeCard
+          ? `${ds.panel.homeCard} border-orange-500/50 bg-gradient-to-br from-orange-500/15 to-slate-900/80 p-4 shadow-orange-500/10 sm:p-6`
+          : `${ds.panel.homeCard} p-4 sm:p-6`
       }
     >
       <div className="flex items-start justify-between gap-3">
@@ -1983,9 +1999,9 @@ function HomeCard({
           {stat}
         </Badge>
       </div>
-      <h2 className="mt-6 text-xl font-bold tracking-tight text-white">{title}</h2>
-      <p className="mt-3 text-sm leading-6 text-slate-400">{description}</p>
-      <div className="mt-6 flex items-center text-sm font-semibold text-orange-300">
+      <h2 className="mt-4 text-lg font-bold tracking-tight text-white sm:mt-6 sm:text-xl">{title}</h2>
+      <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-400 sm:mt-3 sm:line-clamp-none">{description}</p>
+      <div className="mt-4 flex items-center text-sm font-semibold text-orange-300 sm:mt-6">
         Abrir modo
         <span className="ml-2 transition group-hover:translate-x-1">→</span>
       </div>
