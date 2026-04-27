@@ -1,11 +1,13 @@
 "use client";
 
+import { useState, type SyntheticEvent } from "react";
 import {
   getResultCardAccent,
   getResultCardIcon,
   getResultCardTitle,
 } from "@/lib/uiHelpers";
-import { Badge, Panel } from "@/components/ui";
+import { getSetupImage } from "@/lib/setupVisuals";
+import { Badge, Button, Panel } from "@/components/ui";
 import { ds } from "@/lib/design-system";
 
 type ResultCardProps = {
@@ -60,6 +62,79 @@ function ResultCardContent({ lines }: { lines: string[] }) {
   );
 }
 
+function isSetupCard(title: string) {
+  return title.toUpperCase().includes("SETUP");
+}
+
+function SetupVisualToggle({
+  content,
+  title,
+}: {
+  content: string;
+  title: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
+  const setupImage = getSetupImage({ equipment: content, method: content });
+
+  if (!isSetupCard(title) || !setupImage || imageFailed) return null;
+
+  function handleImageError(event: SyntheticEvent<HTMLImageElement>) {
+    event.currentTarget.src = "";
+    setImageFailed(true);
+    setOpen(false);
+  }
+
+  return (
+    <div className="mt-4">
+      <Button
+        className="rounded-full px-3 py-2 text-xs"
+        onClick={() => setOpen((current) => !current)}
+        variant="outlineAccent"
+      >
+        {open ? "Ocultar setup" : "Ver setup 🔥"}
+      </Button>
+
+      <div
+        className={
+          open
+            ? "grid grid-rows-[1fr] opacity-100 transition-all duration-300 ease-out"
+            : "grid grid-rows-[0fr] opacity-0 transition-all duration-300 ease-out"
+        }
+      >
+        <div className="min-h-0 overflow-hidden">
+          <div
+            className={
+              open
+                ? "mt-4 translate-y-0 transition-transform duration-300 ease-out"
+                : "mt-4 translate-y-2 transition-transform duration-300 ease-out"
+            }
+          >
+            <div className="relative overflow-hidden rounded-2xl border border-orange-400/20 bg-slate-950 shadow-2xl shadow-black/20">
+              <img
+                src={setupImage}
+                alt="Visual grill setup"
+                loading="lazy"
+                className="h-44 w-full object-cover sm:h-56"
+                onError={handleImageError}
+              />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(251,146,60,0.26),transparent_34%),linear-gradient(to_top,rgba(2,6,23,0.86)_0%,rgba(2,6,23,0.32)_54%,rgba(255,255,255,0.08)_100%)]" />
+              <div className="absolute bottom-0 left-0 right-0 p-4">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-300">
+                  Setup visual
+                </p>
+                <p className="mt-1 text-sm font-semibold text-white">
+                  Zonas de calor para este plan
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ResultCard({ title, content }: ResultCardProps) {
   if (!content?.trim()) return null;
 
@@ -83,6 +158,7 @@ export default function ResultCard({ title, content }: ResultCardProps) {
           lineCount={contentLines.length}
         />
         <ResultCardContent lines={contentLines} />
+        <SetupVisualToggle content={content} title={title} />
       </div>
     </Panel>
   );

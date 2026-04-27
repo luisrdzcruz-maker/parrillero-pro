@@ -7,19 +7,33 @@ import { Badge, Button, Card, Grid, Panel, Section } from "@/components/ui";
 import {
   generateCookingPlan as generateLocalCookingPlan,
   generateCookingSteps as generateLocalCookingSteps,
+  getCutById,
+  getCutsByAnimal,
+  getDonenessOptions,
+  shouldShowThickness,
+  type AnimalId,
+  type CookingMethod,
   type CookingStep,
-} from "@/lib/cookingEngine";
+  type ProductCut,
+} from "../lib/cookingEngine";
+import { DEFAULT_COOKING_STEP_IMAGE, getCookingStepImage } from "@/lib/cookingVisuals";
 import { ds } from "@/lib/design-system";
 import { generateParrilladaPlan } from "@/lib/parrilladaEngine";
-import { useEffect, useMemo, useState } from "react";
+import { type SyntheticEvent, useEffect, useMemo, useState } from "react";
 
-type Animal = "Vacuno" | "Cerdo" | "Pollo" | "Pescado" | "Vegetales";
+type Animal = "Vacuno" | "Cerdo" | "Pollo" | "Pescado" | "Verduras";
 type Mode = "inicio" | "coccion" | "menu" | "parrillada" | "cocina" | "guardados";
 type Lang = "es" | "en" | "fi";
 type EngineLang = "es" | "en";
 type Blocks = Record<string, string>;
 type SaveMenuStatus = "idle" | "saving" | "success" | "error";
 type CookingWizardStep = "animal" | "cut" | "details";
+type SelectOption = string | { label: string; value: string };
+type CookingVisualContext = {
+  animalId?: AnimalId;
+  cutId?: string;
+  method?: CookingMethod;
+};
 
 type SavedMenu = {
   id: string;
@@ -29,10 +43,25 @@ type SavedMenu = {
 };
 
 type CutItem = {
+  id: string;
   name: string;
   image: string;
   description: string;
 };
+
+type AnimalMedia = {
+  image: string;
+};
+
+const animalIdsByLabel: Record<Animal, AnimalId> = {
+  Vacuno: "beef",
+  Cerdo: "pork",
+  Pollo: "chicken",
+  Pescado: "fish",
+  Verduras: "vegetables",
+};
+
+const animalOptions: Animal[] = ["Vacuno", "Cerdo", "Pollo", "Pescado", "Verduras"];
 
 const texts = {
   es: {
@@ -205,73 +234,45 @@ const texts = {
   },
 };
 
-const animalData: Record<Animal, { icon: string; image: string; cuts: CutItem[] }> = {
-  Vacuno: {
-    icon: "🥩",
-    image: "/animals/vacuno.jpg",
-    cuts: [
-      { name: "Aguja / Chuck", image: "/cuts/aguja-chuck.jpg", description: "Sabor intenso, ideal para baja temperatura o piezas jugosas." },
-      { name: "Lomo alto", image: "/cuts/lomo-alto.jpg", description: "Muy bueno para chuletón, ribeye y cortes premium." },
-      { name: "Tomahawk", image: "/cuts/tomahawk.jpg", description: "Corte grueso con hueso, perfecto para sellado + indirecto." },
-      { name: "Entrecote / Ribeye", image: "/cuts/ribeye.jpg", description: "Jugoso, marmoleado y muy rápido de cocinar." },
-      { name: "Picanha", image: "/cuts/picanha.jpg", description: "Capa de grasa, excelente entera o en steaks." },
-      { name: "Maminha", image: "/cuts/maminha.jpg", description: "Tierna y sabrosa, buena para cocción controlada." },
-      { name: "Babette", image: "/cuts/babette.jpg", description: "Fina, intensa y perfecta para fuego fuerte." },
-      { name: "Skirt steak / Entraña", image: "/cuts/skirt-steak.jpg", description: "Muy sabrosa, cocción rápida y corte contra fibra." },
-    ],
-  },
-  Cerdo: {
-    icon: "🐖",
-    image: "/animals/cerdo.jpg",
-    cuts: [
-      { name: "Secreto ibérico", image: "/cuts/secreto.jpg", description: "Graso, rápido y muy jugoso." },
-      { name: "Presa ibérica", image: "/cuts/presa.jpg", description: "Premium, buena para punto rosado seguro." },
-      { name: "Costillas", image: "/cuts/costillas.jpg", description: "Ideal para lento, humo y glaseado." },
-      { name: "Panceta", image: "/cuts/panceta.jpg", description: "Crujiente, grasa y perfecta para fuego controlado." },
-      { name: "Solomillo", image: "/cuts/solomillo-cerdo.jpg", description: "Magro, rápido y delicado." },
-    ],
-  },
-  Pollo: {
-    icon: "🍗",
-    image: "/animals/pollo.jpg",
-    cuts: [
-      { name: "Muslos", image: "/cuts/muslos-pollo.jpg", description: "Jugosos y fáciles." },
-      { name: "Alitas", image: "/cuts/alitas.jpg", description: "Perfectas para dorar y glasear." },
-      { name: "Pechuga", image: "/cuts/pechuga.jpg", description: "Magro, requiere control para no secar." },
-      { name: "Pollo entero", image: "/cuts/pollo-entero.jpg", description: "Ideal para indirecto." },
-    ],
-  },
-  Pescado: {
-    icon: "🐟",
-    image: "/animals/pescado.jpg",
-    cuts: [
-      { name: "Rodaballo", image: "/cuts/rodaballo.jpg", description: "Top para parrilla suave." },
-      { name: "Salmón", image: "/cuts/salmon.jpg", description: "Graso y resistente." },
-      { name: "Lubina", image: "/cuts/lubina.jpg", description: "Fina y delicada." },
-      { name: "Dorada", image: "/cuts/dorada.jpg", description: "Muy buena entera." },
-    ],
-  },
-  Vegetales: {
-    icon: "🌽",
-    image: "/animals/vegetales.jpg",
-    cuts: [
-      { name: "Maíz", image: "/cuts/maiz.jpg", description: "Dulce, fácil y perfecto para BBQ." },
-      { name: "Berenjena", image: "/cuts/berenjena.jpg", description: "Muy buena para fuego medio." },
-      { name: "Patata", image: "/cuts/patata.jpg", description: "Mejor precocida o indirecta." },
-      { name: "Espárragos", image: "/cuts/esparragos.jpg", description: "Rápidos y elegantes." },
-      { name: "Pimientos", image: "/cuts/pimientos.jpg", description: "Perfectos para asar y pelar." },
-    ],
-  },
+const animalMedia: Record<Animal, AnimalMedia> = {
+  Vacuno: { image: "/animals/vacuno.jpg" },
+  Cerdo: { image: "/animals/cerdo.jpg" },
+  Pollo: { image: "/animals/pollo.jpg" },
+  Pescado: { image: "/animals/pescado.jpg" },
+  Verduras: { image: "/animals/vegetales.jpg" },
 };
 
-const beefDonenessOptions = ["blue", "poco hecho", "medium rare", "medium", "hecho"];
-const porkDonenessOptions = ["jugoso seguro", "medio seguro", "muy hecho"];
-
-const thinCutsWithoutThickness = [
-  "Secreto ibérico",
-  "Babette",
-  "Skirt steak / Entraña",
-];
+const cutImages: Record<string, string> = {
+  aguja: "/cuts/aguja-chuck.jpg",
+  lomo_alto: "/cuts/lomo-alto.jpg",
+  tomahawk: "/cuts/tomahawk.jpg",
+  entrecote: "/cuts/ribeye.jpg",
+  picanha: "/cuts/picanha.jpg",
+  maminha: "/cuts/maminha.jpg",
+  bavette: "/cuts/babette.jpg",
+  entrana: "/cuts/skirt-steak.jpg",
+  secreto_iberico: "/cuts/secreto.jpg",
+  presa_iberica: "/cuts/presa.jpg",
+  costillas: "/cuts/costillas.jpg",
+  panceta: "/cuts/panceta.jpg",
+  solomillo: "/cuts/solomillo-cerdo.jpg",
+  pork_chop: "/cuts/chuleta-cerdo.jpg",
+  muslos: "/cuts/muslos-pollo.jpg",
+  alitas: "/cuts/alitas.jpg",
+  pechuga: "/cuts/pechuga.jpg",
+  pollo_entero: "/cuts/pollo-entero.jpg",
+  rodaballo: "/cuts/rodaballo.jpg",
+  salmon: "/cuts/salmon.jpg",
+  lubina: "/cuts/lubina.jpg",
+  dorada: "/cuts/dorada.jpg",
+  maiz: "/cuts/maiz.jpg",
+  berenjena: "/cuts/berenjena.jpg",
+  patata: "/cuts/patata.jpg",
+  esparragos: "/cuts/esparragos.jpg",
+  pimientos: "/cuts/pimientos.jpg",
+  calabacin: "/cuts/calabacin.jpg",
+  setas: "/cuts/setas.jpg",
+};
 
 const equipmentOptions = [
   "parrilla gas",
@@ -286,21 +287,21 @@ const defaultCookSteps: CookingStep[] = [
     title: "Precalentar",
     duration: 600,
     description: "Precalienta la parrilla con tapa cerrada.",
-    image: "/visuals/preheat.jpg",
+    image: getCookingStepImage({ stepTitle: "Precalentar" }),
     tips: ["Parrilla caliente", "Tapa cerrada", "Rejillas limpias"],
   },
   {
     title: "Sellar lado 1",
     duration: 180,
     description: "Carne en zona directa. No mover.",
-    image: "/visuals/sear.jpg",
+    image: getCookingStepImage({ stepTitle: "Sellar lado 1" }),
     tips: ["No tocar", "Buscar costra", "No aplastar"],
   },
   {
     title: "Reposo",
     duration: 300,
     description: "Reposar antes de cortar.",
-    image: "/visuals/rest.jpg",
+    image: getCookingStepImage({ stepTitle: "Reposo" }),
     tips: ["No cortar al momento", "Estabilizar jugos", "Cortar después del reposo"],
   },
 ];
@@ -310,19 +311,79 @@ function engineLang(lang: Lang): EngineLang {
 }
 
 function hasLocalEngine(animal: Animal) {
-  return animal === "Vacuno" || animal === "Cerdo";
+  return Boolean(animalIdsByLabel[animal]);
+}
+
+function getInitialDoneness(animal: Animal) {
+  return getDonenessOptions(animalIdsByLabel[animal])[0]?.id ?? "";
+}
+
+function getDonenessSelectOptions(animal: Animal, lang: Lang): SelectOption[] {
+  const labelLang = lang === "fi" ? "en" : lang;
+
+  return getDonenessOptions(animalIdsByLabel[animal]).map((option) => ({
+    value: option.id,
+    label: option.names[labelLang],
+  }));
+}
+
+function catalogLang(lang: Lang) {
+  return lang;
+}
+
+function getCutName(cut: ProductCut, lang: Lang) {
+  return cut.names[catalogLang(lang)] ?? cut.names.es;
+}
+
+function getCutDescription(cut: ProductCut, lang: Lang) {
+  return cut.notes?.[catalogLang(lang)] ?? cut.error[engineLang(lang)] ?? "";
+}
+
+function getCutItems(animal: Animal, lang: Lang): CutItem[] {
+  return getCutsByAnimal(animalIdsByLabel[animal]).map((cut) => ({
+    id: cut.id,
+    name: getCutName(cut, lang),
+    image: cutImages[cut.id] ?? "/cuts/placeholder.jpg",
+    description: getCutDescription(cut, lang),
+  }));
+}
+
+function getAnimalPreview(animal: Animal, lang: Lang) {
+  return getCutItems(animal, lang).slice(0, 2).map((cut) => cut.name).join(", ");
+}
+
+function getCookingVisualContext(animal: Animal, cutId?: string): CookingVisualContext {
+  const cut = cutId ? getCutById(cutId) : undefined;
+
+  return {
+    animalId: animalIdsByLabel[animal],
+    cutId,
+    method: cut?.defaultMethod,
+  };
+}
+
+function withCookingStepImages(steps: CookingStep[], context: CookingVisualContext): CookingStep[] {
+  return steps.map((step) => ({
+    ...step,
+    image: getCookingStepImage({
+      animalId: context.animalId,
+      cutId: context.cutId,
+      method: context.method,
+      stepTitle: `${step.title} ${step.description}`,
+    }),
+  }));
 }
 
 function getStepLabel(title: string) {
   const value = title.toLowerCase();
 
-  if (value.includes("precal") || value.includes("preheat")) return "🔥 Preheat";
-  if (value.includes("sell") || value.includes("sear")) return "🔥 Direct heat";
-  if (value.includes("indirect")) return "♨️ Indirect";
-  if (value.includes("repos") || value.includes("rest")) return "⏸️ Rest";
-  if (value.includes("grasa") || value.includes("fat")) return "🥩 Fat cap";
+  if (value.includes("precal") || value.includes("preheat")) return "Preheat";
+  if (value.includes("sell") || value.includes("sear")) return "Direct heat";
+  if (value.includes("indirect")) return "Indirect";
+  if (value.includes("repos") || value.includes("rest")) return "Rest";
+  if (value.includes("grasa") || value.includes("fat")) return "Fat cap";
 
-  return "🔥 Cooking";
+  return "Cooking";
 }
 
 function parseResponse(text: string): Blocks {
@@ -347,21 +408,18 @@ function buildCookStepsFromPlan(blocks: Blocks): CookingStep[] {
   return lines.map((line) => {
     const lower = line.toLowerCase();
     let duration = 300;
-    let image = "/visuals/sear.jpg";
+    let image = getCookingStepImage({ stepTitle: line });
 
     if (lower.includes("precal") || lower.includes("preheat")) {
       duration = 600;
-      image = "/visuals/preheat.jpg";
     }
 
     if (lower.includes("indirect")) {
       duration = 300;
-      image = "/visuals/indirect.jpg";
     }
 
     if (lower.includes("repos") || lower.includes("rest")) {
       duration = 300;
-      image = "/visuals/rest.jpg";
     }
 
     return {
@@ -406,7 +464,7 @@ export default function Home() {
   const [cut, setCut] = useState("");
   const [weight, setWeight] = useState("1");
   const [thickness, setThickness] = useState("5");
-  const [doneness, setDoneness] = useState("poco hecho");
+  const [doneness, setDoneness] = useState("rare");
   const [equipment, setEquipment] = useState("parrilla gas");
 
   const [people, setPeople] = useState("6");
@@ -433,11 +491,11 @@ export default function Home() {
   const [timeLeft, setTimeLeft] = useState(defaultCookSteps[0].duration);
   const [timerRunning, setTimerRunning] = useState(false);
 
-  const cuts = useMemo(() => animalData[animal].cuts, [animal]);
-  const selectedCut = cuts.find((item) => item.name === cut);
+  const cuts = useMemo(() => getCutItems(animal, lang), [animal, lang]);
+  const selectedCut = cuts.find((item) => item.id === cut);
 
-  const currentDonenessOptions = animal === "Cerdo" ? porkDonenessOptions : beefDonenessOptions;
-  const showThickness = !thinCutsWithoutThickness.includes(cut);
+  const currentDonenessOptions = getDonenessSelectOptions(animal, lang);
+  const showThickness = cut ? shouldShowThickness(cut) : true;
 
   useEffect(() => {
     const stored = localStorage.getItem("parrillero_saved_menus");
@@ -552,20 +610,20 @@ export default function Home() {
   function handleAnimalChange(selectedAnimal: Animal) {
     setAnimal(selectedAnimal);
     setCut("");
-    setDoneness(selectedAnimal === "Cerdo" ? "jugoso seguro" : "poco hecho");
+    setDoneness(getInitialDoneness(selectedAnimal));
     setBlocks({});
     setCheckedItems({});
     setCookingStep("cut");
   }
 
-  function handleCutChange(selectedCutName: string) {
-    setCut(selectedCutName);
+  function handleCutChange(selectedCutId: string) {
+    setCut(selectedCutId);
     setBlocks({});
     setCheckedItems({});
     setCookingStep("details");
   }
 
-  async function callAI(message: string, createCookSteps = false) {
+  async function callAI(message: string, createCookSteps = false, visualContext?: CookingVisualContext) {
     setLoading(true);
     setBlocks({});
     setCheckedItems({});
@@ -584,7 +642,8 @@ export default function Home() {
     setBlocks(parsed);
 
     if (createCookSteps) {
-      const steps = buildCookStepsFromPlan(parsed);
+      const baseSteps = buildCookStepsFromPlan(parsed);
+      const steps = visualContext ? withCookingStepImages(baseSteps, visualContext) : baseSteps;
       setCookSteps(steps);
       setCurrentStep(0);
       setTimeLeft(steps[0].duration);
@@ -595,6 +654,7 @@ export default function Home() {
   }
 
   async function generateCookingPlan() {
+    const visualContext = getCookingVisualContext(animal, cut);
     const input = {
       animal,
       cut,
@@ -609,11 +669,12 @@ export default function Home() {
     const localSteps = generateLocalCookingSteps(input);
 
     if (localPlan && localSteps) {
+      const visualSteps = withCookingStepImages(localSteps, visualContext);
       setBlocks(localPlan);
       setCheckedItems({});
-      setCookSteps(localSteps);
+      setCookSteps(visualSteps);
       setCurrentStep(0);
-      setTimeLeft(localSteps[0].duration);
+      setTimeLeft(visualSteps[0].duration);
       setTimerRunning(false);
       return;
     }
@@ -622,7 +683,7 @@ export default function Home() {
       `
 Language: ${engineLang(lang) === "es" ? "Spanish" : "English"}.
 Animal: ${animal}
-Cut: ${cut}
+Cut: ${selectedCut?.name ?? cut}
 Weight: ${weight} kg
 Thickness: ${showThickness ? thickness : "not relevant"} cm
 Doneness: ${doneness}
@@ -635,7 +696,8 @@ TEMPERATURA
 PASOS
 ERROR
 `,
-      true
+      true,
+      visualContext
     );
   }
 
@@ -734,6 +796,7 @@ ERROR
             generateCookingPlan={generateCookingPlan}
             handleAnimalChange={handleAnimalChange}
             handleCutChange={handleCutChange}
+            lang={lang}
             loading={loading}
             selectedCut={selectedCut}
             setCookingStep={setCookingStep}
@@ -967,6 +1030,7 @@ function CookingWizard({
   generateCookingPlan,
   handleAnimalChange,
   handleCutChange,
+  lang,
   loading,
   selectedCut,
   setCheckedItems,
@@ -986,7 +1050,7 @@ function CookingWizard({
   blocks: Blocks;
   checkedItems: Record<string, boolean>;
   cookingStep: CookingWizardStep;
-  currentDonenessOptions: string[];
+  currentDonenessOptions: SelectOption[];
   cut: string;
   cuts: CutItem[];
   doneness: string;
@@ -994,6 +1058,7 @@ function CookingWizard({
   generateCookingPlan: () => Promise<void>;
   handleAnimalChange: (animal: Animal) => void;
   handleCutChange: (cut: string) => void;
+  lang: Lang;
   loading: boolean;
   selectedCut?: CutItem;
   setCheckedItems: (value: Record<string, boolean>) => void;
@@ -1021,6 +1086,7 @@ function CookingWizard({
       {cookingStep === "animal" && (
         <CookingAnimalStep
           animal={animal}
+          lang={lang}
           onSelectAnimal={handleAnimalChange}
           t={t}
         />
@@ -1091,28 +1157,44 @@ function CookingWizardHeader({
         : "Ajusta peso, punto y equipo.";
 
   return (
-    <Panel className="sticky top-2 z-30 overflow-hidden p-3 shadow-2xl shadow-black/30 sm:static sm:p-6" tone="hero">
-      <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-orange-500/15 blur-3xl" />
-      <div className="relative z-10 flex flex-col gap-2.5 sm:gap-5 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <Badge className="text-[10px] uppercase tracking-[0.16em] sm:text-xs sm:tracking-[0.2em]">Paso guiado</Badge>
-          <h1 className="mt-2 text-xl font-black tracking-tight text-white sm:mt-4 sm:text-4xl">
-            {title}
-          </h1>
-          <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-300 sm:mt-3 sm:text-sm sm:leading-6">
-            {subtitle}
-          </p>
-          {cookingStep !== "animal" && (
-            <div className="mt-2 flex flex-wrap gap-2 sm:mt-4">
-              <Badge>{animal}</Badge>
-              {selectedCut && <Badge tone="glass">{selectedCut.name}</Badge>}
+    <>
+      <div className="sticky top-2 z-30 mb-2 rounded-2xl border border-white/10 bg-slate-950/90 p-3 shadow-xl shadow-black/30 backdrop-blur sm:hidden">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-black tracking-tight text-white">Cocción</h1>
+              <Badge className="px-2 py-0.5 text-[10px]">Paso guiado</Badge>
             </div>
-          )}
+            <p className="mt-0.5 text-xs text-slate-400">Animal → Corte → Detalles</p>
+          </div>
+          {cookingStep !== "animal" && <Badge className="shrink-0" tone="glass">{animal}</Badge>}
         </div>
-
         <CookingStepIndicator currentStep={cookingStep} />
       </div>
-    </Panel>
+
+      <Panel className="relative hidden overflow-hidden p-6 sm:block" tone="hero">
+        <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-orange-500/15 blur-3xl" />
+        <div className="relative z-10 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <Badge className="text-xs uppercase tracking-[0.2em]">Paso guiado</Badge>
+            <h1 className="mt-4 text-4xl font-black tracking-tight text-white">
+              {title}
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
+              {subtitle}
+            </p>
+            {cookingStep !== "animal" && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Badge>{animal}</Badge>
+                {selectedCut && <Badge tone="glass">{selectedCut.name}</Badge>}
+              </div>
+            )}
+          </div>
+
+          <CookingStepIndicator currentStep={cookingStep} />
+        </div>
+      </Panel>
+    </>
   );
 }
 
@@ -1125,7 +1207,7 @@ function CookingStepIndicator({ currentStep }: { currentStep: CookingWizardStep 
   const currentIndex = steps.findIndex((step) => step.id === currentStep);
 
   return (
-    <div className="grid min-w-full grid-cols-3 gap-1 rounded-2xl border border-white/10 bg-black/30 p-1 shadow-inner shadow-black/20 sm:min-w-[360px] sm:gap-2 sm:p-2">
+    <div className="grid min-w-full grid-cols-3 gap-1 rounded-xl border border-white/10 bg-black/30 p-1 shadow-inner shadow-black/20 sm:min-w-[360px] sm:rounded-2xl sm:gap-2 sm:p-2">
       {steps.map((step, index) => {
         const isActive = step.id === currentStep;
         const isComplete = index < currentIndex;
@@ -1135,14 +1217,14 @@ function CookingStepIndicator({ currentStep }: { currentStep: CookingWizardStep 
             key={step.id}
             className={
               isActive
-                ? "rounded-xl bg-orange-500 px-2 py-1 text-center text-black shadow-lg shadow-orange-500/20 transition-all duration-200 active:scale-[0.98] sm:px-3 sm:py-2"
+                ? "rounded-lg bg-orange-500 px-2 py-1 text-center text-black shadow-lg shadow-orange-500/20 transition-all duration-200 active:scale-[0.98] sm:rounded-xl sm:px-3 sm:py-2"
                 : isComplete
-                  ? "rounded-xl border border-orange-500/20 bg-orange-500/10 px-2 py-1 text-center text-orange-200 transition-all duration-200 sm:px-3 sm:py-2"
-                  : "rounded-xl px-2 py-1 text-center text-slate-500 transition-all duration-200 sm:px-3 sm:py-2"
+                  ? "rounded-lg border border-orange-500/20 bg-orange-500/10 px-2 py-1 text-center text-orange-200 transition-all duration-200 sm:rounded-xl sm:px-3 sm:py-2"
+                  : "rounded-lg px-2 py-1 text-center text-slate-500 transition-all duration-200 sm:rounded-xl sm:px-3 sm:py-2"
             }
           >
-            <p className="text-[10px] font-black sm:text-xs">{step.number}</p>
-            <p className="mt-0.5 text-[10px] font-semibold sm:text-xs">{step.label}</p>
+            <p className="hidden text-[10px] font-black sm:block sm:text-xs">{step.number}</p>
+            <p className="text-[11px] font-semibold leading-4 sm:mt-0.5 sm:text-xs">{step.label}</p>
           </div>
         );
       })}
@@ -1152,24 +1234,25 @@ function CookingStepIndicator({ currentStep }: { currentStep: CookingWizardStep 
 
 function CookingAnimalStep({
   animal,
+  lang,
   onSelectAnimal,
   t,
 }: {
   animal: Animal;
+  lang: Lang;
   onSelectAnimal: (animal: Animal) => void;
   t: typeof texts.es;
 }) {
   return (
     <Section className="space-y-3 sm:space-y-5" eyebrow="Paso 1" title={t.chooseAnimal}>
       <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-5">
-        {(Object.keys(animalData) as Animal[]).map((item) => (
+        {animalOptions.map((item) => (
           <ImageCard
             key={item}
             active={animal === item}
             title={item}
-            subtitle={animalData[item].cuts.slice(0, 2).map((cutItem) => cutItem.name).join(", ")}
-            emoji={animalData[item].icon}
-            image={animalData[item].image}
+            subtitle={getAnimalPreview(item, lang)}
+            image={animalMedia[item].image}
             badge={hasLocalEngine(item) ? t.localEngine : t.aiFallback}
             selectedLabel={t.selected}
             onClick={() => onSelectAnimal(item)}
@@ -1208,12 +1291,12 @@ function CookingCutStep({
       <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
         {cuts.map((item) => (
           <CutCard
-            key={item.name}
-            active={cut === item.name}
+            key={item.id}
+            active={cut === item.id}
             cut={item}
             badge={hasLocalEngine(animal) ? t.localEngine : t.aiFallback}
             activeLabel={t.active}
-            onClick={() => onSelectCut(item.name)}
+            onClick={() => onSelectCut(item.id)}
           />
         ))}
       </div>
@@ -1247,7 +1330,7 @@ function CookingDetailsStep({
   animal: Animal;
   blocks: Blocks;
   checkedItems: Record<string, boolean>;
-  currentDonenessOptions: string[];
+  currentDonenessOptions: SelectOption[];
   doneness: string;
   equipment: string;
   generateCookingPlan: () => Promise<void>;
@@ -1289,7 +1372,9 @@ function CookingDetailsStep({
           <Input label={t.thickness} value={thickness} onChange={setThickness} placeholder="Ej: 5" />
         )}
 
-        <Select label={t.doneness} value={doneness} onChange={setDoneness} options={currentDonenessOptions} />
+        {currentDonenessOptions.length > 0 && (
+          <Select label={t.doneness} value={doneness} onChange={setDoneness} options={currentDonenessOptions} />
+        )}
         <Select label={t.equipment} value={equipment} onChange={setEquipment} options={equipmentOptions} />
 
         <PrimaryButton onClick={generateCookingPlan} loading={loading} text={t.generatePlan} loadingText={t.generating} />
@@ -1603,14 +1688,13 @@ function SelectionSections({
       <Section className="mb-8" eyebrow={lang === "es" ? "Paso 1" : "Step 1"} title={t.chooseAnimal}>
 
         <Grid variant="home">
-          {(Object.keys(animalData) as Animal[]).map((item) => (
+          {animalOptions.map((item) => (
             <ImageCard
               key={item}
               active={animal === item}
               title={item}
-              subtitle={animalData[item].cuts.slice(0, 2).map((cutItem) => cutItem.name).join(", ")}
-              emoji={animalData[item].icon}
-              image={animalData[item].image}
+              subtitle={getAnimalPreview(item, lang)}
+              image={animalMedia[item].image}
               badge={hasLocalEngine(item) ? t.localEngine : t.aiFallback}
               selectedLabel={t.selected}
               onClick={() => handleAnimalChange(item)}
@@ -1624,12 +1708,12 @@ function SelectionSections({
         <Grid className="sm:grid-cols-2 lg:grid-cols-4">
           {cuts.map((item) => (
             <CutCard
-              key={item.name}
-              active={cut === item.name}
+              key={item.id}
+              active={cut === item.id}
               cut={item}
               badge={hasLocalEngine(animal) ? t.localEngine : t.aiFallback}
               activeLabel={t.active}
-              onClick={() => handleCutChange(item.name)}
+              onClick={() => handleCutChange(item.id)}
             />
           ))}
         </Grid>
@@ -1732,20 +1816,25 @@ function CookingMode({
   );
 }
 
-function StepImage({ image, title }: { image?: string; title: string }) {
-  if (!image) return null;
+function handleCookingImageError(event: SyntheticEvent<HTMLImageElement>) {
+  const image = event.currentTarget;
+  image.onerror = null;
+  image.src = image.src.endsWith(DEFAULT_COOKING_STEP_IMAGE) ? "/visuals/preheat.jpg" : DEFAULT_COOKING_STEP_IMAGE;
+}
 
+function StepImage({ image, title }: { image?: string; title: string }) {
   return (
-    <div className="relative h-52 overflow-hidden">
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{
-          backgroundImage: `linear-gradient(to top, rgba(2,6,23,0.95), rgba(2,6,23,0.25)), url(${image})`,
-        }}
+    <div className="relative h-56 overflow-hidden sm:h-64">
+      <img
+        src={image ?? DEFAULT_COOKING_STEP_IMAGE}
+        alt={title}
+        loading="lazy"
+        sizes="(min-width: 768px) 420px, 100vw"
+        onError={handleCookingImageError}
+        className="h-full w-full object-cover"
       />
-      <div className="absolute bottom-3 left-3 rounded bg-black/60 px-3 py-1 text-xs font-semibold text-white">
-        {getStepLabel(title)}
-      </div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(251,146,60,0.28),transparent_34%),linear-gradient(to_top,rgba(2,6,23,0.84)_0%,rgba(2,6,23,0.34)_48%,rgba(255,255,255,0.08)_100%)]" />
+      <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-orange-300 via-orange-500 to-amber-300" />
     </div>
   );
 }
@@ -1765,31 +1854,34 @@ function CookingStepPreview({
           : "overflow-hidden rounded-2xl border border-white/10 bg-slate-950/80"
       }
     >
-      {step.image && (
-        <div className="relative h-24 overflow-hidden">
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{
-              backgroundImage: `linear-gradient(to top, rgba(2,6,23,0.9), rgba(2,6,23,0.25)), url(${step.image})`,
-            }}
-          />
-          <div className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-1 text-[10px] font-semibold text-white">
-            {getStepLabel(step.title)}
-          </div>
-        </div>
-      )}
+      <div className="relative h-24 overflow-hidden">
+        <img
+          src={step.image ?? DEFAULT_COOKING_STEP_IMAGE}
+          alt={step.title}
+          loading="lazy"
+          sizes="(min-width: 768px) 50vw, 100vw"
+          onError={handleCookingImageError}
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/35 to-white/10" />
+      </div>
 
       <div className="p-4">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="font-bold">{step.title}</h3>
-          <span className="text-sm text-slate-400">{formatTime(step.duration)}</span>
+          <div>
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-orange-300/80">
+              {getStepLabel(step.title)}
+            </p>
+            <h3 className="font-bold">{step.title}</h3>
+          </div>
+          <span className="shrink-0 text-sm text-slate-400">{formatTime(step.duration)}</span>
         </div>
-        <p className="mt-2 text-sm text-slate-400">{step.description}</p>
+
+        <p className="mt-1 text-sm text-slate-400">{step.description}</p>
       </div>
     </div>
   );
 }
-
 function ResultCards({
   blocks,
   loading,
@@ -1877,7 +1969,6 @@ function ImageCard({
   active,
   title,
   subtitle,
-  emoji,
   image,
   badge,
   selectedLabel,
@@ -1886,7 +1977,6 @@ function ImageCard({
   active: boolean;
   title: string;
   subtitle: string;
-  emoji: string;
   image: string;
   badge?: string;
   selectedLabel: string;
@@ -1897,28 +1987,30 @@ function ImageCard({
       onClick={onClick}
       className={
         active
-          ? "group relative overflow-hidden rounded-3xl border border-orange-500 bg-orange-500/20 text-left shadow-[0_0_35px_rgba(249,115,22,0.25)] ring-1 ring-orange-300/20 transition-all duration-200 active:scale-[0.98]"
-          : "group relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-900 text-left transition-all duration-200 hover:-translate-y-1 hover:border-orange-500/70 hover:shadow-[0_0_30px_rgba(249,115,22,0.15)] active:scale-[0.98]"
+          ? "group relative overflow-hidden rounded-[2rem] border border-orange-400/80 bg-slate-950 text-left shadow-[0_24px_70px_rgba(249,115,22,0.24)] ring-1 ring-orange-200/25 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/70 active:scale-[0.98]"
+          : "group relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 text-left shadow-[0_18px_50px_rgba(2,6,23,0.35)] transition-all duration-300 hover:-translate-y-1 hover:border-orange-400/60 hover:shadow-[0_24px_70px_rgba(249,115,22,0.16)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/60 active:scale-[0.98]"
       }
     >
-      <div className="relative h-28 overflow-hidden sm:h-40">
+      <div className="relative min-h-48 overflow-hidden sm:min-h-60">
         <div
-          className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-110"
+          className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-105"
           style={{
-            backgroundImage: `linear-gradient(to top, rgba(2,6,23,0.95), rgba(2,6,23,0.2)), url(${image})`,
+            backgroundImage: `url(${image})`,
           }}
         />
 
-        <div className="absolute left-3 top-3 rounded-2xl bg-black/55 px-3 py-2 text-2xl backdrop-blur sm:left-4 sm:top-4 sm:text-3xl">{emoji}</div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(251,146,60,0.36),transparent_34%),linear-gradient(to_top,rgba(2,6,23,0.98)_0%,rgba(2,6,23,0.68)_36%,rgba(2,6,23,0.14)_72%,rgba(255,255,255,0.08)_100%)]" />
+        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/10 to-transparent opacity-70" />
+        <div className={active ? "absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-orange-300 via-orange-500 to-amber-300" : "absolute inset-x-0 bottom-0 h-px bg-white/10"} />
 
-        {badge && <Badge className="absolute right-3 top-3 text-[11px]" tone="solidAccent">{badge}</Badge>}
+        {badge && <Badge className="absolute right-3 top-3 text-[11px] shadow-lg shadow-black/20 backdrop-blur-md" tone="glass">{badge}</Badge>}
 
-        {active && <Badge className="absolute bottom-3 right-3 font-black shadow-lg shadow-black/20" tone="selected">✓ {selectedLabel}</Badge>}
-      </div>
+        {active && <Badge className="absolute bottom-4 right-4 font-black shadow-lg shadow-black/20" tone="selected">{selectedLabel}</Badge>}
 
-      <div className="p-3 sm:p-4">
-        <h3 className="text-base font-black sm:text-lg">{title}</h3>
-        <p className="mt-1 line-clamp-1 text-xs text-slate-400 sm:line-clamp-2">{subtitle}</p>
+        <div className="absolute inset-x-0 bottom-0 p-4 pr-24 sm:p-5 sm:pr-28">
+          <h3 className="text-xl font-black tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)] sm:text-2xl">{title}</h3>
+          <p className="mt-2 line-clamp-2 max-w-[18rem] text-xs font-medium leading-5 text-slate-200/90 sm:text-sm">{subtitle}</p>
+        </div>
       </div>
     </button>
   );
@@ -1942,28 +2034,29 @@ function CutCard({
       onClick={onClick}
       className={
         active
-          ? "group relative overflow-hidden rounded-3xl border border-orange-500 bg-orange-500/20 text-left shadow-[0_0_35px_rgba(249,115,22,0.25)] ring-1 ring-orange-300/20 transition-all duration-200 active:scale-[0.98]"
-          : "group relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-900 text-left transition-all duration-200 hover:-translate-y-1 hover:border-orange-500/70 hover:shadow-[0_0_30px_rgba(249,115,22,0.15)] active:scale-[0.98]"
+          ? "group relative overflow-hidden rounded-[2rem] border border-orange-400/80 bg-slate-950 text-left shadow-[0_24px_70px_rgba(249,115,22,0.24)] ring-1 ring-orange-200/25 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/70 active:scale-[0.98]"
+          : "group relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 text-left shadow-[0_18px_50px_rgba(2,6,23,0.35)] transition-all duration-300 hover:-translate-y-1 hover:border-orange-400/60 hover:shadow-[0_24px_70px_rgba(249,115,22,0.16)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/60 active:scale-[0.98]"
       }
     >
-      <div className="relative h-32 overflow-hidden sm:h-44">
+      <div className="relative min-h-60 overflow-hidden sm:min-h-72">
         <div
-          className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-110"
+          className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-105"
           style={{
-            backgroundImage: `linear-gradient(to top, rgba(2,6,23,0.96), rgba(2,6,23,0.1)), url(${cut.image})`,
+            backgroundImage: `url(${cut.image})`,
           }}
         />
 
-        {badge && <Badge className="absolute left-3 top-3 text-[11px]" tone="glass">{badge}</Badge>}
-        {active && <Badge className="absolute right-3 top-3 text-[11px] font-black shadow-lg shadow-black/20" tone="solidAccent">✓ {activeLabel}</Badge>}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(251,146,60,0.32),transparent_34%),linear-gradient(to_top,rgba(2,6,23,0.99)_0%,rgba(2,6,23,0.72)_40%,rgba(2,6,23,0.18)_74%,rgba(255,255,255,0.08)_100%)]" />
+        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/10 to-transparent opacity-70" />
+        <div className={active ? "absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-orange-300 via-orange-500 to-amber-300" : "absolute inset-x-0 bottom-0 h-px bg-white/10"} />
 
-        <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
-          <h3 className="text-lg font-black text-white sm:text-xl">{cut.name}</h3>
+        {badge && <Badge className="absolute left-3 top-3 text-[11px] shadow-lg shadow-black/20 backdrop-blur-md" tone="glass">{badge}</Badge>}
+        {active && <Badge className="absolute right-3 top-3 text-[11px] font-black shadow-lg shadow-black/20" tone="solidAccent">{activeLabel}</Badge>}
+
+        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
+          <h3 className="text-xl font-black tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)] sm:text-2xl">{cut.name}</h3>
+          <p className="mt-2 line-clamp-3 max-w-[24rem] text-xs leading-5 text-slate-200/90 sm:text-sm">{cut.description}</p>
         </div>
-      </div>
-
-      <div className="p-3 sm:p-4">
-        <p className="line-clamp-2 text-xs leading-5 text-slate-400 sm:line-clamp-3 sm:text-sm">{cut.description}</p>
       </div>
     </button>
   );
@@ -2047,7 +2140,7 @@ function Input({ label, value, onChange, placeholder }: { label: string; value: 
   );
 }
 
-function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: string[] }) {
+function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: SelectOption[] }) {
   return (
     <div>
       <label className={ds.input.label}>{label}</label>
@@ -2057,7 +2150,9 @@ function Select({ label, value, onChange, options }: { label: string; value: str
         className={ds.input.field}
       >
         {options.map((item) => (
-          <option key={item}>{item}</option>
+          <option key={typeof item === "string" ? item : item.value} value={typeof item === "string" ? item : item.value}>
+            {typeof item === "string" ? item : item.label}
+          </option>
         ))}
       </select>
     </div>
