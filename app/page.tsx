@@ -708,7 +708,7 @@ ERROR
   }
 
   return (
-    <main className={ds.shell.page}>
+    <main className={`${ds.shell.page} pb-36 md:pb-28`}>
       <VersionSwitcher />
 
       <div className={ds.shell.container}>
@@ -1091,7 +1091,7 @@ function CookingWizardHeader({
         : "Ajusta peso, punto y equipo.";
 
   return (
-    <Panel className="relative overflow-hidden p-3 sm:p-6" tone="hero">
+    <Panel className="sticky top-2 z-30 overflow-hidden p-3 shadow-2xl shadow-black/30 sm:static sm:p-6" tone="hero">
       <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-orange-500/15 blur-3xl" />
       <div className="relative z-10 flex flex-col gap-2.5 sm:gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
@@ -1125,7 +1125,7 @@ function CookingStepIndicator({ currentStep }: { currentStep: CookingWizardStep 
   const currentIndex = steps.findIndex((step) => step.id === currentStep);
 
   return (
-    <div className="grid min-w-full grid-cols-3 gap-1 rounded-2xl border border-white/10 bg-black/20 p-1 sm:min-w-[360px] sm:gap-2 sm:p-2">
+    <div className="grid min-w-full grid-cols-3 gap-1 rounded-2xl border border-white/10 bg-black/30 p-1 shadow-inner shadow-black/20 sm:min-w-[360px] sm:gap-2 sm:p-2">
       {steps.map((step, index) => {
         const isActive = step.id === currentStep;
         const isComplete = index < currentIndex;
@@ -1135,10 +1135,10 @@ function CookingStepIndicator({ currentStep }: { currentStep: CookingWizardStep 
             key={step.id}
             className={
               isActive
-                ? "rounded-xl bg-orange-500 px-2 py-1 text-center text-black shadow-lg shadow-orange-500/20 sm:px-3 sm:py-2"
+                ? "rounded-xl bg-orange-500 px-2 py-1 text-center text-black shadow-lg shadow-orange-500/20 transition-all duration-200 active:scale-[0.98] sm:px-3 sm:py-2"
                 : isComplete
-                  ? "rounded-xl border border-orange-500/20 bg-orange-500/10 px-2 py-1 text-center text-orange-200 sm:px-3 sm:py-2"
-                  : "rounded-xl px-2 py-1 text-center text-slate-500 sm:px-3 sm:py-2"
+                  ? "rounded-xl border border-orange-500/20 bg-orange-500/10 px-2 py-1 text-center text-orange-200 transition-all duration-200 sm:px-3 sm:py-2"
+                  : "rounded-xl px-2 py-1 text-center text-slate-500 transition-all duration-200 sm:px-3 sm:py-2"
             }
           >
             <p className="text-[10px] font-black sm:text-xs">{step.number}</p>
@@ -1202,7 +1202,7 @@ function CookingCutStep({
           <p className="text-sm text-orange-300">{t.selected}</p>
           <h2 className="font-bold text-white">{animal}</h2>
         </div>
-        <Button onClick={onBack} variant="secondary">← {t.reset}</Button>
+        <Button className="rounded-full px-3 py-2 text-xs" onClick={onBack} variant="secondary">← {t.reset}</Button>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
@@ -1274,7 +1274,7 @@ function CookingDetailsStep({
             <p className={ds.text.eyebrow}>Paso 3</p>
             <h2 className="mt-1 text-lg font-bold text-white sm:text-xl">{t.configurePlan}</h2>
           </div>
-          <Button onClick={onBack} variant="secondary">← {t.chooseCut}</Button>
+          <Button className="rounded-full px-3 py-2 text-xs" onClick={onBack} variant="secondary">← {t.chooseCut}</Button>
         </div>
 
         <div className={`${ds.panel.highlight} p-3 sm:p-4`}>
@@ -1569,7 +1569,7 @@ function BottomNavigation({
 }) {
   return (
     <nav className={`${ds.nav.bottom} md:hidden`}>
-      <div className={ds.layout.navGrid}>
+      <div className={`${ds.layout.navGrid} rounded-3xl bg-slate-950/70 p-1`}>
         <Tab active={mode === "inicio"} label={t.start} emoji="🏠" onClick={() => onModeChange("inicio")} />
         <Tab active={mode === "coccion"} label={t.cooking} emoji="🥩" onClick={() => onModeChange("coccion")} />
         <Tab active={mode === "menu"} label={t.menu} emoji="🍽️" onClick={() => onModeChange("menu")} />
@@ -1897,8 +1897,8 @@ function ImageCard({
       onClick={onClick}
       className={
         active
-          ? "group relative overflow-hidden rounded-3xl border border-orange-500 bg-orange-500/20 text-left shadow-[0_0_35px_rgba(249,115,22,0.25)]"
-          : "group relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-900 text-left transition hover:-translate-y-1 hover:border-orange-500/70 hover:shadow-[0_0_30px_rgba(249,115,22,0.15)]"
+          ? "group relative overflow-hidden rounded-3xl border border-orange-500 bg-orange-500/20 text-left shadow-[0_0_35px_rgba(249,115,22,0.25)] ring-1 ring-orange-300/20 transition-all duration-200 active:scale-[0.98]"
+          : "group relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-900 text-left transition-all duration-200 hover:-translate-y-1 hover:border-orange-500/70 hover:shadow-[0_0_30px_rgba(249,115,22,0.15)] active:scale-[0.98]"
       }
     >
       <div className="relative h-28 overflow-hidden sm:h-40">
@@ -1913,7 +1913,7 @@ function ImageCard({
 
         {badge && <Badge className="absolute right-3 top-3 text-[11px]" tone="solidAccent">{badge}</Badge>}
 
-        {active && <Badge className="absolute bottom-3 right-3 font-black" tone="selected">✓ {selectedLabel}</Badge>}
+        {active && <Badge className="absolute bottom-3 right-3 font-black shadow-lg shadow-black/20" tone="selected">✓ {selectedLabel}</Badge>}
       </div>
 
       <div className="p-3 sm:p-4">
@@ -1942,8 +1942,8 @@ function CutCard({
       onClick={onClick}
       className={
         active
-          ? "group relative overflow-hidden rounded-3xl border border-orange-500 bg-orange-500/20 text-left shadow-[0_0_35px_rgba(249,115,22,0.25)]"
-          : "group relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-900 text-left transition hover:-translate-y-1 hover:border-orange-500/70 hover:shadow-[0_0_30px_rgba(249,115,22,0.15)]"
+          ? "group relative overflow-hidden rounded-3xl border border-orange-500 bg-orange-500/20 text-left shadow-[0_0_35px_rgba(249,115,22,0.25)] ring-1 ring-orange-300/20 transition-all duration-200 active:scale-[0.98]"
+          : "group relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-900 text-left transition-all duration-200 hover:-translate-y-1 hover:border-orange-500/70 hover:shadow-[0_0_30px_rgba(249,115,22,0.15)] active:scale-[0.98]"
       }
     >
       <div className="relative h-32 overflow-hidden sm:h-44">
@@ -1955,7 +1955,7 @@ function CutCard({
         />
 
         {badge && <Badge className="absolute left-3 top-3 text-[11px]" tone="glass">{badge}</Badge>}
-        {active && <Badge className="absolute right-3 top-3 text-[11px] font-black" tone="solidAccent">✓ {activeLabel}</Badge>}
+        {active && <Badge className="absolute right-3 top-3 text-[11px] font-black shadow-lg shadow-black/20" tone="solidAccent">✓ {activeLabel}</Badge>}
 
         <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
           <h3 className="text-lg font-black text-white sm:text-xl">{cut.name}</h3>
@@ -1989,8 +1989,8 @@ function HomeCard({
       onClick={onClick}
       className={
         active
-          ? `${ds.panel.homeCard} border-orange-500/50 bg-gradient-to-br from-orange-500/15 to-slate-900/80 p-4 shadow-orange-500/10 sm:p-6`
-          : `${ds.panel.homeCard} p-4 sm:p-6`
+          ? `${ds.panel.homeCard} border-orange-500/50 bg-gradient-to-br from-orange-500/15 to-slate-900/80 p-4 shadow-orange-500/10 ring-1 ring-orange-300/15 active:scale-[0.98] sm:p-6`
+          : `${ds.panel.homeCard} p-4 active:scale-[0.98] sm:p-6`
       }
     >
       <div className="flex items-start justify-between gap-3">
@@ -2013,7 +2013,11 @@ function Tab({ active, label, emoji, onClick }: { active: boolean; label: string
   return (
     <button
       onClick={onClick}
-      className={active ? ds.button.tabActive : ds.button.tabIdle}
+      className={
+        active
+          ? `${ds.button.tabActive} ring-1 ring-orange-200/30`
+          : `${ds.button.tabIdle} opacity-70 hover:opacity-100`
+      }
     >
       <div>{emoji}</div>
       <div>{label}</div>
