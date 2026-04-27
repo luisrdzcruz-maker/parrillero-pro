@@ -16,7 +16,7 @@ type ResultCardProps = {
 };
 
 const cardClassName =
-  "group transition-all duration-200 hover:scale-[1.01] hover:border-orange-500/30 hover:shadow-xl hover:shadow-orange-500/10 active:scale-[0.99]";
+  "group transition-all duration-300 hover:-translate-y-0.5 hover:border-orange-500/30 hover:shadow-xl hover:shadow-orange-500/10 active:scale-[0.99]";
 
 function ResultCardHeader({
   accent,
@@ -32,19 +32,23 @@ function ResultCardHeader({
   return (
     <div className="flex items-start justify-between gap-4">
       <div className="flex min-w-0 items-start gap-3">
-        <div className={ds.media.iconBox}>
+        <div className={`${ds.media.iconBox} h-11 w-11 rounded-2xl bg-white/[0.06] text-lg ring-1 ring-inset ring-white/[0.04]`}>
           {icon}
         </div>
+
         <div className="min-w-0">
-          <h3 className="truncate text-sm font-semibold tracking-wide text-white">
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300/90">
+            Plan block
+          </p>
+          <h3 className="mt-1 truncate text-base font-black tracking-tight text-white">
             {title}
           </h3>
-          <div className={`mt-2 h-0.5 w-10 rounded-full ${accent}`} />
+          <div className={`mt-2 h-0.5 w-12 rounded-full ${accent}`} />
         </div>
       </div>
 
-      <Badge className="shrink-0 text-[11px] font-medium" tone="glass">
-        {lineCount}
+      <Badge className="shrink-0 border-white/10 bg-black/35 text-[11px] font-bold" tone="glass">
+        {lineCount} {lineCount === 1 ? "línea" : "líneas"}
       </Badge>
     </div>
   );
@@ -53,9 +57,11 @@ function ResultCardHeader({
 function ResultCardContent({ lines }: { lines: string[] }) {
   return (
     <div className="mt-5 border-t border-white/5 pt-4">
-      <div className="space-y-2 rounded-xl bg-black/10 p-3 text-sm leading-relaxed text-slate-300 ring-1 ring-inset ring-white/[0.03]">
+      <div className="space-y-2.5 rounded-2xl border border-white/[0.06] bg-black/15 p-3.5 text-sm leading-relaxed text-slate-300 shadow-inner shadow-black/10 ring-1 ring-inset ring-white/[0.03]">
         {lines.map((line, index) => (
-          <p key={index}>{line}</p>
+          <p key={`${line}-${index}`} className="whitespace-pre-wrap">
+            {line}
+          </p>
         ))}
       </div>
     </div>
@@ -63,7 +69,8 @@ function ResultCardContent({ lines }: { lines: string[] }) {
 }
 
 function isSetupCard(title: string) {
-  return title.toUpperCase().includes("SETUP");
+  const normalizedTitle = title.toUpperCase();
+  return normalizedTitle.includes("SETUP") || normalizedTitle.includes("CONFIGURACION") || normalizedTitle.includes("CONFIGURACIÓN");
 }
 
 function SetupVisualToggle({
@@ -85,14 +92,26 @@ function SetupVisualToggle({
   }
 
   return (
-    <div className="mt-4">
-      <Button
-        className="rounded-full px-3 py-2 text-xs"
-        onClick={() => setOpen((current) => !current)}
-        variant="outlineAccent"
-      >
-        {open ? "Ocultar setup" : "Ver setup"}
-      </Button>
+    <div className="mt-4 rounded-2xl border border-orange-400/15 bg-orange-500/[0.04] p-3 ring-1 ring-inset ring-orange-300/[0.03]">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-300">
+            Setup visual
+          </p>
+          <p className="mt-1 line-clamp-1 text-sm text-slate-400">
+            Zonas de calor y flujo recomendado
+          </p>
+        </div>
+
+        <Button
+          aria-expanded={open}
+          className="shrink-0 rounded-full px-3 py-2 text-xs"
+          onClick={() => setOpen((current) => !current)}
+          variant="outlineAccent"
+        >
+          {open ? "Ocultar" : "Ver setup"}
+        </Button>
+      </div>
 
       <div
         className={
@@ -109,7 +128,7 @@ function SetupVisualToggle({
                 : "mt-4 translate-y-2 transition-transform duration-300 ease-out"
             }
           >
-            <div className="relative overflow-hidden rounded-2xl border border-dashed border-orange-400/30 bg-slate-950 shadow-2xl shadow-black/20">
+            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950 shadow-2xl shadow-black/25">
               {!imageFailed && (
                 <img
                   src={setupImage}
@@ -119,24 +138,33 @@ function SetupVisualToggle({
                   onError={handleImageError}
                 />
               )}
+
               {imageFailed && (
-                <div className="flex h-44 w-full items-center justify-center bg-orange-500/10 p-5 text-center sm:h-56">
+                <div className="flex h-44 w-full items-center justify-center border border-dashed border-orange-400/30 bg-[radial-gradient(circle_at_center,rgba(249,115,22,0.18),transparent_48%)] p-5 text-center sm:h-56">
                   <div>
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-300">
-                      Setup visual
+                      Imagen pendiente
                     </p>
                     <p className="mt-2 text-sm font-semibold text-white">
-                      Imagen del setup próximamente
+                      Setup visual listo para conectar asset WebP
+                    </p>
+                    <p className="mx-auto mt-2 max-w-xs text-xs leading-5 text-slate-400">
+                      El plan sigue funcionando con la guía textual mientras se añade la imagen final.
                     </p>
                   </div>
                 </div>
               )}
+
               {!imageFailed && (
                 <>
-                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(251,146,60,0.26),transparent_34%),linear-gradient(to_top,rgba(2,6,23,0.86)_0%,rgba(2,6,23,0.32)_54%,rgba(255,255,255,0.08)_100%)]" />
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(251,146,60,0.28),transparent_34%),linear-gradient(to_top,rgba(2,6,23,0.9)_0%,rgba(2,6,23,0.38)_54%,rgba(255,255,255,0.08)_100%)]" />
                   <div className="pointer-events-none absolute bottom-0 left-0 right-0 p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-300">Setup visual</p>
-                    <p className="mt-1 text-sm font-semibold text-white">Zonas de calor para este plan</p>
+                    <Badge className="border-orange-400/30 bg-black/45 text-orange-200" tone="glass">
+                      Setup del fuego
+                    </Badge>
+                    <p className="mt-2 text-sm font-semibold text-white">
+                      Visualiza zonas antes de cocinar
+                    </p>
                   </div>
                 </>
               )}
@@ -162,6 +190,7 @@ export default function ResultCard({ title, content }: ResultCardProps) {
       <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent blur-xl" />
       </div>
+      <div className="pointer-events-none absolute -right-16 -top-16 h-32 w-32 rounded-full bg-orange-500/0 blur-3xl transition group-hover:bg-orange-500/10" />
 
       <div className="relative z-10 p-4 sm:p-5">
         <ResultCardHeader

@@ -32,15 +32,15 @@ export default function ResultHero({
   };
 }) {
   return (
-    <Panel as="section" className="relative mb-3 p-3 sm:mb-6 sm:p-6" tone="hero">
+    <Panel as="section" className="relative mb-3 p-2.5 sm:mb-6 sm:p-6" tone="hero">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400/40 to-transparent" />
       <div className="pointer-events-none absolute -right-12 -top-16 h-36 w-36 rounded-full bg-orange-500/15 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-20 left-1/4 h-32 w-32 rounded-full bg-red-500/10 blur-3xl" />
 
-      <div className="relative z-10 flex flex-col gap-3 sm:hidden">
-        <div className="flex items-start justify-between gap-3">
+      <div className="relative z-10 flex flex-col gap-2 sm:hidden">
+        <div className="flex items-start justify-between gap-2">
           {onEdit ? (
-            <Button className="rounded-full px-3 py-2 text-xs" onClick={onEdit} variant="secondary">
+            <Button className="rounded-full px-2.5 py-1.5 text-xs" onClick={onEdit} variant="secondary">
               ← Editar plan
             </Button>
           ) : (
@@ -63,10 +63,10 @@ export default function ResultHero({
           </div>
         </div>
 
-        <h2 className="text-2xl font-black tracking-tight text-white">{t.result}</h2>
+        <h2 className="text-xl font-black tracking-tight text-white">{t.result}</h2>
 
         {actions.onStartCooking && (
-          <Button className="px-4 py-3 text-sm font-black" fullWidth onClick={actions.onStartCooking} variant="outlineAccent">
+          <Button className="px-3 py-2.5 text-sm font-black" fullWidth onClick={actions.onStartCooking} variant="outlineAccent">
             {t.startCooking}
           </Button>
         )}

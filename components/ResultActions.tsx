@@ -95,17 +95,17 @@ export default function ResultActions({
   }
 
   return (
-    <div className={compact ? "flex flex-col gap-2" : "flex flex-col gap-4"}>
+    <div className={compact ? "flex flex-col gap-1.5" : "flex flex-col gap-4"}>
       {compact && actions.onStartCooking && (
-        <Button className="px-4 py-2.5 text-sm font-black" fullWidth onClick={actions.onStartCooking} variant="outlineAccent">
+        <Button className="px-3 py-2 text-sm font-black" fullWidth onClick={actions.onStartCooking} variant="outlineAccent">
           {t.startCooking}
         </Button>
       )}
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className={compact ? "flex flex-wrap items-center justify-end gap-1.5" : "flex flex-wrap items-center gap-2"}>
         {actions.onSave && (
           <Button
-            className={compact ? "px-3 py-2 text-xs" : undefined}
+            className={compact ? "px-2.5 py-1.5 text-xs" : undefined}
             onClick={actions.onSave}
             disabled={status === "saving"}
           >
@@ -114,19 +114,19 @@ export default function ResultActions({
         )}
 
         {actions.onCopy && (
-          <Button className={compact ? "px-3 py-2 text-xs" : undefined} onClick={actions.onCopy} variant="secondary">
+          <Button className={compact ? "px-2.5 py-1.5 text-xs" : undefined} onClick={actions.onCopy} variant="secondary">
             {t.copy}
           </Button>
         )}
 
         {actions.onShare && (
-          <Button className={compact ? "px-3 py-2 text-xs" : undefined} onClick={handleNativeShare} disabled={shareStatus === "sharing"} variant="secondary">
+          <Button className={compact ? "px-2.5 py-1.5 text-xs" : undefined} onClick={handleNativeShare} disabled={shareStatus === "sharing"} variant="secondary">
             {shareLabel}
           </Button>
         )}
       </div>
 
-      <div className={compact ? "flex min-h-4 items-center" : "h-4 flex items-center"}>
+      <div className={compact ? "flex min-h-0 items-center" : "h-4 flex items-center"}>
         {status === "saving" && (
           <Badge className="animate-pulse">
             Guardando...
@@ -139,7 +139,7 @@ export default function ResultActions({
           </Badge>
         )}
 
-        {shareFeedback && status !== "saving" && status !== "success" && (
+        {!compact && shareFeedback && status !== "saving" && status !== "success" && (
           <Badge className="transition-all duration-200" tone="success">
             {shareFeedback}
           </Badge>
