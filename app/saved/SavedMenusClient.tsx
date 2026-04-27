@@ -1,6 +1,10 @@
 "use client";
 
-import { deleteGeneratedMenu } from "@/app/actions/savedMenus";
+import {
+  deleteGeneratedMenu,
+  publishGeneratedMenu,
+  unpublishGeneratedMenu,
+} from "@/app/actions/savedMenus";
 import type { Json, SavedMenu } from "@/lib/db/savedMenus";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -25,6 +29,11 @@ const texts = {
     hideDetails: "Ocultar",
     delete: "Eliminar",
     deleting: "Eliminando...",
+    publish: "Publicar",
+    unpublish: "Ocultar",
+    publishing: "Actualizando...",
+    copiedShare: "Enlace público copiado.",
+    shareError: "No se pudo actualizar el enlace público. Inténtalo otra vez.",
     emptyTitle: "Todavía no tienes planes guardados",
     emptyText: "Crea un plan desde el generador y guárdalo para repetir tus mejores parrilladas.",
     createFirst: "Crear primer plan",
@@ -53,6 +62,11 @@ const texts = {
     hideDetails: "Hide",
     delete: "Delete",
     deleting: "Deleting...",
+    publish: "Publish",
+    unpublish: "Hide",
+    publishing: "Updating...",
+    copiedShare: "Public link copied.",
+    shareError: "Could not update the public link. Try again.",
     emptyTitle: "You do not have saved plans yet",
     emptyText:
       "Create a plan from the generator and save it so your best BBQs are ready to repeat.",
@@ -82,6 +96,11 @@ const texts = {
     hideDetails: "Piilota",
     delete: "Poista",
     deleting: "Poistetaan...",
+    publish: "Julkaise",
+    unpublish: "Piilota",
+    publishing: "Päivitetään...",
+    copiedShare: "Julkinen linkki kopioitu.",
+    shareError: "Julkisen linkin päivitys epäonnistui. Yritä uudelleen.",
     emptyTitle: "Sinulla ei ole vielä tallennettuja suunnitelmia",
     emptyText:
       "Luo suunnitelma generaattorissa ja tallenna parhaat grillaukset toistamista varten.",
@@ -118,6 +137,8 @@ export default function SavedMenusClient({ initialMenus }: { initialMenus: Saved
   const [query, setQuery] = useState("");
   const [openMenuId, setOpenMenuId] = useState<string | null>(initialMenus[0]?.id ?? null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [pendingShareId, setPendingShareId] = useState<string | null>(null);
+  const [copiedShareId, setCopiedShareId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
   const t = texts[lang];
@@ -168,6 +189,43 @@ export default function SavedMenusClient({ initialMenus }: { initialMenus: Saved
         setError(t.deleteError);
       } finally {
         setPendingDeleteId(null);
+      }
+    });
+  }
+
+  function handleShareToggle(menu: SavedMenu) {
+    setError("");
+    setPendingShareId(menu.id);
+
+    startTransition(async () => {
+      try {
+        const updatedMenu = menu.is_public
+          ? await unpublishGeneratedMenu(menu.id)
+          : await publishGeneratedMenu(menu.id);
+
+        setMenus((currentMenus) =>
+          currentMenus.map((currentMenu) =>
+            currentMenu.id === updatedMenu.id ? updatedMenu : currentMenu,
+          ),
+        );
+
+        if (!menu.is_public && updatedMenu.share_slug) {
+          try {
+            await navigator.clipboard.writeText(
+              `${window.location.origin}/share/${updatedMenu.share_slug}`,
+            );
+            setCopiedShareId(updatedMenu.id);
+            window.setTimeout(() => setCopiedShareId(null), 2200);
+          } catch {
+            // Publishing should still succeed if the browser blocks clipboard access.
+          }
+        }
+
+        router.refresh();
+      } catch {
+        setError(t.shareError);
+      } finally {
+        setPendingShareId(null);
       }
     });
   }
@@ -256,11 +314,14 @@ export default function SavedMenusClient({ initialMenus }: { initialMenus: Saved
                   key={menu.id}
                   isDeleting={isDeleting}
                   isOpen={isOpen}
+                  isSharing={isPending && pendingShareId === menu.id}
                   lang={lang}
                   menu={menu}
                   meta={meta}
                   onDelete={() => handleDelete(menu.id)}
+                  onShareToggle={() => handleShareToggle(menu)}
                   onToggle={() => setOpenMenuId(isOpen ? null : menu.id)}
+                  shareCopied={copiedShareId === menu.id}
                   t={t}
                 />
               );
@@ -282,20 +343,26 @@ type SavedMenuMeta = {
 function SavedMenuCard({
   isDeleting,
   isOpen,
+  isSharing,
   lang,
   menu,
   meta,
   onDelete,
+  onShareToggle,
   onToggle,
+  shareCopied,
   t,
 }: {
   isDeleting: boolean;
   isOpen: boolean;
+  isSharing: boolean;
   lang: Lang;
   menu: SavedMenu;
   meta: SavedMenuMeta;
   onDelete: () => void;
+  onShareToggle: () => void;
   onToggle: () => void;
+  shareCopied: boolean;
   t: (typeof texts)[Lang];
 }) {
   return (
@@ -352,6 +419,17 @@ function SavedMenuCard({
           </button>
           <button
             type="button"
+            disabled={isSharing}
+            onClick={(event) => {
+              event.stopPropagation();
+              onShareToggle();
+            }}
+            className="rounded-2xl border border-orange-400/40 px-4 py-3 text-sm font-black text-orange-200 transition hover:bg-orange-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSharing ? t.publishing : menu.is_public ? t.unpublish : t.publish}
+          </button>
+          <button
+            type="button"
             disabled={isDeleting}
             onClick={(event) => {
               event.stopPropagation();
@@ -362,6 +440,16 @@ function SavedMenuCard({
             {isDeleting ? t.deleting : t.delete}
           </button>
         </div>
+
+        {menu.is_public && menu.share_slug && (
+          <Link
+            href={`/share/${menu.share_slug}`}
+            onClick={(event) => event.stopPropagation()}
+            className="block rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-center text-xs font-black text-emerald-200 transition hover:bg-emerald-500/15"
+          >
+            {shareCopied ? t.copiedShare : `/share/${menu.share_slug}`}
+          </Link>
+        )}
 
         {isOpen && (
           <div className="space-y-3 border-t border-white/10 pt-5">

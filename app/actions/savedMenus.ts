@@ -1,7 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { deleteSavedMenu, saveMenu, type Json } from "@/lib/db/savedMenus";
+import {
+  deleteSavedMenu,
+  publishSavedMenu,
+  saveMenu,
+  unpublishSavedMenu,
+  type Json,
+} from "@/lib/db/savedMenus";
 
 type SaveGeneratedMenuInput = {
   name: string;
@@ -26,4 +32,18 @@ export async function saveGeneratedMenu(input: SaveGeneratedMenuInput) {
 export async function deleteGeneratedMenu(id: string) {
   await deleteSavedMenu(id);
   revalidatePath("/saved");
+}
+
+export async function publishGeneratedMenu(id: string) {
+  const savedMenu = await publishSavedMenu(id);
+  revalidatePath("/saved");
+  if (savedMenu.share_slug) revalidatePath(`/share/${savedMenu.share_slug}`);
+  return savedMenu;
+}
+
+export async function unpublishGeneratedMenu(id: string) {
+  const savedMenu = await unpublishSavedMenu(id);
+  revalidatePath("/saved");
+  if (savedMenu.share_slug) revalidatePath(`/share/${savedMenu.share_slug}`);
+  return savedMenu;
 }
