@@ -1,6 +1,7 @@
 "use server";
 
-import { saveMenu, type Json } from "@/lib/db/savedMenus";
+import { revalidatePath } from "next/cache";
+import { deleteSavedMenu, saveMenu, type Json } from "@/lib/db/savedMenus";
 
 type SaveGeneratedMenuInput = {
   name: string;
@@ -10,10 +11,19 @@ type SaveGeneratedMenuInput = {
 };
 
 export async function saveGeneratedMenu(input: SaveGeneratedMenuInput) {
-  return saveMenu({
+  const savedMenu = await saveMenu({
     name: input.name,
     lang: input.lang,
     people: input.people,
     data: input.data as Json,
   });
+
+  revalidatePath("/saved");
+
+  return savedMenu;
+}
+
+export async function deleteGeneratedMenu(id: string) {
+  await deleteSavedMenu(id);
+  revalidatePath("/saved");
 }
