@@ -34,3 +34,5 @@ export {
   getDonenessOptions,
   shouldShowThickness,
 } from "./cookingRules";
+export { validateCookingEngineOutput, COOKING_WARNING_CODES } from "./cookingOutputValidation";
+export type { CookingOutputWarning, CookingValidationResult, CookingWarningCode, ValidateCookingOutputOptions } from "./cookingOutputValidation";

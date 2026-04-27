@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "qa:cooking": "tsx scripts/cooking-engine-qa.ts",
+    "snapshots:cooking": "tsx scripts/cooking-snapshots.ts",
+    "snapshots:cooking:update": "tsx scripts/cooking-snapshots.ts --update",
+    "check:ui": "tsx scripts/print-ui-checklist.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.2",

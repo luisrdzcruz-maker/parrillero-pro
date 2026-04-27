@@ -1,5 +1,6 @@
 "use client";
 
+import { track } from "@/lib/analytics";
 import { saveGeneratedMenu } from "@/app/actions/savedMenus";
 import CookingLiveMode from "@/components/CookingLiveMode";
 import ResultGrid from "@/components/ResultGrid";
@@ -677,6 +678,7 @@ export default function Home() {
     setBlocks({});
     setCheckedItems({});
     setCookingStep("cut");
+    track({ name: "animal_selected", animal: selectedAnimal, lang });
   }
 
   function handleCutChange(selectedCutId: string) {
@@ -684,36 +686,59 @@ export default function Home() {
     setBlocks({});
     setCheckedItems({});
     setCookingStep("details");
+    track({ name: "cut_selected", animal, cutId: selectedCutId, lang });
   }
 
-  async function callAI(message: string, createCookSteps = false, visualContext?: CookingVisualContext) {
+  async function callAI(message: string, createCookSteps = false, visualContext?: CookingVisualContext): Promise<boolean> {
     setLoading(true);
     setBlocks({});
     setCheckedItems({});
     setSaveMenuStatus("idle");
     setSaveMenuMessage("");
 
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message }),
-    });
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+      });
 
-    const data = await res.json();
-    const parsed = parseResponse(data.reply);
+      if (!res.ok) {
+        if (createCookSteps) {
+          track({ name: "cooking_failure", where: "ai_http", status: res.status });
+        }
+        setLoading(false);
+        return false;
+      }
 
-    setBlocks(parsed);
+      const data = await res.json();
+      const parsed = parseResponse(data.reply);
 
-    if (createCookSteps) {
-      const baseSteps = buildCookStepsFromPlan(parsed);
-      const steps = visualContext ? withCookingStepImages(baseSteps, visualContext) : baseSteps;
-      setCookSteps(steps);
-      setCurrentStep(0);
-      setTimeLeft(steps[0].duration);
-      setTimerRunning(false);
+      setBlocks(parsed);
+
+      if (createCookSteps) {
+        const baseSteps = buildCookStepsFromPlan(parsed);
+        const steps = visualContext ? withCookingStepImages(baseSteps, visualContext) : baseSteps;
+        setCookSteps(steps);
+        setCurrentStep(0);
+        setTimeLeft(steps[0].duration);
+        setTimerRunning(false);
+      }
+    } catch (e) {
+      if (createCookSteps) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (e instanceof TypeError) {
+          track({ name: "cooking_failure", where: "ai_network", message: msg });
+        } else {
+          track({ name: "cooking_failure", where: "ai_exception", message: msg });
+        }
+      }
+      setLoading(false);
+      return false;
     }
 
     setLoading(false);
+    return true;
   }
 
   async function generateCookingPlan() {
@@ -732,6 +757,7 @@ export default function Home() {
     const localSteps = generateLocalCookingSteps(input);
 
     if (localPlan && localSteps) {
+      track({ name: "cooking_plan_result", path: "local" });
       const visualSteps = withCookingStepImages(localSteps, visualContext);
       setBlocks(localPlan);
       setCheckedItems({});
@@ -743,7 +769,8 @@ export default function Home() {
       return;
     }
 
-    await callAI(
+    track({ name: "cooking_ai_fallback" });
+    const ok = await callAI(
       `
 Language: ${engineLang(lang) === "es" ? "Spanish" : "English"}.
 Animal: ${animal}
@@ -763,6 +790,9 @@ ERROR
       true,
       visualContext
     );
+    if (ok) {
+      track({ name: "cooking_plan_result", path: "ai" });
+    }
     setCookingStep("result");
   }
 
