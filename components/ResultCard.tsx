@@ -13,6 +13,7 @@ import { ds } from "@/lib/design-system";
 type ResultCardProps = {
   title: string;
   content?: string;
+  variant?: "default" | "primary" | "summary" | "tip" | "setup";
 };
 
 const cardClassName =
@@ -23,41 +24,55 @@ function ResultCardHeader({
   icon,
   title,
   lineCount,
+  variant,
 }: {
   accent: string;
   icon: string;
   title: string;
   lineCount: number;
+  variant: NonNullable<ResultCardProps["variant"]>;
 }) {
+  const isPrimary = variant === "primary";
+  const isTip = variant === "tip";
+
   return (
     <div className="flex items-start justify-between gap-4">
       <div className="flex min-w-0 items-start gap-3">
-        <div className={`${ds.media.iconBox} h-11 w-11 rounded-2xl bg-white/[0.06] text-lg ring-1 ring-inset ring-white/[0.04]`}>
+        <div className={`${ds.media.iconBox} ${isPrimary ? "h-12 w-12 text-xl" : "h-10 w-10 text-base"} rounded-2xl bg-white/[0.06] ring-1 ring-inset ring-white/[0.04]`}>
           {icon}
         </div>
 
         <div className="min-w-0">
           <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300/90">
-            Plan block
+            {isTip ? "Consejo clave" : isPrimary ? "Siguiente acción" : "Plan"}
           </p>
-          <h3 className="mt-1 truncate text-base font-black tracking-tight text-white">
+          <h3 className={`${isPrimary ? "text-xl sm:text-2xl" : "text-base"} mt-1 truncate font-black tracking-tight text-white`}>
             {title}
           </h3>
           <div className={`mt-2 h-0.5 w-12 rounded-full ${accent}`} />
         </div>
       </div>
 
-      <Badge className="shrink-0 border-white/10 bg-black/35 text-[11px] font-bold" tone="glass">
+      <Badge className="shrink-0 border-white/10 bg-black/35 text-[11px] font-bold" tone={isTip ? "danger" : "glass"}>
         {lineCount} {lineCount === 1 ? "línea" : "líneas"}
       </Badge>
     </div>
   );
 }
 
-function ResultCardContent({ lines }: { lines: string[] }) {
+function ResultCardContent({
+  lines,
+  variant,
+}: {
+  lines: string[];
+  variant: NonNullable<ResultCardProps["variant"]>;
+}) {
+  const isPrimary = variant === "primary";
+  const isTip = variant === "tip";
+
   return (
-    <div className="mt-5 border-t border-white/5 pt-4">
-      <div className="space-y-2.5 rounded-2xl border border-white/[0.06] bg-black/15 p-3.5 text-sm leading-relaxed text-slate-300 shadow-inner shadow-black/10 ring-1 ring-inset ring-white/[0.03]">
+    <div className={`${isTip ? "mt-3" : "mt-5 border-t border-white/5 pt-4"}`}>
+      <div className={`${isPrimary ? "p-4 text-base leading-7 text-slate-100" : isTip ? "border-orange-400/15 bg-orange-500/[0.04] p-3 text-sm leading-6 text-orange-100" : "p-3.5 text-sm leading-relaxed text-slate-300"} space-y-2.5 rounded-2xl border border-white/[0.06] bg-black/15 shadow-inner shadow-black/10 ring-1 ring-inset ring-white/[0.03]`}>
         {lines.map((line, index) => (
           <p key={`${line}-${index}`} className="whitespace-pre-wrap">
             {line}
@@ -176,7 +191,23 @@ function SetupVisualToggle({
   );
 }
 
-export default function ResultCard({ title, content }: ResultCardProps) {
+function getCardTone(variant: NonNullable<ResultCardProps["variant"]>) {
+  if (variant === "primary") {
+    return "border-orange-400/35 bg-gradient-to-br from-orange-500/12 via-slate-900/95 to-slate-950 shadow-orange-500/10";
+  }
+
+  if (variant === "tip") {
+    return "border-orange-400/20 bg-gradient-to-br from-slate-900/95 to-orange-950/20";
+  }
+
+  if (variant === "summary") {
+    return "border-white/10 bg-gradient-to-br from-slate-900/95 to-slate-950/80";
+  }
+
+  return "";
+}
+
+export default function ResultCard({ title, content, variant = "default" }: ResultCardProps) {
   if (!content?.trim()) return null;
 
   const icon = getResultCardIcon(title);
@@ -185,7 +216,7 @@ export default function ResultCard({ title, content }: ResultCardProps) {
   const contentLines = content.split("\n").map((line) => line.trim()).filter(Boolean);
 
   return (
-    <Panel as="article" className={cardClassName} tone="result">
+    <Panel as="article" className={`${cardClassName} ${getCardTone(variant)}`} tone="result">
       <div className={`absolute left-0 top-0 h-full w-[3px] rounded-l-2xl ${accent}`} />
       <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent blur-xl" />
@@ -198,8 +229,9 @@ export default function ResultCard({ title, content }: ResultCardProps) {
           icon={icon}
           title={cleanTitle}
           lineCount={contentLines.length}
+          variant={variant}
         />
-        <ResultCardContent lines={contentLines} />
+        <ResultCardContent lines={contentLines} variant={variant} />
         <SetupVisualToggle content={content} title={title} />
       </div>
     </Panel>

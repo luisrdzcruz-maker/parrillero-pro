@@ -1,6 +1,7 @@
 "use client";
 
 import { saveGeneratedMenu } from "@/app/actions/savedMenus";
+import CookingLiveMode from "@/components/CookingLiveMode";
 import ResultGrid from "@/components/ResultGrid";
 import ResultHero from "@/components/ResultHero";
 import { Badge, Button, Card, Grid, Panel, Section } from "@/components/ui";
@@ -18,10 +19,10 @@ import type {
   CookingStep,
   ProductCut,
 } from "@/lib/cookingCatalog";
-import { DEFAULT_COOKING_STEP_IMAGE, getCookingStepImage } from "@/lib/cookingVisuals";
+import { getCookingStepImage } from "@/lib/cookingVisuals";
 import { ds } from "@/lib/design-system";
 import { generateParrilladaPlan } from "@/lib/parrilladaEngine";
-import { type SyntheticEvent, type TouchEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type TouchEvent, useEffect, useMemo, useRef, useState } from "react";
 
 type Animal = "Vacuno" | "Cerdo" | "Pollo" | "Pescado" | "Verduras";
 type Mode = "inicio" | "coccion" | "menu" | "parrillada" | "cocina" | "guardados";
@@ -522,6 +523,8 @@ export default function Home() {
   const showThickness = cut ? shouldShowThickness(cut) : true;
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const stored = localStorage.getItem("parrillero_saved_menus");
     if (stored) setSavedMenus(JSON.parse(stored) as SavedMenu[]);
   }, []);
@@ -606,10 +609,13 @@ export default function Home() {
 
   function updateSavedMenus(nextMenus: SavedMenu[]) {
     setSavedMenus(nextMenus);
+    if (typeof window === "undefined") return;
+
     localStorage.setItem("parrillero_saved_menus", JSON.stringify(nextMenus));
   }
 
   async function saveCurrentMenu() {
+    if (typeof window === "undefined") return;
     if (Object.keys(blocks).length === 0) return;
 
     const now = new Date();
@@ -649,11 +655,9 @@ export default function Home() {
       updateSavedMenus([newMenu, ...savedMenus.filter((menu) => menu.id !== newMenu.id)]);
       setSaveMenuStatus("success");
       setSaveMenuMessage(t.menuSaved);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : t.menuSaveError;
-
+    } catch {
       setSaveMenuStatus("error");
-      setSaveMenuMessage(`${t.menuSaveError} ${errorMessage}`);
+      setSaveMenuMessage(t.menuSaveError);
     }
   }
 
@@ -1047,9 +1051,8 @@ ERROR
         )}
 
         {mode === "cocina" && (
-          <CookingMode
+          <CookingLiveMode
             lang={lang}
-            t={t}
             cookSteps={cookSteps}
             currentStep={currentStep}
             cookingAlertsEnabled={cookingAlertsEnabled}
@@ -1058,13 +1061,13 @@ ERROR
             timeLeft={timeLeft}
             timerRunning={timerRunning}
             notificationPermission={notificationPermission}
-            onCreatePlan={() => navigateMode("coccion")}
+            onBackToPlan={() => navigateMode("coccion")}
             onEnableAlerts={enableCookingAlerts}
-            previousCookStep={previousCookStep}
+            onPreviousStep={previousCookStep}
             setTimerRunning={setTimerRunning}
-            goToCookStep={goToCookStep}
-            nextCookStep={nextCookStep}
-            resetCookMode={resetCookMode}
+            onGoToStep={goToCookStep}
+            onCompleteStep={nextCookStep}
+            onReset={resetCookMode}
           />
         )}
 
@@ -1072,7 +1075,7 @@ ERROR
           <SavedMenusSection
             lang={lang}
             menus={savedMenus}
-            onCopy={(menu) => navigator.clipboard.writeText(buildText(menu.blocks))}
+            onCopy={copySavedMenu}
             onDelete={deleteMenu}
             onOpen={loadMenu}
             t={t}
@@ -1083,6 +1086,12 @@ ERROR
       <BottomNavigation mode={mode} onModeChange={handleModeChange} t={t} />
     </main>
   );
+}
+
+function copySavedMenu(menu: SavedMenu) {
+  if (typeof window === "undefined" || !navigator.clipboard) return;
+
+  navigator.clipboard.writeText(buildText(menu.blocks));
 }
 
 /* COMPONENTS */
@@ -1316,8 +1325,10 @@ function CookingWizard({
 
       {visibleCookingStep === "result" && (
         <CookingResultStep
+          animal={animal}
           blocks={blocks}
           checkedItems={checkedItems}
+          equipment={equipment}
           onEdit={() => setCookingStep("details")}
           onSaveMenu={onSaveMenu}
           saveMenuMessage={saveMenuMessage}
@@ -1575,8 +1586,10 @@ function CookingDetailsStep({
 }
 
 function CookingResultStep({
+  animal,
   blocks,
   checkedItems,
+  equipment,
   onEdit,
   onSaveMenu,
   saveMenuMessage,
@@ -1586,8 +1599,10 @@ function CookingResultStep({
   setTimerRunning,
   t,
 }: {
+  animal: Animal;
   blocks: Blocks;
   checkedItems: Record<string, boolean>;
+  equipment: string;
   onEdit: () => void;
   onSaveMenu: () => Promise<void>;
   saveMenuMessage: string;
@@ -1601,6 +1616,7 @@ function CookingResultStep({
     <div className="space-y-4">
       <ResultCards
         blocks={blocks}
+        context={`${animal} · ${equipment}`}
         loading={false}
         checkedItems={checkedItems}
         onEdit={onEdit}
@@ -1984,322 +2000,9 @@ function SelectionSections({
   );
 }
 
-function getCookingZone(step: CookingStep) {
-  const value = `${step.title} ${step.description}`.toLowerCase();
-
-  if (value.includes("repos") || value.includes("rest")) return "Reposo";
-  if (value.includes("serv") || value.includes("serve")) return "Servir";
-  if (value.includes("indirect") || value.includes("indirecto") || value.includes("horno")) return "Indirecto";
-
-  return "Directo";
-}
-
-function CookingMode({
-  lang,
-  t,
-  cookSteps,
-  currentStep,
-  cookingAlertsEnabled,
-  cookingAlertMessage,
-  hasCookingPlan,
-  timeLeft,
-  timerRunning,
-  notificationPermission,
-  onCreatePlan,
-  onEnableAlerts,
-  previousCookStep,
-  setTimerRunning,
-  goToCookStep,
-  nextCookStep,
-  resetCookMode,
-}: {
-  lang: Lang;
-  t: typeof texts.es;
-  cookSteps: CookingStep[];
-  currentStep: number;
-  cookingAlertsEnabled: boolean;
-  cookingAlertMessage: string;
-  hasCookingPlan: boolean;
-  timeLeft: number;
-  timerRunning: boolean;
-  notificationPermission: NotificationPermission | "unsupported";
-  onCreatePlan: () => void;
-  onEnableAlerts: () => Promise<void>;
-  previousCookStep: () => void;
-  setTimerRunning: (value: boolean) => void;
-  goToCookStep: (stepIndex: number) => void;
-  nextCookStep: () => void;
-  resetCookMode: () => void;
-}) {
-  if (!hasCookingPlan || cookSteps.length === 0) {
-    return (
-      <section className="pb-28">
-        <Panel className="overflow-hidden p-0" tone="hero">
-          <div className="relative min-h-[520px]">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(249,115,22,0.25),transparent_36%),linear-gradient(to_top,rgba(2,6,23,0.98),rgba(15,23,42,0.72),rgba(255,255,255,0.05))]" />
-            <div className="relative flex min-h-[520px] flex-col justify-end p-6 sm:p-8">
-              <Badge className="w-fit text-xs uppercase tracking-[0.2em]">Modo Cocina</Badge>
-              <h1 className="mt-5 text-4xl font-black tracking-tight text-white sm:text-5xl">
-                Tu sesión live empieza con un plan.
-              </h1>
-              <p className="mt-4 max-w-xl text-sm leading-6 text-slate-300 sm:text-base">
-                Genera primero un plan de cocción para activar la guía paso a paso, temporizador y progreso live.
-              </p>
-              <Button className="mt-6 px-5 py-4 font-black" onClick={onCreatePlan}>
-                Crear plan de cocción
-              </Button>
-            </div>
-          </div>
-        </Panel>
-      </section>
-    );
-  }
-
-  const step = cookSteps[currentStep];
-  const nextStep = cookSteps[currentStep + 1];
-  const completedSteps = currentStep;
-  const totalSteps = cookSteps.length;
-  const progress = Math.min(
-    100,
-    Math.max(0, ((step.duration - timeLeft) / step.duration) * 100)
-  );
-  const sessionProgress = Math.round(((completedSteps + progress / 100) / totalSteps) * 100);
-  const stepLabel = lang === "es" ? "Paso" : "Step";
-  const completeLabel = lang === "es" ? "Completar paso" : "Complete step";
-  const previousLabel = lang === "es" ? "Anterior" : "Previous";
-  const nextLabel = lang === "es" ? "Siguiente" : "Next";
-  const pauseLabel = timerRunning ? t.pause : t.startTimer;
-  const zone = getCookingZone(step);
-  const alertsLabel = lang === "es" ? "Activar avisos" : "Enable alerts";
-  const alertsActiveLabel = lang === "es" ? "Avisos activados" : "Alerts enabled";
-  const alertsFallbackLabel =
-    notificationPermission === "denied"
-      ? lang === "es"
-        ? "Avisos en app activos"
-        : "In-app alerts active"
-      : notificationPermission === "unsupported"
-        ? lang === "es"
-          ? "Sonido y vibración activos"
-          : "Sound and vibration active"
-        : alertsActiveLabel;
-
-  return (
-    <section className="space-y-5 pb-32">
-      <Panel className="overflow-hidden p-0" tone="hero">
-        <div className="grid md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-          <StepImage image={step.image} title={step.title} />
-
-          <div className="space-y-5 p-5 sm:p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <Badge className="text-xs uppercase tracking-[0.2em]">Live cooking</Badge>
-              <Badge tone="solidAccent">{zone}</Badge>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              {cookingAlertsEnabled ? (
-                <Badge tone="success">{alertsFallbackLabel}</Badge>
-              ) : (
-                <Button className="rounded-full px-3 py-2 text-xs" onClick={onEnableAlerts} variant="outlineAccent">
-                  {alertsLabel}
-                </Button>
-              )}
-
-              {cookingAlertMessage && (
-                <Badge className="animate-pulse" tone="accent">
-                  {cookingAlertMessage}
-                </Badge>
-              )}
-            </div>
-
-            <div>
-              <p className="text-sm font-semibold text-orange-300">
-                {stepLabel} {currentStep + 1} of {totalSteps} · {sessionProgress}%
-              </p>
-              <h1 className="mt-2 text-3xl font-black tracking-tight text-white sm:text-5xl">
-                {step.title}
-              </h1>
-              <p className="mt-3 text-sm leading-6 text-slate-300 sm:text-base">
-                {step.description}
-              </p>
-            </div>
-
-            <div className="rounded-[2rem] border border-orange-400/20 bg-black/35 p-5 text-center shadow-2xl shadow-black/20">
-              <p className="text-xs font-black uppercase tracking-[0.24em] text-orange-300">Countdown</p>
-              <p className="mt-2 font-mono text-7xl font-black tracking-tighter text-orange-300 sm:text-8xl">
-                {formatTime(timeLeft)}
-              </p>
-              <div className="mt-5 h-3 overflow-hidden rounded-full bg-white/10">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-orange-300 via-orange-500 to-red-500 transition-all duration-500"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-                    {lang === "es" ? "Siguiente" : "Next"}
-                  </p>
-                  <p className="mt-1 font-bold text-white">{nextStep?.title ?? (lang === "es" ? "Servir" : "Serve")}</p>
-                </div>
-                <span className="shrink-0 rounded-2xl bg-orange-500/15 px-3 py-2 text-sm font-bold text-orange-200">
-                  {nextStep ? formatTime(nextStep.duration) : "0:00"}
-                </span>
-              </div>
-            </div>
-
-            {step.tips && step.tips.length > 0 && (
-              <Card className="border-orange-500/30 bg-orange-500/10" tone="glass">
-                <h3 className="font-bold text-orange-300">{t.keyTips}</h3>
-                <ul className="mt-3 space-y-2 text-sm text-slate-200">
-                  {step.tips.map((tip) => (
-                    <li key={tip}>• {tip}</li>
-                  ))}
-                </ul>
-              </Card>
-            )}
-
-            <div className="grid gap-3">
-              <Button className="py-4 text-base font-black" fullWidth onClick={nextCookStep}>
-                {completeLabel}
-              </Button>
-
-              <div className="grid grid-cols-3 gap-2">
-                <Button onClick={previousCookStep} disabled={currentStep === 0} variant="secondary">
-                  {previousLabel}
-                </Button>
-                <Button onClick={() => setTimerRunning(!timerRunning)} variant="secondary">
-                  {pauseLabel}
-                </Button>
-                <Button onClick={nextCookStep} disabled={currentStep === totalSteps - 1} variant="secondary">
-                  {nextLabel}
-                </Button>
-              </div>
-
-              <Button fullWidth onClick={resetCookMode} variant="ghost">
-                {t.reset}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </Panel>
-
-      <Card className="p-4 sm:p-5">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-300">Timeline</p>
-            <h2 className="mt-1 text-xl font-bold">{t.planSequence}</h2>
-          </div>
-          <Badge tone="glass">{completedSteps}/{totalSteps} done</Badge>
-        </div>
-
-        <div className="h-2 overflow-hidden rounded-full bg-white/10">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-orange-300 via-orange-500 to-red-500 transition-all duration-500"
-            style={{ width: `${sessionProgress}%` }}
-          />
-        </div>
-
-        <div className="mt-5 space-y-3">
-          {cookSteps.map((item, index) => (
-            <CookingStepPreview
-              key={`${item.title}-${index}`}
-              active={index === currentStep}
-              completed={index < currentStep}
-              index={index}
-              onClick={() => goToCookStep(index)}
-              step={item}
-            />
-          ))}
-        </div>
-      </Card>
-    </section>
-  );
-}
-
-function handleCookingImageError(event: SyntheticEvent<HTMLImageElement>) {
-  const image = event.currentTarget;
-  image.onerror = null;
-  image.src = image.src.endsWith(DEFAULT_COOKING_STEP_IMAGE) ? "/visuals/preheat.jpg" : DEFAULT_COOKING_STEP_IMAGE;
-}
-
-function StepImage({ image, title }: { image?: string; title: string }) {
-  return (
-    <div className="relative h-56 overflow-hidden sm:h-64">
-      <img
-        src={image ?? DEFAULT_COOKING_STEP_IMAGE}
-        alt={title}
-        loading="lazy"
-        sizes="(min-width: 768px) 420px, 100vw"
-        onError={handleCookingImageError}
-        className="h-full w-full object-cover"
-      />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(251,146,60,0.28),transparent_34%),linear-gradient(to_top,rgba(2,6,23,0.84)_0%,rgba(2,6,23,0.34)_48%,rgba(255,255,255,0.08)_100%)]" />
-      <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-orange-300 via-orange-500 to-amber-300" />
-    </div>
-  );
-}
-
-function CookingStepPreview({
-  active,
-  completed,
-  index,
-  onClick,
-  step,
-}: {
-  active: boolean;
-  completed: boolean;
-  index: number;
-  onClick: () => void;
-  step: CookingStep;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={
-        active
-          ? "w-full scale-[1.01] overflow-hidden rounded-2xl border border-orange-500 bg-orange-500/20 text-left shadow-lg shadow-orange-500/10 transition active:scale-[0.99]"
-          : completed
-            ? "w-full overflow-hidden rounded-2xl border border-white/5 bg-slate-950/45 text-left opacity-60 transition hover:opacity-80 active:scale-[0.99]"
-            : "w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-950/80 text-left transition hover:border-orange-400/30 active:scale-[0.99]"
-      }
-    >
-      <div className="grid grid-cols-[86px_1fr]">
-        <div className="relative min-h-full overflow-hidden">
-          <img
-            src={step.image ?? DEFAULT_COOKING_STEP_IMAGE}
-            alt={step.title}
-            loading="lazy"
-            sizes="86px"
-            onError={handleCookingImageError}
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 to-transparent" />
-          <div className="absolute left-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-xs font-black text-white">
-            {completed ? "✓" : index + 1}
-          </div>
-        </div>
-
-        <div className="p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-orange-300/80">
-                {getCookingZone(step)}
-              </p>
-              <h3 className="truncate font-bold text-white">{step.title}</h3>
-            </div>
-            <span className="shrink-0 text-sm text-slate-400">{formatTime(step.duration)}</span>
-          </div>
-          <p className="mt-1 line-clamp-2 text-sm text-slate-400">{step.description}</p>
-        </div>
-      </div>
-    </button>
-  );
-}
 function ResultCards({
   blocks,
+  context,
   loading,
   checkedItems,
   setCheckedItems,
@@ -2311,6 +2014,7 @@ function ResultCards({
   t,
 }: {
   blocks: Blocks;
+  context?: string;
   loading: boolean;
   checkedItems: Record<string, boolean>;
   setCheckedItems: (value: Record<string, boolean>) => void;
@@ -2326,11 +2030,15 @@ function ResultCards({
   const canStartCooking = Boolean(blocks.PASOS || blocks.STEPS);
 
   function copyText() {
+    if (typeof window === "undefined" || !navigator.clipboard) return;
+
     navigator.clipboard.writeText(buildText(blocks));
     alert("Copiado");
   }
 
   function shareWhatsApp() {
+    if (typeof window === "undefined") return;
+
     const url = `https://wa.me/?text=${encodeURIComponent(buildText(blocks))}`;
     window.open(url, "_blank");
   }
@@ -2344,6 +2052,7 @@ function ResultCards({
           onShare: shareWhatsApp,
           onStartCooking: canStartCooking ? onStartCooking : undefined,
         }}
+        context={context}
         hasResult={hasResult}
         onEdit={onEdit}
         saveMenuStatus={saveMenuStatus}
@@ -2352,7 +2061,7 @@ function ResultCards({
           result: t.result,
           save: "Guardar",
           saving: "Guardando...",
-          share: t.whatsapp,
+          share: "Compartir",
           startCooking: t.startCooking,
         }}
       />

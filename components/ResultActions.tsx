@@ -9,6 +9,7 @@ export default function ResultActions({
   actions,
   compact = false,
   hasResult,
+  secondary = false,
   status: rawStatus,
   t,
 }: {
@@ -20,6 +21,7 @@ export default function ResultActions({
   };
   compact?: boolean;
   hasResult: boolean;
+  secondary?: boolean;
   status?: SaveMenuStatus;
   t: {
     copy: string;
@@ -29,7 +31,8 @@ export default function ResultActions({
     startCooking: string;
   };
 }) {
-  const status = rawStatus ?? "idle";
+  const [localSaveStatus, setLocalSaveStatus] = useState<SaveMenuStatus>("idle");
+  const status = rawStatus ?? localSaveStatus;
   const [shareStatus, setShareStatus] = useState<"idle" | "sharing" | "shared" | "copied">("idle");
   const isEnglish = t.copy.toLowerCase().includes("copy");
   const saveLabel =
@@ -73,6 +76,22 @@ export default function ResultActions({
 
   if (!hasResult) return null;
 
+  async function handleSavePlan() {
+    if (!actions.onSave || typeof window === "undefined") return;
+
+    if (!rawStatus) setLocalSaveStatus("saving");
+
+    try {
+      await actions.onSave();
+      if (!rawStatus) {
+        setLocalSaveStatus("success");
+        window.setTimeout(() => setLocalSaveStatus("idle"), 2200);
+      }
+    } catch {
+      if (!rawStatus) setLocalSaveStatus("error");
+    }
+  }
+
   function getShareText() {
     return isEnglish
       ? "Parrillero Pro cooking result. Open the app to review the full plan."
@@ -80,6 +99,8 @@ export default function ResultActions({
   }
 
   async function handleNativeShare() {
+    if (typeof window === "undefined" || typeof navigator === "undefined") return;
+
     setShareStatus("sharing");
 
     const shareData = {
@@ -89,14 +110,17 @@ export default function ResultActions({
     };
 
     try {
-      if (navigator.share) {
+      if ("share" in navigator && navigator.share) {
         await navigator.share(shareData);
         setShareStatus("shared");
-      } else {
+      } else if (navigator.clipboard) {
         await navigator.clipboard.writeText(
           [shareData.title, shareData.text, shareData.url].filter(Boolean).join("\n\n")
         );
         setShareStatus("copied");
+      } else {
+        setShareStatus("idle");
+        return;
       }
 
       window.setTimeout(() => setShareStatus("idle"), 2200);
@@ -107,13 +131,18 @@ export default function ResultActions({
   }
 
   return (
-    <div className={compact ? "flex flex-col gap-2" : "flex flex-col gap-4"}>
-      <div className={compact ? "grid grid-cols-2 gap-2" : "flex flex-wrap items-center gap-2"}>
+    <div className={compact ? "flex flex-col gap-2" : "flex flex-col gap-3"}>
+      <div className={compact ? "grid grid-cols-3 gap-2" : "flex flex-wrap items-center gap-2"}>
         {actions.onSave && (
           <Button
-            className={compact ? "col-span-2 px-3 py-2.5 text-sm font-black" : "px-5 py-3 font-black"}
-            onClick={actions.onSave}
+            className={
+              compact || secondary
+                ? "px-3 py-2 text-xs font-bold"
+                : "px-5 py-3 font-black"
+            }
+            onClick={handleSavePlan}
             disabled={status === "saving" || status === "success"}
+            variant={secondary ? "secondary" : "primary"}
           >
             {saveLabel}
           </Button>
