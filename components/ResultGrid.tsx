@@ -2,6 +2,7 @@
 
 import { Badge, Card, Grid } from "@/components/ui";
 import { ds } from "@/lib/design-system";
+import { detectSetupFromText, type SetupType } from "@/lib/setupVisualMap";
 import { formatTitle, getGrillManagerLineClass, getShoppingItems } from "@/lib/uiHelpers";
 import ResultCard from "@/components/ResultCard";
 import ResultTimeline from "./ResultTimeline";
@@ -12,6 +13,7 @@ type ResultItem =
       key: string;
       title: string;
       content: string;
+      setup?: SetupType;
       type: "card";
       variant?: "default" | "primary" | "summary" | "tip" | "setup";
     }
@@ -161,6 +163,7 @@ function getOrderedResultItems(blocks: Blocks, keys: string[]): ResultItem[] {
       key: setupKey,
       title: formatTitle(setupKey),
       content: blocks[setupKey],
+      setup: detectSetupFromText(blocks[setupKey]),
       type: "card",
       variant: "setup",
     });
@@ -272,6 +275,7 @@ export default function ResultGrid({
             title={item.title}
             content={item.content}
             equipment={equipment}
+            setup={item.setup}
             variant={item.variant}
           />
         );

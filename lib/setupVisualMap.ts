@@ -22,6 +22,20 @@ export const setupVisualMap: Record<string, string> = {
 
 export const SETUP_VISUAL_FALLBACK = "/setup/setup_gas_two_zone.webp";
 
+export function detectSetupFromText(text: string): SetupType {
+  const normalized = text.toLowerCase();
+
+  if (normalized.includes("two zone") || normalized.includes("two-zone")) return "two-zone";
+  if (normalized.includes("reverse sear") || normalized.includes("reverse-sear")) {
+    return "reverse-sear";
+  }
+  if (normalized.includes("smoke") || normalized.includes("low and slow")) return "low-slow";
+  if (normalized.includes("indirect")) return "indirect";
+  if (normalized.includes("direct heat")) return "direct";
+
+  return "two-zone";
+}
+
 export function getSetupVisual(
   equipment?: string,
   setup?: string

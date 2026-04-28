@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { getResultCardAccent, getResultCardIcon, getResultCardTitle } from "@/lib/uiHelpers";
 import {
+  detectSetupFromText,
   getSetupVisual,
   SETUP_VISUAL_FALLBACK,
   type SetupEquipment,
@@ -16,6 +17,7 @@ type ResultCardProps = {
   title: string;
   content?: string;
   equipment?: string;
+  setup?: SetupType;
   variant?: "default" | "primary" | "summary" | "tip" | "setup";
 };
 
@@ -136,42 +138,6 @@ function resolveSetupEquipment(value = ""): SetupEquipment | undefined {
   return undefined;
 }
 
-function resolveSetupType(value = "", equipment?: SetupEquipment): SetupType | undefined {
-  const normalized = normalizeSetupText(value);
-
-  if (equipment === "indoor") {
-    if (
-      normalized.includes("horno") ||
-      normalized.includes("oven") ||
-      normalized.includes("sarten") ||
-      normalized.includes("pan")
-    ) {
-      return "pan-oven";
-    }
-
-    return "pan";
-  }
-
-  if (normalized.includes("reverse")) return "reverse-sear";
-  if (normalized.includes("smoke") || normalized.includes("ahum")) return "smoke";
-  if (normalized.includes("low") || normalized.includes("slow") || normalized.includes("baja")) {
-    return "low-slow";
-  }
-  if (
-    normalized.includes("2 zonas") ||
-    normalized.includes("dos zonas") ||
-    normalized.includes("two-zone") ||
-    normalized.includes("two zone") ||
-    normalized.includes("zona indirecta")
-  ) {
-    return "two-zone";
-  }
-  if (normalized.includes("indirect")) return "indirect";
-  if (normalized.includes("direct")) return "direct";
-
-  return undefined;
-}
-
 function SetupVisualImage({ src }: { src: string }) {
   const [fallbackStep, setFallbackStep] = useState<"none" | "asset" | "inline">("none");
   const imageSrc =
@@ -202,16 +168,18 @@ function SetupVisualImage({ src }: { src: string }) {
 function SetupVisualToggle({
   content,
   equipment,
+  setup,
   title,
 }: {
   content: string;
   equipment?: string;
+  setup?: SetupType;
   title: string;
 }) {
   const [open, setOpen] = useState(false);
   const setupEquipment = resolveSetupEquipment(equipment) ?? resolveSetupEquipment(content);
-  const setupType = resolveSetupType(content, setupEquipment);
-  const setupImage = getSetupVisual(setupEquipment, setupType);
+  const detectedSetup = setup ?? detectSetupFromText(content);
+  const setupImage = getSetupVisual(setupEquipment, detectedSetup);
 
   if (!isSetupCard(title)) return null;
 
@@ -300,6 +268,7 @@ export default function ResultCard({
   title,
   content,
   equipment,
+  setup,
   variant = "default",
 }: ResultCardProps) {
   if (!content?.trim()) return null;
@@ -329,7 +298,7 @@ export default function ResultCard({
           variant={variant}
         />
         <ResultCardContent lines={contentLines} variant={variant} />
-        <SetupVisualToggle content={content} equipment={equipment} title={title} />
+        <SetupVisualToggle content={content} equipment={equipment} setup={setup} title={title} />
       </div>
     </Panel>
   );

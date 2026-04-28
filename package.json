@@ -13,6 +13,7 @@
     "snapshots:cooking": "tsx scripts/cooking-snapshots.ts",
     "snapshots:cooking:update": "tsx scripts/cooking-snapshots.ts --update",
     "process:setup-images": "node scripts/process-setup-images.mjs",
+    "generate:setup-images": "node scripts/generate-setup-images.mjs",
     "check:ui": "tsx scripts/print-ui-checklist.ts",
     "check": "npm run lint && npm run build && npm run qa:cooking && npm run check:ui",
     "qa": "npm run qa:cooking && npm run snapshots:cooking && npm run check:ui"
