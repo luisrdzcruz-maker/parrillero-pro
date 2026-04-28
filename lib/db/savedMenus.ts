@@ -19,6 +19,16 @@ export type SavedMenu = {
   share_slug: string | null;
 };
 
+export type PublishSavedMenuResult =
+  | {
+      ok: true;
+      menu: SavedMenu;
+    }
+  | {
+      ok: false;
+      error: string;
+    };
+
 export type SaveMenuInput = {
   name: string;
   lang: string;
@@ -40,7 +50,7 @@ type SavedMenuRow = {
 };
 
 function createShareSlug() {
-  return `bbq-${crypto.randomUUID().replace(/-/g, "").slice(0, 12)}`;
+  return `plan-${crypto.randomUUID().replace(/-/g, "").slice(0, 12)}`;
 }
 
 function createFallbackSavedMenu(input: SaveMenuInput): SavedMenu {
@@ -170,9 +180,12 @@ export async function deleteSavedMenu(id: string): Promise<void> {
   }
 }
 
-export async function publishSavedMenu(id: string): Promise<SavedMenu> {
-  if (id.startsWith("local_")) {
-    throw new Error("Local saved menus cannot be published until Supabase save succeeds.");
+export async function publishSavedMenu(id: string): Promise<PublishSavedMenuResult> {
+  if (!id || id.startsWith("local_")) {
+    return {
+      ok: false,
+      error: "Este plan solo está guardado en este dispositivo.",
+    };
   }
 
   try {
@@ -185,7 +198,10 @@ export async function publishSavedMenu(id: string): Promise<SavedMenu> {
 
     if (existingError) {
       console.error("[savedMenus] Failed to read menu before publish", existingError);
-      throw new Error(`Failed to publish saved menu: ${existingError.message}`);
+      return {
+        ok: false,
+        error: `No se pudo publicar el plan: ${existingError.message}`,
+      };
     }
 
     const slug =
@@ -198,6 +214,7 @@ export async function publishSavedMenu(id: string): Promise<SavedMenu> {
       .update({
         is_public: true,
         share_slug: slug,
+        updated_at: new Date().toISOString(),
       })
       .eq("id", id)
       .select(savedMenuSelect)
@@ -205,13 +222,22 @@ export async function publishSavedMenu(id: string): Promise<SavedMenu> {
 
     if (error || !data) {
       console.error("[savedMenus] Failed to publish menu", error);
-      throw new Error(`Failed to publish saved menu: ${error?.message ?? "No row returned"}`);
+      return {
+        ok: false,
+        error: `No se pudo publicar el plan: ${error?.message ?? "No se encontró el plan actualizado"}`,
+      };
     }
 
-    return toSavedMenu(data as SavedMenuRow);
+    return {
+      ok: true,
+      menu: toSavedMenu(data as SavedMenuRow),
+    };
   } catch (error) {
     console.error("[savedMenus] Failed to publish menu", error);
-    throw error;
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "No se pudo publicar el plan.",
+    };
   }
 }
 

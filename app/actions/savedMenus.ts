@@ -108,10 +108,26 @@ export async function deleteGeneratedMenu(id: string) {
 }
 
 export async function publishSavedMenu(id: string) {
-  const savedMenu = await publishSavedMenuRow(id);
+  const result = await publishSavedMenuRow(id);
+  if (!result.ok) {
+    return {
+      ok: false,
+      error: result.error,
+    };
+  }
+
+  const savedMenu = result.menu;
   safeRevalidate("/saved");
   if (savedMenu.share_slug) safeRevalidate(`/share/${savedMenu.share_slug}`);
-  return savedMenu;
+
+  return {
+    ok: true,
+    menu: {
+      id: savedMenu.id,
+      is_public: savedMenu.is_public,
+      share_slug: savedMenu.share_slug,
+    },
+  };
 }
 
 export async function unpublishSavedMenu(id: string) {

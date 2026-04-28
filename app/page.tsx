@@ -76,6 +76,7 @@ type SavedMenu = {
 };
 
 type SavedMenuType = "cooking_plan" | "generated_menu" | "parrillada_plan";
+type ShareStatus = "idle" | "publishing" | "copied" | "error";
 
 type SavedMenuActionMenu = {
   id: string;
@@ -89,6 +90,17 @@ type SaveGeneratedMenuResponse =
   | { ok: true; menu: SavedMenuActionMenu }
   | { ok: false; error?: string }
   | SavedMenuActionMenu;
+
+type PublishSavedMenuResponse =
+  | {
+      ok: true;
+      menu: {
+        id: string;
+        is_public: boolean;
+        share_slug: string | null;
+      };
+    }
+  | { ok: false; error?: string };
 
 type CutItem = {
   id: string;
@@ -266,6 +278,24 @@ function getSavedMenuType(menu: SavedMenu): SavedMenuType {
   return menu.type ?? "generated_menu";
 }
 
+function isLocalSavedMenu(menu: Pick<SavedMenu, "id">) {
+  return !menu.id || menu.id.startsWith("local_");
+}
+
+function getShareButtonLabel({
+  isPublic,
+  isSharing,
+  shareStatus,
+}: {
+  isPublic: boolean;
+  isSharing: boolean;
+  shareStatus: ShareStatus;
+}) {
+  if (isSharing || shareStatus === "publishing") return "Publicando...";
+  if (isPublic || shareStatus === "copied") return "Copiar link";
+  return "Publicar";
+}
+
 function buildCookStepsFromPlan(blocks: Blocks): CookingStep[] {
   const text = blocks.PASOS || blocks.STEPS || blocks.ORDEN || blocks.ORDER || "";
   const lines = text
@@ -357,6 +387,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [saveMenuStatus, setSaveMenuStatus] = useState<SaveMenuStatus>("idle");
   const [saveMenuMessage, setSaveMenuMessage] = useState("");
+  const [shareStatus, setShareStatus] = useState<ShareStatus>("idle");
   const [shareMessage, setShareMessage] = useState("");
   const [shareMessageMenuId, setShareMessageMenuId] = useState<string | null>(null);
   const [sharingMenuId, setSharingMenuId] = useState<string | null>(null);
@@ -479,14 +510,17 @@ export default function Home() {
   function resetSaveMenuState() {
     setSaveMenuStatus("idle");
     setSaveMenuMessage("");
+    setShareStatus("idle");
+    setShareMessage("");
+    setShareMessageMenuId(null);
   }
 
-  async function saveCurrentMenu() {
-    if (typeof window === "undefined") return;
+  async function saveCurrentMenu(): Promise<SavedMenu | null> {
+    if (typeof window === "undefined") return null;
     if (!hasSavableBlocks(blocks)) {
       setSaveMenuStatus("error");
       setSaveMenuMessage(t.menuSaveError);
-      return;
+      return null;
     }
 
     const now = new Date();
@@ -518,7 +552,7 @@ export default function Home() {
       if (Object.keys(safeBlocks).length === 0) {
         setSaveMenuStatus("error");
         setSaveMenuMessage(t.menuSaveError);
-        return;
+        return null;
       }
 
       const inputs =
@@ -567,7 +601,7 @@ export default function Home() {
       if ("ok" in savedMenuResult && !savedMenuResult.ok) {
         setSaveMenuStatus("error");
         setSaveMenuMessage(savedMenuResult.error || t.menuSaveError);
-        return;
+        return null;
       }
 
       const savedMenu = "ok" in savedMenuResult ? savedMenuResult.menu : savedMenuResult;
@@ -585,9 +619,11 @@ export default function Home() {
       updateSavedMenus([newMenu, ...savedMenus.filter((menu) => menu.id !== newMenu.id)]);
       setSaveMenuStatus("success");
       setSaveMenuMessage(t.menuSaved);
+      return newMenu;
     } catch {
       setSaveMenuStatus("error");
       setSaveMenuMessage(t.menuSaveError);
+      return null;
     }
   }
 
@@ -609,26 +645,59 @@ export default function Home() {
   }
 
   async function publishMenu(menu: SavedMenu) {
-    if (menu.id.startsWith("local_") || menu.id.startsWith("local-")) {
-      setShareMessage("Guarda en la nube para compartir");
+    if (process.env.NODE_ENV === "development") {
+      console.log("[share] selected item", menu);
+    }
+
+    if (isLocalSavedMenu(menu)) {
+      setShareStatus("error");
+      setShareMessage("Este plan solo está guardado en este dispositivo. Guárdalo en la nube para compartir.");
       setShareMessageMenuId(menu.id);
       return;
     }
 
     setSharingMenuId(menu.id);
+    setShareStatus("publishing");
     setShareMessage("");
     setShareMessageMenuId(menu.id);
 
     try {
-      const published = await publishGeneratedMenu(menu.id);
+      const result = (await publishGeneratedMenu(menu.id)) as PublishSavedMenuResponse;
+      if (process.env.NODE_ENV === "development") {
+        console.log("[share] publish result", result);
+      }
+
+      if (!result.ok) {
+        setShareStatus("error");
+        setShareMessage(result.error || "No se pudo publicar el plan");
+        return;
+      }
+
+      const published = result.menu;
       const updatedMenu = {
         ...menu,
         is_public: published.is_public,
         share_slug: published.share_slug,
       };
       updateSharedMenu(updatedMenu);
-      setShareMessage(published.share_slug ? "Plan publicado" : "Plan publicado");
-    } catch {
+      setShareStatus("idle");
+      setShareMessage("Plan publicado. Link listo para compartir.");
+
+      if (published.share_slug && typeof window !== "undefined" && navigator.clipboard) {
+        try {
+          await navigator.clipboard.writeText(`${window.location.origin}/share/${published.share_slug}`);
+          setShareStatus("copied");
+          setShareMessage("Link copiado");
+        } catch {
+          setShareStatus("idle");
+          setShareMessage("Plan publicado. Link listo para compartir.");
+        }
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV === "development") {
+        console.log("[share] publish result", error);
+      }
+      setShareStatus("error");
       setShareMessage("No se pudo publicar el plan");
     } finally {
       setSharingMenuId(null);
@@ -636,9 +705,10 @@ export default function Home() {
   }
 
   async function unpublishMenu(menu: SavedMenu) {
-    if (menu.id.startsWith("local_") || menu.id.startsWith("local-")) return;
+    if (isLocalSavedMenu(menu)) return;
 
     setSharingMenuId(menu.id);
+    setShareStatus("publishing");
     setShareMessage("");
     setShareMessageMenuId(menu.id);
 
@@ -650,8 +720,10 @@ export default function Home() {
         share_slug: unpublished.share_slug,
       };
       updateSharedMenu(updatedMenu);
+      setShareStatus("idle");
       setShareMessage("Plan privado");
     } catch {
+      setShareStatus("error");
       setShareMessage("No se pudo cambiar la privacidad");
     } finally {
       setSharingMenuId(null);
@@ -662,6 +734,7 @@ export default function Home() {
     if (typeof window === "undefined" || !navigator.clipboard || !menu.share_slug) return;
 
     await navigator.clipboard.writeText(`${window.location.origin}/share/${menu.share_slug}`);
+    setShareStatus("copied");
     setShareMessage("Link copiado");
     setShareMessageMenuId(menu.id);
   }
@@ -897,7 +970,10 @@ ERROR
   }
 
   async function shareCurrentPlan() {
-    await copyCurrentPlan();
+    const savedMenu = await saveCurrentMenu();
+    if (!savedMenu) return;
+
+    await publishMenu(savedMenu);
   }
 
   function generateParrillada() {
@@ -1059,7 +1135,9 @@ ERROR
             onCopy={copyCurrentPlan}
             onEdit={editPlanExperience}
             onGenerate={generatePlanExperience}
-            onSave={saveCurrentMenu}
+            onSave={async () => {
+              await saveCurrentMenu();
+            }}
             onShare={shareCurrentPlan}
             parrilladaPeople={parrilladaPeople}
             parrilladaProducts={parrilladaProducts}
@@ -1122,7 +1200,9 @@ ERROR
               resetSaveMenuState();
             }}
             showThickness={showThickness}
-            onSaveMenu={saveCurrentMenu}
+            onSaveMenu={async () => {
+              await saveCurrentMenu();
+            }}
             t={t}
             weight={weight}
             thickness={thickness}
@@ -1213,7 +1293,11 @@ ERROR
               checkedItems={checkedItems}
               setCheckedItems={setCheckedItems}
               onSaveMenu={
-                blocks.MENU || blocks.COMPRA || blocks.SHOPPING ? saveCurrentMenu : undefined
+                blocks.MENU || blocks.COMPRA || blocks.SHOPPING
+                  ? async () => {
+                      await saveCurrentMenu();
+                    }
+                  : undefined
               }
               saveMenuStatus={saveMenuStatus}
               saveMenuMessage={saveMenuMessage}
@@ -1267,7 +1351,13 @@ ERROR
               blocks={blocks}
               loading={loading}
               checkedItems={checkedItems}
-              onSaveMenu={Object.keys(blocks).length > 0 ? saveCurrentMenu : undefined}
+              onSaveMenu={
+                Object.keys(blocks).length > 0
+                  ? async () => {
+                      await saveCurrentMenu();
+                    }
+                  : undefined
+              }
               saveMenuMessage={saveMenuMessage}
               saveMenuStatus={saveMenuStatus}
               setCheckedItems={setCheckedItems}
@@ -1312,6 +1402,7 @@ ERROR
               onUnpublish={unpublishMenu}
               shareMessage={shareMessage}
               shareMessageMenuId={shareMessageMenuId}
+              shareStatus={shareStatus}
               sharingMenuId={sharingMenuId}
               setCheckedItems={setCheckedItems}
               t={t}
@@ -1328,6 +1419,7 @@ ERROR
               onUnpublish={unpublishMenu}
               shareMessage={shareMessage}
               shareMessageMenuId={shareMessageMenuId}
+              shareStatus={shareStatus}
               sharingMenuId={sharingMenuId}
               t={t}
             />
@@ -1357,6 +1449,7 @@ function SavedMenusSection({
   onUnpublish,
   shareMessage,
   shareMessageMenuId,
+  shareStatus,
   sharingMenuId,
   t,
 }: {
@@ -1370,6 +1463,7 @@ function SavedMenusSection({
   onUnpublish: (menu: SavedMenu) => void;
   shareMessage: string;
   shareMessageMenuId: string | null;
+  shareStatus: ShareStatus;
   sharingMenuId: string | null;
   t: AppText;
 }) {
@@ -1389,9 +1483,9 @@ function SavedMenusSection({
               <p className="mt-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-xs font-bold text-emerald-200">
                 /share/{menu.share_slug}
               </p>
-            ) : menu.id.startsWith("local_") || menu.id.startsWith("local-") ? (
+            ) : isLocalSavedMenu(menu) ? (
               <p className="mt-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-slate-300">
-                Guarda en la nube para compartir
+                Este plan solo está guardado en este dispositivo. Guárdalo en la nube para compartir.
               </p>
             ) : null}
 
@@ -1413,17 +1507,17 @@ function SavedMenusSection({
                     {sharingMenuId === menu.id ? "Actualizando..." : "Despublicar"}
                   </Button>
                 </>
-              ) : (
+              ) : isLocalSavedMenu(menu) ? null : (
                 <Button
                   onClick={() => onPublish(menu)}
                   variant="outlineAccent"
-                  disabled={
-                    sharingMenuId === menu.id ||
-                    menu.id.startsWith("local_") ||
-                    menu.id.startsWith("local-")
-                  }
+                  disabled={sharingMenuId === menu.id}
                 >
-                  {sharingMenuId === menu.id ? "Publicando..." : "Publicar"}
+                  {getShareButtonLabel({
+                    isPublic: false,
+                    isSharing: sharingMenuId === menu.id,
+                    shareStatus: shareMessageMenuId === menu.id ? shareStatus : "idle",
+                  })}
                 </Button>
               )}
               <Button onClick={() => onDelete(menu.id)} variant="danger">
@@ -1451,6 +1545,7 @@ function SavedMenuDetail({
   onUnpublish,
   shareMessage,
   shareMessageMenuId,
+  shareStatus,
   sharingMenuId,
   setCheckedItems,
   t,
@@ -1465,12 +1560,13 @@ function SavedMenuDetail({
   onUnpublish: (menu: SavedMenu) => void;
   shareMessage: string;
   shareMessageMenuId: string | null;
+  shareStatus: ShareStatus;
   sharingMenuId: string | null;
   setCheckedItems: (value: Record<string, boolean>) => void;
   t: AppText;
 }) {
   const type = getSavedMenuType(menu);
-  const isLocal = menu.id.startsWith("local_") || menu.id.startsWith("local-");
+  const isLocal = isLocalSavedMenu(menu);
 
   return (
     <div className="space-y-4">
@@ -1502,13 +1598,17 @@ function SavedMenuDetail({
                   {sharingMenuId === menu.id ? "Actualizando..." : "Despublicar"}
                 </Button>
               </>
-            ) : (
+            ) : isLocal ? null : (
               <Button
                 onClick={() => onPublish(menu)}
                 variant="outlineAccent"
-                disabled={isLocal || sharingMenuId === menu.id}
+                disabled={sharingMenuId === menu.id}
               >
-                {sharingMenuId === menu.id ? "Publicando..." : "Publicar"}
+                {getShareButtonLabel({
+                  isPublic: false,
+                  isSharing: sharingMenuId === menu.id,
+                  shareStatus: shareMessageMenuId === menu.id ? shareStatus : "idle",
+                })}
               </Button>
             )}
           </div>
@@ -1519,7 +1619,7 @@ function SavedMenuDetail({
           </div>
         ) : isLocal ? (
           <p className="mt-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold text-slate-300">
-            Guarda en la nube para compartir
+            Este plan solo está guardado en este dispositivo. Guárdalo en la nube para compartir.
           </p>
         ) : null}
         {shareMessage && shareMessageMenuId === menu.id && (
@@ -2404,7 +2504,9 @@ ERROR
               resetSaveMenuState();
             }}
             showThickness={showThickness}
-            onSaveMenu={saveCurrentMenu}
+            onSaveMenu={async () => {
+              await saveCurrentMenu();
+            }}
             t={t}
             weight={weight}
             thickness={thickness}
@@ -2496,7 +2598,13 @@ ERROR
               loading={loading}
               checkedItems={checkedItems}
               setCheckedItems={setCheckedItems}
-              onSaveMenu={blocks.MENU || blocks.COMPRA || blocks.SHOPPING ? saveCurrentMenu : undefined}
+              onSaveMenu={
+                blocks.MENU || blocks.COMPRA || blocks.SHOPPING
+                  ? async () => {
+                      await saveCurrentMenu();
+                    }
+                  : undefined
+              }
               saveMenuStatus={saveMenuStatus}
               saveMenuMessage={saveMenuMessage}
               t={t}
@@ -3508,7 +3616,9 @@ ERROR
               resetSaveMenuState();
             }}
             showThickness={showThickness}
-            onSaveMenu={saveCurrentMenu}
+            onSaveMenu={async () => {
+              await saveCurrentMenu();
+            }}
             t={t}
             weight={weight}
             thickness={thickness}
@@ -3600,7 +3710,13 @@ ERROR
               loading={loading}
               checkedItems={checkedItems}
               setCheckedItems={setCheckedItems}
-              onSaveMenu={blocks.MENU || blocks.COMPRA || blocks.SHOPPING ? saveCurrentMenu : undefined}
+              onSaveMenu={
+                blocks.MENU || blocks.COMPRA || blocks.SHOPPING
+                  ? async () => {
+                      await saveCurrentMenu();
+                    }
+                  : undefined
+              }
               saveMenuStatus={saveMenuStatus}
               saveMenuMessage={saveMenuMessage}
               t={t}
@@ -4615,7 +4731,9 @@ ERROR
               resetSaveMenuState();
             }}
             showThickness={showThickness}
-            onSaveMenu={saveCurrentMenu}
+            onSaveMenu={async () => {
+              await saveCurrentMenu();
+            }}
             t={t}
             weight={weight}
             thickness={thickness}
@@ -4665,7 +4783,13 @@ ERROR
               loading={loading}
               checkedItems={checkedItems}
               setCheckedItems={setCheckedItems}
-              onSaveMenu={blocks.MENU || blocks.COMPRA || blocks.SHOPPING ? saveCurrentMenu : undefined}
+              onSaveMenu={
+                blocks.MENU || blocks.COMPRA || blocks.SHOPPING
+                  ? async () => {
+                      await saveCurrentMenu();
+                    }
+                  : undefined
+              }
               saveMenuStatus={saveMenuStatus}
               saveMenuMessage={saveMenuMessage}
               t={t}

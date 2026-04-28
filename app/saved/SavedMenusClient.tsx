@@ -13,6 +13,16 @@ import { useMemo, useState, useTransition } from "react";
 type Lang = "es" | "en" | "fi";
 type Blocks = Record<string, string>;
 type SavedMenuType = "cooking_plan" | "generated_menu" | "parrillada_plan";
+type ShareActionResult =
+  | {
+      ok: true;
+      menu: Pick<SavedMenu, "id" | "is_public" | "share_slug">;
+    }
+  | {
+      ok: false;
+      error?: string;
+    };
+type LegacyShareActionResult = Pick<SavedMenu, "id" | "is_public" | "share_slug">;
 
 const texts = {
   es: {
@@ -226,18 +236,34 @@ export default function SavedMenusClient({ initialMenus }: { initialMenus: Saved
 
     startTransition(async () => {
       try {
-        const updatedMenu = menu.is_public
-          ? await unpublishGeneratedMenu(menu.id)
-          : await publishGeneratedMenu(menu.id);
+        const actionResult = (await (menu.is_public
+          ? unpublishGeneratedMenu(menu.id)
+          : publishGeneratedMenu(menu.id))) as ShareActionResult | LegacyShareActionResult;
+        const result = normalizeShareActionResult(actionResult);
+
+        if (!result.ok) {
+          setError(result.error || t.shareError);
+          return;
+        }
 
         setMenus((currentMenus) =>
           currentMenus.map((currentMenu) =>
-            currentMenu.id === updatedMenu.id ? updatedMenu : currentMenu,
+            currentMenu.id === result.menu.id
+              ? {
+                  ...currentMenu,
+                  is_public: result.menu.is_public,
+                  share_slug: result.menu.share_slug,
+                }
+              : currentMenu,
           ),
         );
 
-        if (!menu.is_public && updatedMenu.share_slug) {
-          await copyShareLink(updatedMenu);
+        if (!menu.is_public && result.menu.share_slug) {
+          await copyShareLink({
+            ...menu,
+            is_public: result.menu.is_public,
+            share_slug: result.menu.share_slug,
+          });
         }
 
         router.refresh();
@@ -259,6 +285,21 @@ export default function SavedMenusClient({ initialMenus }: { initialMenus: Saved
     } catch {
       setError(t.shareError);
     }
+  }
+
+  function normalizeShareActionResult(
+    result: ShareActionResult | LegacyShareActionResult,
+  ): ShareActionResult {
+    if ("ok" in result) return result;
+
+    return {
+      ok: true,
+      menu: {
+        id: result.id,
+        is_public: result.is_public,
+        share_slug: result.share_slug,
+      },
+    };
   }
 
   return (
