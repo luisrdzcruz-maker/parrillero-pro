@@ -232,11 +232,11 @@ function CookingAnimalStep({
   t: AppText;
 }) {
   return (
-    <Section className="animate-[fadeIn_220ms_ease-out] space-y-6 sm:space-y-7" title="¿Qué quieres cocinar?">
+    <Section className="mx-auto max-w-7xl animate-[fadeIn_220ms_ease-out] space-y-6 sm:space-y-7 lg:space-y-8" title="¿Qué quieres cocinar?">
       <p className="-mt-3 max-w-xl text-sm font-medium leading-6 text-slate-300 sm:text-base">
         Elige el ingrediente principal y Parrillero Pro ajusta cortes, fuego y tiempos.
       </p>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-5">
         {animalOptions.map((item) => (
           <FoodCard
             key={item}
@@ -291,10 +291,10 @@ function CookingCutStep({
   t: AppText;
 }) {
   return (
-    <section className="animate-[fadeIn_220ms_ease-out] space-y-5 sm:space-y-7">
+    <section className="mx-auto max-w-7xl animate-[fadeIn_220ms_ease-out] space-y-5 sm:space-y-7 lg:space-y-8">
       <AppTopBar backLabel={animal} onBack={onBack} />
 
-      <div className="max-w-2xl">
+      <div className="max-w-3xl">
         <p className="text-[11px] font-black uppercase tracking-[0.22em] text-orange-300/75">
           Categoría
         </p>
@@ -306,7 +306,7 @@ function CookingCutStep({
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3.5 sm:gap-5 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3.5 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
         {cuts.map((item) => (
           <CutCard
             key={item.id}
@@ -358,10 +358,10 @@ function CookingDetailsStep({
   weight: string;
 }) {
   return (
-    <section className="mx-auto max-w-2xl animate-[fadeIn_220ms_ease-out] space-y-5 sm:space-y-7">
+    <section className="mx-auto max-w-5xl animate-[fadeIn_220ms_ease-out] space-y-5 sm:space-y-7">
       <AppTopBar backLabel={selectedCut.name} onBack={onBack} />
 
-      <div>
+      <div className="max-w-2xl">
         <p className="text-[11px] font-black uppercase tracking-[0.22em] text-orange-300/75">
           {animal}
         </p>
@@ -373,12 +373,12 @@ function CookingDetailsStep({
         </p>
       </div>
 
-      <div className="rounded-[2rem] border border-white/10 bg-white/[0.045] p-4 shadow-2xl shadow-black/25 sm:p-5">
+      <div className="max-w-3xl rounded-[2rem] border border-white/10 bg-white/[0.045] p-4 shadow-2xl shadow-black/25 sm:p-5">
         <h2 className="text-lg font-black text-white">{selectedCut.name}</h2>
         <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-400">{selectedCut.description}</p>
       </div>
 
-      <div className="space-y-4">
+      <div className="grid max-w-4xl gap-4 md:grid-cols-2">
         <Input label={t.weight} value={weight} onChange={setWeight} placeholder="Ej: 1.2" />
 
         {showThickness && (
@@ -406,12 +406,14 @@ function CookingDetailsStep({
         />
       </div>
 
-      <PrimaryButton
-        onClick={generateCookingPlan}
-        loading={loading}
-        text={t.generatePlan}
-        loadingText={t.generating}
-      />
+      <div className="max-w-md">
+        <PrimaryButton
+          onClick={generateCookingPlan}
+          loading={loading}
+          text={t.generatePlan}
+          loadingText={t.generating}
+        />
+      </div>
     </section>
   );
 }
@@ -596,7 +598,7 @@ function CutCard({
             src={cut.image}
             alt={cut.name}
             fill
-            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 50vw"
+            sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
             className="object-cover object-center transition-transform duration-300 ease-out group-hover:scale-105"
             onError={() => setImageFailed(true)}
           />

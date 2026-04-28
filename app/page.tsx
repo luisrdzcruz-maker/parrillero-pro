@@ -1005,11 +1005,11 @@ ERROR
 
   return (
     <main
-      className={`${ds.shell.page} overflow-x-hidden px-3 pt-2 !pb-[max(120px,env(safe-area-inset-bottom))] sm:px-4 sm:pt-5 md:!pb-28`}
+      className={`${ds.shell.page} overflow-x-hidden px-3 pt-2 !pb-[max(120px,env(safe-area-inset-bottom))] sm:px-4 sm:pt-5 lg:px-8 lg:pt-6 lg:!pb-12`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <div className={ds.shell.container}>
+      <div className={`${ds.shell.container} lg:max-w-7xl xl:max-w-[1360px]`}>
         {mode === "inicio" && <AppHeader lang={lang} onLangChange={handleLanguageChange} t={t} />}
         <DesktopModeTabs mode={mode} onModeChange={handleModeChange} t={t} />
 

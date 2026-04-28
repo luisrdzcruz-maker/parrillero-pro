@@ -55,8 +55,8 @@ export function DesktopModeTabs({
   t: AppText;
 }) {
   return (
-    <nav className="mb-6 hidden rounded-3xl border border-white/10 bg-white/[0.03] p-2 shadow-lg shadow-black/10 backdrop-blur md:block">
-      <div className="grid grid-cols-5 gap-2">
+    <nav className="mb-7 hidden justify-center lg:flex">
+      <div className="grid w-full max-w-3xl grid-cols-5 gap-1.5 rounded-full border border-white/10 bg-black/45 p-1.5 shadow-2xl shadow-black/30 backdrop-blur-xl">
         <DesktopTab
           active={mode === "inicio"}
           label="Inicio"
@@ -108,11 +108,11 @@ function DesktopTab({
       onClick={onClick}
       className={
         active
-          ? "rounded-2xl bg-orange-500 px-3 py-2.5 text-sm font-bold text-black shadow-lg shadow-orange-500/25 transition-all duration-200 active:scale-[0.98]"
-          : "rounded-2xl px-3 py-2.5 text-sm font-medium text-slate-400 transition-all duration-200 hover:bg-white/5 hover:text-slate-100 active:scale-[0.98]"
+          ? "rounded-full bg-orange-500 px-3 py-2.5 text-sm font-black text-black shadow-lg shadow-orange-500/30 transition-all duration-200 active:scale-[0.98]"
+          : "rounded-full px-3 py-2.5 text-sm font-bold text-slate-300/80 transition-all duration-200 hover:bg-white/7 hover:text-slate-100 active:scale-[0.98]"
       }
     >
-      <span className="mr-2">{emoji}</span>
+      <span className="mr-1.5 text-base">{emoji}</span>
       {label}
     </button>
   );
@@ -128,7 +128,7 @@ export function BottomNavigation({
 }) {
   return (
     <nav
-      className={`${ds.nav.bottom} z-50 px-2 pb-[max(0.7rem,env(safe-area-inset-bottom))] pt-2 md:hidden`}
+      className={`${ds.nav.bottom} z-50 px-2 pb-[max(0.7rem,env(safe-area-inset-bottom))] pt-2 lg:hidden`}
     >
       <div className="mx-auto grid w-full max-w-[448px] grid-cols-5 items-center gap-0.5 rounded-[2rem] border border-white/10 bg-black/70 p-1.5 shadow-2xl shadow-black/60 backdrop-blur-xl">
         <Tab

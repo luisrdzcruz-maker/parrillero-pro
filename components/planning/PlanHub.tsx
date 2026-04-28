@@ -172,18 +172,20 @@ export function PlanHub({
   }
 
   return (
-    <section className="w-full max-w-full overflow-x-hidden">
-      <div className="relative overflow-hidden rounded-[1.75rem] border border-orange-400/15 bg-[radial-gradient(circle_at_20%_0%,rgba(249,115,22,0.20),transparent_34%),linear-gradient(145deg,rgba(15,23,42,0.98),rgba(2,6,23,0.96))] p-4 shadow-2xl shadow-orange-950/20 sm:p-7">
+    <section className="mx-auto grid w-full max-w-6xl gap-3 overflow-x-hidden lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-6">
+      <div className="relative overflow-hidden rounded-[1.75rem] border border-orange-400/15 bg-[radial-gradient(circle_at_20%_0%,rgba(249,115,22,0.20),transparent_34%),linear-gradient(145deg,rgba(15,23,42,0.98),rgba(2,6,23,0.96))] p-4 shadow-2xl shadow-orange-950/20 sm:p-7 lg:sticky lg:top-6 lg:min-h-[420px]">
         <div className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-orange-400/20 blur-3xl" />
-        <div className="relative z-10">
-          <h1 className="max-w-xl text-[clamp(1.8rem,8vw,3.25rem)] font-black leading-[0.98] tracking-[-0.055em] text-white">
-            Organiza tu parrillada
-          </h1>
-          <p className="mt-2 max-w-md text-sm font-medium leading-6 text-slate-300 sm:text-base">
-            Calcula cantidades, tiempos y orden de cocción.
-          </p>
+        <div className="relative z-10 flex h-full flex-col justify-between gap-8">
+          <div>
+            <h1 className="max-w-xl text-[clamp(1.8rem,8vw,3.25rem)] font-black leading-[0.98] tracking-[-0.055em] text-white lg:text-5xl">
+              Organiza tu parrillada
+            </h1>
+            <p className="mt-2 max-w-md text-sm font-medium leading-6 text-slate-300 sm:text-base">
+              Calcula cantidades, tiempos y orden de cocción.
+            </p>
+          </div>
 
-          <div className="mt-4 grid grid-cols-3 gap-1.5 rounded-2xl border border-white/10 bg-black/30 p-1 backdrop-blur">
+          <div className="grid grid-cols-3 gap-1.5 rounded-2xl border border-white/10 bg-black/30 p-1 backdrop-blur">
             {planModes.map((mode) => (
               <button
                 key={mode.id}
@@ -202,7 +204,7 @@ export function PlanHub({
         </div>
       </div>
 
-      <div className="mt-3 rounded-[1.75rem] border border-white/10 bg-white/[0.045] p-4 shadow-2xl shadow-black/20 backdrop-blur sm:p-6">
+      <div className="rounded-[1.75rem] border border-white/10 bg-white/[0.045] p-4 shadow-2xl shadow-black/20 backdrop-blur sm:p-6">
         <div className="mb-4">
           <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-300">
             {copy.badge}
