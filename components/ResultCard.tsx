@@ -1,14 +1,21 @@
 "use client";
 
-import { useState, type SyntheticEvent } from "react";
+import Image from "next/image";
+import { useState } from "react";
 import { getResultCardAccent, getResultCardIcon, getResultCardTitle } from "@/lib/uiHelpers";
-import { getSetupImage, SETUP_PLACEHOLDER_IMAGE } from "@/lib/setupVisuals";
+import {
+  getSetupVisual,
+  SETUP_VISUAL_FALLBACK,
+  type SetupEquipment,
+  type SetupType,
+} from "@/lib/setupVisualMap";
 import { Badge, Button, Panel } from "@/components/ui";
 import { ds } from "@/lib/design-system";
 
 type ResultCardProps = {
   title: string;
   content?: string;
+  equipment?: string;
   variant?: "default" | "primary" | "summary" | "tip" | "setup";
 };
 
@@ -100,21 +107,113 @@ function isSetupCard(title: string) {
   );
 }
 
-function SetupVisualToggle({ content, title }: { content: string; title: string }) {
-  const [open, setOpen] = useState(false);
-  const setupImage = getSetupImage({ equipment: content, heatType: content, method: content });
+function normalizeSetupText(value = "") {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
 
-  if (!isSetupCard(title)) return null;
+function resolveSetupEquipment(value = ""): SetupEquipment | undefined {
+  const normalized = normalizeSetupText(value);
 
-  function handleImageError(event: SyntheticEvent<HTMLImageElement>) {
-    if (event.currentTarget.getAttribute("src") === SETUP_PLACEHOLDER_IMAGE) {
-      event.currentTarget.onerror = null;
-      event.currentTarget.src = inlineFallbackImage;
-      return;
+  if (normalized.includes("kamado")) return "kamado";
+  if (
+    normalized.includes("interior") ||
+    normalized.includes("indoor") ||
+    normalized.includes("cocina") ||
+    normalized.includes("sarten") ||
+    normalized.includes("horno") ||
+    normalized.includes("oven")
+  ) {
+    return "indoor";
+  }
+  if (normalized.includes("carbon") || normalized.includes("charcoal")) return "charcoal";
+  if (normalized.includes("gas") || normalized.includes("napoleon") || normalized.includes("rogue")) {
+    return "gas";
+  }
+
+  return undefined;
+}
+
+function resolveSetupType(value = "", equipment?: SetupEquipment): SetupType | undefined {
+  const normalized = normalizeSetupText(value);
+
+  if (equipment === "indoor") {
+    if (
+      normalized.includes("horno") ||
+      normalized.includes("oven") ||
+      normalized.includes("sarten") ||
+      normalized.includes("pan")
+    ) {
+      return "pan-oven";
     }
 
-    event.currentTarget.src = SETUP_PLACEHOLDER_IMAGE;
+    return "pan";
   }
+
+  if (normalized.includes("reverse")) return "reverse-sear";
+  if (normalized.includes("smoke") || normalized.includes("ahum")) return "smoke";
+  if (normalized.includes("low") || normalized.includes("slow") || normalized.includes("baja")) {
+    return "low-slow";
+  }
+  if (
+    normalized.includes("2 zonas") ||
+    normalized.includes("dos zonas") ||
+    normalized.includes("two-zone") ||
+    normalized.includes("two zone") ||
+    normalized.includes("zona indirecta")
+  ) {
+    return "two-zone";
+  }
+  if (normalized.includes("indirect")) return "indirect";
+  if (normalized.includes("direct")) return "direct";
+
+  return undefined;
+}
+
+function SetupVisualImage({ src }: { src: string }) {
+  const [fallbackStep, setFallbackStep] = useState<"none" | "asset" | "inline">("none");
+  const imageSrc =
+    fallbackStep === "inline"
+      ? inlineFallbackImage
+      : fallbackStep === "asset"
+        ? SETUP_VISUAL_FALLBACK
+        : src;
+
+  function handleImageError() {
+    setFallbackStep((current) =>
+      current === "none" && src !== SETUP_VISUAL_FALLBACK ? "asset" : "inline",
+    );
+  }
+
+  return (
+    <Image
+      src={imageSrc}
+      alt=""
+      fill
+      sizes="(min-width: 640px) 640px, 100vw"
+      className="object-cover"
+      onError={handleImageError}
+    />
+  );
+}
+
+function SetupVisualToggle({
+  content,
+  equipment,
+  title,
+}: {
+  content: string;
+  equipment?: string;
+  title: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const setupEquipment = resolveSetupEquipment(equipment) ?? resolveSetupEquipment(content);
+  const setupType = resolveSetupType(content, setupEquipment);
+  const setupImage = getSetupVisual(setupEquipment, setupType);
+
+  if (!isSetupCard(title)) return null;
 
   return (
     <div className="mt-4 rounded-2xl border border-orange-400/15 bg-orange-500/[0.04] p-3 ring-1 ring-inset ring-orange-300/[0.03]">
@@ -154,15 +253,14 @@ function SetupVisualToggle({ content, title }: { content: string; title: string 
             }
           >
             <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950 shadow-2xl shadow-black/25">
-              <img
-                src={setupImage || SETUP_PLACEHOLDER_IMAGE}
-                alt="Visual grill setup"
-                loading="lazy"
-                className="h-44 w-full object-cover sm:h-56"
-                onError={handleImageError}
-              />
+              <div className="relative h-44 w-full sm:h-56">
+                <SetupVisualImage key={setupImage} src={setupImage} />
+              </div>
 
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(251,146,60,0.28),transparent_34%),linear-gradient(to_top,rgba(2,6,23,0.9)_0%,rgba(2,6,23,0.38)_54%,rgba(255,255,255,0.08)_100%)]" />
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(251,146,60,0.28),transparent_34%),linear-gradient(to_top,rgba(2,6,23,0.9)_0%,rgba(2,6,23,0.38)_54%,rgba(255,255,255,0.08)_100%)]"
+              />
               <div className="pointer-events-none absolute bottom-0 left-0 right-0 p-4">
                 <Badge
                   className="border-orange-400/30 bg-black/45 text-orange-200"
@@ -198,7 +296,12 @@ function getCardTone(variant: NonNullable<ResultCardProps["variant"]>) {
   return "";
 }
 
-export default function ResultCard({ title, content, variant = "default" }: ResultCardProps) {
+export default function ResultCard({
+  title,
+  content,
+  equipment,
+  variant = "default",
+}: ResultCardProps) {
   if (!content?.trim()) return null;
 
   const icon = getResultCardIcon(title);
@@ -226,7 +329,7 @@ export default function ResultCard({ title, content, variant = "default" }: Resu
           variant={variant}
         />
         <ResultCardContent lines={contentLines} variant={variant} />
-        <SetupVisualToggle content={content} title={title} />
+        <SetupVisualToggle content={content} equipment={equipment} title={title} />
       </div>
     </Panel>
   );

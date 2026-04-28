@@ -224,6 +224,7 @@ function getOrderedResultItems(blocks: Blocks, keys: string[]): ResultItem[] {
 export default function ResultGrid({
   blocks,
   checkedItems,
+  equipment,
   keys,
   loading,
   setCheckedItems,
@@ -231,6 +232,7 @@ export default function ResultGrid({
 }: {
   blocks: Blocks;
   checkedItems: Record<string, boolean>;
+  equipment?: string;
   keys: string[];
   loading: boolean;
   setCheckedItems: (value: Record<string, boolean>) => void;
@@ -269,6 +271,7 @@ export default function ResultGrid({
             key={item.key}
             title={item.title}
             content={item.content}
+            equipment={equipment}
             variant={item.variant}
           />
         );

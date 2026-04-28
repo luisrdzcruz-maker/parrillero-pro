@@ -448,6 +448,7 @@ function CookingResultStep({
       <ResultCards
         blocks={blocks}
         context={`${animal} · ${equipment}`}
+        equipment={equipment}
         loading={false}
         checkedItems={checkedItems}
         onEdit={onEdit}
@@ -467,6 +468,7 @@ function CookingResultStep({
 export function ResultCards({
   blocks,
   context,
+  equipment,
   loading,
   checkedItems,
   setCheckedItems,
@@ -479,6 +481,7 @@ export function ResultCards({
 }: {
   blocks: Blocks;
   context?: string;
+  equipment?: string;
   loading: boolean;
   checkedItems: Record<string, boolean>;
   setCheckedItems: (value: Record<string, boolean>) => void;
@@ -554,6 +557,7 @@ export function ResultCards({
       <ResultGrid
         blocks={blocks}
         checkedItems={checkedItems}
+        equipment={equipment}
         keys={keys}
         loading={loading}
         setCheckedItems={setCheckedItems}

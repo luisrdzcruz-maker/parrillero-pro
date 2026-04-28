@@ -12,6 +12,7 @@
     "qa:cooking": "tsx scripts/cooking-engine-qa.ts",
     "snapshots:cooking": "tsx scripts/cooking-snapshots.ts",
     "snapshots:cooking:update": "tsx scripts/cooking-snapshots.ts --update",
+    "process:setup-images": "node scripts/process-setup-images.mjs",
     "check:ui": "tsx scripts/print-ui-checklist.ts",
     "check": "npm run lint && npm run build && npm run qa:cooking && npm run check:ui",
     "qa": "npm run qa:cooking && npm run snapshots:cooking && npm run check:ui"
@@ -19,6 +20,7 @@
   "dependencies": {
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.104.1",
+    "dotenv": "^17.4.2",
     "fs-extra": "^11.3.4",
     "next": "16.2.4",
     "react": "19.2.4",
