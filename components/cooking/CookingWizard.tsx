@@ -232,11 +232,11 @@ function CookingAnimalStep({
   t: AppText;
 }) {
   return (
-    <Section className="mx-auto max-w-7xl animate-[fadeIn_220ms_ease-out] space-y-6 sm:space-y-7 lg:space-y-8" title="¿Qué quieres cocinar?">
+    <Section className="mx-auto max-w-[1480px] animate-[fadeIn_220ms_ease-out] space-y-6 sm:space-y-7 lg:space-y-8 2xl:max-w-[1520px]" title="¿Qué quieres cocinar?">
       <p className="-mt-3 max-w-xl text-sm font-medium leading-6 text-slate-300 sm:text-base">
         Elige el ingrediente principal y Parrillero Pro ajusta cortes, fuego y tiempos.
       </p>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6 xl:grid-cols-3 xl:gap-8 2xl:grid-cols-5">
         {animalOptions.map((item) => (
           <FoodCard
             key={item}
@@ -291,7 +291,7 @@ function CookingCutStep({
   t: AppText;
 }) {
   return (
-    <section className="mx-auto max-w-7xl animate-[fadeIn_220ms_ease-out] space-y-5 sm:space-y-7 lg:space-y-8">
+    <section className="mx-auto max-w-[1480px] animate-[fadeIn_220ms_ease-out] space-y-5 sm:space-y-7 lg:space-y-8 2xl:max-w-[1520px]">
       <AppTopBar backLabel={animal} onBack={onBack} />
 
       <div className="max-w-3xl">
@@ -306,7 +306,7 @@ function CookingCutStep({
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3.5 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3.5 sm:gap-5 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
         {cuts.map((item) => (
           <CutCard
             key={item.id}
@@ -589,7 +589,7 @@ function CutCard({
           : "group relative touch-manipulation select-none overflow-hidden rounded-[1.75rem] border border-white/10 bg-zinc-950 text-left shadow-[0_14px_42px_rgba(0,0,0,0.35)] transition-all duration-200 ease-out hover:border-[#FF6A00]/45 hover:shadow-[0_20px_52px_rgba(255,106,0,0.16)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/50 active:scale-[0.98]"
       }
     >
-      <div className="relative aspect-[4/5] overflow-hidden">
+      <div className="relative aspect-[4/5] min-h-[220px] overflow-hidden lg:min-h-[300px] xl:min-h-[340px] 2xl:min-h-[360px]">
         {!showImage && (
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_16%,rgba(255,106,0,0.30),transparent_34%),radial-gradient(circle_at_82%_0%,rgba(251,146,60,0.12),transparent_28%),linear-gradient(145deg,#18181b_0%,#09090b_48%,#000000_100%)]" />
         )}

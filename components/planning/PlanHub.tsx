@@ -172,7 +172,7 @@ export function PlanHub({
   }
 
   return (
-    <section className="mx-auto grid w-full max-w-6xl gap-3 overflow-x-hidden lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-6">
+    <section className="mx-auto grid w-full max-w-[1180px] gap-3 overflow-x-hidden lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-6 xl:max-w-[1360px]">
       <div className="relative overflow-hidden rounded-[1.75rem] border border-orange-400/15 bg-[radial-gradient(circle_at_20%_0%,rgba(249,115,22,0.20),transparent_34%),linear-gradient(145deg,rgba(15,23,42,0.98),rgba(2,6,23,0.96))] p-4 shadow-2xl shadow-orange-950/20 sm:p-7 lg:sticky lg:top-6 lg:min-h-[420px]">
         <div className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-orange-400/20 blur-3xl" />
         <div className="relative z-10 flex h-full flex-col justify-between gap-8">

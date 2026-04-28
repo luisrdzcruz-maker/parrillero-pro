@@ -31,8 +31,8 @@ export default function FoodCard({
       onClick={onClick}
       className={
         selected
-          ? "group relative min-h-52 w-full touch-manipulation select-none overflow-hidden rounded-[2rem] border-2 border-orange-400/90 bg-zinc-950 text-left shadow-[0_24px_70px_rgba(255,106,0,0.36)] ring-2 ring-orange-400/35 transition-all duration-300 ease-out hover:scale-[1.025] hover:shadow-[0_30px_90px_rgba(255,106,0,0.46)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/70 active:scale-[0.98] sm:min-h-64 lg:min-h-[320px] xl:min-h-[360px]"
-          : "group relative min-h-52 w-full touch-manipulation select-none overflow-hidden rounded-[2rem] border border-white/10 bg-zinc-950 text-left shadow-[0_14px_45px_rgba(0,0,0,0.38)] transition-all duration-300 ease-out hover:scale-[1.025] hover:border-[#FF6A00]/70 hover:shadow-[0_26px_80px_rgba(255,106,0,0.34)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/60 active:scale-[0.98] sm:min-h-64 lg:min-h-[320px] xl:min-h-[360px]"
+          ? "group relative min-h-52 w-full touch-manipulation select-none overflow-hidden rounded-[2rem] border-2 border-orange-400/90 bg-zinc-950 text-left shadow-[0_24px_70px_rgba(255,106,0,0.36)] ring-2 ring-orange-400/35 transition-all duration-300 ease-out hover:scale-[1.025] hover:shadow-[0_30px_90px_rgba(255,106,0,0.46)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/70 active:scale-[0.98] sm:min-h-64 lg:min-h-[360px] xl:min-h-[420px] 2xl:min-h-[460px]"
+          : "group relative min-h-52 w-full touch-manipulation select-none overflow-hidden rounded-[2rem] border border-white/10 bg-zinc-950 text-left shadow-[0_14px_45px_rgba(0,0,0,0.38)] transition-all duration-300 ease-out hover:scale-[1.025] hover:border-[#FF6A00]/70 hover:shadow-[0_26px_80px_rgba(255,106,0,0.34)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/60 active:scale-[0.98] sm:min-h-64 lg:min-h-[360px] xl:min-h-[420px] 2xl:min-h-[460px]"
       }
     >
       {!showImage && (

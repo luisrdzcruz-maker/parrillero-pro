@@ -61,10 +61,10 @@ export function HomeScreen({
   ];
 
   return (
-    <div className="mx-auto w-full max-w-7xl overflow-x-hidden space-y-4 sm:space-y-6 lg:space-y-7">
-      <section className="grid gap-3 lg:grid-cols-[1.18fr_0.82fr] lg:items-stretch lg:gap-5 xl:gap-6">
+    <div className="mx-auto w-full max-w-none overflow-x-hidden space-y-4 sm:space-y-6 lg:space-y-7 xl:space-y-8">
+      <section className="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:items-stretch lg:gap-6 xl:gap-8">
         <Panel
-          className="relative min-h-[340px] overflow-hidden p-5 shadow-2xl shadow-orange-950/20 sm:min-h-[380px] sm:p-7 lg:min-h-[500px] lg:p-8 xl:min-h-[540px]"
+          className="relative min-h-[340px] overflow-hidden p-5 shadow-2xl shadow-orange-950/20 sm:min-h-[380px] sm:p-7 lg:col-span-7 lg:min-h-[520px] lg:p-8 xl:min-h-[580px]"
           tone="hero"
         >
           {!heroImageFailed && (
@@ -86,7 +86,7 @@ export function HomeScreen({
           <div className="pointer-events-none absolute -bottom-28 right-8 h-56 w-56 rounded-full bg-red-500/12 blur-3xl" />
 
           <FadeInSection>
-            <div className="relative z-10 flex min-h-[300px] flex-col justify-end gap-5 sm:min-h-[330px] lg:min-h-[436px] xl:min-h-[470px]">
+            <div className="relative z-10 flex min-h-[300px] flex-col justify-end gap-5 sm:min-h-[330px] lg:min-h-[456px] xl:min-h-[512px]">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge className="uppercase tracking-[0.16em] sm:tracking-[0.2em]">
@@ -124,7 +124,7 @@ export function HomeScreen({
           </FadeInSection>
         </Panel>
 
-        <div className="hidden lg:block">
+        <div className="hidden lg:col-span-5 lg:block">
           <HomePreviewPanel
             onOpenSaved={() => onModeChange("guardados")}
             savedMenusCount={savedMenusCount}
@@ -134,7 +134,7 @@ export function HomeScreen({
       </section>
 
       <section className="space-y-3 sm:space-y-4">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:gap-5 xl:gap-6">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-12 lg:gap-6 xl:gap-8">
           {featureCards.map((card) => (
             <HomeCard
               key={card.mode}
@@ -169,7 +169,7 @@ function HomePreviewPanel({
   ];
 
   return (
-    <Panel className="relative h-full min-h-[500px] overflow-hidden p-5 sm:p-6" tone="result">
+    <Panel className="relative h-full min-h-[420px] overflow-hidden p-5 sm:p-6 lg:min-h-[520px] xl:min-h-[580px]" tone="result">
       <div className="pointer-events-none absolute right-0 top-0 h-40 w-40 rounded-full bg-orange-500/10 blur-3xl" />
 
       <div className="relative z-10">
@@ -250,7 +250,7 @@ function HomeCard({
     <button
       type="button"
       onClick={onClick}
-      className="group relative min-h-[156px] touch-manipulation overflow-hidden rounded-3xl border border-white/10 bg-zinc-950 p-4 text-left shadow-2xl shadow-black/30 transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-300/35 active:scale-[0.98] active:brightness-[0.98] sm:min-h-[178px] sm:p-5 lg:min-h-[300px] xl:min-h-[330px]"
+      className="group relative min-h-[156px] touch-manipulation overflow-hidden rounded-3xl border border-white/10 bg-zinc-950 p-4 text-left shadow-2xl shadow-black/30 transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-300/35 active:scale-[0.98] active:brightness-[0.98] sm:min-h-[178px] sm:p-5 lg:col-span-6 lg:min-h-[280px] xl:min-h-[320px]"
     >
       {!showImage && (
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_12%,rgba(255,106,0,0.26),transparent_34%),linear-gradient(145deg,#18181b,#020202)]" />
@@ -268,7 +268,7 @@ function HomeCard({
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/10" />
       <div className="pointer-events-none absolute -right-12 -top-14 h-36 w-36 rounded-full bg-orange-400/20 blur-3xl" />
 
-      <div className="relative z-10 flex h-full min-h-[124px] flex-col justify-between sm:min-h-[138px] lg:min-h-[260px] xl:min-h-[288px]">
+      <div className="relative z-10 flex h-full min-h-[124px] flex-col justify-between sm:min-h-[138px] lg:min-h-[240px] xl:min-h-[278px]">
         <div className="flex items-start justify-between gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-orange-400/25 bg-black/35 text-2xl shadow-lg shadow-black/30 backdrop-blur">
           {emoji}

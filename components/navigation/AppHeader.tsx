@@ -56,7 +56,7 @@ export function DesktopModeTabs({
 }) {
   return (
     <nav className="mb-7 hidden justify-center lg:flex">
-      <div className="grid w-full max-w-3xl grid-cols-5 gap-1.5 rounded-full border border-white/10 bg-black/45 p-1.5 shadow-2xl shadow-black/30 backdrop-blur-xl">
+      <div className="grid w-full max-w-[1180px] grid-cols-5 gap-2 rounded-full border border-white/10 bg-black/45 p-1.5 shadow-2xl shadow-black/30 backdrop-blur-xl xl:max-w-[1280px]">
         <DesktopTab
           active={mode === "inicio"}
           label="Inicio"
