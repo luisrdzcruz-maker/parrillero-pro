@@ -6,6 +6,12 @@ import { useMemo, useState } from "react";
 
 export type PlanMode = "rapido" | "completo" | "evento";
 
+type SavedResult = {
+  id: string;
+  isPublic?: boolean;
+  shareSlug?: string | null;
+};
+
 type PlanHubProps = {
   blocks: Blocks;
   difficulty: string;
@@ -15,7 +21,7 @@ type PlanHubProps = {
   onCopy: () => void;
   onEdit: () => void;
   onGenerate: () => Promise<void> | void;
-  onSave: () => Promise<void>;
+  onSave: () => Promise<SavedResult | null | void>;
   onShare: () => void;
   parrilladaPeople: string;
   parrilladaProducts: string;
@@ -332,7 +338,7 @@ function PlanResultView({
   onCloseVisual: () => void;
   onCopy: () => void;
   onEdit: () => void;
-  onSave: () => Promise<void>;
+  onSave: () => Promise<SavedResult | null | void>;
   onShare: () => void;
   onShowVisual: () => void;
   saveMenuMessage: string;
