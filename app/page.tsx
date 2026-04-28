@@ -1266,6 +1266,7 @@ ERROR
             steps={Boolean(blocks.PASOS || blocks.STEPS) ? cookSteps : []}
             title={[selectedCut?.name, animal].filter(Boolean).join(" · ") || "Parrillero Pro"}
             subtitle={[selectedCut?.name, equipment].filter(Boolean).join(" · ")}
+            visualImage={cutImages[cut]}
             onExit={exitLiveCooking}
             onFinish={exitLiveCooking}
           />

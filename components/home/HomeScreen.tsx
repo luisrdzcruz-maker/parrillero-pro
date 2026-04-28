@@ -4,6 +4,7 @@ import { Badge, Button, Panel } from "@/components/ui";
 import type { Mode } from "@/components/navigation/AppHeader";
 import { ds } from "@/lib/design-system";
 import type { AppText } from "@/lib/i18n/texts";
+import Image from "next/image";
 import { type ReactNode, useLayoutEffect, useState } from "react";
 
 function FadeInSection({ children }: { children: ReactNode }) {
@@ -36,39 +37,24 @@ export function HomeScreen({
   onModeChange: (mode: Mode) => void;
   t: AppText;
 }) {
-  const primaryCard = {
-    description: "Elige corte, punto y equipo. El plan sale listo para ejecutar.",
-    emoji: "🥩",
-    mode: "coccion" as const,
-    priority: "Cocción",
-    stat: "Plan paso a paso",
-    title: t.planCooking,
-  };
+  const [heroImageFailed, setHeroImageFailed] = useState(false);
 
   const featureCards = [
     {
-      description: "Menú rápido o parrillada detallada desde un solo lugar.",
-      emoji: "🧭",
-      mode: "plan" as const,
-      priority: "Plan",
-      stat: "Menú o timeline",
-      title: "Planificar",
-    },
-    {
-      description: "Temporizador del plan activo.",
+      description: "Un paso cada vez, con avisos y temporizadores.",
       emoji: "⏱️",
-      mode: "cocina" as const,
-      priority: "En vivo",
-      stat: "Live cooking",
-      title: t.liveMode,
+      mode: "coccion" as const,
+      priority: "Guía en vivo",
+      stat: "Sin pensar",
+      title: "Live Cooking",
     },
     {
-      description: "Repite tus planes favoritos.",
-      emoji: "⭐",
-      mode: "guardados" as const,
-      priority: "Biblioteca",
-      stat: `${savedMenusCount} ${t.saved}`,
-      title: t.savedMenus,
+      description: "Organiza tiempos para varias piezas.",
+      emoji: "🔥",
+      mode: "plan" as const,
+      priority: "Parrilladas",
+      stat: "Timing claro",
+      title: "Parrilladas",
     },
   ];
 
@@ -76,15 +62,29 @@ export function HomeScreen({
     <div className="w-full max-w-full overflow-x-hidden space-y-4 sm:space-y-6">
       <section className="grid gap-3 lg:grid-cols-[1.02fr_0.98fr] lg:items-stretch">
         <Panel
-          className="relative overflow-hidden p-5 shadow-2xl shadow-orange-950/20 sm:p-7 lg:min-h-[300px]"
+          className="relative min-h-[340px] overflow-hidden p-5 shadow-2xl shadow-orange-950/20 sm:min-h-[380px] sm:p-7 lg:min-h-[420px]"
           tone="hero"
         >
+          {!heroImageFailed && (
+            <Image
+              src="/images/vacuno/ribeye-cooked.webp"
+              alt=""
+              fill
+              priority
+              sizes="(min-width: 1024px) 50vw, 100vw"
+              className="object-cover"
+              onError={() => setHeroImageFailed(true)}
+            />
+          )}
+          {heroImageFailed && (
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_15%,rgba(255,106,0,0.26),transparent_34%),linear-gradient(145deg,#18181b,#020202)]" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/68 to-black/10" />
           <div className="pointer-events-none absolute -left-16 -top-20 h-52 w-52 rounded-full bg-orange-500/18 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-28 right-8 h-56 w-56 rounded-full bg-red-500/12 blur-3xl" />
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.07),transparent_42%)]" />
 
           <FadeInSection>
-            <div className="relative z-10 flex h-full flex-col justify-between gap-5">
+            <div className="relative z-10 flex min-h-[300px] flex-col justify-end gap-5 sm:min-h-[330px] lg:min-h-[360px]">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge className="uppercase tracking-[0.16em] sm:tracking-[0.2em]">
@@ -97,23 +97,26 @@ export function HomeScreen({
                   <span className="block text-orange-300">sin improvisar</span>
                 </h1>
                 <p className="mt-3 max-w-md text-[15px] font-medium leading-6 text-slate-200 sm:max-w-lg sm:text-base sm:leading-7">
-                  Controla cortes, fuego y tiempos con una guía clara y precisa.
+                  Parrillero Pro te guía con cortes, fuego y tiempos claros.
                 </p>
 
-                <div className="mt-5 grid gap-2 sm:flex sm:gap-3">
+                <div className="mt-5 flex flex-wrap gap-3">
                   <Button
                     className="min-h-[46px] touch-manipulation rounded-2xl px-5 py-3 text-sm font-black shadow-xl shadow-orange-500/25 transition-all duration-200 active:scale-[0.97] active:brightness-95 sm:min-h-[50px] sm:px-6 sm:text-base"
                     onClick={() => onModeChange("coccion")}
                   >
                     Empezar <span aria-hidden="true">→</span>
                   </Button>
+                  {savedMenusCount > 0 && (
+                    <Button
+                      className="min-h-[46px] rounded-2xl px-5 py-3 text-sm font-black"
+                      onClick={() => onModeChange("guardados")}
+                      variant="secondary"
+                    >
+                      Ver guardados
+                    </Button>
+                  )}
                 </div>
-              </div>
-
-              <div className="hidden grid-cols-3 gap-2 text-sm text-slate-300 sm:grid">
-                <TrustItem label={t.localEngine} value="Cortes premium" />
-                <TrustItem label="Timeline live" value={t.liveMode} />
-                <TrustItem label={t.savedMenus} value={`${savedMenusCount} ${t.saved}`} />
               </div>
             </div>
           </FadeInSection>
@@ -129,33 +132,11 @@ export function HomeScreen({
       </section>
 
       <section className="space-y-3 sm:space-y-4">
-        <div className="flex flex-col justify-between gap-1 sm:flex-row sm:items-end">
-          <div>
-            <p className={`${ds.text.eyebrow} hidden sm:block`}>Modos secundarios</p>
-            <h2 className="text-lg font-black tracking-tight text-white sm:mt-2 sm:text-2xl">
-              Elige cómo quieres cocinar
-            </h2>
-          </div>
-          <p className="hidden max-w-xl text-sm leading-6 text-slate-400 sm:block">
-            Herramientas extra para planificar, cocinar en vivo y repetir planes guardados.
-          </p>
-        </div>
-
-        <HomeCard
-          active
-          description={primaryCard.description}
-          emoji={primaryCard.emoji}
-          onClick={() => onModeChange(primaryCard.mode)}
-          priority={primaryCard.priority}
-          stat={primaryCard.stat}
-          title={primaryCard.title}
-        />
-
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
           {featureCards.map((card) => (
             <HomeCard
               key={card.mode}
-              active={false}
+              active
               description={card.description}
               emoji={card.emoji}
               onClick={() => onModeChange(card.mode)}
@@ -166,17 +147,6 @@ export function HomeScreen({
           ))}
         </div>
       </section>
-    </div>
-  );
-}
-
-function TrustItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-2.5 ring-1 ring-inset ring-white/[0.03] sm:p-3">
-      <p className="truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-orange-300 sm:text-xs sm:tracking-[0.16em]">
-        {label}
-      </p>
-      <p className="mt-1 truncate text-xs font-medium text-white sm:text-sm">{value}</p>
     </div>
   );
 }

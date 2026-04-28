@@ -130,7 +130,7 @@ export function BottomNavigation({
     <nav
       className={`${ds.nav.bottom} z-50 min-h-[76px] px-2.5 pb-[max(0.7rem,env(safe-area-inset-bottom))] pt-2 md:hidden`}
     >
-      <div className="mx-auto grid w-full max-w-[430px] grid-cols-5 items-center gap-1 rounded-[1.65rem] border border-white/10 bg-slate-950/90 p-1.5 shadow-2xl shadow-black/50 backdrop-blur-xl">
+      <div className="mx-auto grid w-full max-w-[430px] grid-cols-5 items-center gap-0.5 rounded-[1.65rem] border border-white/10 bg-slate-950/90 p-1 shadow-2xl shadow-black/50 backdrop-blur-xl min-[390px]:gap-1 min-[390px]:p-1.5">
         <Tab
           active={mode === "inicio"}
           label="Inicio"
@@ -184,11 +184,11 @@ function Tab({
       aria-current={active ? "page" : undefined}
       className={
         active
-          ? "flex min-h-[56px] touch-manipulation flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-orange-300 via-orange-500 to-orange-600 px-0.5 py-1.5 text-[9px] font-black leading-tight text-black shadow-lg shadow-orange-500/45 ring-2 ring-orange-200/45 transition-all duration-200 motion-reduce:transition-none active:scale-[0.96] motion-reduce:active:scale-100 active:brightness-95"
-          : "flex min-h-[56px] touch-manipulation flex-col items-center justify-center rounded-2xl px-0.5 py-1.5 text-[9px] font-bold leading-tight text-slate-400 opacity-80 transition-all duration-200 motion-reduce:transition-none hover:bg-white/5 hover:text-slate-200 hover:opacity-100 active:scale-[0.96] motion-reduce:active:scale-100 active:bg-white/10"
+          ? "flex min-h-[54px] touch-manipulation flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-orange-300 via-orange-500 to-orange-600 px-0.5 py-1 text-[8.5px] font-black leading-tight text-black shadow-lg shadow-orange-500/45 ring-2 ring-orange-200/45 transition-all duration-200 motion-reduce:transition-none active:scale-[0.96] motion-reduce:active:scale-100 active:brightness-95 min-[390px]:min-h-[56px] min-[390px]:py-1.5 min-[390px]:text-[9px]"
+          : "flex min-h-[54px] touch-manipulation flex-col items-center justify-center rounded-2xl px-0.5 py-1 text-[8.5px] font-bold leading-tight text-slate-400 opacity-80 transition-all duration-200 motion-reduce:transition-none hover:bg-white/5 hover:text-slate-200 hover:opacity-100 active:scale-[0.96] motion-reduce:active:scale-100 active:bg-white/10 min-[390px]:min-h-[56px] min-[390px]:py-1.5 min-[390px]:text-[9px]"
       }
     >
-      <div className="text-center text-[20px] leading-none">{emoji}</div>
+      <div className="text-center text-[18px] leading-none min-[390px]:text-[20px]">{emoji}</div>
       <div className="mt-1 w-full text-center tracking-[-0.02em]">{label}</div>
     </button>
   );
