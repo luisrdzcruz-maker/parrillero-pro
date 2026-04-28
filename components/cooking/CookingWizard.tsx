@@ -3,7 +3,7 @@
 import ResultGrid from "@/components/ResultGrid";
 import ResultHero from "@/components/ResultHero";
 import FoodCard from "@/components/FoodCard";
-import { Badge, Button, Grid, Panel, Section } from "@/components/ui";
+import { Badge, Button, Section } from "@/components/ui";
 import type { Mode } from "@/components/navigation/AppHeader";
 import { ds } from "@/lib/design-system";
 import type { AppText, Lang } from "@/lib/i18n/texts";
@@ -100,7 +100,6 @@ export function CookingWizard({
   getAnimalPreview,
   handleAnimalChange,
   handleCutChange,
-  hasLocalEngine,
   lang,
   loading,
   onSaveMenu,
@@ -132,7 +131,6 @@ export function CookingWizard({
   getAnimalPreview: (animal: Animal, lang: Lang) => string;
   handleAnimalChange: (animal: Animal) => void;
   handleCutChange: (cut: string) => void;
-  hasLocalEngine: (animal: Animal) => boolean;
   lang: Lang;
   loading: boolean;
   onSaveMenu: () => Promise<void>;
@@ -162,28 +160,12 @@ export function CookingWizard({
       : cookingStep;
 
   return (
-    <div className="space-y-3 sm:space-y-5">
-      {visibleCookingStep !== "animal" && visibleCookingStep !== "result" && (
-        <CookingWizardHeader
-          animal={animal}
-          cookingStep={visibleCookingStep}
-          selectedCut={selectedCut}
-          t={t}
-        />
-      )}
-
-      {visibleCookingStep !== "animal" && visibleCookingStep !== "result" && (
-        <p className="px-1 text-center text-[11px] font-medium text-slate-500 md:hidden">
-          Desliza para volver
-        </p>
-      )}
-
+    <div className="space-y-5 sm:space-y-7">
       <CookingStepTransition stepKey={visibleCookingStep}>
         {visibleCookingStep === "animal" ? (
           <CookingAnimalStep
             animal={animal}
             getAnimalPreview={getAnimalPreview}
-            hasLocalEngine={hasLocalEngine}
             lang={lang}
             onSelectAnimal={handleAnimalChange}
             t={t}
@@ -193,7 +175,6 @@ export function CookingWizard({
             animal={animal}
             cut={cut}
             cuts={cuts}
-            hasLocalEngine={hasLocalEngine}
             onBack={() => setCookingStep("animal")}
             onSelectCut={handleCutChange}
             t={t}
@@ -237,88 +218,22 @@ export function CookingWizard({
   );
 }
 
-function CookingWizardHeader({
-  animal,
-  cookingStep,
-  selectedCut,
-  t,
-}: {
-  animal: Animal;
-  cookingStep: CookingWizardStep;
-  selectedCut?: CutItem;
-  t: AppText;
-}) {
-  const title =
-    cookingStep === "animal"
-      ? "¿Qué quieres cocinar?"
-      : cookingStep === "cut"
-        ? t.chooseCut
-        : t.configurePlan;
-  const subtitle =
-    cookingStep === "animal"
-      ? "Elige el ingrediente principal y Parrillero Pro ajusta cortes, fuego y tiempos."
-      : cookingStep === "cut"
-        ? "Ahora selecciona el corte exacto."
-        : "Ajusta peso, punto y equipo.";
-
-  return (
-    <>
-      <div className="sticky top-2 z-30 mb-2 rounded-xl border border-white/10 bg-slate-950/95 px-3 py-2 shadow-lg shadow-black/30 backdrop-blur sm:hidden">
-        <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <h1 className="text-sm font-bold text-white">{t.cooking}</h1>
-            <p className="truncate text-[10px] text-slate-400">{title}</p>
-          </div>
-          {cookingStep !== "animal" && (
-            <Badge className="max-w-[130px] shrink-0 truncate px-2 py-1 text-[10px]" tone="glass">
-              {selectedCut?.name ?? animal}
-            </Badge>
-          )}
-        </div>
-      </div>
-
-      <Panel className="relative hidden overflow-hidden p-4 sm:block md:p-5" tone="hero">
-        <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-orange-500/12 blur-3xl" />
-        <div className="relative z-10">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-orange-300/90">
-              {t.cooking}
-            </p>
-            <h1 className="mt-1 text-2xl font-black tracking-tight text-white md:text-3xl">
-              {title}
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">{subtitle}</p>
-            {cookingStep !== "animal" && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Badge>{animal}</Badge>
-                {selectedCut && <Badge tone="glass">{selectedCut.name}</Badge>}
-              </div>
-            )}
-          </div>
-        </div>
-      </Panel>
-    </>
-  );
-}
-
 function CookingAnimalStep({
   animal,
   getAnimalPreview,
-  hasLocalEngine,
   lang,
   onSelectAnimal,
   t,
 }: {
   animal: Animal;
   getAnimalPreview: (animal: Animal, lang: Lang) => string;
-  hasLocalEngine: (animal: Animal) => boolean;
   lang: Lang;
   onSelectAnimal: (animal: Animal) => void;
   t: AppText;
 }) {
   return (
-    <Section className="space-y-4 sm:space-y-5" eyebrow="Cocción" title="¿Qué quieres cocinar?">
-      <p className="-mt-2 max-w-2xl text-sm font-medium leading-6 text-slate-300 sm:text-base">
+    <Section className="animate-[fadeIn_220ms_ease-out] space-y-6 sm:space-y-7" title="¿Qué quieres cocinar?">
+      <p className="-mt-3 max-w-xl text-sm font-medium leading-6 text-slate-300 sm:text-base">
         Elige el ingrediente principal y Parrillero Pro ajusta cortes, fuego y tiempos.
       </p>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-5">
@@ -329,7 +244,7 @@ function CookingAnimalStep({
             title={item}
             subtitle={getAnimalPreview(item, lang)}
             image={foodImages[item]}
-            badge={hasLocalEngine(item) ? t.localEngine : t.aiFallback}
+            badge={undefined}
             selectedLabel={t.selected}
             onClick={() => onSelectAnimal(item)}
           />
@@ -339,11 +254,31 @@ function CookingAnimalStep({
   );
 }
 
+function AppTopBar({
+  backLabel,
+  onBack,
+}: {
+  backLabel: string;
+  onBack: () => void;
+}) {
+  return (
+    <div className="flex min-h-12 items-center">
+      <button
+        type="button"
+        onClick={onBack}
+        className="inline-flex min-h-11 max-w-full items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-3.5 py-2 text-sm font-black text-slate-100 shadow-lg shadow-black/10 transition-all duration-200 hover:bg-white/[0.08] active:scale-[0.97]"
+      >
+        <span className="text-lg leading-none">←</span>
+        <span className="truncate">{backLabel}</span>
+      </button>
+    </div>
+  );
+}
+
 function CookingCutStep({
   animal,
   cut,
   cuts,
-  hasLocalEngine,
   onBack,
   onSelectCut,
   t,
@@ -351,42 +286,39 @@ function CookingCutStep({
   animal: Animal;
   cut: string;
   cuts: CutItem[];
-  hasLocalEngine: (animal: Animal) => boolean;
   onBack: () => void;
   onSelectCut: (cut: string) => void;
   t: AppText;
 }) {
   return (
-    <Section className="space-y-4 sm:space-y-5" eyebrow="Categoría" title={t.chooseCut}>
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-300/80">
-            {animal}
-          </p>
-          <p className="mt-1 text-sm text-slate-400">Selecciona el corte para ajustar fuego y tiempos.</p>
-        </div>
-        <Button
-          className="rounded-full px-3 py-2 text-xs transition-all duration-200 active:scale-[0.98]"
-          onClick={onBack}
-          variant="secondary"
-        >
-          ← {t.reset}
-        </Button>
+    <section className="animate-[fadeIn_220ms_ease-out] space-y-5 sm:space-y-7">
+      <AppTopBar backLabel={animal} onBack={onBack} />
+
+      <div className="max-w-2xl">
+        <p className="text-[11px] font-black uppercase tracking-[0.22em] text-orange-300/75">
+          Categoría
+        </p>
+        <h1 className="mt-2 text-4xl font-black tracking-tight text-white sm:text-5xl">
+          {t.chooseCut}
+        </h1>
+        <p className="mt-2 text-sm font-medium leading-6 text-slate-400 sm:text-base">
+          Selecciona el corte para ajustar fuego y tiempos.
+        </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3.5 sm:gap-5 lg:grid-cols-4">
         {cuts.map((item) => (
           <CutCard
             key={item.id}
             active={cut === item.id}
             cut={item}
-            badge={hasLocalEngine(animal) ? t.localEngine : undefined}
+            badge={undefined}
             activeLabel={t.active}
             onClick={() => onSelectCut(item.id)}
           />
         ))}
       </div>
-    </Section>
+    </section>
   );
 }
 
@@ -426,28 +358,27 @@ function CookingDetailsStep({
   weight: string;
 }) {
   return (
-    <Grid variant="split">
-      <Panel className="space-y-2.5 sm:space-y-4 md:col-span-2" tone="form">
-        <div className="flex items-start justify-between gap-2 sm:gap-3">
-          <div>
-            <p className={ds.text.eyebrow}>Paso 3</p>
-            <h2 className="mt-1 text-lg font-bold text-white sm:text-xl">{t.configurePlan}</h2>
-          </div>
-          <Button
-            className="rounded-full px-3 py-2 text-xs transition-all duration-200 active:scale-[0.98]"
-            onClick={onBack}
-            variant="secondary"
-          >
-            ← {t.chooseCut}
-          </Button>
-        </div>
+    <section className="mx-auto max-w-2xl animate-[fadeIn_220ms_ease-out] space-y-5 sm:space-y-7">
+      <AppTopBar backLabel={selectedCut.name} onBack={onBack} />
 
-        <div className={`${ds.panel.highlight} p-2.5 sm:p-4`}>
-          <p className="text-sm text-orange-300">{animal}</p>
-          <h3 className="font-bold text-white">{selectedCut.name}</h3>
-          <p className="mt-1 text-sm text-slate-300">{selectedCut.description}</p>
-        </div>
+      <div>
+        <p className="text-[11px] font-black uppercase tracking-[0.22em] text-orange-300/75">
+          {animal}
+        </p>
+        <h1 className="mt-2 text-4xl font-black tracking-tight text-white sm:text-5xl">
+          Ajusta los detalles
+        </h1>
+        <p className="mt-2 text-sm font-medium leading-6 text-slate-400 sm:text-base">
+          Define punto, grosor y equipo para calcular tiempos precisos.
+        </p>
+      </div>
 
+      <div className="rounded-[2rem] border border-white/10 bg-white/[0.045] p-4 shadow-2xl shadow-black/25 sm:p-5">
+        <h2 className="text-lg font-black text-white">{selectedCut.name}</h2>
+        <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-400">{selectedCut.description}</p>
+      </div>
+
+      <div className="space-y-4">
         <Input label={t.weight} value={weight} onChange={setWeight} placeholder="Ej: 1.2" />
 
         {showThickness && (
@@ -473,15 +404,15 @@ function CookingDetailsStep({
           onChange={setEquipment}
           options={equipmentOptions}
         />
+      </div>
 
-        <PrimaryButton
-          onClick={generateCookingPlan}
-          loading={loading}
-          text={t.generatePlan}
-          loadingText={t.generating}
-        />
-      </Panel>
-    </Grid>
+      <PrimaryButton
+        onClick={generateCookingPlan}
+        loading={loading}
+        text={t.generatePlan}
+        loadingText={t.generating}
+      />
+    </section>
   );
 }
 
@@ -652,11 +583,11 @@ function CutCard({
       onClick={onClick}
       className={
         active
-          ? "group relative touch-manipulation select-none overflow-hidden rounded-[1.75rem] border-2 border-orange-400/90 bg-zinc-950 text-left shadow-[0_22px_64px_rgba(255,106,0,0.34)] ring-2 ring-orange-400/35 transition-all duration-300 ease-out hover:scale-[1.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/70 active:scale-[0.98]"
-          : "group relative touch-manipulation select-none overflow-hidden rounded-[1.75rem] border border-white/10 bg-zinc-950 text-left shadow-[0_14px_42px_rgba(0,0,0,0.35)] transition-all duration-300 ease-out hover:scale-[1.03] hover:border-[#FF6A00]/55 hover:shadow-[0_24px_68px_rgba(255,106,0,0.22)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/50 active:scale-[0.98]"
+          ? "group relative touch-manipulation select-none overflow-hidden rounded-[1.75rem] border border-orange-300/90 bg-zinc-950 text-left shadow-[0_22px_64px_rgba(255,106,0,0.30)] ring-2 ring-orange-400/35 transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/70 active:scale-[0.98]"
+          : "group relative touch-manipulation select-none overflow-hidden rounded-[1.75rem] border border-white/10 bg-zinc-950 text-left shadow-[0_14px_42px_rgba(0,0,0,0.35)] transition-all duration-200 ease-out hover:border-[#FF6A00]/45 hover:shadow-[0_20px_52px_rgba(255,106,0,0.16)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/50 active:scale-[0.98]"
       }
     >
-      <div className="relative min-h-44 overflow-hidden sm:min-h-64">
+      <div className="relative aspect-[4/5] overflow-hidden">
         {!showImage && (
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_16%,rgba(255,106,0,0.30),transparent_34%),radial-gradient(circle_at_82%_0%,rgba(251,146,60,0.12),transparent_28%),linear-gradient(145deg,#18181b_0%,#09090b_48%,#000000_100%)]" />
         )}
@@ -671,9 +602,9 @@ function CutCard({
           />
         )}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/68 to-transparent" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(255,106,0,0.22),transparent_34%)]" />
-        <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-white/10 to-transparent opacity-70" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/78 to-transparent" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(255,106,0,0.18),transparent_34%)]" />
+        <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-white/10 to-transparent opacity-50" />
         <div
           className={
             active
@@ -692,7 +623,7 @@ function CutCard({
         )}
         {active && (
           <span
-            className="absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-[#FF6A00] text-xs font-black leading-none text-black shadow-lg shadow-orange-500/50 ring-2 ring-white/25 sm:right-3 sm:top-3"
+            className="absolute right-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-[#FF6A00] text-xs font-black leading-none text-black shadow-lg shadow-orange-500/50 ring-2 ring-white/25 sm:right-3 sm:top-3"
             title={activeLabel}
             aria-label={activeLabel}
           >
@@ -701,10 +632,10 @@ function CutCard({
         )}
 
         <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
-          <h3 className="line-clamp-2 text-base font-black leading-5 tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)] sm:text-2xl sm:leading-tight">
+          <h3 className="line-clamp-2 text-lg font-black leading-5 tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)] sm:text-2xl sm:leading-tight">
             {cut.name}
           </h3>
-          <p className="mt-1 line-clamp-2 max-w-[24rem] text-[10px] font-medium leading-4 text-slate-200/90 sm:mt-2 sm:text-sm sm:leading-5">
+          <p className="mt-1 line-clamp-2 max-w-[24rem] text-[11px] font-medium leading-4 text-slate-200/80 sm:mt-2 sm:text-sm sm:leading-5">
             {cut.description}
           </p>
         </div>

@@ -137,10 +137,6 @@ function engineLang(lang: Lang): EngineLang {
   return lang === "es" ? "es" : "en";
 }
 
-function hasLocalEngine(animal: Animal) {
-  return Boolean(animalIdsByLabel[animal]);
-}
-
 function getInitialDoneness(animal: Animal) {
   return getDonenessOptions(animalIdsByLabel[animal])[0]?.id ?? "";
 }
@@ -170,7 +166,7 @@ function getCutItems(animal: Animal, lang: Lang): CutItem[] {
   return getCutsByAnimal(animalIdsByLabel[animal]).map((cut) => ({
     id: cut.id,
     name: getCutName(cut, lang),
-    image: cutImages[cut.id] ?? "/cuts/placeholder.jpg",
+    image: cutImages[cut.id] ?? "/images/vacuno/ribeye-cooked.webp",
     description: getCutDescription(cut, lang),
   }));
 }
@@ -1014,7 +1010,7 @@ ERROR
       onTouchEnd={handleTouchEnd}
     >
       <div className={ds.shell.container}>
-        <AppHeader lang={lang} onLangChange={handleLanguageChange} t={t} />
+        {mode === "inicio" && <AppHeader lang={lang} onLangChange={handleLanguageChange} t={t} />}
         <DesktopModeTabs mode={mode} onModeChange={handleModeChange} t={t} />
 
         {mode === "inicio" && (
@@ -1070,7 +1066,6 @@ ERROR
             getAnimalPreview={getAnimalPreview}
             handleAnimalChange={handleAnimalChange}
             handleCutChange={handleCutChange}
-            hasLocalEngine={hasLocalEngine}
             lang={lang}
             loading={loading}
             selectedCut={selectedCut}
@@ -1657,7 +1652,7 @@ function getCutItems(animal: Animal, lang: Lang): CutItem[] {
   return getCutsByAnimal(animalIdsByLabel[animal]).map((cut) => ({
     id: cut.id,
     name: getCutName(cut, lang),
-    image: cutImages[cut.id] ?? "/cuts/placeholder.jpg",
+    image: cutImages[cut.id] ?? "/images/vacuno/ribeye-cooked.webp",
     description: getCutDescription(cut, lang),
   }));
 }
@@ -2769,7 +2764,7 @@ function getCutItems(animal: Animal, lang: Lang): CutItem[] {
   return getCutsByAnimal(animalIdsByLabel[animal]).map((cut) => ({
     id: cut.id,
     name: getCutName(cut, lang),
-    image: cutImages[cut.id] ?? "/cuts/placeholder.jpg",
+    image: cutImages[cut.id] ?? "/images/vacuno/ribeye-cooked.webp",
     description: getCutDescription(cut, lang),
   }));
 }
@@ -3888,7 +3883,7 @@ function getCutItems(animal: Animal, lang: Lang): CutItem[] {
   return getCutsByAnimal(animalIdsByLabel[animal]).map((cut) => ({
     id: cut.id,
     name: getCutName(cut, lang),
-    image: cutImages[cut.id] ?? "/cuts/placeholder.jpg",
+    image: cutImages[cut.id] ?? "/images/vacuno/ribeye-cooked.webp",
     description: getCutDescription(cut, lang),
   }));
 }

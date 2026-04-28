@@ -28,6 +28,8 @@ export const cutImages: Record<string, string> = {
   patata: "/images/verduras/verduras-asadas.webp",
   esparragos: "/images/verduras/esparragos.webp",
   pimientos: "/images/verduras/pimientos.webp",
-  calabacin: "/images/verduras/verduras-asadas.webp",
   setas: "/images/verduras/verduras-asadas.webp",
+  cebolla: "/images/verduras/verduras-asadas.webp",
+  zanahoria: "/images/verduras/verduras-asadas.webp",
+  calabacin: "/images/verduras/verduras-asadas.webp",
 };
