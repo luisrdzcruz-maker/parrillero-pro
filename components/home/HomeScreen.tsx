@@ -43,16 +43,18 @@ export function HomeScreen({
     {
       description: "Un paso cada vez, con avisos y temporizadores.",
       emoji: "⏱️",
+      image: "/images/pescado/salmon-cooked.webp",
       mode: "coccion" as const,
-      priority: "Guía en vivo",
+      priority: "GUÍA EN VIVO",
       stat: "Sin pensar",
       title: "Live Cooking",
     },
     {
       description: "Organiza tiempos para varias piezas.",
       emoji: "🔥",
+      image: "/images/verduras/pimientos.webp",
       mode: "plan" as const,
-      priority: "Parrilladas",
+      priority: "PARRILLADAS",
       stat: "Timing claro",
       title: "Parrilladas",
     },
@@ -136,9 +138,9 @@ export function HomeScreen({
           {featureCards.map((card) => (
             <HomeCard
               key={card.mode}
-              active
               description={card.description}
               emoji={card.emoji}
+              image={card.image}
               onClick={() => onModeChange(card.mode)}
               priority={card.priority}
               stat={card.stat}
@@ -225,90 +227,75 @@ function HomePreviewPanel({
 }
 
 function HomeCard({
-  active = false,
   description,
   emoji,
+  image,
   onClick,
   priority,
   stat,
   title,
 }: {
-  active?: boolean;
   description: string;
   emoji: string;
+  image: string;
   onClick: () => void;
   priority: string;
   stat: string;
   title: string;
 }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const showImage = Boolean(image) && !imageFailed;
+
   return (
     <button
       type="button"
       onClick={onClick}
-      className={
-        active
-          ? `group ${ds.panel.homeCard} relative min-h-[132px] touch-manipulation overflow-hidden border-orange-500/60 bg-gradient-to-br from-orange-500/20 via-slate-900/95 to-slate-950 p-5 shadow-2xl shadow-orange-500/20 ring-2 ring-orange-400/25 transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-300/70 active:scale-[0.98] active:brightness-[0.98] sm:p-6`
-          : `group ${ds.panel.homeCard} relative min-h-[140px] touch-manipulation overflow-hidden rounded-3xl border-white/10 bg-white/[0.045] p-3.5 shadow-xl shadow-black/20 transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-300/25 hover:bg-white/[0.065] active:scale-[0.97] active:brightness-[0.98] sm:p-5`
-      }
+      className="group relative min-h-[156px] touch-manipulation overflow-hidden rounded-3xl border border-white/10 bg-zinc-950 p-4 text-left shadow-2xl shadow-black/30 transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-300/35 active:scale-[0.98] active:brightness-[0.98] sm:min-h-[178px] sm:p-5"
     >
-      <div
-        className={
-          active
-            ? "pointer-events-none absolute -right-10 -top-14 h-36 w-36 rounded-full bg-orange-400/25 blur-3xl"
-            : "pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-orange-500/0 blur-2xl transition-all duration-200 group-hover:bg-orange-500/10"
-        }
-      />
-      <div className="relative z-10 flex items-start justify-between gap-3">
-        <div
-          className={
-            active
-              ? `${ds.media.iconTile} h-12 w-12 rounded-2xl border-orange-400/40 bg-orange-500/20 text-3xl shadow-lg shadow-orange-500/20 sm:h-14 sm:w-14`
-              : `${ds.media.iconTile} h-10 w-10 rounded-2xl bg-white/[0.06] text-2xl opacity-90 sm:h-11 sm:w-11`
-          }
-        >
+      {!showImage && (
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_12%,rgba(255,106,0,0.26),transparent_34%),linear-gradient(145deg,#18181b,#020202)]" />
+      )}
+      {showImage && (
+        <Image
+          src={image}
+          alt=""
+          fill
+          sizes="(min-width: 640px) 50vw, 100vw"
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
+          onError={() => setImageFailed(true)}
+        />
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/10" />
+      <div className="pointer-events-none absolute -right-12 -top-14 h-36 w-36 rounded-full bg-orange-400/20 blur-3xl" />
+
+      <div className="relative z-10 flex h-full min-h-[124px] flex-col justify-between sm:min-h-[138px]">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-orange-400/25 bg-black/35 text-2xl shadow-lg shadow-black/30 backdrop-blur">
           {emoji}
+          </div>
+          <Badge className="max-w-[145px] shrink-0 truncate bg-black/35 backdrop-blur" tone="accent">
+            {stat}
+          </Badge>
         </div>
-        <Badge
-          className={active ? "max-w-[150px] shrink-0 truncate" : "hidden max-w-[132px] shrink-0 truncate sm:inline-flex"}
-          tone={active ? "accent" : "glass"}
-        >
-          {stat}
-        </Badge>
-      </div>
 
-      <div className="relative z-10 mt-4 sm:mt-6">
-        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-orange-300/90 sm:text-[11px] sm:tracking-[0.18em]">
-          {priority}
-        </p>
-        <h2
-          className={
-            active
-              ? "mt-1 line-clamp-2 text-2xl font-black leading-tight tracking-tight text-white sm:text-3xl"
-              : "mt-1 line-clamp-2 text-[15px] font-black leading-tight tracking-tight text-white sm:mt-2 sm:text-xl"
-          }
-        >
-          {title}
-        </h2>
-        <p
-          className={
-            active
-              ? "mt-2 max-w-xl text-sm font-medium leading-6 text-slate-200"
-              : "mt-1 line-clamp-2 text-xs leading-5 text-slate-400 sm:mt-3 sm:line-clamp-none sm:text-sm sm:leading-6"
-          }
-        >
-          {description}
-        </p>
-      </div>
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-300/95 sm:text-[11px]">
+            {priority}
+          </p>
+          <h2 className="mt-1 text-2xl font-black leading-tight tracking-tight text-white sm:text-3xl">
+            {title}
+          </h2>
+          <p className="mt-1.5 line-clamp-2 max-w-xl text-sm font-medium leading-5 text-slate-200">
+            {description}
+          </p>
 
-      <div
-        className={`relative z-10 mt-4 flex items-center justify-between text-sm font-black sm:mt-5 ${active ? "text-orange-200" : "text-slate-400"}`}
-      >
-        <span>{active ? "Empezar" : "Abrir"}</span>
-        <span
-          className={`flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-200 group-hover:translate-x-1 ${active ? "border-orange-300/30 bg-orange-500/20 shadow-lg shadow-orange-500/20 group-hover:bg-orange-500/25" : "border-white/10 bg-white/[0.04] group-hover:bg-white/[0.08]"}`}
-        >
-          →
-        </span>
+          <div className="mt-3 flex items-center justify-between text-sm font-black text-orange-200">
+            <span>Abrir</span>
+            <span className="flex h-8 w-8 items-center justify-center rounded-full border border-orange-300/25 bg-orange-500/20 shadow-lg shadow-orange-500/20 transition-all duration-200 group-hover:translate-x-1 group-hover:bg-orange-500/25">
+              →
+            </span>
+          </div>
+        </div>
       </div>
     </button>
   );

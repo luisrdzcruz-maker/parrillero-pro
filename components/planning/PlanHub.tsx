@@ -23,6 +23,7 @@ type PlanHubProps = {
   onGenerate: () => Promise<void> | void;
   onSave: () => Promise<SavedResult | null | void>;
   onShare: () => void;
+  people: string;
   parrilladaPeople: string;
   parrilladaProducts: string;
   parrilladaSides: string;
@@ -35,6 +36,7 @@ type PlanHubProps = {
   setDifficulty: (value: string) => void;
   setEquipment: (value: string) => void;
   setMenuMeats: (value: string) => void;
+  setPeople: (value: string) => void;
   setParrilladaPeople: (value: string) => void;
   setParrilladaProducts: (value: string) => void;
   setParrilladaSides: (value: string) => void;
@@ -70,18 +72,18 @@ const modeCopy: Record<
   }
 > = {
   rapido: {
-    badge: "Menú + compra",
-    cta: "Generar plan simple",
-    description: "Minimal friction: producto, equipo y una guía clara para resolver rápido.",
+    badge: "Datos básicos",
+    cta: "Crear plan",
+    description: "Lo esencial para cocinar sin perder tiempo.",
   },
   completo: {
-    badge: "Plan estructurado",
-    cta: "Generar plan estructurado",
-    description: "Más control sobre productos, acompañamientos, equipo y dificultad.",
+    badge: "Parrillada completa",
+    cta: "Crear plan",
+    description: "Cantidades, acompañamientos, equipo y dificultad.",
   },
   evento: {
-    badge: "Timeline + zonas",
-    cta: "Generar parrillada completa",
+    badge: "Evento",
+    cta: "Crear plan",
     description: "Para grupos: hora objetivo, zonas de fuego y orden de cocción.",
   },
 };
@@ -120,6 +122,7 @@ export function PlanHub({
   onGenerate,
   onSave,
   onShare,
+  people,
   parrilladaPeople,
   parrilladaProducts,
   parrilladaSides,
@@ -132,6 +135,7 @@ export function PlanHub({
   setDifficulty,
   setEquipment,
   setMenuMeats,
+  setPeople,
   setParrilladaPeople,
   setParrilladaProducts,
   setParrilladaSides,
@@ -145,9 +149,9 @@ export function PlanHub({
   const copy = modeCopy[planMode];
   const subtitle = useMemo(() => {
     if (planMode === "evento") return `${parrilladaPeople} personas · ${equipment}`;
-    if (planMode === "rapido") return `${planProduct || "Producto"} · ${equipment}`;
-    return `${menuMeats || "Productos"} · ${equipment}`;
-  }, [equipment, menuMeats, parrilladaPeople, planMode, planProduct]);
+    if (planMode === "rapido") return `${people} personas · ${planProduct || "Producto"} · ${equipment}`;
+    return `${people} personas · ${menuMeats || "Productos"} · ${equipment}`;
+  }, [equipment, menuMeats, parrilladaPeople, people, planMode, planProduct]);
 
   if (planGenerated) {
     return (
@@ -169,29 +173,17 @@ export function PlanHub({
 
   return (
     <section className="w-full max-w-full overflow-x-hidden">
-      <div className="relative overflow-hidden rounded-[2rem] border border-orange-400/20 bg-[radial-gradient(circle_at_20%_0%,rgba(249,115,22,0.28),transparent_34%),linear-gradient(145deg,rgba(15,23,42,0.98),rgba(2,6,23,0.96))] p-5 shadow-2xl shadow-orange-950/25 sm:p-8">
+      <div className="relative overflow-hidden rounded-[1.75rem] border border-orange-400/15 bg-[radial-gradient(circle_at_20%_0%,rgba(249,115,22,0.20),transparent_34%),linear-gradient(145deg,rgba(15,23,42,0.98),rgba(2,6,23,0.96))] p-4 shadow-2xl shadow-orange-950/20 sm:p-7">
         <div className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-orange-400/20 blur-3xl" />
         <div className="relative z-10">
-          <p className="text-xs font-black uppercase tracking-[0.24em] text-orange-300">
-            PLAN
-          </p>
-          <h1 className="mt-3 max-w-xl text-[clamp(2.25rem,11vw,4.75rem)] font-black leading-[0.94] tracking-[-0.07em] text-white">
-            Planifica tu parrillada
+          <h1 className="max-w-xl text-[clamp(1.8rem,8vw,3.25rem)] font-black leading-[0.98] tracking-[-0.055em] text-white">
+            Organiza tu parrillada
           </h1>
-          <p className="mt-4 max-w-md text-base font-medium leading-7 text-slate-200">
-            Como un chef profesional, sin pensar
+          <p className="mt-2 max-w-md text-sm font-medium leading-6 text-slate-300 sm:text-base">
+            Calcula cantidades, tiempos y orden de cocción.
           </p>
 
-          <Button
-            className="mt-6 min-h-[56px] rounded-2xl px-6 text-base font-black shadow-xl shadow-orange-500/25 active:scale-[0.98]"
-            disabled={loading}
-            fullWidth
-            onClick={onGenerate}
-          >
-            {loading ? "Creando plan..." : "Crear plan"}
-          </Button>
-
-          <div className="mt-5 grid grid-cols-3 gap-2 rounded-2xl border border-white/10 bg-black/30 p-1.5 backdrop-blur">
+          <div className="mt-4 grid grid-cols-3 gap-1.5 rounded-2xl border border-white/10 bg-black/30 p-1 backdrop-blur">
             {planModes.map((mode) => (
               <button
                 key={mode.id}
@@ -199,8 +191,8 @@ export function PlanHub({
                 onClick={() => setPlanMode(mode.id)}
                 className={
                   planMode === mode.id
-                    ? "min-h-[44px] rounded-xl bg-orange-500 text-sm font-black text-black shadow-lg shadow-orange-500/25 transition active:scale-[0.97]"
-                    : "min-h-[44px] rounded-xl text-sm font-bold text-slate-400 transition hover:bg-white/5 hover:text-white active:scale-[0.97]"
+                    ? "min-h-[40px] rounded-xl bg-orange-500 text-sm font-black text-black shadow-lg shadow-orange-500/25 transition active:scale-[0.97]"
+                    : "min-h-[40px] rounded-xl text-sm font-bold text-slate-400 transition hover:bg-white/5 hover:text-white active:scale-[0.97]"
                 }
               >
                 {mode.label}
@@ -210,23 +202,30 @@ export function PlanHub({
         </div>
       </div>
 
-      <div className="mt-4 rounded-[2rem] border border-white/10 bg-white/[0.045] p-5 shadow-2xl shadow-black/20 backdrop-blur sm:p-7">
-        <div className="mb-5">
+      <div className="mt-3 rounded-[1.75rem] border border-white/10 bg-white/[0.045] p-4 shadow-2xl shadow-black/20 backdrop-blur sm:p-6">
+        <div className="mb-4">
           <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-300">
             {copy.badge}
           </p>
-          <h2 className="mt-2 text-2xl font-black text-white">{planModes.find((mode) => mode.id === planMode)?.label}</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-300">{copy.description}</p>
+          <p className="mt-1 text-sm leading-6 text-slate-400">{copy.description}</p>
         </div>
 
-        <div className="grid gap-4">
+        <div className="grid gap-3.5">
           {planMode === "rapido" && (
             <>
               <PlanInput
-                label="Producto"
+                label="Carnes / productos"
                 placeholder="Ej: chuletón, verduras, costillas"
                 value={planProduct}
                 onChange={setPlanProduct}
+              />
+              <PlanInput
+                inputMode="numeric"
+                label="Número de personas"
+                placeholder="Ej. 6"
+                type="number"
+                value={people}
+                onChange={setPeople}
               />
               <Select label="Equipo" value={equipment} onChange={setEquipment} options={equipmentOptions} />
             </>
@@ -234,6 +233,14 @@ export function PlanHub({
 
           {planMode === "completo" && (
             <>
+              <PlanInput
+                inputMode="numeric"
+                label="Número de personas"
+                placeholder="Ej. 6"
+                type="number"
+                value={people}
+                onChange={setPeople}
+              />
               <PlanInput
                 label="Carnes / productos"
                 placeholder="Ej: chuletón, secreto, maíz"
@@ -282,7 +289,7 @@ export function PlanHub({
           )}
 
           <Button
-            className="mt-1 min-h-[56px] rounded-2xl text-base font-black shadow-xl shadow-orange-500/20 active:scale-[0.98]"
+            className="mt-1 min-h-[50px] rounded-2xl text-base font-black shadow-xl shadow-orange-500/20 active:scale-[0.98]"
             disabled={loading}
             fullWidth
             onClick={onGenerate}
@@ -296,25 +303,31 @@ export function PlanHub({
 }
 
 function PlanInput({
+  inputMode,
   label,
   onChange,
   placeholder,
+  type = "text",
   value,
 }: {
+  inputMode?: "decimal" | "email" | "numeric" | "search" | "tel" | "text" | "url";
   label: string;
   onChange: (value: string) => void;
   placeholder: string;
+  type?: string;
   value: string;
 }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+      <span className="mb-1.5 block text-[11px] font-black uppercase tracking-[0.17em] text-slate-400">
         {label}
       </span>
       <input
-        className="min-h-[54px] w-full rounded-2xl border border-white/10 bg-black/30 px-4 text-base font-semibold text-white outline-none transition placeholder:text-slate-600 focus:border-orange-400/60 focus:bg-black/40"
+        className="min-h-[50px] w-full rounded-2xl border border-white/10 bg-black/30 px-4 text-[15px] font-semibold text-white outline-none transition placeholder:text-slate-600 focus:border-orange-400/60 focus:bg-black/40"
+        inputMode={inputMode}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
+        type={type}
         value={value}
       />
     </label>
@@ -352,7 +365,7 @@ function PlanResultView({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.22em] text-orange-300">
-              PLAN
+              Resultado
             </p>
             <h1 className="mt-2 text-4xl font-black tracking-tight text-white sm:text-5xl">
               Resultado listo 🔥

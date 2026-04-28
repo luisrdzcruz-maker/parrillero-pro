@@ -359,7 +359,7 @@ export default function Home() {
   const [doneness, setDoneness] = useState("rare");
   const [equipment, setEquipment] = useState("parrilla gas");
 
-  const [people, setPeople] = useState("6");
+  const [people, setPeople] = useState("4");
   const [eventType, setEventType] = useState("cena con amigos");
   const [menuMeats, setMenuMeats] = useState("chuletón, secreto ibérico");
   const [sides, setSides] = useState("patatas, ensalada, chimichurri");
@@ -1031,6 +1031,7 @@ ERROR
               await saveCurrentMenu();
             }}
             onShare={shareCurrentPlan}
+            people={people}
             parrilladaPeople={parrilladaPeople}
             parrilladaProducts={parrilladaProducts}
             parrilladaSides={parrilladaSides}
@@ -1043,6 +1044,7 @@ ERROR
             setDifficulty={setDifficulty}
             setEquipment={setEquipment}
             setMenuMeats={setMenuMeats}
+            setPeople={setPeople}
             setParrilladaPeople={setParrilladaPeople}
             setParrilladaProducts={setParrilladaProducts}
             setParrilladaSides={setParrilladaSides}
