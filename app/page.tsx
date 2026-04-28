@@ -20,7 +20,6 @@ import {
 import LiveCookingMode from "@/components/cooking/LiveCookingMode";
 import { HomeScreen } from "@/components/home/HomeScreen";
 import {
-  AppHeader,
   BottomNavigation,
   DesktopModeTabs,
   type Mode,
@@ -1010,11 +1009,16 @@ ERROR
       onTouchEnd={handleTouchEnd}
     >
       <div className={`${ds.shell.container} w-full lg:max-w-[1180px] xl:max-w-[1360px] 2xl:max-w-[1520px]`}>
-        {mode === "inicio" && <AppHeader lang={lang} onLangChange={handleLanguageChange} t={t} />}
         <DesktopModeTabs mode={mode} onModeChange={handleModeChange} t={t} />
 
         {mode === "inicio" && (
-          <HomeScreen savedMenusCount={savedMenus.length} t={t} onModeChange={handleModeChange} />
+          <HomeScreen
+            lang={lang}
+            onLangChange={handleLanguageChange}
+            savedMenusCount={savedMenus.length}
+            t={t}
+            onModeChange={handleModeChange}
+          />
         )}
 
         {mode === "plan" && (
