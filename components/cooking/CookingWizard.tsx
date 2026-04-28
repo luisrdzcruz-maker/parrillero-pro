@@ -2,11 +2,12 @@
 
 import ResultGrid from "@/components/ResultGrid";
 import ResultHero from "@/components/ResultHero";
+import FoodCard from "@/components/FoodCard";
 import { Badge, Button, Grid, Panel, Section } from "@/components/ui";
 import type { Mode } from "@/components/navigation/AppHeader";
 import { ds } from "@/lib/design-system";
 import type { AppText, Lang } from "@/lib/i18n/texts";
-import { animalMedia, animalOptions, type Animal } from "@/lib/media/animalMedia";
+import { animalOptions, type Animal } from "@/lib/media/animalMedia";
 import { type ReactNode, type SyntheticEvent, useLayoutEffect, useState } from "react";
 
 export type Blocks = Record<string, string>;
@@ -32,6 +33,14 @@ export const equipmentOptions = [
 const IMAGE_FALLBACK_SRC = "/visuals/setup/setup-placeholder.webp";
 const INLINE_FALLBACK_IMAGE =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='700' viewBox='0 0 1200 700'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='30%25' r='70%25'%3E%3Cstop offset='0%25' stop-color='%23f97316' stop-opacity='.45'/%3E%3Cstop offset='60%25' stop-color='%230f172a'/%3E%3Cstop offset='100%25' stop-color='%23020617'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='1200' height='700' fill='url(%23g)'/%3E%3Cpath d='M280 470h640' stroke='%23fb923c' stroke-width='18' stroke-linecap='round' opacity='.55'/%3E%3Cpath d='M340 405h520' stroke='%23fed7aa' stroke-width='10' stroke-linecap='round' opacity='.38'/%3E%3Ccircle cx='600' cy='300' r='105' fill='%23f97316' opacity='.18'/%3E%3C/svg%3E";
+
+const foodImages: Record<Animal, string> = {
+  Vacuno: "/images/vacuno/ribeye-cooked.webp",
+  Cerdo: "/images/cerdo/secreto-cooked.webp",
+  Pollo: "/images/pollo/muslos-cooked.webp",
+  Pescado: "/images/pescado/salmon-cooked.webp",
+  Verduras: "/images/verduras/verduras-asadas.webp",
+};
 
 function buildText(blocks: Blocks) {
   return Object.keys(blocks)
@@ -257,13 +266,13 @@ function CookingWizardHeader({
 }) {
   const title =
     cookingStep === "animal"
-      ? t.chooseAnimal
+      ? "¿Qué quieres cocinar?"
       : cookingStep === "cut"
         ? t.chooseCut
         : t.configurePlan;
   const subtitle =
     cookingStep === "animal"
-      ? "Empieza eligiendo la proteína principal."
+      ? "Empieza eligiendo el ingrediente principal"
       : cookingStep === "cut"
         ? "Ahora selecciona el corte exacto."
         : "Ajusta peso, punto y equipo.";
@@ -315,7 +324,7 @@ function CookingWizardHeader({
 
 function CookingStepIndicator({ currentStep }: { currentStep: CookingWizardStep }) {
   const steps: Array<{ id: CookingWizardStep; label: string; number: string }> = [
-    { id: "animal", label: "Animal", number: "1" },
+    { id: "animal", label: "Ingrediente", number: "1" },
     { id: "cut", label: "Corte", number: "2" },
     { id: "details", label: "Detalles", number: "3" },
   ];
@@ -383,15 +392,18 @@ function CookingAnimalStep({
   t: AppText;
 }) {
   return (
-    <Section className="space-y-2 sm:space-y-5" eyebrow="Paso 1" title={t.chooseAnimal}>
-      <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-5">
+    <Section className="space-y-4 sm:space-y-6" eyebrow="Paso 1" title="¿Qué quieres cocinar?">
+      <p className="-mt-2 max-w-2xl text-sm font-medium leading-6 text-slate-300 sm:text-base">
+        Empieza eligiendo el ingrediente principal
+      </p>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-5 lg:gap-6">
         {animalOptions.map((item) => (
-          <ImageCard
+          <FoodCard
             key={item}
-            active={animal === item}
+            selected={animal === item}
             title={item}
             subtitle={getAnimalPreview(item, lang)}
-            image={animalMedia[item].image}
+            image={foodImages[item]}
             badge={hasLocalEngine(item) ? t.localEngine : t.aiFallback}
             selectedLabel={t.selected}
             onClick={() => onSelectAnimal(item)}
@@ -691,86 +703,6 @@ export function ResultCards({
         t={t}
       />
     </div>
-  );
-}
-
-export function ImageCard({
-  active,
-  title,
-  subtitle,
-  image,
-  badge,
-  selectedLabel,
-  onClick,
-}: {
-  active: boolean;
-  title: string;
-  subtitle: string;
-  image: string;
-  badge?: string;
-  selectedLabel: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={
-        active
-          ? "group relative touch-manipulation select-none overflow-hidden rounded-[2rem] border-2 border-orange-400/90 bg-slate-950 text-left shadow-[0_20px_55px_rgba(249,115,22,0.35)] shadow-orange-500/15 ring-2 ring-orange-400/40 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/70 active:scale-[0.97] active:brightness-[0.98]"
-          : "group relative touch-manipulation select-none overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 text-left shadow-[0_14px_40px_rgba(2,6,23,0.32)] transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-400/45 hover:shadow-[0_18px_48px_rgba(249,115,22,0.12)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/50 active:scale-[0.97] active:brightness-[0.98]"
-      }
-    >
-      <div className="relative min-h-32 overflow-hidden sm:min-h-60">
-        <img
-          src={image || IMAGE_FALLBACK_SRC}
-          alt=""
-          loading="lazy"
-          className="absolute inset-0 h-full w-full object-cover object-center transition-all duration-200 group-hover:scale-105"
-          onError={handleImageFallback}
-        />
-
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(251,146,60,0.36),transparent_34%),linear-gradient(to_top,rgba(2,6,23,0.98)_0%,rgba(2,6,23,0.68)_36%,rgba(2,6,23,0.14)_72%,rgba(255,255,255,0.08)_100%)]" />
-        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/10 to-transparent opacity-70" />
-        <div
-          className={
-            active
-              ? "absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-orange-300 via-orange-500 to-amber-300"
-              : "absolute inset-x-0 bottom-0 h-px bg-white/10"
-          }
-        />
-
-        {badge && (
-          <Badge
-            className="absolute right-2 top-2 z-10 text-[9px] shadow-lg shadow-black/20 backdrop-blur-md sm:right-3 sm:top-3 sm:text-[11px]"
-            tone="glass"
-          >
-            {badge}
-          </Badge>
-        )}
-
-        {active && (
-          <span
-            className="absolute bottom-2 right-2 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-orange-500 text-[11px] font-black leading-none text-black shadow-lg shadow-orange-500/50 ring-2 ring-white/25 sm:bottom-3 sm:right-3 sm:h-7 sm:w-7 sm:text-xs"
-            title={selectedLabel}
-            aria-label={selectedLabel}
-          >
-            ✓
-          </span>
-        )}
-
-        <div
-          className={`absolute inset-x-0 bottom-0 p-3 sm:p-5 ${active ? "pr-14 sm:pr-16" : "pr-12 sm:pr-28"}`}
-        >
-          <h3 className="line-clamp-2 text-base font-black leading-5 tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)] sm:text-2xl sm:leading-tight">
-            {title}
-          </h3>
-          <p className="mt-1 line-clamp-1 max-w-[18rem] text-[10px] font-medium leading-4 text-slate-200/90 sm:mt-2 sm:line-clamp-2 sm:text-sm sm:leading-5">
-            {subtitle}
-          </p>
-        </div>
-      </div>
-    </button>
   );
 }
 
