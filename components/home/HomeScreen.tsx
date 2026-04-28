@@ -3,7 +3,7 @@
 import { Badge, Button, Panel } from "@/components/ui";
 import type { Mode } from "@/components/navigation/AppHeader";
 import { ds } from "@/lib/design-system";
-import type { AppText } from "@/lib/i18n/texts";
+import type { AppText, Lang } from "@/lib/i18n/texts";
 import Image from "next/image";
 import { type ReactNode, useLayoutEffect, useState } from "react";
 
@@ -29,10 +29,14 @@ function FadeInSection({ children }: { children: ReactNode }) {
 }
 
 export function HomeScreen({
+  lang,
+  onLangChange,
   savedMenusCount,
   onModeChange,
   t,
 }: {
+  lang: Lang;
+  onLangChange: (lang: Lang) => void;
   savedMenusCount: number;
   onModeChange: (mode: Mode) => void;
   t: AppText;
@@ -149,7 +153,40 @@ export function HomeScreen({
           ))}
         </div>
       </section>
+
+      <HomeSettingsStrip lang={lang} onLangChange={onLangChange} />
     </div>
+  );
+}
+
+function HomeSettingsStrip({
+  lang,
+  onLangChange,
+}: {
+  lang: Lang;
+  onLangChange: (lang: Lang) => void;
+}) {
+  return (
+    <section className="mb-24 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.05] px-3.5 py-3 shadow-lg shadow-black/10 backdrop-blur sm:px-4 lg:mb-0">
+      <div className="min-w-0">
+        <p className="truncate text-[11px] font-black uppercase tracking-[0.16em] text-white/85">
+          IA Parrillero Pro
+        </p>
+        <p className="mt-0.5 truncate text-xs font-medium text-slate-400">
+          Como un chef profesional, pero sin pensar.
+        </p>
+      </div>
+
+      <select
+        value={lang}
+        onChange={(event) => onLangChange(event.target.value as Lang)}
+        className="min-h-9 shrink-0 rounded-xl border border-white/10 bg-black/35 px-2.5 text-xs font-bold text-slate-200 outline-none transition focus:border-orange-400/60"
+      >
+        <option value="es">🇪🇸 Español</option>
+        <option value="en">🇬🇧 English</option>
+        <option value="fi">🇫🇮 Suomi</option>
+      </select>
+    </section>
   );
 }
 
