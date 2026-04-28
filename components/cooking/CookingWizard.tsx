@@ -113,7 +113,6 @@ export function CookingWizard({
   setEquipment,
   setMode,
   setThickness,
-  setTimerRunning,
   setWeight,
   showThickness,
   t,
@@ -146,7 +145,6 @@ export function CookingWizard({
   setEquipment: (value: string) => void;
   setMode: (mode: Mode) => void;
   setThickness: (value: string) => void;
-  setTimerRunning: (value: boolean) => void;
   setWeight: (value: string) => void;
   showThickness: boolean;
   t: AppText;
@@ -231,7 +229,6 @@ export function CookingWizard({
             saveMenuStatus={saveMenuStatus}
             setCheckedItems={setCheckedItems}
             setMode={setMode}
-            setTimerRunning={setTimerRunning}
             t={t}
           />
         ) : null}
@@ -499,7 +496,6 @@ function CookingResultStep({
   saveMenuStatus,
   setCheckedItems,
   setMode,
-  setTimerRunning,
   t,
 }: {
   animal: Animal;
@@ -512,7 +508,6 @@ function CookingResultStep({
   saveMenuStatus: SaveMenuStatus;
   setCheckedItems: (value: Record<string, boolean>) => void;
   setMode: (mode: Mode) => void;
-  setTimerRunning: (value: boolean) => void;
   t: AppText;
 }) {
   return (
@@ -529,7 +524,6 @@ function CookingResultStep({
         setCheckedItems={setCheckedItems}
         onStartCooking={() => {
           setMode("cocina");
-          setTimerRunning(false);
         }}
         t={t}
       />
@@ -599,7 +593,7 @@ export function ResultCards({
           save: "Guardar",
           saving: "Guardando...",
           share: "Compartir",
-          startCooking: t.startCooking,
+          startCooking: "Empezar Live Cooking",
         }}
       />
 
