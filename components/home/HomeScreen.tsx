@@ -73,53 +73,44 @@ export function HomeScreen({
   ];
 
   return (
-    <div className="w-full max-w-full overflow-x-hidden space-y-4 sm:space-y-7">
-      <section className="grid gap-3 lg:grid-cols-[1.05fr_0.95fr] lg:items-stretch">
+    <div className="w-full max-w-full overflow-x-hidden space-y-4 sm:space-y-6">
+      <section className="grid gap-3 lg:grid-cols-[1.02fr_0.98fr] lg:items-stretch">
         <Panel
-          className="relative overflow-hidden p-5 shadow-2xl shadow-orange-950/25 sm:p-7 lg:min-h-[360px]"
+          className="relative overflow-hidden p-5 shadow-2xl shadow-orange-950/20 sm:p-7 lg:min-h-[300px]"
           tone="hero"
         >
-          <div className="pointer-events-none absolute -left-16 -top-20 h-56 w-56 rounded-full bg-orange-500/20 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 right-8 h-64 w-64 rounded-full bg-red-500/15 blur-3xl" />
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.08),transparent_40%)]" />
+          <div className="pointer-events-none absolute -left-16 -top-20 h-52 w-52 rounded-full bg-orange-500/18 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-28 right-8 h-56 w-56 rounded-full bg-red-500/12 blur-3xl" />
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.07),transparent_42%)]" />
 
           <FadeInSection>
-            <div className="relative z-10 flex h-full flex-col justify-between gap-5 sm:gap-7">
+            <div className="relative z-10 flex h-full flex-col justify-between gap-5">
               <div>
-                <div className="hidden flex-wrap items-center gap-2 sm:flex">
+                <div className="flex flex-wrap items-center gap-2">
                   <Badge className="uppercase tracking-[0.16em] sm:tracking-[0.2em]">
                     Parrillero Pro
                   </Badge>
-                  <Badge
-                    className="border-orange-400/20 bg-black/25 text-[11px] text-orange-200"
-                    tone="glass"
-                  >
-                    Corte → Fuego → Pasos
-                  </Badge>
                 </div>
 
-                <h1 className="max-w-none text-[clamp(2.05rem,10.5vw,4.5rem)] font-black leading-[0.92] tracking-[-0.07em] text-white sm:mt-5 sm:max-w-2xl sm:text-6xl lg:text-7xl">
-                  <span className="block">🔥 Cocina como un PRO</span>
-                  <span className="block text-orange-300">sin pensar</span>
+                <h1 className="mt-4 max-w-xl text-[clamp(2.1rem,10vw,4.2rem)] font-black leading-[0.94] tracking-[-0.065em] text-white sm:mt-5 sm:text-5xl lg:text-6xl">
+                  <span className="block">Cocina mejor,</span>
+                  <span className="block text-orange-300">sin improvisar</span>
                 </h1>
-                <p className="mt-4 max-w-sm text-[15px] font-medium leading-6 text-slate-200 sm:max-w-xl sm:text-lg sm:leading-7">
-                  Planes claros para cortes, fuego, tiempos y servicio sin improvisar.
+                <p className="mt-3 max-w-md text-[15px] font-medium leading-6 text-slate-200 sm:max-w-lg sm:text-base sm:leading-7">
+                  Controla cortes, fuego y tiempos con una guía clara y precisa.
                 </p>
 
-                <div className="mt-5 grid gap-2 sm:mt-7 sm:flex sm:gap-3">
+                <div className="mt-5 grid gap-2 sm:flex sm:gap-3">
                   <Button
-                    className="min-h-[54px] touch-manipulation rounded-2xl px-6 py-4 text-base font-black shadow-xl shadow-orange-500/30 transition-all duration-200 active:scale-[0.97] active:brightness-95 sm:px-7 sm:text-base"
-                    fullWidth
+                    className="min-h-[46px] touch-manipulation rounded-2xl px-5 py-3 text-sm font-black shadow-xl shadow-orange-500/25 transition-all duration-200 active:scale-[0.97] active:brightness-95 sm:min-h-[50px] sm:px-6 sm:text-base"
                     onClick={() => onModeChange("coccion")}
                   >
-                    Empezar a cocinar <span aria-hidden="true">→</span>
+                    Empezar <span aria-hidden="true">→</span>
                   </Button>
                 </div>
               </div>
 
-              <HomeFlowPreview />
-
-              <div className="hidden grid-cols-3 gap-2 text-sm text-slate-300 sm:grid sm:gap-3">
+              <div className="hidden grid-cols-3 gap-2 text-sm text-slate-300 sm:grid">
                 <TrustItem label={t.localEngine} value="Cortes premium" />
                 <TrustItem label="Timeline live" value={t.liveMode} />
                 <TrustItem label={t.savedMenus} value={`${savedMenusCount} ${t.saved}`} />
@@ -175,54 +166,6 @@ export function HomeScreen({
           ))}
         </div>
       </section>
-    </div>
-  );
-}
-
-function HomeFlowPreview() {
-  const steps = [
-    { label: "Corte", n: 1 },
-    { label: "Punto", n: 2 },
-    { label: "Fuego", n: 3 },
-    { label: "Pasos", n: 4 },
-  ];
-
-  return (
-    <div className="rounded-lg border border-white/10 bg-black/30 p-1 ring-1 ring-inset ring-white/[0.04] sm:rounded-xl sm:p-1.5">
-      <p className="mb-0.5 px-1 text-[8px] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:text-[9px]">
-        Tu flujo
-      </p>
-      <div className="grid grid-cols-4 gap-px rounded-md bg-white/10 p-px sm:gap-0.5 sm:rounded-lg sm:p-px">
-        {steps.map((step, index) => (
-          <div
-            key={step.label}
-            className={
-              index === 0
-                ? "rounded-[5px] bg-orange-500 px-1 py-1.5 text-center sm:rounded-md sm:py-2"
-                : "rounded-[5px] bg-slate-950/90 px-1 py-1.5 text-center sm:rounded-md sm:py-2"
-            }
-          >
-            <span
-              className={
-                index === 0
-                  ? "block text-[8px] font-black text-black/70"
-                  : "block text-[8px] font-black text-slate-500"
-              }
-            >
-              {step.n}
-            </span>
-            <span
-              className={
-                index === 0
-                  ? "mt-0.5 block text-[9px] font-bold leading-tight text-black sm:text-[10px]"
-                  : "mt-0.5 block text-[9px] font-semibold leading-tight text-slate-400 sm:text-[10px]"
-              }
-            >
-              {step.label}
-            </span>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
