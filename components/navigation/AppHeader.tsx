@@ -49,24 +49,23 @@ export function AppHeader({
 export function DesktopModeTabs({
   mode,
   onModeChange,
-  t,
 }: {
   mode: Mode;
   onModeChange: (mode: Mode) => void;
   t: AppText;
 }) {
   return (
-    <nav className="mb-6 hidden rounded-3xl border border-white/10 bg-white/[0.03] p-2 shadow-lg shadow-black/10 backdrop-blur md:block">
-      <div className="grid grid-cols-5 gap-2">
+    <nav className="mb-7 hidden justify-center lg:flex">
+      <div className="grid w-full max-w-[1180px] grid-cols-5 gap-2 rounded-full border border-white/10 bg-black/45 p-1.5 shadow-2xl shadow-black/30 backdrop-blur-xl xl:max-w-[1280px]">
         <DesktopTab
           active={mode === "inicio"}
-          label={t.start}
+          label="Inicio"
           emoji="🏠"
           onClick={() => onModeChange("inicio")}
         />
         <DesktopTab
           active={mode === "coccion"}
-          label="Cocina"
+          label="Cocción"
           emoji="🥩"
           onClick={() => onModeChange("coccion")}
         />
@@ -78,13 +77,13 @@ export function DesktopModeTabs({
         />
         <DesktopTab
           active={mode === "cocina"}
-          label={t.live}
+          label="Cocina"
           emoji="⏱️"
           onClick={() => onModeChange("cocina")}
         />
         <DesktopTab
           active={mode === "guardados"}
-          label={t.saved}
+          label="Guardados"
           emoji="⭐"
           onClick={() => onModeChange("guardados")}
         />
@@ -109,11 +108,11 @@ function DesktopTab({
       onClick={onClick}
       className={
         active
-          ? "rounded-2xl bg-orange-500 px-3 py-2.5 text-sm font-bold text-black shadow-lg shadow-orange-500/25 transition-all duration-200 active:scale-[0.98]"
-          : "rounded-2xl px-3 py-2.5 text-sm font-medium text-slate-400 transition-all duration-200 hover:bg-white/5 hover:text-slate-100 active:scale-[0.98]"
+          ? "rounded-full bg-orange-500 px-3 py-2.5 text-sm font-black text-black shadow-lg shadow-orange-500/30 transition-all duration-200 active:scale-[0.98]"
+          : "rounded-full px-3 py-2.5 text-sm font-bold text-slate-300/80 transition-all duration-200 hover:bg-white/7 hover:text-slate-100 active:scale-[0.98]"
       }
     >
-      <span className="mr-2">{emoji}</span>
+      <span className="mr-1.5 text-base">{emoji}</span>
       {label}
     </button>
   );
@@ -122,7 +121,6 @@ function DesktopTab({
 export function BottomNavigation({
   mode,
   onModeChange,
-  t,
 }: {
   mode: Mode;
   onModeChange: (mode: Mode) => void;
@@ -130,18 +128,18 @@ export function BottomNavigation({
 }) {
   return (
     <nav
-      className={`${ds.nav.bottom} z-50 min-h-[72px] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 md:hidden`}
+      className={`${ds.nav.bottom} z-50 px-2 pb-[max(0.7rem,env(safe-area-inset-bottom))] pt-2 lg:hidden`}
     >
-      <div className={`${ds.layout.navGrid} gap-1.5 rounded-[1.6rem] border border-white/10 bg-slate-950/90 p-1.5 shadow-2xl shadow-black/50`}>
+      <div className="mx-auto grid w-full max-w-[448px] grid-cols-5 items-center gap-0.5 rounded-[2rem] border border-white/10 bg-black/70 p-1.5 shadow-2xl shadow-black/60 backdrop-blur-xl">
         <Tab
           active={mode === "inicio"}
-          label={t.start}
+          label="Inicio"
           emoji="🏠"
           onClick={() => onModeChange("inicio")}
         />
         <Tab
           active={mode === "coccion"}
-          label="Cocina"
+          label="Cocción"
           emoji="🥩"
           onClick={() => onModeChange("coccion")}
         />
@@ -153,13 +151,13 @@ export function BottomNavigation({
         />
         <Tab
           active={mode === "cocina"}
-          label={t.live}
+          label="Cocina"
           emoji="⏱️"
           onClick={() => onModeChange("cocina")}
         />
         <Tab
           active={mode === "guardados"}
-          label={t.saved}
+          label="Guardados"
           emoji="⭐"
           onClick={() => onModeChange("guardados")}
         />
@@ -186,12 +184,12 @@ function Tab({
       aria-current={active ? "page" : undefined}
       className={
         active
-          ? "min-h-[54px] touch-manipulation rounded-2xl bg-gradient-to-br from-orange-300 via-orange-500 to-orange-600 px-1.5 py-1.5 text-[10px] font-black leading-tight text-black shadow-lg shadow-orange-500/45 ring-2 ring-orange-200/45 transition-all duration-200 motion-reduce:transition-none active:scale-[0.96] motion-reduce:active:scale-100 active:brightness-95"
-          : "min-h-[54px] touch-manipulation rounded-2xl px-1.5 py-1.5 text-[10px] font-bold leading-tight text-slate-400 opacity-75 transition-all duration-200 motion-reduce:transition-none hover:bg-white/5 hover:text-slate-200 hover:opacity-100 active:scale-[0.96] motion-reduce:active:scale-100 active:bg-white/10"
+          ? "flex min-h-[58px] touch-manipulation flex-col items-center justify-center rounded-[1.35rem] bg-gradient-to-br from-orange-300 via-orange-500 to-orange-600 px-0.5 py-1.5 text-[9.5px] font-black leading-tight text-black shadow-lg shadow-orange-500/45 ring-1 ring-orange-200/45 transition-all duration-200 motion-reduce:transition-none active:scale-[0.96] motion-reduce:active:scale-100 active:brightness-95 min-[390px]:text-[10px]"
+          : "flex min-h-[58px] touch-manipulation flex-col items-center justify-center rounded-[1.35rem] px-0.5 py-1.5 text-[9.5px] font-bold leading-tight text-slate-300/80 transition-all duration-200 motion-reduce:transition-none hover:bg-white/[0.06] hover:text-slate-100 active:scale-[0.96] motion-reduce:active:scale-100 active:bg-white/10 min-[390px]:text-[10px]"
       }
     >
-      <div className="text-[20px] leading-none">{emoji}</div>
-      <div className="mt-0.5 truncate">{label}</div>
+      <div className="text-center text-[19px] leading-none">{emoji}</div>
+      <div className="mt-1 w-full whitespace-nowrap text-center tracking-[-0.03em]">{label}</div>
     </button>
   );
 }

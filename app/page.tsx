@@ -5,7 +5,6 @@ import {
   saveGeneratedMenu,
   unpublishGeneratedMenu,
 } from "@/app/actions/savedMenus";
-import CookingLiveMode from "@/components/CookingLiveMode";
 import {
   CookingWizard,
   Input,
@@ -18,6 +17,7 @@ import {
   type SaveMenuStatus,
   type SelectOption,
 } from "@/components/cooking/CookingWizard";
+import LiveCookingMode from "@/components/cooking/LiveCookingMode";
 import { HomeScreen } from "@/components/home/HomeScreen";
 import {
   AppHeader,
@@ -137,10 +137,6 @@ function engineLang(lang: Lang): EngineLang {
   return lang === "es" ? "es" : "en";
 }
 
-function hasLocalEngine(animal: Animal) {
-  return Boolean(animalIdsByLabel[animal]);
-}
-
 function getInitialDoneness(animal: Animal) {
   return getDonenessOptions(animalIdsByLabel[animal])[0]?.id ?? "";
 }
@@ -170,7 +166,7 @@ function getCutItems(animal: Animal, lang: Lang): CutItem[] {
   return getCutsByAnimal(animalIdsByLabel[animal]).map((cut) => ({
     id: cut.id,
     name: getCutName(cut, lang),
-    image: cutImages[cut.id] ?? "/cuts/placeholder.jpg",
+    image: cutImages[cut.id] ?? "/images/vacuno/ribeye-cooked.webp",
     description: getCutDescription(cut, lang),
   }));
 }
@@ -363,7 +359,7 @@ export default function Home() {
   const [doneness, setDoneness] = useState("rare");
   const [equipment, setEquipment] = useState("parrilla gas");
 
-  const [people, setPeople] = useState("6");
+  const [people, setPeople] = useState("4");
   const [eventType, setEventType] = useState("cena con amigos");
   const [menuMeats, setMenuMeats] = useState("chuletón, secreto ibérico");
   const [sides, setSides] = useState("patatas, ensalada, chimichurri");
@@ -393,14 +389,6 @@ export default function Home() {
   const [sharingMenuId, setSharingMenuId] = useState<string | null>(null);
 
   const [cookSteps, setCookSteps] = useState<CookingStep[]>(defaultCookSteps);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(defaultCookSteps[0].duration);
-  const [timerRunning, setTimerRunning] = useState(false);
-  const [cookingAlertsEnabled, setCookingAlertsEnabled] = useState(false);
-  const [notificationPermission, setNotificationPermission] = useState<
-    NotificationPermission | "unsupported"
-  >("default");
-  const [cookingAlertMessage, setCookingAlertMessage] = useState("");
   const touchStartRef = useRef<TouchPoint | null>(null);
   const modeHistoryRef = useRef<Mode[]>([]);
 
@@ -431,74 +419,6 @@ export default function Home() {
       cancelled = true;
     };
   }, []);
-
-  useEffect(() => {
-    if (!timerRunning) return;
-
-    const interval = setInterval(() => {
-      setTimeLeft((current) => {
-        if (current <= 1) {
-          clearInterval(interval);
-          setTimerRunning(false);
-          notifyStepFinished();
-
-          setTimeout(() => {
-            setCurrentStep((previous) => {
-              const next = Math.min(previous + 1, cookSteps.length - 1);
-              setTimeLeft(cookSteps[next]?.duration ?? 0);
-              return next;
-            });
-          }, 800);
-
-          return 0;
-        }
-
-        return current - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [timerRunning, currentStep, cookSteps.length]);
-
-  function notifyStepFinished() {
-    if (typeof window === "undefined") return;
-
-    const nextStep = cookSteps[Math.min(currentStep + 1, cookSteps.length - 1)];
-    const message = nextStep ? `Siguiente paso: ${nextStep.title}` : "Plan de cocción completado.";
-
-    try {
-      const audio = new Audio("/sounds/beep.mp3");
-      audio.play().catch(() => {});
-    } catch {}
-
-    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-
-    setCookingAlertMessage(message);
-    window.setTimeout(() => setCookingAlertMessage(""), 5000);
-
-    if (cookingAlertsEnabled && "Notification" in window && Notification.permission === "granted") {
-      try {
-        new Notification("Parrillero Pro", { body: message });
-      } catch {}
-    }
-  }
-
-  async function enableCookingAlerts() {
-    setCookingAlertsEnabled(true);
-
-    if (typeof window === "undefined" || !("Notification" in window)) {
-      setNotificationPermission("unsupported");
-      return;
-    }
-
-    if (Notification.permission === "default") {
-      const permission = await Notification.requestPermission();
-      setNotificationPermission(permission);
-      return;
-    }
-
-    setNotificationPermission(Notification.permission);
-  }
 
   function updateSavedMenus(nextMenus: SavedMenu[]) {
     setSavedMenus(nextMenus);
@@ -803,9 +723,6 @@ export default function Home() {
         const baseSteps = buildCookStepsFromPlan(normalized);
         const steps = visualContext ? withCookingStepImages(baseSteps, visualContext) : baseSteps;
         setCookSteps(steps);
-        setCurrentStep(0);
-        setTimeLeft(steps[0].duration);
-        setTimerRunning(false);
       }
     } catch (e) {
       if (createCookSteps) {
@@ -847,9 +764,6 @@ export default function Home() {
       setCheckedItems({});
       resetSaveMenuState();
       setCookSteps(visualSteps);
-      setCurrentStep(0);
-      setTimeLeft(visualSteps[0].duration);
-      setTimerRunning(false);
       setCookingStep("result");
       return;
     }
@@ -991,31 +905,9 @@ ERROR
     resetSaveMenuState();
   }
 
-  function nextCookStep() {
-    const next = Math.min(currentStep + 1, cookSteps.length - 1);
-    setCurrentStep(next);
-    setTimeLeft(cookSteps[next].duration);
-    setTimerRunning(false);
-  }
-
-  function previousCookStep() {
-    const previous = Math.max(currentStep - 1, 0);
-    setCurrentStep(previous);
-    setTimeLeft(cookSteps[previous].duration);
-    setTimerRunning(false);
-  }
-
-  function goToCookStep(stepIndex: number) {
-    const next = Math.max(0, Math.min(stepIndex, cookSteps.length - 1));
-    setCurrentStep(next);
-    setTimeLeft(cookSteps[next].duration);
-    setTimerRunning(false);
-  }
-
-  function resetCookMode() {
-    setCurrentStep(0);
-    setTimeLeft(cookSteps[0].duration);
-    setTimerRunning(false);
+  function exitLiveCooking() {
+    setMode("coccion");
+    setCookingStep("result");
   }
 
   function handleLanguageChange(nextLang: Lang) {
@@ -1113,12 +1005,12 @@ ERROR
 
   return (
     <main
-      className={`${ds.shell.page} overflow-x-hidden px-3 pt-2 !pb-[max(120px,env(safe-area-inset-bottom))] sm:px-4 sm:pt-5 md:!pb-28`}
+      className={`${ds.shell.page} overflow-x-hidden px-3 pt-2 !pb-[max(120px,env(safe-area-inset-bottom))] sm:px-4 sm:pt-5 lg:px-8 lg:pt-6 lg:!pb-12 xl:px-10`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <div className={ds.shell.container}>
-        <AppHeader lang={lang} onLangChange={handleLanguageChange} t={t} />
+      <div className={`${ds.shell.container} w-full lg:max-w-[1180px] xl:max-w-[1360px] 2xl:max-w-[1520px]`}>
+        {mode === "inicio" && <AppHeader lang={lang} onLangChange={handleLanguageChange} t={t} />}
         <DesktopModeTabs mode={mode} onModeChange={handleModeChange} t={t} />
 
         {mode === "inicio" && (
@@ -1139,6 +1031,7 @@ ERROR
               await saveCurrentMenu();
             }}
             onShare={shareCurrentPlan}
+            people={people}
             parrilladaPeople={parrilladaPeople}
             parrilladaProducts={parrilladaProducts}
             parrilladaSides={parrilladaSides}
@@ -1151,6 +1044,7 @@ ERROR
             setDifficulty={setDifficulty}
             setEquipment={setEquipment}
             setMenuMeats={setMenuMeats}
+            setPeople={setPeople}
             setParrilladaPeople={setParrilladaPeople}
             setParrilladaProducts={setParrilladaProducts}
             setParrilladaSides={setParrilladaSides}
@@ -1174,7 +1068,6 @@ ERROR
             getAnimalPreview={getAnimalPreview}
             handleAnimalChange={handleAnimalChange}
             handleCutChange={handleCutChange}
-            hasLocalEngine={hasLocalEngine}
             lang={lang}
             loading={loading}
             selectedCut={selectedCut}
@@ -1190,7 +1083,6 @@ ERROR
               resetSaveMenuState();
             }}
             setMode={setMode}
-            setTimerRunning={setTimerRunning}
             setThickness={(value) => {
               setThickness(value);
               resetSaveMenuState();
@@ -1367,25 +1259,13 @@ ERROR
         )}
 
         {mode === "cocina" && (
-          <CookingLiveMode
-            context={[animal, selectedCut?.name, equipment].filter(Boolean).join(" · ")}
-            lang={lang}
-            cookSteps={cookSteps}
-            currentStep={currentStep}
-            cookingAlertsEnabled={cookingAlertsEnabled}
-            cookingAlertMessage={cookingAlertMessage}
-            hasCookingPlan={Boolean(blocks.PASOS || blocks.STEPS)}
-            timeLeft={timeLeft}
-            timerRunning={timerRunning}
-            notificationPermission={notificationPermission}
-            onBackToPlan={() => navigateMode("coccion")}
-            onEnableAlerts={enableCookingAlerts}
-            onNextStep={nextCookStep}
-            onPreviousStep={previousCookStep}
-            setTimerRunning={setTimerRunning}
-            onGoToStep={goToCookStep}
-            onCompleteStep={nextCookStep}
-            onReset={resetCookMode}
+          <LiveCookingMode
+            steps={Boolean(blocks.PASOS || blocks.STEPS) ? cookSteps : []}
+            title={[selectedCut?.name, animal].filter(Boolean).join(" · ") || "Parrillero Pro"}
+            subtitle={[selectedCut?.name, equipment].filter(Boolean).join(" · ")}
+            visualImage={cutImages[cut]}
+            onExit={exitLiveCooking}
+            onFinish={exitLiveCooking}
           />
         )}
 
@@ -1774,7 +1654,7 @@ function getCutItems(animal: Animal, lang: Lang): CutItem[] {
   return getCutsByAnimal(animalIdsByLabel[animal]).map((cut) => ({
     id: cut.id,
     name: getCutName(cut, lang),
-    image: cutImages[cut.id] ?? "/cuts/placeholder.jpg",
+    image: cutImages[cut.id] ?? "/images/vacuno/ribeye-cooked.webp",
     description: getCutDescription(cut, lang),
   }));
 }
@@ -2886,7 +2766,7 @@ function getCutItems(animal: Animal, lang: Lang): CutItem[] {
   return getCutsByAnimal(animalIdsByLabel[animal]).map((cut) => ({
     id: cut.id,
     name: getCutName(cut, lang),
-    image: cutImages[cut.id] ?? "/cuts/placeholder.jpg",
+    image: cutImages[cut.id] ?? "/images/vacuno/ribeye-cooked.webp",
     description: getCutDescription(cut, lang),
   }));
 }
@@ -4005,7 +3885,7 @@ function getCutItems(animal: Animal, lang: Lang): CutItem[] {
   return getCutsByAnimal(animalIdsByLabel[animal]).map((cut) => ({
     id: cut.id,
     name: getCutName(cut, lang),
-    image: cutImages[cut.id] ?? "/cuts/placeholder.jpg",
+    image: cutImages[cut.id] ?? "/images/vacuno/ribeye-cooked.webp",
     description: getCutDescription(cut, lang),
   }));
 }

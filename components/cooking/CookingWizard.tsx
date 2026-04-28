@@ -2,12 +2,14 @@
 
 import ResultGrid from "@/components/ResultGrid";
 import ResultHero from "@/components/ResultHero";
-import { Badge, Button, Grid, Panel, Section } from "@/components/ui";
+import FoodCard from "@/components/FoodCard";
+import { Badge, Button, Section } from "@/components/ui";
 import type { Mode } from "@/components/navigation/AppHeader";
 import { ds } from "@/lib/design-system";
 import type { AppText, Lang } from "@/lib/i18n/texts";
-import { animalMedia, animalOptions, type Animal } from "@/lib/media/animalMedia";
-import { type ReactNode, type SyntheticEvent, useLayoutEffect, useState } from "react";
+import { animalOptions, type Animal } from "@/lib/media/animalMedia";
+import Image from "next/image";
+import { type ReactNode, useLayoutEffect, useState } from "react";
 
 export type Blocks = Record<string, string>;
 export type SaveMenuStatus = "idle" | "saving" | "success" | "error";
@@ -29,24 +31,18 @@ export const equipmentOptions = [
   "Napoleon Rogue 525-2",
 ];
 
-const IMAGE_FALLBACK_SRC = "/visuals/setup/setup-placeholder.webp";
-const INLINE_FALLBACK_IMAGE =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='700' viewBox='0 0 1200 700'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='30%25' r='70%25'%3E%3Cstop offset='0%25' stop-color='%23f97316' stop-opacity='.45'/%3E%3Cstop offset='60%25' stop-color='%230f172a'/%3E%3Cstop offset='100%25' stop-color='%23020617'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='1200' height='700' fill='url(%23g)'/%3E%3Cpath d='M280 470h640' stroke='%23fb923c' stroke-width='18' stroke-linecap='round' opacity='.55'/%3E%3Cpath d='M340 405h520' stroke='%23fed7aa' stroke-width='10' stroke-linecap='round' opacity='.38'/%3E%3Ccircle cx='600' cy='300' r='105' fill='%23f97316' opacity='.18'/%3E%3C/svg%3E";
+const foodImages: Record<Animal, string> = {
+  Vacuno: "/images/vacuno/ribeye-cooked.webp",
+  Cerdo: "/images/cerdo/secreto-cooked.webp",
+  Pollo: "/images/pollo/muslos-cooked.webp",
+  Pescado: "/images/pescado/salmon-cooked.webp",
+  Verduras: "/images/verduras/verduras-asadas.webp",
+};
 
 function buildText(blocks: Blocks) {
   return Object.keys(blocks)
     .map((key) => `${key}\n${blocks[key]}`)
     .join("\n\n");
-}
-
-function handleImageFallback(event: SyntheticEvent<HTMLImageElement>) {
-  if (event.currentTarget.getAttribute("src") === IMAGE_FALLBACK_SRC) {
-    event.currentTarget.onerror = null;
-    event.currentTarget.src = INLINE_FALLBACK_IMAGE;
-    return;
-  }
-
-  event.currentTarget.src = IMAGE_FALLBACK_SRC;
 }
 
 function CookingStepTransition({
@@ -104,7 +100,6 @@ export function CookingWizard({
   getAnimalPreview,
   handleAnimalChange,
   handleCutChange,
-  hasLocalEngine,
   lang,
   loading,
   onSaveMenu,
@@ -117,7 +112,6 @@ export function CookingWizard({
   setEquipment,
   setMode,
   setThickness,
-  setTimerRunning,
   setWeight,
   showThickness,
   t,
@@ -137,7 +131,6 @@ export function CookingWizard({
   getAnimalPreview: (animal: Animal, lang: Lang) => string;
   handleAnimalChange: (animal: Animal) => void;
   handleCutChange: (cut: string) => void;
-  hasLocalEngine: (animal: Animal) => boolean;
   lang: Lang;
   loading: boolean;
   onSaveMenu: () => Promise<void>;
@@ -150,7 +143,6 @@ export function CookingWizard({
   setEquipment: (value: string) => void;
   setMode: (mode: Mode) => void;
   setThickness: (value: string) => void;
-  setTimerRunning: (value: boolean) => void;
   setWeight: (value: string) => void;
   showThickness: boolean;
   t: AppText;
@@ -168,28 +160,12 @@ export function CookingWizard({
       : cookingStep;
 
   return (
-    <div className="space-y-2 sm:space-y-6">
-      {visibleCookingStep !== "result" && (
-        <CookingWizardHeader
-          animal={animal}
-          cookingStep={visibleCookingStep}
-          selectedCut={selectedCut}
-          t={t}
-        />
-      )}
-
-      {visibleCookingStep !== "animal" && visibleCookingStep !== "result" && (
-        <p className="px-1 text-center text-[11px] font-medium text-slate-500 md:hidden">
-          Desliza para volver
-        </p>
-      )}
-
+    <div className="space-y-5 sm:space-y-7">
       <CookingStepTransition stepKey={visibleCookingStep}>
         {visibleCookingStep === "animal" ? (
           <CookingAnimalStep
             animal={animal}
             getAnimalPreview={getAnimalPreview}
-            hasLocalEngine={hasLocalEngine}
             lang={lang}
             onSelectAnimal={handleAnimalChange}
             t={t}
@@ -199,7 +175,6 @@ export function CookingWizard({
             animal={animal}
             cut={cut}
             cuts={cuts}
-            hasLocalEngine={hasLocalEngine}
             onBack={() => setCookingStep("animal")}
             onSelectCut={handleCutChange}
             t={t}
@@ -235,7 +210,6 @@ export function CookingWizard({
             saveMenuStatus={saveMenuStatus}
             setCheckedItems={setCheckedItems}
             setMode={setMode}
-            setTimerRunning={setTimerRunning}
             t={t}
           />
         ) : null}
@@ -244,155 +218,33 @@ export function CookingWizard({
   );
 }
 
-function CookingWizardHeader({
-  animal,
-  cookingStep,
-  selectedCut,
-  t,
-}: {
-  animal: Animal;
-  cookingStep: CookingWizardStep;
-  selectedCut?: CutItem;
-  t: AppText;
-}) {
-  const title =
-    cookingStep === "animal"
-      ? t.chooseAnimal
-      : cookingStep === "cut"
-        ? t.chooseCut
-        : t.configurePlan;
-  const subtitle =
-    cookingStep === "animal"
-      ? "Empieza eligiendo la proteína principal."
-      : cookingStep === "cut"
-        ? "Ahora selecciona el corte exacto."
-        : "Ajusta peso, punto y equipo.";
-
-  return (
-    <>
-      <div className="sticky top-2 z-30 mb-2 rounded-xl border border-white/10 bg-slate-950/95 px-3 py-2 shadow-lg shadow-black/30 backdrop-blur sm:hidden">
-        <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <h1 className="text-sm font-bold text-white">{t.cooking}</h1>
-            <p className="truncate text-[10px] text-slate-400">{title}</p>
-          </div>
-          {cookingStep !== "animal" && (
-            <Badge className="max-w-[130px] shrink-0 truncate px-2 py-1 text-[10px]" tone="glass">
-              {selectedCut?.name ?? animal}
-            </Badge>
-          )}
-        </div>
-        <div className="mt-2">
-          <CookingStepIndicator currentStep={cookingStep} />
-        </div>
-      </div>
-
-      <Panel className="relative hidden overflow-hidden p-4 sm:block md:p-5" tone="hero">
-        <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-orange-500/15 blur-3xl" />
-        <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-orange-300/90">
-              {t.cooking}
-            </p>
-            <h1 className="mt-1 text-2xl font-black tracking-tight text-white md:text-3xl">
-              {title}
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">{subtitle}</p>
-            {cookingStep !== "animal" && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Badge>{animal}</Badge>
-                {selectedCut && <Badge tone="glass">{selectedCut.name}</Badge>}
-              </div>
-            )}
-          </div>
-
-          <CookingStepIndicator currentStep={cookingStep} />
-        </div>
-      </Panel>
-    </>
-  );
-}
-
-function CookingStepIndicator({ currentStep }: { currentStep: CookingWizardStep }) {
-  const steps: Array<{ id: CookingWizardStep; label: string; number: string }> = [
-    { id: "animal", label: "Animal", number: "1" },
-    { id: "cut", label: "Corte", number: "2" },
-    { id: "details", label: "Detalles", number: "3" },
-  ];
-  const currentIndex = steps.findIndex((step) => step.id === currentStep);
-
-  return (
-    <div className="flex min-w-0 gap-0.5 rounded-lg border border-white/10 bg-black/40 p-0.5 shadow-inner shadow-black/25 sm:min-w-[320px] sm:gap-1 sm:rounded-xl sm:p-1 md:min-w-[360px]">
-      {steps.map((step, index) => {
-        const isActive = step.id === currentStep;
-        const isComplete = index < currentIndex;
-
-        return (
-          <div
-            key={step.id}
-            className={
-              isActive
-                ? "flex min-w-0 flex-1 flex-col items-center justify-center rounded-md bg-orange-500 px-1 py-1 text-center shadow-md shadow-orange-500/30 transition-all duration-200 sm:rounded-lg sm:px-2 sm:py-1.5"
-                : isComplete
-                  ? "flex min-w-0 flex-1 flex-col items-center justify-center rounded-md border border-orange-500/25 bg-orange-500/10 px-1 py-1 text-center transition-all duration-200 sm:rounded-lg sm:px-2 sm:py-1.5"
-                  : "flex min-w-0 flex-1 flex-col items-center justify-center rounded-md bg-white/[0.04] px-1 py-1 text-center transition-all duration-200 sm:rounded-lg sm:px-2 sm:py-1.5"
-            }
-          >
-            <span
-              className={
-                isActive
-                  ? "text-[9px] font-black leading-none text-black/80 sm:text-[10px]"
-                  : isComplete
-                    ? "text-[9px] font-black leading-none text-orange-200/90 sm:text-[10px]"
-                    : "text-[9px] font-black leading-none text-slate-500 sm:text-[10px]"
-              }
-            >
-              {step.number}
-            </span>
-            <span
-              className={
-                isActive
-                  ? "mt-0.5 text-[10px] font-bold leading-tight text-black sm:text-xs"
-                  : isComplete
-                    ? "mt-0.5 text-[10px] font-bold leading-tight text-orange-100 sm:text-xs"
-                    : "mt-0.5 text-[10px] font-semibold leading-tight text-slate-500 sm:text-xs"
-              }
-            >
-              {step.label}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 function CookingAnimalStep({
   animal,
   getAnimalPreview,
-  hasLocalEngine,
   lang,
   onSelectAnimal,
   t,
 }: {
   animal: Animal;
   getAnimalPreview: (animal: Animal, lang: Lang) => string;
-  hasLocalEngine: (animal: Animal) => boolean;
   lang: Lang;
   onSelectAnimal: (animal: Animal) => void;
   t: AppText;
 }) {
   return (
-    <Section className="space-y-2 sm:space-y-5" eyebrow="Paso 1" title={t.chooseAnimal}>
-      <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-5">
+    <Section className="mx-auto max-w-[1480px] animate-[fadeIn_220ms_ease-out] space-y-6 sm:space-y-7 lg:space-y-8 2xl:max-w-[1520px]" title="¿Qué quieres cocinar?">
+      <p className="-mt-3 max-w-xl text-sm font-medium leading-6 text-slate-300 sm:text-base">
+        Elige el ingrediente principal y Parrillero Pro ajusta cortes, fuego y tiempos.
+      </p>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6 xl:grid-cols-3 xl:gap-8 2xl:grid-cols-5">
         {animalOptions.map((item) => (
-          <ImageCard
+          <FoodCard
             key={item}
-            active={animal === item}
+            selected={animal === item}
             title={item}
             subtitle={getAnimalPreview(item, lang)}
-            image={animalMedia[item].image}
-            badge={hasLocalEngine(item) ? t.localEngine : t.aiFallback}
+            image={foodImages[item]}
+            badge={undefined}
             selectedLabel={t.selected}
             onClick={() => onSelectAnimal(item)}
           />
@@ -402,11 +254,31 @@ function CookingAnimalStep({
   );
 }
 
+function AppTopBar({
+  backLabel,
+  onBack,
+}: {
+  backLabel: string;
+  onBack: () => void;
+}) {
+  return (
+    <div className="flex min-h-12 items-center">
+      <button
+        type="button"
+        onClick={onBack}
+        className="inline-flex min-h-11 max-w-full items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-3.5 py-2 text-sm font-black text-slate-100 shadow-lg shadow-black/10 transition-all duration-200 hover:bg-white/[0.08] active:scale-[0.97]"
+      >
+        <span className="text-lg leading-none">←</span>
+        <span className="truncate">{backLabel}</span>
+      </button>
+    </div>
+  );
+}
+
 function CookingCutStep({
   animal,
   cut,
   cuts,
-  hasLocalEngine,
   onBack,
   onSelectCut,
   t,
@@ -414,40 +286,39 @@ function CookingCutStep({
   animal: Animal;
   cut: string;
   cuts: CutItem[];
-  hasLocalEngine: (animal: Animal) => boolean;
   onBack: () => void;
   onSelectCut: (cut: string) => void;
   t: AppText;
 }) {
   return (
-    <Section className="space-y-2 sm:space-y-5" eyebrow="Paso 2" title={t.chooseCut}>
-      <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
-        <div className={`${ds.panel.highlight} px-2.5 py-1.5 sm:p-4`}>
-          <p className="text-xs text-orange-300 sm:text-sm">{t.selected}</p>
-          <h2 className="text-sm font-bold text-white sm:text-base">{animal}</h2>
-        </div>
-        <Button
-          className="rounded-full px-3 py-2 text-xs transition-all duration-200 active:scale-[0.98]"
-          onClick={onBack}
-          variant="secondary"
-        >
-          ← {t.reset}
-        </Button>
+    <section className="mx-auto max-w-[1480px] animate-[fadeIn_220ms_ease-out] space-y-5 sm:space-y-7 lg:space-y-8 2xl:max-w-[1520px]">
+      <AppTopBar backLabel={animal} onBack={onBack} />
+
+      <div className="max-w-3xl">
+        <p className="text-[11px] font-black uppercase tracking-[0.22em] text-orange-300/75">
+          Categoría
+        </p>
+        <h1 className="mt-2 text-4xl font-black tracking-tight text-white sm:text-5xl">
+          {t.chooseCut}
+        </h1>
+        <p className="mt-2 text-sm font-medium leading-6 text-slate-400 sm:text-base">
+          Selecciona el corte para ajustar fuego y tiempos.
+        </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3.5 sm:gap-5 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
         {cuts.map((item) => (
           <CutCard
             key={item.id}
             active={cut === item.id}
             cut={item}
-            badge={hasLocalEngine(animal) ? t.localEngine : t.aiFallback}
+            badge={undefined}
             activeLabel={t.active}
             onClick={() => onSelectCut(item.id)}
           />
         ))}
       </div>
-    </Section>
+    </section>
   );
 }
 
@@ -487,28 +358,27 @@ function CookingDetailsStep({
   weight: string;
 }) {
   return (
-    <Grid variant="split">
-      <Panel className="space-y-2.5 sm:space-y-4 md:col-span-2" tone="form">
-        <div className="flex items-start justify-between gap-2 sm:gap-3">
-          <div>
-            <p className={ds.text.eyebrow}>Paso 3</p>
-            <h2 className="mt-1 text-lg font-bold text-white sm:text-xl">{t.configurePlan}</h2>
-          </div>
-          <Button
-            className="rounded-full px-3 py-2 text-xs transition-all duration-200 active:scale-[0.98]"
-            onClick={onBack}
-            variant="secondary"
-          >
-            ← {t.chooseCut}
-          </Button>
-        </div>
+    <section className="mx-auto max-w-5xl animate-[fadeIn_220ms_ease-out] space-y-5 sm:space-y-7">
+      <AppTopBar backLabel={selectedCut.name} onBack={onBack} />
 
-        <div className={`${ds.panel.highlight} p-2.5 sm:p-4`}>
-          <p className="text-sm text-orange-300">{animal}</p>
-          <h3 className="font-bold text-white">{selectedCut.name}</h3>
-          <p className="mt-1 text-sm text-slate-300">{selectedCut.description}</p>
-        </div>
+      <div className="max-w-2xl">
+        <p className="text-[11px] font-black uppercase tracking-[0.22em] text-orange-300/75">
+          {animal}
+        </p>
+        <h1 className="mt-2 text-4xl font-black tracking-tight text-white sm:text-5xl">
+          Ajusta los detalles
+        </h1>
+        <p className="mt-2 text-sm font-medium leading-6 text-slate-400 sm:text-base">
+          Define punto, grosor y equipo para calcular tiempos precisos.
+        </p>
+      </div>
 
+      <div className="max-w-3xl rounded-[2rem] border border-white/10 bg-white/[0.045] p-4 shadow-2xl shadow-black/25 sm:p-5">
+        <h2 className="text-lg font-black text-white">{selectedCut.name}</h2>
+        <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-400">{selectedCut.description}</p>
+      </div>
+
+      <div className="grid max-w-4xl gap-4 md:grid-cols-2">
         <Input label={t.weight} value={weight} onChange={setWeight} placeholder="Ej: 1.2" />
 
         {showThickness && (
@@ -534,15 +404,17 @@ function CookingDetailsStep({
           onChange={setEquipment}
           options={equipmentOptions}
         />
+      </div>
 
+      <div className="max-w-md">
         <PrimaryButton
           onClick={generateCookingPlan}
           loading={loading}
           text={t.generatePlan}
           loadingText={t.generating}
         />
-      </Panel>
-    </Grid>
+      </div>
+    </section>
   );
 }
 
@@ -557,7 +429,6 @@ function CookingResultStep({
   saveMenuStatus,
   setCheckedItems,
   setMode,
-  setTimerRunning,
   t,
 }: {
   animal: Animal;
@@ -570,7 +441,6 @@ function CookingResultStep({
   saveMenuStatus: SaveMenuStatus;
   setCheckedItems: (value: Record<string, boolean>) => void;
   setMode: (mode: Mode) => void;
-  setTimerRunning: (value: boolean) => void;
   t: AppText;
 }) {
   return (
@@ -587,7 +457,6 @@ function CookingResultStep({
         setCheckedItems={setCheckedItems}
         onStartCooking={() => {
           setMode("cocina");
-          setTimerRunning(false);
         }}
         t={t}
       />
@@ -657,7 +526,7 @@ export function ResultCards({
           save: "Guardar",
           saving: "Guardando...",
           share: "Compartir",
-          startCooking: t.startCooking,
+          startCooking: "Empezar Live Cooking",
         }}
       />
 
@@ -694,86 +563,6 @@ export function ResultCards({
   );
 }
 
-export function ImageCard({
-  active,
-  title,
-  subtitle,
-  image,
-  badge,
-  selectedLabel,
-  onClick,
-}: {
-  active: boolean;
-  title: string;
-  subtitle: string;
-  image: string;
-  badge?: string;
-  selectedLabel: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={
-        active
-          ? "group relative touch-manipulation select-none overflow-hidden rounded-[2rem] border-2 border-orange-400/90 bg-slate-950 text-left shadow-[0_20px_55px_rgba(249,115,22,0.35)] shadow-orange-500/15 ring-2 ring-orange-400/40 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/70 active:scale-[0.97] active:brightness-[0.98]"
-          : "group relative touch-manipulation select-none overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 text-left shadow-[0_14px_40px_rgba(2,6,23,0.32)] transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-400/45 hover:shadow-[0_18px_48px_rgba(249,115,22,0.12)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/50 active:scale-[0.97] active:brightness-[0.98]"
-      }
-    >
-      <div className="relative min-h-32 overflow-hidden sm:min-h-60">
-        <img
-          src={image || IMAGE_FALLBACK_SRC}
-          alt=""
-          loading="lazy"
-          className="absolute inset-0 h-full w-full object-cover object-center transition-all duration-200 group-hover:scale-105"
-          onError={handleImageFallback}
-        />
-
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(251,146,60,0.36),transparent_34%),linear-gradient(to_top,rgba(2,6,23,0.98)_0%,rgba(2,6,23,0.68)_36%,rgba(2,6,23,0.14)_72%,rgba(255,255,255,0.08)_100%)]" />
-        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/10 to-transparent opacity-70" />
-        <div
-          className={
-            active
-              ? "absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-orange-300 via-orange-500 to-amber-300"
-              : "absolute inset-x-0 bottom-0 h-px bg-white/10"
-          }
-        />
-
-        {badge && (
-          <Badge
-            className="absolute right-2 top-2 z-10 text-[9px] shadow-lg shadow-black/20 backdrop-blur-md sm:right-3 sm:top-3 sm:text-[11px]"
-            tone="glass"
-          >
-            {badge}
-          </Badge>
-        )}
-
-        {active && (
-          <span
-            className="absolute bottom-2 right-2 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-orange-500 text-[11px] font-black leading-none text-black shadow-lg shadow-orange-500/50 ring-2 ring-white/25 sm:bottom-3 sm:right-3 sm:h-7 sm:w-7 sm:text-xs"
-            title={selectedLabel}
-            aria-label={selectedLabel}
-          >
-            ✓
-          </span>
-        )}
-
-        <div
-          className={`absolute inset-x-0 bottom-0 p-3 sm:p-5 ${active ? "pr-14 sm:pr-16" : "pr-12 sm:pr-28"}`}
-        >
-          <h3 className="line-clamp-2 text-base font-black leading-5 tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)] sm:text-2xl sm:leading-tight">
-            {title}
-          </h3>
-          <p className="mt-1 line-clamp-1 max-w-[18rem] text-[10px] font-medium leading-4 text-slate-200/90 sm:mt-2 sm:line-clamp-2 sm:text-sm sm:leading-5">
-            {subtitle}
-          </p>
-        </div>
-      </div>
-    </button>
-  );
-}
-
 function CutCard({
   active,
   cut,
@@ -787,31 +576,41 @@ function CutCard({
   activeLabel: string;
   onClick: () => void;
 }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const showImage = Boolean(cut.image) && !imageFailed;
+
   return (
     <button
       type="button"
       onClick={onClick}
       className={
         active
-          ? "group relative touch-manipulation select-none overflow-hidden rounded-[2rem] border-2 border-orange-400/90 bg-slate-950 text-left shadow-[0_20px_55px_rgba(249,115,22,0.35)] shadow-orange-500/15 ring-2 ring-orange-400/40 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/70 active:scale-[0.97] active:brightness-[0.98]"
-          : "group relative touch-manipulation select-none overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 text-left shadow-[0_14px_40px_rgba(2,6,23,0.32)] transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-400/45 hover:shadow-[0_18px_48px_rgba(249,115,22,0.12)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/50 active:scale-[0.97] active:brightness-[0.98]"
+          ? "group relative touch-manipulation select-none overflow-hidden rounded-[1.75rem] border border-orange-300/90 bg-zinc-950 text-left shadow-[0_22px_64px_rgba(255,106,0,0.30)] ring-2 ring-orange-400/35 transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/70 active:scale-[0.98]"
+          : "group relative touch-manipulation select-none overflow-hidden rounded-[1.75rem] border border-white/10 bg-zinc-950 text-left shadow-[0_14px_42px_rgba(0,0,0,0.35)] transition-all duration-200 ease-out hover:border-[#FF6A00]/45 hover:shadow-[0_20px_52px_rgba(255,106,0,0.16)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/50 active:scale-[0.98]"
       }
     >
-      <div className="relative min-h-40 overflow-hidden sm:min-h-72">
-        <img
-          src={cut.image || IMAGE_FALLBACK_SRC}
-          alt=""
-          loading="lazy"
-          className="absolute inset-0 h-full w-full object-cover object-center transition-all duration-200 group-hover:scale-105"
-          onError={handleImageFallback}
-        />
+      <div className="relative aspect-[4/5] min-h-[220px] overflow-hidden lg:min-h-[300px] xl:min-h-[340px] 2xl:min-h-[360px]">
+        {!showImage && (
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_16%,rgba(255,106,0,0.30),transparent_34%),radial-gradient(circle_at_82%_0%,rgba(251,146,60,0.12),transparent_28%),linear-gradient(145deg,#18181b_0%,#09090b_48%,#000000_100%)]" />
+        )}
+        {showImage && (
+          <Image
+            src={cut.image}
+            alt={cut.name}
+            fill
+            sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
+            className="object-cover object-center transition-transform duration-300 ease-out group-hover:scale-105"
+            onError={() => setImageFailed(true)}
+          />
+        )}
 
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(251,146,60,0.32),transparent_34%),linear-gradient(to_top,rgba(2,6,23,0.99)_0%,rgba(2,6,23,0.72)_40%,rgba(2,6,23,0.18)_74%,rgba(255,255,255,0.08)_100%)]" />
-        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/10 to-transparent opacity-70" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/78 to-transparent" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(255,106,0,0.18),transparent_34%)]" />
+        <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-white/10 to-transparent opacity-50" />
         <div
           className={
             active
-              ? "absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-orange-300 via-orange-500 to-amber-300"
+              ? "absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-orange-300 via-[#FF6A00] to-amber-300"
               : "absolute inset-x-0 bottom-0 h-px bg-white/10"
           }
         />
@@ -826,7 +625,7 @@ function CutCard({
         )}
         {active && (
           <span
-            className="absolute right-2 top-2 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-orange-500 text-[11px] font-black leading-none text-black shadow-lg shadow-orange-500/50 ring-2 ring-white/25 sm:right-3 sm:top-3 sm:h-7 sm:w-7 sm:text-xs"
+            className="absolute right-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-[#FF6A00] text-xs font-black leading-none text-black shadow-lg shadow-orange-500/50 ring-2 ring-white/25 sm:right-3 sm:top-3"
             title={activeLabel}
             aria-label={activeLabel}
           >
@@ -834,11 +633,11 @@ function CutCard({
           </span>
         )}
 
-        <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-5">
-          <h3 className="line-clamp-2 text-base font-black leading-5 tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)] sm:text-2xl sm:leading-tight">
+        <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
+          <h3 className="line-clamp-2 text-lg font-black leading-5 tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)] sm:text-2xl sm:leading-tight">
             {cut.name}
           </h3>
-          <p className="mt-1 line-clamp-2 max-w-[24rem] text-[10px] leading-4 text-slate-200/90 sm:mt-2 sm:line-clamp-3 sm:text-sm sm:leading-5">
+          <p className="mt-1 line-clamp-2 max-w-[24rem] text-[11px] font-medium leading-4 text-slate-200/80 sm:mt-2 sm:text-sm sm:leading-5">
             {cut.description}
           </p>
         </div>
