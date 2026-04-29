@@ -32,6 +32,7 @@ import {
   type SavedMenuType,
   type ShareStatus,
 } from "@/components/results/CookingResultScreen";
+import { SavedCooksScreen } from "@/components/cooks/SavedCooksScreen";
 import {
   OnboardingSlides,
 } from "@/components/onboarding/OnboardingSlides";
@@ -49,16 +50,19 @@ import {
 } from "@/lib/cookingRules";
 import { ds } from "@/lib/design-system";
 import { texts, type Lang } from "@/lib/i18n/texts";
+import { createLiveCookingPayload, saveLiveCookingPayload } from "@/lib/liveCookingPlan";
 import { animalIdsByLabel, type Animal } from "@/lib/media/animalMedia";
 import { cutImages } from "@/lib/media/cutImages";
 import {
   REQUIRED_COOKING_BLOCKS,
+  REQUIRED_COOKING_BLOCKS_EN,
   REQUIRED_MENU_BLOCKS,
   REQUIRED_PARRILLADA_BLOCKS,
   normalizeBlocks,
 } from "@/lib/parser/normalizeBlocks";
 import { parseBlocks } from "@/lib/parser/parseBlocks";
 import { generateParrilladaPlan } from "@/lib/parrilladaEngine";
+import { useRouter } from "next/navigation";
 import { type TouchEvent, useEffect, useMemo, useRef, useState } from "react";
 
 type EngineLang = "es" | "en";
@@ -73,6 +77,7 @@ type SavedMenuActionMenu = {
   id: string;
   name: string;
   created_at: string;
+  data?: Record<string, unknown>;
   is_public?: boolean;
   share_slug?: string | null;
 };
@@ -99,6 +104,67 @@ type CutItem = {
   image: string;
   description: string;
 };
+
+type SavedCookConfig = {
+  animal: Animal;
+  cut: string;
+  weight: string;
+  thickness: string;
+  doneness: string;
+  equipment: string;
+  lang: Lang;
+};
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
+function asText(value: unknown) {
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number") return `${value}`;
+  return "";
+}
+
+function parseSavedLang(value: unknown): Lang {
+  const text = asText(value);
+  if (text === "en" || text === "fi" || text === "es") return text;
+  return "es";
+}
+
+function parseSavedAnimal(value: unknown, fallback: Animal): Animal {
+  const text = asText(value);
+  if (text && text in animalIdsByLabel) return text as Animal;
+  return fallback;
+}
+
+function parseSavedCookConfig(
+  menu: SavedMenu,
+  fallback: {
+    animal: Animal;
+    equipment: string;
+    doneness: string;
+    weight: string;
+    thickness: string;
+    lang: Lang;
+  },
+): SavedCookConfig | null {
+  const data = asRecord(menu.data);
+  if (!data) return null;
+  const inputs = asRecord(data.inputs) ?? data;
+  const cut = asText(inputs.cut);
+  if (!cut) return null;
+
+  return {
+    animal: parseSavedAnimal(inputs.animal, fallback.animal),
+    cut,
+    weight: asText(inputs.weight) || fallback.weight,
+    thickness: asText(inputs.thickness) || fallback.thickness,
+    doneness: asText(inputs.doneness) || fallback.doneness,
+    equipment: asText(inputs.equipment) || fallback.equipment,
+    lang: parseSavedLang(data.lang ?? inputs.lang ?? fallback.lang),
+  };
+}
 
 function engineLang(lang: Lang): EngineLang {
   return lang === "es" ? "es" : "en";
@@ -221,6 +287,8 @@ function parsePositiveInt(value: string) {
 }
 
 export default function Home() {
+  const router = useRouter();
+
   // ── Onboarding gate ─────────────────────────────────────────────────────────
   // null  = not yet resolved (server render + first paint — avoids hydration mismatch)
   // true  = show onboarding
@@ -260,6 +328,7 @@ export default function Home() {
   const [budget, setBudget] = useState("200");
   const [difficulty, setDifficulty] = useState("medio");
   const [planMode, setPlanMode] = useState<PlanMode>("rapido");
+  const [guardadosTab, setGuardadosTab] = useState<"plans" | "cooks">("plans");
   const [planProduct, setPlanProduct] = useState("chuletón");
   const [planGenerated, setPlanGenerated] = useState(false);
 
@@ -284,6 +353,14 @@ export default function Home() {
 
   const touchStartRef = useRef<TouchPoint | null>(null);
   const modeHistoryRef = useRef<Mode[]>([]);
+
+  // ── Browser-history refs ─────────────────────────────────────────────────
+  // isRestoringNavRef: set to true before any backward navigation setState so the
+  //   "push on change" effect knows not to create a new forward history entry.
+  //   Reset to false inside that same effect after one render cycle.
+  // lastPushedNavRef: tracks what we last pushed so we can deduplicate.
+  const isRestoringNavRef = useRef(false);
+  const lastPushedNavRef = useRef<{ mode: Mode; cookingStep: CookingWizardStep } | null>(null);
 
   const cuts = useMemo(() => getCutItems(animal, lang), [animal, lang]);
   const selectedCut = cuts.find((item) => item.id === cut);
@@ -311,6 +388,52 @@ export default function Home() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  // ── Browser history: seed the initial entry ────────────────────────────────
+  // replaceState (not push) so the very first page doesn't create an extra entry.
+  useEffect(() => {
+    window.history.replaceState({ mode: "inicio", cookingStep: "animal" }, "");
+    lastPushedNavRef.current = { mode: "inicio", cookingStep: "animal" };
+  }, []);
+
+  // ── Browser history: push on every forward navigation ──────────────────────
+  // Fires whenever mode or cookingStep changes. Skipped during backward
+  // navigation (isRestoringNavRef.current === true) and deduplicated against
+  // the last pushed entry. showOnboarding is included so we don't push during
+  // the onboarding gate phase.
+  useEffect(() => {
+    if (showOnboarding === null || showOnboarding) return;
+    if (isRestoringNavRef.current) {
+      // Backward navigation — reset the flag and skip the push.
+      isRestoringNavRef.current = false;
+      return;
+    }
+    const last = lastPushedNavRef.current;
+    if (last?.mode === mode && last?.cookingStep === cookingStep) return;
+    lastPushedNavRef.current = { mode, cookingStep };
+    window.history.pushState({ mode, cookingStep }, "");
+  }, [mode, cookingStep, showOnboarding]);
+
+  // ── Browser history: restore state on popstate (back button / swipe) ───────
+  // Registered once. The handler restores mode + cookingStep and sets the
+  // restoring flag so the push effect skips the next render cycle.
+  useEffect(() => {
+    function onPopState(event: PopStateEvent) {
+      const state = event.state as { mode?: Mode; cookingStep?: CookingWizardStep } | null;
+      if (!state?.mode) return;
+      const restoredStep = (state.cookingStep ?? "animal") as CookingWizardStep;
+      // Flag must be set BEFORE the setState calls so the subsequent render's
+      // useEffect sees it correctly (refs are synchronous).
+      isRestoringNavRef.current = true;
+      lastPushedNavRef.current = { mode: state.mode, cookingStep: restoredStep };
+      setMode(state.mode);
+      setCookingStep(restoredStep);
+      if (restoredStep !== "result") setLoading(false);
+      if (state.mode !== "guardados") setSelectedSavedMenu(null);
+    }
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
   function updateSavedMenus(nextMenus: SavedMenu[]) {
@@ -424,6 +547,12 @@ export default function Home() {
         title: savedMenu.name,
         date: new Date(savedMenu.created_at).toLocaleDateString(localeForLang(lang)),
         blocks: safeBlocks,
+        data: asRecord(savedMenu.data) ?? {
+          type: savedType,
+          lang,
+          inputs,
+          blocks: safeBlocks,
+        },
         type: savedType,
         is_public: savedMenu.is_public ?? false,
         share_slug: savedMenu.share_slug ?? null,
@@ -449,6 +578,104 @@ export default function Home() {
     setSelectedSavedMenu(menu);
     resetSaveMenuState();
     navigateMode("guardados");
+  }
+
+  function buildCookingPlanFromSavedConfig(menu: SavedMenu) {
+    const config = parseSavedCookConfig(menu, {
+      animal,
+      equipment,
+      doneness,
+      weight,
+      thickness,
+      lang,
+    });
+    if (!config) return null;
+
+    const thicknessForPlan = shouldShowThickness(config.cut) ? config.thickness : "2";
+    const localPlan = generateLocalCookingPlan({
+      animal: config.animal,
+      cut: config.cut,
+      weightKg: config.weight,
+      thicknessCm: thicknessForPlan,
+      doneness: config.doneness,
+      equipment: config.equipment,
+      language: engineLang(config.lang),
+    });
+    const localPlanRepeat = generateLocalCookingPlan({
+      animal: config.animal,
+      cut: config.cut,
+      weightKg: config.weight,
+      thicknessCm: thicknessForPlan,
+      doneness: config.doneness,
+      equipment: config.equipment,
+      language: engineLang(config.lang),
+    });
+    if (
+      localPlan &&
+      localPlanRepeat &&
+      JSON.stringify(localPlan) !== JSON.stringify(localPlanRepeat)
+    ) {
+      console.warn("[cook-again] Non-deterministic local cooking plan detected", config);
+    }
+
+    const requiredBlocks = config.lang === "en" ? REQUIRED_COOKING_BLOCKS_EN : REQUIRED_COOKING_BLOCKS;
+    const normalizedPlan = normalizeBlocks(
+      localPlan ?? menu.blocks,
+      requiredBlocks,
+      "cooking_plan",
+    );
+
+    return { config, blocks: normalizedPlan };
+  }
+
+  function reviewSavedCook(menu: SavedMenu) {
+    if (menu.type !== "cooking_plan") {
+      loadMenu(menu);
+      return;
+    }
+
+    const rebuilt = buildCookingPlanFromSavedConfig(menu);
+    if (!rebuilt) {
+      loadMenu(menu);
+      return;
+    }
+
+    setLang(rebuilt.config.lang);
+    setAnimal(rebuilt.config.animal);
+    setCut(rebuilt.config.cut);
+    setWeight(rebuilt.config.weight);
+    setThickness(rebuilt.config.thickness);
+    setDoneness(rebuilt.config.doneness);
+    setEquipment(rebuilt.config.equipment);
+    setBlocks(rebuilt.blocks);
+    setCheckedItems({});
+    resetSaveMenuState();
+    setSelectedSavedMenu(null);
+    setCookingStep("result");
+    navigateMode("coccion");
+  }
+
+  function startSavedCookLive(menu: SavedMenu) {
+    const rebuilt = buildCookingPlanFromSavedConfig(menu);
+    if (!rebuilt) {
+      loadMenu(menu);
+      return;
+    }
+
+    const payload = createLiveCookingPayload({
+      input: {
+        animal: rebuilt.config.animal,
+        cut: rebuilt.config.cut,
+        equipment: rebuilt.config.equipment,
+        doneness: rebuilt.config.doneness,
+        thickness: shouldShowThickness(rebuilt.config.cut) ? rebuilt.config.thickness : "2",
+        lang: rebuilt.config.lang,
+      },
+      blocks: rebuilt.blocks,
+    });
+
+    saveLiveCookingPayload(payload);
+    router.push("/coccion-live");
   }
 
   function updateSharedMenu(updatedMenu: SavedMenu) {
@@ -797,7 +1024,12 @@ ERROR
 
   function navigateMode(nextMode: Mode, trackHistory = true) {
     if (nextMode === mode) return;
-    if (trackHistory) modeHistoryRef.current = [...modeHistoryRef.current.slice(-8), mode];
+    if (trackHistory) {
+      modeHistoryRef.current = [...modeHistoryRef.current.slice(-8), mode];
+    } else {
+      // Backward / programmatic nav — tell the push effect to skip this render.
+      isRestoringNavRef.current = true;
+    }
     if (nextMode === "coccion") setCookingStep("animal");
     if (nextMode !== "guardados") setSelectedSavedMenu(null);
     setMode(nextMode);
@@ -817,21 +1049,20 @@ ERROR
     if (direction === "back") {
       if (mode === "coccion") {
         if (cookingStep === "result") {
+          isRestoringNavRef.current = true;
           setCookingStep("details");
           return;
         }
 
         if (cookingStep === "details") {
+          isRestoringNavRef.current = true;
           setCookingStep("cut");
           return;
         }
 
         if (cookingStep === "cut") {
+          isRestoringNavRef.current = true;
           setCookingStep("animal");
-          return;
-        }
-
-        if (cookingStep === "animal") {
           return;
         }
 
@@ -841,7 +1072,7 @@ ERROR
       if (modeHistoryRef.current.length > 0) {
         const previousMode = modeHistoryRef.current[modeHistoryRef.current.length - 1];
         modeHistoryRef.current = modeHistoryRef.current.slice(0, -1);
-        navigateMode(previousMode, false);
+        navigateMode(previousMode, false); // sets isRestoringNavRef inside
       }
 
       return;
@@ -1164,25 +1395,63 @@ ERROR
         {/* Live cooking → /coccion-live (AppHeader.tsx intercepts mode "cocina" and navigates there) */}
 
         {mode === "guardados" && (
-          <CookingResultScreen
-            checkedItems={checkedItems}
-            lang={lang}
-            menus={savedMenus}
-            selectedMenu={selectedSavedMenu}
-            shareMessage={shareMessage}
-            shareMessageMenuId={shareMessageMenuId}
-            shareStatus={shareStatus}
-            sharingMenuId={sharingMenuId}
-            onBack={() => setSelectedSavedMenu(null)}
-            onCopyLink={copyShareLink}
-            onCopy={copySavedMenu}
-            onDelete={deleteMenu}
-            onOpen={loadMenu}
-            onPublish={publishMenu}
-            onUnpublish={unpublishMenu}
-            setCheckedItems={setCheckedItems}
-            t={t}
-          />
+          <div>
+            {/* ── Tab toggle: Planes | Cocciones ─────────────────────────── */}
+            <div className="mb-5 flex gap-1.5 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-1.5">
+              <button
+                type="button"
+                onClick={() => setGuardadosTab("plans")}
+                className={`flex-1 rounded-xl py-2 text-[12px] font-black transition-all duration-200 ${
+                  guardadosTab === "plans"
+                    ? "bg-orange-500 text-black shadow-[0_2px_12px_rgba(249,115,22,0.35)]"
+                    : "text-white/45 hover:text-white/65"
+                }`}
+              >
+                📋 Planes
+              </button>
+              <button
+                type="button"
+                onClick={() => setGuardadosTab("cooks")}
+                className={`flex-1 rounded-xl py-2 text-[12px] font-black transition-all duration-200 ${
+                  guardadosTab === "cooks"
+                    ? "bg-orange-500 text-black shadow-[0_2px_12px_rgba(249,115,22,0.35)]"
+                    : "text-white/45 hover:text-white/65"
+                }`}
+              >
+                🔥 Cocciones
+              </button>
+            </div>
+
+            {guardadosTab === "plans" && (
+              <CookingResultScreen
+                checkedItems={checkedItems}
+                lang={lang}
+                menus={savedMenus}
+                selectedMenu={selectedSavedMenu}
+                shareMessage={shareMessage}
+                shareMessageMenuId={shareMessageMenuId}
+                shareStatus={shareStatus}
+                sharingMenuId={sharingMenuId}
+                onBack={() => setSelectedSavedMenu(null)}
+                onCopyLink={copyShareLink}
+                onCopy={copySavedMenu}
+                onDelete={deleteMenu}
+                onOpen={loadMenu}
+            onCookAgainLive={startSavedCookLive}
+            onCookAgainReview={reviewSavedCook}
+                onPublish={publishMenu}
+                onUnpublish={unpublishMenu}
+                setCheckedItems={setCheckedItems}
+                t={t}
+              />
+            )}
+
+            {guardadosTab === "cooks" && (
+              <SavedCooksScreen
+                onStartCooking={() => navigateMode("coccion")}
+              />
+            )}
+          </div>
         )}
       </div>
 

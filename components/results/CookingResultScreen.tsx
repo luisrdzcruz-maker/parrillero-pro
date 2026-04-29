@@ -14,6 +14,7 @@ export type SavedMenu = {
   title: string;
   date: string;
   blocks: Blocks;
+  data?: Record<string, unknown>;
   type?: SavedMenuType;
   is_public?: boolean;
   share_slug?: string | null;
@@ -66,6 +67,8 @@ function getShareButtonLabel({
 
 type SharedMenuProps = {
   lang: Lang;
+  onCookAgainLive: (menu: SavedMenu) => void;
+  onCookAgainReview: (menu: SavedMenu) => void;
   onCopyLink: (menu: SavedMenu) => void;
   onCopy: (menu: SavedMenu) => void;
   onPublish: (menu: SavedMenu) => void;
@@ -82,6 +85,8 @@ type SharedMenuProps = {
 function SavedMenusSection({
   lang,
   menus,
+  onCookAgainLive,
+  onCookAgainReview,
   onCopyLink,
   onCopy,
   onDelete,
@@ -123,6 +128,16 @@ function SavedMenusSection({
 
             <div className="mt-4 flex flex-wrap gap-3">
               <Button onClick={() => onOpen(menu)}>{lang === "es" ? "Abrir" : "Open"}</Button>
+              {getSavedMenuType(menu) === "cooking_plan" && (
+                <>
+                  <Button onClick={() => onCookAgainReview(menu)} variant="outlineAccent">
+                    {lang === "es" ? "Revisar cocción" : "Review cook"}
+                  </Button>
+                  <Button onClick={() => onCookAgainLive(menu)} variant="outlineAccent">
+                    {lang === "es" ? "Live directo" : "Go live now"}
+                  </Button>
+                </>
+              )}
               <Button onClick={() => onCopy(menu)} variant="secondary">
                 {t.copy}
               </Button>
@@ -173,6 +188,8 @@ function SavedMenuDetail({
   checkedItems,
   lang,
   menu,
+  onCookAgainLive,
+  onCookAgainReview,
   onBack,
   onCopyLink,
   onCopy,
@@ -207,6 +224,16 @@ function SavedMenuDetail({
             <Button onClick={onBack} variant="secondary">
               {lang === "es" ? "Volver" : "Back"}
             </Button>
+            {type === "cooking_plan" && (
+              <>
+                <Button onClick={() => onCookAgainReview(menu)} variant="outlineAccent">
+                  {lang === "es" ? "Revisar cocción" : "Review cook"}
+                </Button>
+                <Button onClick={() => onCookAgainLive(menu)} variant="outlineAccent">
+                  {lang === "es" ? "Live directo" : "Go live now"}
+                </Button>
+              </>
+            )}
             <Button onClick={() => onCopy(menu)} variant="outlineAccent">
               {t.copy}
             </Button>
@@ -258,6 +285,7 @@ function SavedMenuDetail({
         blocks={menu.blocks}
         checkedItems={checkedItems}
         loading={false}
+        onStartCooking={type === "cooking_plan" ? () => onCookAgainLive(menu) : undefined}
         saveMenuMessage=""
         saveMenuStatus="idle"
         setCheckedItems={setCheckedItems}
@@ -275,6 +303,8 @@ export function CookingResultScreen({
   lang,
   menus,
   selectedMenu,
+  onCookAgainLive,
+  onCookAgainReview,
   shareMessage,
   shareMessageMenuId,
   shareStatus,
@@ -293,6 +323,8 @@ export function CookingResultScreen({
   lang: Lang;
   menus: SavedMenu[];
   selectedMenu: SavedMenu | null;
+  onCookAgainLive: (menu: SavedMenu) => void;
+  onCookAgainReview: (menu: SavedMenu) => void;
   shareMessage: string;
   shareMessageMenuId: string | null;
   shareStatus: ShareStatus;
@@ -313,6 +345,8 @@ export function CookingResultScreen({
         checkedItems={checkedItems}
         lang={lang}
         menu={selectedMenu}
+        onCookAgainLive={onCookAgainLive}
+        onCookAgainReview={onCookAgainReview}
         onBack={onBack}
         onCopyLink={onCopyLink}
         onCopy={onCopy}
@@ -332,6 +366,8 @@ export function CookingResultScreen({
     <SavedMenusSection
       lang={lang}
       menus={menus}
+      onCookAgainLive={onCookAgainLive}
+      onCookAgainReview={onCookAgainReview}
       onCopyLink={onCopyLink}
       onCopy={onCopy}
       onDelete={onDelete}
