@@ -106,7 +106,7 @@ function getBgStyle(phase: LivePhase, zone: string): React.CSSProperties {
   if (z.includes("directo") || z === "directo") {
     return {
       backgroundImage:
-        "radial-gradient(ellipse at 50% 20%, rgba(249,115,22,0.22), transparent 60%), radial-gradient(ellipse at 50% 100%, rgba(234,88,12,0.10), transparent 45%), linear-gradient(180deg, #020202, #040404)",
+        "radial-gradient(ellipse at 50% 18%, rgba(249,115,22,0.30), transparent 58%), radial-gradient(ellipse at 50% 100%, rgba(234,88,12,0.14), transparent 45%), linear-gradient(180deg, #020202, #040404)",
     };
   }
   if (z.includes("indirecto") || z === "indirecto") {
@@ -205,7 +205,7 @@ export default function LiveCookingScreen({
 
   return (
     <div
-      className="flex min-h-0 flex-1 flex-col text-white"
+      className="animate-live-enter flex min-h-0 flex-1 flex-col text-white"
       style={bgStyle}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
@@ -263,10 +263,11 @@ export default function LiveCookingScreen({
               </button>
             )
           )}
-          {/* Step counter — prominent so user feels orientation immediately */}
-          <span className="rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-0.5 text-[11px] font-black tabular-nums text-white/70">
-            {currentIndex + 1}
-            <span className="font-medium text-white/30"> / {steps.length}</span>
+          {/* Step counter — "Paso 1 de 5" gives instant orientation */}
+          <span className="rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-0.5 text-[11px] tabular-nums">
+            <span className="font-semibold text-white/38">{isEs ? "Paso " : "Step "}</span>
+            <span className="font-black text-white/75">{currentIndex + 1}</span>
+            <span className="font-medium text-white/30">{isEs ? ` de ${steps.length}` : ` of ${steps.length}`}</span>
           </span>
         </div>
       </header>

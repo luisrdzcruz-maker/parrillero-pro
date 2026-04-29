@@ -36,16 +36,56 @@ body {
 }
 .animate-msg-in { animation: msg-in 380ms cubic-bezier(0.2, 0, 0.4, 1) both; }
 
-/* ── Tap-to-cook radial ripple ── */
-/* An 8px dot placed at the tap origin is scaled up to cover the screen. */
-/* cubic-bezier(0.2, 0, 0.38, 1) = fast burst, gentle tail               */
-@keyframes tap-ripple {
-  0%   { transform: translate(-50%, -50%) scale(0);   opacity: 0.88; }
-  55%  { transform: translate(-50%, -50%) scale(280);  opacity: 0.55; }
-  100% { transform: translate(-50%, -50%) scale(380);  opacity: 0;   }
+/* ── Live Cooking entry fade-up (first render only) ─────────────────────── */
+/* Applied once to the root div of LiveCookingScreen on mount.               */
+/* translateY(10px → 0) + opacity(0 → 1) — subtle, no layout shift.         */
+
+@keyframes live-enter {
+  0%   { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
-.animate-tap-ripple {
-  animation: tap-ripple 220ms cubic-bezier(0.2, 0, 0.38, 1) forwards;
+.animate-live-enter {
+  animation: live-enter 360ms cubic-bezier(0.25, 0, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-live-enter { animation: none; }
+}
+
+/* ── Ignition transition (Home → Cooking) ───────────────────────────────── */
+/*                                                                            */
+/* Two-layer approach, both anchored at the tap origin via an 8px dot:       */
+/*  1. ignition-spark  — bright white/amber inner flash, fast (180ms)        */
+/*  2. ignition-bloom  — warm orange outer fire bloom, slower (280ms)        */
+/*                                                                            */
+/* Easing: steep cubic-bezier front = instant burst, long tail = premium.    */
+
+@keyframes ignition-spark {
+  0%   { transform: translate(-50%, -50%) scale(0);  opacity: 0.95; }
+  25%  { transform: translate(-50%, -50%) scale(22); opacity: 0.80; }
+  70%  { transform: translate(-50%, -50%) scale(55); opacity: 0;    }
+  100% { transform: translate(-50%, -50%) scale(60); opacity: 0;    }
+}
+
+@keyframes ignition-bloom {
+  0%   { transform: translate(-50%, -50%) scale(0);   opacity: 0.82; }
+  45%  { transform: translate(-50%, -50%) scale(230); opacity: 0.50; }
+  100% { transform: translate(-50%, -50%) scale(360); opacity: 0;    }
+}
+
+.animate-ignition-spark {
+  animation: ignition-spark 180ms cubic-bezier(0.15, 0, 0.35, 1) forwards;
   will-change: transform, opacity;
+}
+
+.animate-ignition-bloom {
+  animation: ignition-bloom 280ms cubic-bezier(0.18, 0, 0.40, 1) forwards;
+  will-change: transform, opacity;
+}
+
+/* Respect reduced-motion — suppress animation, action still fires */
+@media (prefers-reduced-motion: reduce) {
+  .animate-ignition-spark,
+  .animate-ignition-bloom { animation: none; opacity: 0; }
 }

@@ -21,7 +21,7 @@ const CARD_BORDER: Record<LivePhase, string> = {
 // Card background tint — subtle but present
 const CARD_BG: Record<LivePhase, string> = {
   idle:     "rgba(255,255,255,0.025)",
-  active:   "rgba(249,115,22,0.042)",
+  active:   "rgba(249,115,22,0.055)",
   urgent:   "rgba(234,179,8,0.048)",
   rest:     "rgba(129,140,248,0.032)",
   complete: "rgba(16,185,129,0.038)",
@@ -30,7 +30,7 @@ const CARD_BG: Record<LivePhase, string> = {
 // Warm glow behind the card — makes the active step feel alive
 const CARD_GLOW: Record<LivePhase, string> = {
   idle:     "none",
-  active:   "0 0 0 1px rgba(249,115,22,0.18), 0 8px 40px rgba(249,115,22,0.14)",
+  active:   "0 0 0 1px rgba(249,115,22,0.24), 0 8px 52px rgba(249,115,22,0.20)",
   urgent:   "0 0 0 1px rgba(234,179,8,0.30), 0 8px 40px rgba(234,179,8,0.18)",
   rest:     "0 0 0 1px rgba(129,140,248,0.18), 0 8px 24px rgba(129,140,248,0.10)",
   complete: "0 0 0 1px rgba(16,185,129,0.22), 0 8px 32px rgba(16,185,129,0.12)",

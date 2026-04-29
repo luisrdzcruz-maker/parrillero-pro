@@ -465,24 +465,40 @@ export function HomeScreen({
 
   return (
     <>
-      {/* ── Tap-origin radial ripple overlay ─────────────────────────────────
-          Fixed at z-[60], pointer-events-none so it doesn't block the
-          underlying navigation. Cleared when the animation ends.         */}
+      {/* ── Ignition transition overlay ────────────────────────────────────────
+          Two layers anchored at tap origin:
+            · spark  — bright white/amber inner flash (180ms, fast)
+            · bloom  — warm orange fire spread  (280ms, slower)
+          pointer-events-none: never blocks navigation or re-taps.
+          onAnimationEnd on the bloom (longer layer) clears the state.      */}
       {ripple && (
         <div
           key={ripple.id}
           className="pointer-events-none fixed inset-0 z-[60] overflow-hidden"
           aria-hidden
         >
+          {/* Inner spark — white/amber flash */}
           <div
-            className="animate-tap-ripple absolute rounded-full"
+            className="animate-ignition-spark absolute rounded-full"
             style={{
               left: ripple.x,
               top: ripple.y,
               width: 8,
               height: 8,
               background:
-                "radial-gradient(circle, rgba(255,140,0,0.90) 0%, rgba(249,115,22,0.70) 30%, rgba(234,88,12,0.40) 65%, transparent 100%)",
+                "radial-gradient(circle, rgba(255,255,200,0.98) 0%, rgba(255,190,50,0.85) 35%, rgba(255,120,0,0.40) 70%, transparent 100%)",
+            }}
+          />
+          {/* Outer bloom — orange fire spread */}
+          <div
+            className="animate-ignition-bloom absolute rounded-full"
+            style={{
+              left: ripple.x,
+              top: ripple.y,
+              width: 8,
+              height: 8,
+              background:
+                "radial-gradient(circle, rgba(255,140,0,0.88) 0%, rgba(249,115,22,0.65) 30%, rgba(234,88,12,0.28) 65%, transparent 100%)",
             }}
             onAnimationEnd={() => setRipple(null)}
           />

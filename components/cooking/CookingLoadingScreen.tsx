@@ -6,15 +6,15 @@ import { useEffect, useState } from "react";
 // ─── Narrated messages ────────────────────────────────────────────────────────
 
 const MESSAGES_ES = [
-  "Analizando tu corte…",
-  "Calculando zonas de temperatura…",
-  "Calculando tiempo de reposo…",
+  "Analizando el corte…",
+  "Configurando zonas de calor…",
+  "Calculando el reposo…",
   "Construyendo tu timeline…",
 ];
 
 const MESSAGES_EN = [
   "Analyzing your cut…",
-  "Setting temperature zones…",
+  "Setting heat zones…",
   "Calculating rest time…",
   "Building your timeline…",
 ];

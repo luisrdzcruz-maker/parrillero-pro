@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import LiveCookingScreen, { type LiveStep } from "@/components/live/LiveCookingScreen";
 import {
   buildLiveStepsFromPayload,
@@ -9,7 +9,7 @@ import {
   readLiveCookingPayload,
 } from "@/lib/liveCookingPlan";
 
-// ─── Mock cooking plan ────────────────────────────────────────────────────────
+// ─── Mock cooking plan (fallback only — used after mount if no real plan) ─────
 
 const MOCK_STEPS: LiveStep[] = [
   {
@@ -62,51 +62,77 @@ const MOCK_STEPS: LiveStep[] = [
   },
 ];
 
-// ─── Page (state + countdown logic only) ──────────────────────────────────────
+// ─── Page ─────────────────────────────────────────────────────────────────────
+//
+// Hydration-safe pattern:
+//   · All sessionStorage reads happen in useEffect (never during render/SSR).
+//   · clientReady starts as false — server and initial client render are identical
+//     (both show the stable dark shell, zero plan-specific values).
+//   · After mount the effect reads the payload, resolves steps, and sets
+//     clientReady = true to swap in LiveCookingScreen.
 
 export default function CoccionLivePage() {
-  const liveSession = useMemo(() => {
-    const payload = readLiveCookingPayload();
-    const built = buildLiveStepsFromPayload(payload, MOCK_STEPS);
+  // ── Hydration gate ────────────────────────────────────────────────────────
+  const [clientReady, setClientReady] = useState(false);
 
-    if (!built.usedFallback) {
-      const mockSignature = buildLiveStepsSignature(MOCK_STEPS);
-      if (!hasDistinctLiveSteps(built.steps, MOCK_STEPS)) {
-        console.warn("[live-cooking] Live steps match mock signature unexpectedly", {
-          payloadSignature: payload?.signature ?? "",
-          liveSignature: built.signature,
-          mockSignature,
-        });
-      }
-    }
+  // ── Session state (all initialized to plan-neutral values) ────────────────
+  const [steps, setSteps] = useState<LiveStep[]>(MOCK_STEPS);
+  const [context, setContext] = useState<string | undefined>(undefined);
 
-    return built;
-  }, []);
-
-  const steps = liveSession.steps;
+  // ── Playback state ────────────────────────────────────────────────────────
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [remaining, setRemaining] = useState((liveSession.steps[0] ?? MOCK_STEPS[0]).duration);
+  const [remaining, setRemaining] = useState(0); // set to real duration after mount
   const [paused, setPaused] = useState(false);
   const advancing = useRef(false);
 
+  // ── Step shortcuts (safe to derive from state at all times) ──────────────
   const step = steps[currentIndex] ?? steps[0];
   const isLast = currentIndex === steps.length - 1;
   const hasTimer = step.duration > 0;
 
-  // ── Countdown ────────────────────────────────────────────────────────────
+  // ── Mount: read sessionStorage, resolve plan, enable UI ──────────────────
+  // State updates are deferred to the next animation frame so they are never
+  // synchronous inside the effect body (satisfies react-hooks/set-state-in-effect).
   useEffect(() => {
-    if (paused || !hasTimer) return;
+    const frame = window.requestAnimationFrame(() => {
+      const payload = readLiveCookingPayload();
+      const built = buildLiveStepsFromPayload(payload, MOCK_STEPS);
+
+      if (!built.usedFallback) {
+        if (!hasDistinctLiveSteps(built.steps, MOCK_STEPS)) {
+          console.warn("[live-cooking] Live steps match mock signature unexpectedly", {
+            payloadSignature: payload?.signature ?? "",
+            liveSignature: built.signature,
+            mockSignature: buildLiveStepsSignature(MOCK_STEPS),
+          });
+        }
+      }
+
+      setSteps(built.steps);
+      setContext(built.usedFallback ? undefined : built.context);
+      setRemaining((built.steps[0] ?? MOCK_STEPS[0]).duration);
+      setCurrentIndex(0);
+      setPaused(false);
+      setClientReady(true);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, []); // runs once, after first paint
+
+  // ── Countdown (only active after clientReady) ────────────────────────────
+  useEffect(() => {
+    if (!clientReady || paused || !hasTimer) return;
 
     const id = setInterval(() => {
       setRemaining((prev) => Math.max(0, prev - 1));
     }, 1000);
 
     return () => clearInterval(id);
-  }, [paused, hasTimer, currentIndex]); // `remaining` intentionally excluded — interval runs continuously
+  }, [clientReady, paused, hasTimer, currentIndex]);
 
-  // ── Auto-advance when timer hits 0 ───────────────────────────────────────
+  // ── Auto-advance when timer hits 0 (only after clientReady) ──────────────
   useEffect(() => {
-    if (remaining > 0 || !hasTimer || isLast || advancing.current) return;
+    if (!clientReady || remaining > 0 || !hasTimer || isLast || advancing.current) return;
 
     advancing.current = true;
     const id = setTimeout(() => {
@@ -121,9 +147,9 @@ export default function CoccionLivePage() {
       clearTimeout(id);
       advancing.current = false;
     };
-  }, [remaining, hasTimer, isLast, currentIndex, steps]);
+  }, [clientReady, remaining, hasTimer, isLast, currentIndex, steps]);
 
-  // ── Controls ─────────────────────────────────────────────────────────────
+  // ── Controls ──────────────────────────────────────────────────────────────
   function completeStep() {
     if (isLast) return;
     const next = currentIndex + 1;
@@ -144,21 +170,29 @@ export default function CoccionLivePage() {
   return (
     <div className="bg-[#0a0a0a] md:flex md:min-h-screen md:items-start md:justify-center md:py-8">
       {/*
-       * h-screen gives the shell an explicit height so that flex-1 children
-       * inside LiveCookingScreen can reliably expand to fill it.
-       * (min-h-screen alone does NOT give flex-1 a reference height in all browsers.)
+       * h-screen gives the shell an explicit height so flex-1 children inside
+       * LiveCookingScreen can reliably expand to fill it.
        */}
       <div className="flex h-screen w-full flex-col overflow-hidden md:h-[844px] md:w-[390px] md:rounded-[3rem] md:border md:border-white/10 md:shadow-[0_32px_80px_rgba(0,0,0,0.8)]">
-        <LiveCookingScreen
-          steps={steps}
-          currentIndex={currentIndex}
-          remaining={remaining}
-          paused={paused}
-          context={liveSession.usedFallback ? undefined : liveSession.context}
-          onPause={() => setPaused((v) => !v)}
-          onCompleteStep={completeStep}
-          onGoToStep={goToStep}
-        />
+        {!clientReady ? (
+          // ── Stable SSR shell ──────────────────────────────────────────────
+          // Identical on server and client; contains zero plan-specific values.
+          // Replaced by LiveCookingScreen once the mount effect resolves steps.
+          <div className="flex flex-1 flex-col items-center justify-center bg-[#020202]">
+            <div className="h-[3px] w-14 rounded-full bg-orange-500/35" />
+          </div>
+        ) : (
+          <LiveCookingScreen
+            steps={steps}
+            currentIndex={currentIndex}
+            remaining={remaining}
+            paused={paused}
+            context={context}
+            onPause={() => setPaused((v) => !v)}
+            onCompleteStep={completeStep}
+            onGoToStep={goToStep}
+          />
+        )}
       </div>
     </div>
   );
