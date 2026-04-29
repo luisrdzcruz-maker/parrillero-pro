@@ -402,15 +402,7 @@ export default function Home() {
   const [sharingMenuId, setSharingMenuId] = useState<string | null>(null);
 
   const touchStartRef = useRef<TouchPoint | null>(null);
-  const modeHistoryRef = useRef<Mode[]>([]);
-
-  // ── Browser-history refs ─────────────────────────────────────────────────
-  // isRestoringNavRef: set to true before any backward navigation setState so the
-  //   "push on change" effect knows not to create a new forward history entry.
-  //   Reset to false inside that same effect after one render cycle.
-  // lastPushedNavRef: tracks what we last pushed so we can deduplicate.
-  const isRestoringNavRef = useRef(false);
-  const lastPushedNavRef = useRef<{ mode: Mode; cookingStep: CookingWizardStep } | null>(null);
+  const isApplyingPopRef = useRef(false);
 
   const cuts = useMemo(() => getCutItems(animal, lang), [animal, lang]);
   const selectedCut = cuts.find((item) => item.id === cut);
@@ -423,6 +415,8 @@ export default function Home() {
     nextCookingStep: CookingWizardStep,
     method: "push" | "replace",
   ) {
+    if (isApplyingPopRef.current && method === "push") return;
+
     const mode = isAllowedMode(nextMode) ? nextMode : "inicio";
     const cookingStep =
       mode === "coccion" && isAllowedCookingStep(nextCookingStep) ? nextCookingStep : "animal";
@@ -440,8 +434,6 @@ export default function Home() {
     } else {
       window.history.pushState(state, "", url);
     }
-
-    lastPushedNavRef.current = state;
   }
 
   useEffect(() => {
@@ -480,40 +472,21 @@ export default function Home() {
     return () => window.cancelAnimationFrame(raf);
   }, []);
 
-  // ── Browser history: push on every forward navigation ──────────────────────
-  // Fires whenever mode or cookingStep changes. Skipped during backward
-  // navigation (isRestoringNavRef.current === true) and deduplicated against
-  // the last pushed entry. showOnboarding is included so we don't push during
-  // the onboarding gate phase.
-  useEffect(() => {
-    if (showOnboarding === null || showOnboarding) return;
-    if (isRestoringNavRef.current) {
-      // Backward navigation — reset the flag and skip the push.
-      isRestoringNavRef.current = false;
-      return;
-    }
-    const last = lastPushedNavRef.current;
-    if (last?.mode === mode && last?.cookingStep === cookingStep) return;
-    lastPushedNavRef.current = { mode, cookingStep };
-    window.history.pushState({ mode, cookingStep }, "");
-  }, [mode, cookingStep, showOnboarding]);
-
   // ── Browser history: restore state on popstate (back button / swipe) ───────
   // Registered once. URL query params are the source of truth for mode/step.
   // We still keep history.state shape compatibility, but restoration reads from
-  // window.location.search and sets the restoring flag so the push effect skips
-  // writing a new forward entry during back/forward application.
+  // window.location.search only.
   useEffect(() => {
     function onPopState() {
       const nav = parseNavFromSearch(window.location.search);
-      // Flag must be set BEFORE the setState calls so the subsequent render's
-      // useEffect sees it correctly (refs are synchronous).
-      isRestoringNavRef.current = true;
-      lastPushedNavRef.current = { mode: nav.mode, cookingStep: nav.cookingStep };
+      isApplyingPopRef.current = true;
       setMode(nav.mode);
       setCookingStep(nav.cookingStep);
       if (nav.cookingStep !== "result") setLoading(false);
       if (nav.mode !== "guardados") setSelectedSavedMenu(null);
+      window.requestAnimationFrame(() => {
+        isApplyingPopRef.current = false;
+      });
     }
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
@@ -734,8 +707,7 @@ export default function Home() {
     setCheckedItems({});
     resetSaveMenuState();
     setSelectedSavedMenu(null);
-    setCookingStep("result");
-    navigateMode("coccion");
+    commitNav("coccion", "result", "push");
   }
 
   function startSavedCookLive(menu: SavedMenu) {
@@ -1105,25 +1077,15 @@ ERROR
     resetSaveMenuState();
   }
 
-  function navigateMode(nextMode: Mode, trackHistory = true) {
+  function navigateMode(nextMode: Mode) {
     if (nextMode === mode) return;
-    if (trackHistory) {
-      modeHistoryRef.current = [...modeHistoryRef.current.slice(-8), mode];
-    } else {
-      // Backward / programmatic nav — tell the push effect to skip this render.
-      isRestoringNavRef.current = true;
-    }
-    if (nextMode === "coccion") setCookingStep("animal");
+    const nextStep: CookingWizardStep = nextMode === "coccion" ? "animal" : cookingStep;
     if (nextMode !== "guardados") setSelectedSavedMenu(null);
     // Soft Pro prompt for multi-item planning (non-blocking — navigation still proceeds)
     if ((nextMode === "plan" || nextMode === "parrillada") && !isPro()) {
       setShowProModal("planning");
     }
-    if (trackHistory) {
-      commitNav(nextMode, nextMode === "coccion" ? "animal" : cookingStep, "push");
-    } else {
-      setMode(nextMode);
-    }
+    commitNav(nextMode, nextStep, "push");
   }
 
   function handleModeChange(nextMode: Mode) {
@@ -1133,39 +1095,13 @@ ERROR
   // Tap a protein card on Home → pre-select animal, jump to cut step
   function handleQuickAnimal(selectedAnimal: Animal) {
     handleAnimalChange(selectedAnimal); // sets animal, clears cut, cookingStep → "cut"
-    setMode("coccion");
   }
 
   function handleSwipeNavigation(direction: SwipeDirection) {
     if (direction === "back") {
-      if (mode === "coccion") {
-        if (cookingStep === "result") {
-          isRestoringNavRef.current = true;
-          setCookingStep("details");
-          return;
-        }
-
-        if (cookingStep === "details") {
-          isRestoringNavRef.current = true;
-          setCookingStep("cut");
-          return;
-        }
-
-        if (cookingStep === "cut") {
-          isRestoringNavRef.current = true;
-          setCookingStep("animal");
-          return;
-        }
-
-        return;
+      if (typeof window !== "undefined") {
+        window.history.back();
       }
-
-      if (modeHistoryRef.current.length > 0) {
-        const previousMode = modeHistoryRef.current[modeHistoryRef.current.length - 1];
-        modeHistoryRef.current = modeHistoryRef.current.slice(0, -1);
-        navigateMode(previousMode, false); // sets isRestoringNavRef inside
-      }
-
       return;
     }
 
