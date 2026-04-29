@@ -7,6 +7,8 @@ export const COOKING_WARNING_CODES = [
   "plan_section_empty",
   "steps_null",
   "steps_empty",
+  "step_empty_text",
+  "step_duplicate",
   "step_invalid_duration",
   "temperature_missing_numeric",
   "temperature_invalid_pair",
@@ -173,7 +175,29 @@ export function validateCookingEngineOutput(
   } else if (steps.length === 0) {
     push({ code: "steps_empty", message: "Cooking steps array is empty" });
   } else {
+    const seen = new Set<string>();
     steps.forEach((s, i) => {
+      const title = String(s.title ?? "").trim();
+      const description = String(s.description ?? "").trim();
+      if (!title || !description) {
+        push({
+          code: "step_empty_text",
+          message: `Step ${i} has empty title or description`,
+          detail: `title=${title.slice(0, 40)} description=${description.slice(0, 60)}`,
+        });
+      }
+
+      const dedupeKey = `${title.toLowerCase()}|${description.toLowerCase()}`;
+      if (seen.has(dedupeKey)) {
+        push({
+          code: "step_duplicate",
+          message: `Step ${i} duplicates a previous step`,
+          detail: title.slice(0, 60),
+        });
+      } else {
+        seen.add(dedupeKey);
+      }
+
       if (typeof s.duration !== "number" || !Number.isFinite(s.duration) || s.duration <= 0) {
         push({
           code: "step_invalid_duration",

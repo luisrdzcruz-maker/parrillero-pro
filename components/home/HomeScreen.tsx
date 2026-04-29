@@ -24,8 +24,8 @@ function FadeIn({ children, delay = 0 }: { children: ReactNode; delay?: number }
 
   return (
     <div
-      className={`transition-[opacity,transform] duration-500 ease-out motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none ${
-        entered ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
+      className={`transition-[opacity,transform] duration-700 ease-out motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none ${
+        entered ? "translate-y-0 opacity-100" : "translate-y-5 opacity-0"
       }`}
     >
       {children}
@@ -33,7 +33,99 @@ function FadeIn({ children, delay = 0 }: { children: ReactNode; delay?: number }
   );
 }
 
-// ─── Live feature card (full-width, large) ────────────────────────────────────
+// ─── Hero section ─────────────────────────────────────────────────────────────
+
+function HeroSection({ onStartCooking, onPlanSession }: { onStartCooking: () => void; onPlanSession: () => void }) {
+  return (
+    <section className="relative overflow-hidden rounded-3xl border border-white/[0.06] bg-[#020617] px-6 pb-9 pt-9 shadow-2xl shadow-black/70 sm:px-8 sm:pb-12 sm:pt-12">
+      {/* Animated fire blobs */}
+      <div
+        className="animate-fire-breathe pointer-events-none absolute -left-40 -top-40 h-[26rem] w-[26rem] rounded-full"
+        style={{ background: "radial-gradient(circle, rgba(234,88,12,0.22) 0%, transparent 65%)" }}
+      />
+      <div
+        className="animate-fire-drift pointer-events-none absolute -bottom-32 right-0 h-72 w-72 rounded-full"
+        style={{
+          background: "radial-gradient(circle, rgba(251,146,60,0.12) 0%, transparent 60%)",
+          animationDelay: "1.8s",
+        }}
+      />
+
+      {/* Diagonal shimmer ray */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.04]"
+        style={{
+          background:
+            "linear-gradient(115deg, transparent 30%, rgba(251,146,60,0.8) 50%, transparent 70%)",
+        }}
+      />
+
+      {/* Top shimmer line */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400/60 to-transparent" />
+      {/* Bottom vignette */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#020617] to-transparent" />
+
+      <div className="relative z-10">
+        {/* Eyebrow pill */}
+        <div className="inline-flex items-center gap-2 rounded-full border border-orange-400/25 bg-orange-500/12 px-3.5 py-1.5 backdrop-blur-sm">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-orange-400 shadow-[0_0_6px_rgba(251,146,60,0.9)]" />
+          <span className="text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">
+            Asistente IA
+          </span>
+        </div>
+
+        {/* Title */}
+        <h1 className="mt-6 text-[clamp(3.2rem,13vw,5.5rem)] font-black leading-[0.86] tracking-[-0.06em] text-white">
+          Parrillero
+          <br />
+          <span
+            className="bg-clip-text text-transparent"
+            style={{
+              backgroundImage:
+                "linear-gradient(135deg, #fb923c 0%, #f97316 40%, #ea580c 100%)",
+            }}
+          >
+            Pro.
+          </span>
+        </h1>
+
+        {/* Subtitle */}
+        <p className="mt-5 max-w-[26ch] text-[15px] font-medium leading-[1.65] text-slate-400 sm:text-base">
+          Tu chef en tiempo real para cada corte. Temporizadores, zonas y guía paso a paso.
+        </p>
+
+        {/* CTAs */}
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          {/* Primary */}
+          <div className="relative">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -inset-2 rounded-[22px] blur-xl"
+              style={{ background: "rgba(234,88,12,0.30)" }}
+            />
+            <Button
+              className="relative min-h-[54px] touch-manipulation rounded-2xl px-8 py-3.5 text-base font-black shadow-[0_10px_40px_rgba(234,88,12,0.50)] transition-all duration-200 active:scale-[0.97]"
+              onClick={onStartCooking}
+            >
+              Empezar cocción <span aria-hidden className="ml-1.5">→</span>
+            </Button>
+          </div>
+
+          {/* Secondary */}
+          <button
+            type="button"
+            onClick={onPlanSession}
+            className="min-h-[54px] touch-manipulation rounded-2xl border border-white/12 bg-white/[0.04] px-7 py-3.5 text-base font-bold text-slate-300 backdrop-blur-sm transition-all duration-200 hover:border-white/22 hover:bg-white/[0.07] hover:text-white active:scale-[0.97]"
+          >
+            Planificar parrillada
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Live feature card (full-width hero card) ─────────────────────────────────
 
 function LiveFeatureCard({ onClick }: { onClick: () => void }) {
   const [imgError, setImgError] = useState(false);
@@ -42,7 +134,7 @@ function LiveFeatureCard({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="group relative min-h-[220px] w-full touch-manipulation overflow-hidden rounded-3xl border border-white/10 bg-zinc-950 text-left transition-all duration-300 hover:border-orange-400/30 hover:shadow-[0_0_64px_rgba(255,106,0,0.18)] active:scale-[0.99] sm:min-h-[260px]"
+      className="group relative min-h-[260px] w-full touch-manipulation overflow-hidden rounded-3xl border border-orange-500/20 bg-zinc-950 text-left transition-all duration-300 hover:border-orange-400/45 hover:shadow-[0_0_90px_rgba(255,106,0,0.24)] active:scale-[0.99] sm:min-h-[300px]"
     >
       {/* Background image */}
       {!imgError ? (
@@ -52,45 +144,56 @@ function LiveFeatureCard({ onClick }: { onClick: () => void }) {
           fill
           priority
           sizes="100vw"
-          className="object-cover object-center transition-transform duration-700 group-hover:scale-[1.04]"
+          className="object-cover object-center transition-transform duration-700 group-hover:scale-[1.06]"
           onError={() => setImgError(true)}
         />
       ) : (
         <div className="absolute inset-0 bg-gradient-to-br from-orange-950/70 via-zinc-950 to-black" />
       )}
 
-      {/* Heavy bottom gradient so text pops */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/68 to-black/10" />
-      {/* Left warm glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_0%_100%,rgba(255,106,0,0.24),transparent_55%)]" />
-      {/* Top shimmer on hover */}
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400/50 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      {/* Gradient layers */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/74 to-black/18" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_0%_100%,rgba(255,106,0,0.30),transparent_50%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_88%_8%,rgba(255,60,0,0.12),transparent_45%)]" />
+
+      {/* Shimmer line always visible */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400/55 to-transparent" />
+      {/* Shimmer on hover */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-200/70 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
       {/* Content */}
-      <div className="relative z-10 flex min-h-[220px] flex-col justify-between p-5 sm:min-h-[260px] sm:p-7">
-        {/* Top badges */}
-        <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1.5 rounded-full border border-orange-400/30 bg-orange-500/15 px-2.5 py-1 backdrop-blur-sm">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-orange-400" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-300">Live</span>
+      <div className="relative z-10 flex min-h-[260px] flex-col justify-between p-6 sm:min-h-[300px] sm:p-8">
+        {/* Badge row */}
+        <div className="flex items-center gap-2.5">
+          <span className="flex items-center gap-1.5 rounded-full border border-red-400/40 bg-red-500/15 px-3 py-1.5 backdrop-blur-sm">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-red-400 shadow-[0_0_7px_rgba(248,113,113,0.85)]" />
+            <span className="text-[10px] font-black uppercase tracking-[0.24em] text-red-200">Live</span>
           </span>
-          <span className="rounded-full border border-white/10 bg-black/35 px-2.5 py-1 text-[10px] font-semibold text-slate-400 backdrop-blur-sm">
-            Cooking Mode
+          <span className="rounded-full border border-white/10 bg-black/42 px-3 py-1.5 text-[10px] font-semibold text-slate-400 backdrop-blur-sm">
+            Guía en tiempo real
           </span>
         </div>
 
-        {/* Bottom: title + CTA row */}
+        {/* Bottom: title + CTA */}
         <div>
-          <h2 className="text-xl font-black leading-tight tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)] sm:text-2xl">
-            Cocina paso a paso con
+          <h2 className="text-2xl font-black leading-[1.1] tracking-[-0.03em] text-white drop-shadow-[0_2px_20px_rgba(0,0,0,0.95)] sm:text-3xl">
+            Cocina paso a paso
             <br />
-            <span className="text-orange-300">temporizador inteligente.</span>
+            <span
+              className="bg-clip-text text-transparent"
+              style={{
+                backgroundImage: "linear-gradient(135deg, #fdba74 0%, #fb923c 55%, #f97316 100%)",
+              }}
+            >
+              con temporizador inteligente.
+            </span>
           </h2>
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <p className="text-[13px] text-slate-400">Guía en tiempo real</p>
-            <span className="flex shrink-0 items-center gap-2 rounded-2xl border border-orange-400/30 bg-orange-500/15 px-4 py-2 text-[13px] font-black text-orange-200 backdrop-blur-sm transition-all duration-200 group-hover:border-orange-400/45 group-hover:bg-orange-500/22">
+
+          <div className="mt-4 flex items-center justify-between gap-4">
+            <p className="text-sm font-medium text-slate-500">Cooking Mode</p>
+            <span className="flex shrink-0 items-center gap-2 rounded-2xl border border-orange-400/38 bg-orange-500/18 px-5 py-2.5 text-sm font-black text-orange-100 backdrop-blur-sm transition-all duration-200 group-hover:border-orange-400/60 group-hover:bg-orange-500/28 group-hover:shadow-[0_4px_24px_rgba(234,88,12,0.30)]">
               Iniciar experiencia
-              <span className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>
+              <span className="transition-transform duration-200 group-hover:translate-x-1">→</span>
             </span>
           </div>
         </div>
@@ -99,7 +202,7 @@ function LiveFeatureCard({ onClick }: { onClick: () => void }) {
   );
 }
 
-// ─── Quick action card (2×2 grid) ────────────────────────────────────────────
+// ─── Quick action card (2 × 2 grid) ──────────────────────────────────────────
 
 function QuickActionCard({
   icon,
@@ -120,7 +223,7 @@ function QuickActionCard({
     <button
       type="button"
       onClick={onClick}
-      className="group relative min-h-[148px] touch-manipulation select-none overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-950 text-left transition-all duration-200 hover:border-orange-400/25 hover:shadow-[0_4px_28px_rgba(255,106,0,0.12)] active:scale-[0.97] sm:min-h-[168px]"
+      className="group relative min-h-[180px] touch-manipulation select-none overflow-hidden rounded-2xl border border-white/[0.07] bg-zinc-950 text-left transition-all duration-300 hover:border-orange-400/30 hover:shadow-[0_8px_48px_rgba(255,106,0,0.16)] active:scale-[0.96] sm:min-h-[210px]"
     >
       {/* Background image */}
       {!imgError ? (
@@ -129,38 +232,40 @@ function QuickActionCard({
           alt=""
           fill
           sizes="(min-width: 640px) 50vw, 50vw"
-          className="object-cover object-center transition-transform duration-500 group-hover:scale-[1.06]"
+          className="object-cover object-center transition-transform duration-500 group-hover:scale-[1.08]"
           onError={() => setImgError(true)}
         />
       ) : (
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_15%,rgba(255,106,0,0.2),transparent_45%),linear-gradient(145deg,#18181b,#030303)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_15%,rgba(255,106,0,0.22),transparent_48%),linear-gradient(145deg,#18181b,#030303)]" />
       )}
 
-      {/* Bottom-heavy gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/94 via-black/60 to-black/12" />
-      {/* Warm top-corner tint */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_0%,rgba(255,106,0,0.15),transparent_42%)]" />
-      {/* Hover glow blob */}
-      <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-orange-500/0 blur-2xl transition-all duration-300 group-hover:bg-orange-500/14" />
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/97 via-black/68 to-black/10" />
+      {/* Warm tint top-left */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_0%,rgba(255,106,0,0.18),transparent_42%)]" />
+      {/* Hover top-right glow */}
+      <div className="pointer-events-none absolute -right-8 -top-8 h-36 w-36 rounded-full bg-orange-500/0 blur-3xl transition-all duration-500 group-hover:bg-orange-500/20" />
+      {/* Bottom border glow — appears on hover */}
+      <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-orange-400/0 to-transparent transition-all duration-300 group-hover:via-orange-400/50" />
 
       {/* Content */}
-      <div className="relative z-10 flex min-h-[148px] flex-col justify-between p-4 sm:min-h-[168px] sm:p-5">
+      <div className="relative z-10 flex min-h-[180px] flex-col justify-between p-4 sm:min-h-[210px] sm:p-5">
         {/* Icon chip */}
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/15 bg-black/50 text-lg shadow-sm backdrop-blur-sm">
+        <span className="flex h-11 w-11 items-center justify-center rounded-[14px] border border-white/18 bg-black/58 text-[22px] shadow-[0_2px_16px_rgba(0,0,0,0.7)] backdrop-blur-md">
           {icon}
         </span>
 
-        {/* Label + hint */}
+        {/* Label + sub + arrow */}
         <div>
-          <p className="text-[15px] font-black tracking-tight text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+          <p className="text-[16px] font-black tracking-[-0.025em] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]">
             {label}
           </p>
-          <p className="mt-0.5 line-clamp-2 text-[12px] font-medium leading-[1.35] text-slate-300 drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
+          <p className="mt-1 line-clamp-2 text-[12px] font-medium leading-[1.4] text-slate-400 drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
             {sub}
           </p>
-          <p className="mt-2 flex items-center gap-1 text-[11px] font-bold text-orange-300/85">
+          <p className="mt-3 flex items-center gap-1 text-[11px] font-bold text-orange-300/90">
             <span>Abrir</span>
-            <span className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>
+            <span className="transition-transform duration-200 group-hover:translate-x-1">→</span>
           </p>
         </div>
       </div>
@@ -178,9 +283,9 @@ function HomeSettingsStrip({
   onLangChange: (lang: Lang) => void;
 }) {
   return (
-    <section className="mb-24 flex items-center justify-between gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.03] px-3.5 py-3 backdrop-blur sm:px-4 lg:mb-0">
+    <section className="mb-24 flex items-center justify-between gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.025] px-4 py-3.5 backdrop-blur sm:px-5 lg:mb-0">
       <div className="min-w-0">
-        <p className="truncate text-[11px] font-black uppercase tracking-[0.16em] text-white/70">
+        <p className="truncate text-[11px] font-black uppercase tracking-[0.18em] text-white/65">
           IA Parrillero Pro
         </p>
         <p className="mt-0.5 truncate text-xs font-medium text-slate-500">
@@ -191,7 +296,7 @@ function HomeSettingsStrip({
       <select
         value={lang}
         onChange={(e) => onLangChange(e.target.value as Lang)}
-        className="min-h-9 shrink-0 rounded-xl border border-white/10 bg-black/35 px-2.5 text-xs font-bold text-slate-200 outline-none transition focus:border-orange-400/60"
+        className="min-h-9 shrink-0 rounded-xl border border-white/10 bg-black/40 px-2.5 text-xs font-bold text-slate-200 outline-none transition focus:border-orange-400/60"
       >
         <option value="es">🇪🇸 Español</option>
         <option value="en">🇬🇧 English</option>
@@ -256,49 +361,10 @@ export function HomeScreen({
     <div className="mx-auto w-full max-w-2xl space-y-3 overflow-x-hidden sm:space-y-4 lg:max-w-3xl">
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <FadeIn>
-        <section className="relative overflow-hidden rounded-3xl border border-white/[0.06] bg-[#020617] px-6 pb-8 pt-8 shadow-2xl shadow-black/60 sm:px-8 sm:pb-10 sm:pt-10">
-          {/* Ambient orange blobs */}
-          <div className="pointer-events-none absolute -left-32 -top-32 h-80 w-80 rounded-full bg-orange-500/15 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 right-0 h-56 w-56 rounded-full bg-orange-400/8 blur-3xl" />
-          {/* Top shimmer line */}
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400/50 to-transparent" />
-
-          <div className="relative z-10">
-            {/* Eyebrow pill */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-orange-400/22 bg-orange-500/10 px-3 py-1 backdrop-blur-sm">
-              <span className="h-1.5 w-1.5 rounded-full bg-orange-400" />
-              <span className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300">
-                Asistente de cocción
-              </span>
-            </div>
-
-            {/* Title */}
-            <h1 className="mt-5 text-[clamp(2.8rem,11vw,5rem)] font-black leading-[0.88] tracking-[-0.055em] text-white">
-              Parrillero
-              <br />
-              <span className="text-orange-400">Pro</span>
-            </h1>
-
-            {/* Subtitle */}
-            <p className="mt-4 max-w-[28ch] text-[15px] font-medium leading-[1.6] text-slate-400 sm:text-base">
-              Tu asistente en tiempo real para cocinar mejor.
-            </p>
-
-            {/* CTA with glow halo */}
-            <div className="relative mt-7 inline-block">
-              <div
-                aria-hidden
-                className="pointer-events-none absolute -inset-2 rounded-[20px] bg-orange-500/22 blur-xl"
-              />
-              <Button
-                className="relative min-h-[52px] touch-manipulation rounded-2xl px-8 py-3.5 text-base font-black shadow-[0_8px_36px_rgba(255,106,0,0.40)] transition-all duration-200 active:scale-[0.97] sm:px-10"
-                onClick={() => onModeChange("coccion")}
-              >
-                Empezar cocción <span aria-hidden="true" className="ml-1">→</span>
-              </Button>
-            </div>
-          </div>
-        </section>
+        <HeroSection
+          onStartCooking={() => onModeChange("coccion")}
+          onPlanSession={() => onModeChange("plan")}
+        />
       </FadeIn>
 
       {/* ── Live Feature Card ─────────────────────────────────────────────── */}
@@ -309,7 +375,7 @@ export function HomeScreen({
       {/* ── Quick Actions 2×2 ─────────────────────────────────────────────── */}
       <FadeIn delay={160}>
         <section>
-          <p className="mb-2.5 text-[10px] font-black uppercase tracking-[0.22em] text-white/25">
+          <p className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-white/22">
             Acciones rápidas
           </p>
           <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
@@ -328,7 +394,9 @@ export function HomeScreen({
       </FadeIn>
 
       {/* ── Settings strip ─────────────────────────────────────────────────── */}
-      <HomeSettingsStrip lang={lang} onLangChange={onLangChange} />
+      <FadeIn delay={240}>
+        <HomeSettingsStrip lang={lang} onLangChange={onLangChange} />
+      </FadeIn>
     </div>
   );
 }

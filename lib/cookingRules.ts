@@ -138,6 +138,24 @@ function getMethodText(method: CookingMethod, language: "es" | "en") {
   return labels[method][language];
 }
 
+type EquipmentProfile = "indoor" | "gas" | "charcoal" | "kamado" | "generic";
+
+function getEquipmentProfile(equipment: string): EquipmentProfile {
+  if (isIndoor(equipment)) return "indoor";
+
+  const normalized = normalizeKey(equipment);
+  if (normalized.includes("kamado")) return "kamado";
+  if (normalized.includes("charcoal") || normalized.includes("carb")) return "charcoal";
+  if (normalized.includes("gas")) return "gas";
+  return "generic";
+}
+
+function getDonenessBias(doneness: DonenessId) {
+  if (doneness === "blue" || doneness === "rare" || doneness === "medium_rare" || doneness === "juicy") return -1;
+  if (doneness === "medium_well" || doneness === "well_done" || doneness === "safe") return 1;
+  return 0;
+}
+
 function getSearSeconds(thickness: number, style: CookingStyle) {
   if (style === "fish") return clamp(Math.round(thickness * 35), 60, 150);
   if (style === "poultry") return clamp(Math.round(thickness * 45), 120, 240);
@@ -213,6 +231,12 @@ function formatStepDuration(seconds: number, language: "es" | "en") {
 }
 
 function buildPlanStepsText(steps: CookingStep[], language: "es" | "en") {
+  if (steps.length === 0) {
+    return language === "en"
+      ? "1. Cook with controlled heat and verify doneness with a thermometer."
+      : "1. Cocina con calor controlado y verifica el punto con termómetro.";
+  }
+
   return steps
     .map((step, index) => {
       const title = step.title.trim();
@@ -221,6 +245,45 @@ function buildPlanStepsText(steps: CookingStep[], language: "es" | "en") {
       return `${index + 1}. ${title}: ${description} (${duration})`;
     })
     .join("\n");
+}
+
+function sanitizeSteps(steps: CookingStep[], language: "es" | "en"): CookingStep[] {
+  const safeTitle = language === "en" ? "Cooking step" : "Paso de cocción";
+  const safeDescription =
+    language === "en"
+      ? "Keep stable heat and verify doneness before moving to the next stage."
+      : "Mantén el calor estable y verifica el punto antes de pasar al siguiente paso.";
+
+  const seen = new Set<string>();
+  const cleaned: CookingStep[] = [];
+
+  for (const step of steps) {
+    const title = step.title.trim() || safeTitle;
+    const description = step.description.trim() || safeDescription;
+    const duration = Number.isFinite(step.duration) && step.duration > 0 ? Math.round(step.duration) : 60;
+    const dedupeKey = normalizeKey(`${title}|${description}`);
+    if (seen.has(dedupeKey)) continue;
+    seen.add(dedupeKey);
+
+    cleaned.push({
+      ...step,
+      title,
+      description,
+      duration,
+    });
+  }
+
+  if (cleaned.length > 0) return cleaned;
+
+  return [
+    {
+      title: safeTitle,
+      duration: 120,
+      description: safeDescription,
+      image: "/visuals/rest.jpg",
+      tips: [],
+    },
+  ];
 }
 
 function estimateTimes(input: CookingInput, cut: ProductCut, doneness: DonenessId) {
@@ -263,8 +326,9 @@ function makeVegetableSteps(input: CookingInput, cut: ProductCut): CookingStep[]
   const cook = getVegetableSeconds(cut);
   const tips = getLocalizedList(cut.tips, input.language);
 
-  return isEnglish
-    ? [
+  return sanitizeSteps(
+    isEnglish
+      ? [
         {
           title: "Prep vegetables",
           duration: 300,
@@ -287,7 +351,7 @@ function makeVegetableSteps(input: CookingInput, cut: ProductCut): CookingStep[]
           tips: ["Add salt at the end", "Serve immediately"],
         },
       ]
-    : [
+      : [
         {
           title: "Preparar verduras",
           duration: 300,
@@ -309,7 +373,9 @@ function makeVegetableSteps(input: CookingInput, cut: ProductCut): CookingStep[]
           image: "/visuals/rest.jpg",
           tips: ["Sal al final", "Servir al momento"],
         },
-      ];
+      ],
+    input.language,
+  );
 }
 
 function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTemp): CookingStep[] {
@@ -323,13 +389,19 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
   const sear = getSearSeconds(thickness, cut.style);
   const indirect = getIndirectSeconds(thickness, cut.style, doneness);
   const rest = getRestSeconds(cut);
-  const indoor = isIndoor(input.equipment);
+  const equipmentProfile = getEquipmentProfile(input.equipment);
+  const indoor = equipmentProfile === "indoor";
+  const thicknessBand = thickness >= 6 ? "thick" : thickness <= 3 ? "thin" : "medium";
+  const donenessBias = getDonenessBias(doneness);
+  const phraseSeed = Math.round(thickness * 10) + doneness.length + normalizeKey(input.equipment).length;
+  const phraseVariant = phraseSeed % 3;
   const pull = temp?.pull ?? 0;
   const final = temp?.final ?? 0;
 
   if (cut.style === "lowSlow") {
-    return isEnglish
-      ? [
+    return sanitizeSteps(
+      isEnglish
+        ? [
           {
             title: indoor ? "Preheat oven low" : "Preheat indirect",
             duration: 600,
@@ -361,7 +433,7 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
             tips: ["Rest before slicing", "Serve hot"],
           },
         ]
-      : [
+        : [
           {
             title: indoor ? "Precalentar horno bajo" : "Precalentar indirecto",
             duration: 600,
@@ -392,12 +464,15 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
             image: "/visuals/rest.jpg",
             tips: ["Reposar antes de cortar", "Servir caliente"],
           },
-        ];
+        ],
+      input.language,
+    );
   }
 
   if (cut.style === "crispy") {
-    return isEnglish
-      ? [
+    return sanitizeSteps(
+      isEnglish
+        ? [
           {
             title: indoor ? "Preheat oven" : "Preheat indirect",
             duration: 600,
@@ -429,7 +504,7 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
             tips: ["Rest before slicing", "Serve crispy"],
           },
         ]
-      : [
+        : [
           {
             title: indoor ? "Precalentar horno" : "Precalentar indirecto",
             duration: 600,
@@ -462,12 +537,15 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
             image: "/visuals/rest.jpg",
             tips: ["Reposar antes de cortar", "Servir crujiente"],
           },
-        ];
+        ],
+      input.language,
+    );
   }
 
   if (cut.style === "poultry") {
-    return isEnglish
-      ? [
+    return sanitizeSteps(
+      isEnglish
+        ? [
           {
             title: indoor ? "Preheat oven or pan" : "Preheat indirect",
             duration: 600,
@@ -499,7 +577,7 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
             tips: ["Short rest", "Juices settle"],
           },
         ]
-      : [
+        : [
           {
             title: indoor ? "Precalentar horno o sartén" : "Precalentar indirecto",
             duration: 600,
@@ -530,71 +608,162 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
             image: "/visuals/rest.jpg",
             tips: ["Reposo corto", "Asentar jugos"],
           },
-        ];
+        ],
+      input.language,
+    );
   }
+
+  const preheatTitle = isEnglish
+    ? indoor
+      ? phraseVariant === 0
+        ? "Preheat pan"
+        : phraseVariant === 1
+          ? "Heat pan to medium-high"
+          : "Preheat pan and oven"
+      : equipmentProfile === "kamado"
+        ? "Stabilize kamado"
+        : equipmentProfile === "charcoal"
+          ? "Prepare charcoal zones"
+          : "Preheat grill"
+    : indoor
+      ? phraseVariant === 0
+        ? "Precalentar sartén"
+        : phraseVariant === 1
+          ? "Calentar sartén medio-alto"
+          : "Precalentar sartén y horno"
+      : equipmentProfile === "kamado"
+        ? "Estabilizar kamado"
+        : equipmentProfile === "charcoal"
+          ? "Preparar zonas de carbón"
+          : "Precalentar parrilla";
+
+  const preheatDescription = isEnglish
+    ? indoor
+      ? "Use a hot pan and keep space between pieces."
+      : equipmentProfile === "kamado"
+        ? "Stabilize dome temperature and define direct/indirect zones."
+        : equipmentProfile === "charcoal"
+          ? "Build a strong direct zone and a cooler safety side."
+          : "Create direct heat and a cooler safety zone."
+    : indoor
+      ? "Usa sartén caliente y deja espacio entre piezas."
+      : equipmentProfile === "kamado"
+        ? "Estabiliza temperatura de cúpula y define zonas directa/indirecta."
+        : equipmentProfile === "charcoal"
+          ? "Prepara zona fuerte de calor y una zona más suave."
+          : "Prepara fuego directo y una zona suave de seguridad.";
+
+  const firstSearTitle = isEnglish
+    ? phraseVariant === 2
+      ? "First sear pass"
+      : "Sear side 1"
+    : phraseVariant === 2
+      ? "Primer sellado"
+      : "Sellar lado 1";
+
+  const secondSearTitle = isEnglish
+    ? phraseVariant === 1
+      ? "Second sear pass"
+      : "Sear side 2"
+    : phraseVariant === 1
+      ? "Segundo sellado"
+      : "Sellar lado 2";
+
+  const deepCookNeedsCoreFirst = !indoor && thicknessBand === "thick" && donenessBias > 0;
+  const finalSearSeconds = deepCookNeedsCoreFirst ? clamp(Math.round(sear * 0.6), 60, 180) : sear;
 
   const baseSteps: CookingStep[] = isEnglish
     ? [
         {
-          title: indoor ? "Preheat pan" : "Preheat grill",
+          title: preheatTitle,
           duration: 600,
-          description: indoor
-            ? "Use a hot pan and keep space between pieces."
-            : "Create direct heat and a cooler safety zone.",
+          description: preheatDescription,
           image: "/visuals/preheat.jpg",
           tips: ["Hot surface", "Do not overcrowd", "Dry surface"],
         },
+      ]
+    : [
         {
-          title: "Sear side 1",
-          duration: sear,
+          title: preheatTitle,
+          duration: 600,
+          description: preheatDescription,
+          image: "/visuals/preheat.jpg",
+          tips: ["Superficie caliente", "No llenar la sartén", "Superficie seca"],
+        },
+      ];
+
+  if (deepCookNeedsCoreFirst && indirect > 0) {
+    baseSteps.push(
+      isEnglish
+        ? {
+            title: "Warm core indirect",
+            duration: clamp(Math.round(indirect * 0.75), 180, 1800),
+            description: `Cook on indirect heat until close to ${Math.max(35, pull - 8)}°C.`,
+            image: "/visuals/indirect.jpg",
+            tips: ["Lid closed", "Stable heat", "Check center temperature"],
+          }
+        : {
+            title: "Templar centro en indirecto",
+            duration: clamp(Math.round(indirect * 0.75), 180, 1800),
+            description: `Cocina en indirecto hasta acercarte a ${Math.max(35, pull - 8)}°C.`,
+            image: "/visuals/indirect.jpg",
+            tips: ["Tapa cerrada", "Calor estable", "Medir centro"],
+          },
+    );
+  }
+
+  baseSteps.push(
+    isEnglish
+      ? {
+          title: firstSearTitle,
+          duration: finalSearSeconds,
           description: indoor
             ? "Sear in the pan without moving."
             : "Sear over direct heat without pressing.",
           image: "/visuals/sear.jpg",
           tips: ["Do not press", "Build color", "Do not move"],
-        },
-        {
-          title: "Sear side 2",
-          duration: sear,
-          description: "Flip once and sear the second side.",
-          image: "/visuals/sear.jpg",
-          tips: ["Flip once", "Keep juicy", "Do not overcook"],
-        },
-      ]
-    : [
-        {
-          title: indoor ? "Precalentar sartén" : "Precalentar parrilla",
-          duration: 600,
-          description: indoor
-            ? "Usa sartén caliente y deja espacio entre piezas."
-            : "Prepara fuego directo y una zona suave de seguridad.",
-          image: "/visuals/preheat.jpg",
-          tips: ["Superficie caliente", "No llenar la sartén", "Superficie seca"],
-        },
-        {
-          title: "Sellar lado 1",
-          duration: sear,
+        }
+      : {
+          title: firstSearTitle,
+          duration: finalSearSeconds,
           description: indoor
             ? "Sella en sartén sin mover."
             : "Sella en fuego directo sin aplastar.",
           image: "/visuals/sear.jpg",
           tips: ["No aplastar", "Buscar color", "No mover"],
         },
-        {
-          title: "Sellar lado 2",
-          duration: sear,
-          description: "Da la vuelta una vez y sella el segundo lado.",
+  );
+
+  baseSteps.push(
+    isEnglish
+      ? {
+          title: secondSearTitle,
+          duration: finalSearSeconds,
+          description:
+            thicknessBand === "thin"
+              ? "Flip once and finish quickly to keep juices."
+              : "Flip once and sear the second side.",
+          image: "/visuals/sear.jpg",
+          tips: ["Flip once", "Keep juicy", "Do not overcook"],
+        }
+      : {
+          title: secondSearTitle,
+          duration: finalSearSeconds,
+          description:
+            thicknessBand === "thin"
+              ? "Da la vuelta una vez y termina rápido para mantener jugos."
+              : "Da la vuelta una vez y sella el segundo lado.",
           image: "/visuals/sear.jpg",
           tips: ["Voltear una vez", "Mantener jugoso", "No pasarse"],
         },
-      ];
+  );
 
   if (indirect > 0) {
     baseSteps.push(
       isEnglish
         ? {
             title: indoor ? "Oven finish if needed" : "Indirect finish",
-            duration: indirect,
+            duration: deepCookNeedsCoreFirst ? clamp(Math.round(indirect * 0.25), 60, 900) : indirect,
             description: indoor
               ? `Use oven only if the piece is thick. Pull close to ${pull}°C.`
               : `Move indirect until close to ${pull}°C.`,
@@ -631,7 +800,7 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
         },
   );
 
-  return baseSteps;
+  return sanitizeSteps(baseSteps, input.language);
 }
 
 export function getCutsByAnimal(animalId: AnimalId) {
