@@ -1,0 +1,32 @@
+[
+  {
+    "id": "setup_gas_direct_heat",
+    "equipment": "gas",
+    "setup": "direct",
+    "prompt": "open premium gas grill with all burners on high, intense blue and orange flame glow under cast iron grates, direct heat cooking zone clearly visible, clean stainless steel grill, dark outdoor background, subtle smoke rising, glowing heat waves, no food, ultra realistic premium cooking setup photography, dark cinematic background, dramatic side lighting, high contrast, warm fire glow, shallow depth of field, 85mm lens, f1.8, realistic materials, no humans, no hands, no text, no labels, centered composition, vertical mobile app hero image, clean negative space, high detail, cinematic shadows"
+  },
+  {
+    "id": "setup_gas_two_zone",
+    "equipment": "gas",
+    "setup": "two-zone",
+    "prompt": "open premium gas grill prepared for two zone cooking, left side intense flame and orange heat glow, right side cooler dark indirect zone, clear visual separation between direct and indirect zones, premium cast iron grates, subtle smoke, dark outdoor background, ultra realistic premium cooking setup photography, dramatic side lighting, high contrast, warm fire glow, shallow depth of field, 85mm lens, f1.8, realistic materials, no humans, no hands, no text, no labels, centered composition, vertical mobile app hero image, clean negative space, high detail, cinematic shadows"
+  },
+  {
+    "id": "setup_charcoal_two_zone",
+    "equipment": "charcoal",
+    "setup": "two-zone",
+    "prompt": "charcoal grill with all glowing coals banked to the left side, right side empty and cooler for indirect cooking, clear two zone setup, cast iron grate above, orange ember glow, subtle smoke, dark premium barbecue atmosphere, ultra realistic premium cooking setup photography, dramatic side lighting, high contrast, warm fire glow, shallow depth of field, 85mm lens, f1.8, realistic materials, no humans, no hands, no text, no labels, centered composition, vertical mobile app hero image, clean negative space, high detail, cinematic shadows"
+  },
+  {
+    "id": "setup_kamado_indirect_deflector",
+    "equipment": "kamado",
+    "setup": "indirect",
+    "prompt": "ceramic kamado grill open, heat deflector plates installed above glowing charcoal, indirect cooking setup clearly visible, ceramic interior, warm ember glow from below, subtle smoke, premium dark barbecue atmosphere, ultra realistic premium cooking setup photography, dramatic side lighting, high contrast, warm fire glow, shallow depth of field, 85mm lens, f1.8, realistic materials, no humans, no hands, no text, no labels, centered composition, vertical mobile app hero image, clean negative space, high detail, cinematic shadows"
+  },
+  {
+    "id": "setup_indoor_pan_oven",
+    "equipment": "indoor",
+    "setup": "pan-oven",
+    "prompt": "modern kitchen setup for pan sear and gentle oven finish, hot cast iron skillet on stovetop in foreground, softly glowing oven in background, premium indoor cooking workflow, dark cinematic kitchen, no food, no humans, ultra realistic premium cooking setup photography, dramatic side lighting, high contrast, warm oven glow, shallow depth of field, 85mm lens, f1.8, realistic materials, no text, no labels, centered composition, vertical mobile app hero image, clean negative space, high detail, cinematic shadows"
+  }
+]

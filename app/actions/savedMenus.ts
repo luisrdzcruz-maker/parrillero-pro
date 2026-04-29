@@ -10,8 +10,11 @@ import {
 } from "@/lib/db/savedMenus";
 import {
   REQUIRED_COOKING_BLOCKS,
+  REQUIRED_COOKING_BLOCKS_EN,
   REQUIRED_MENU_BLOCKS,
+  REQUIRED_MENU_BLOCKS_EN,
   REQUIRED_PARRILLADA_BLOCKS,
+  REQUIRED_PARRILLADA_BLOCKS_EN,
   normalizeBlocks,
   type NormalizedBlockType,
 } from "@/lib/parser/normalizeBlocks";
@@ -37,7 +40,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
-function sanitizeGeneratedMenuData(data: Record<string, unknown>) {
+function sanitizeGeneratedMenuData(data: Record<string, unknown>, lang: string) {
   const blocks = data.blocks;
   const rawBlocks = isRecord(blocks) ? blocks : {};
   const safeBlocks = Object.fromEntries(
@@ -48,10 +51,16 @@ function sanitizeGeneratedMenuData(data: Record<string, unknown>) {
   const type = getNormalizedBlockType(data.type);
   const required =
     type === "cooking_plan"
-      ? REQUIRED_COOKING_BLOCKS
+      ? lang === "en"
+        ? REQUIRED_COOKING_BLOCKS_EN
+        : REQUIRED_COOKING_BLOCKS
       : type === "parrillada_plan"
-        ? REQUIRED_PARRILLADA_BLOCKS
-        : REQUIRED_MENU_BLOCKS;
+        ? lang === "en"
+          ? REQUIRED_PARRILLADA_BLOCKS_EN
+          : REQUIRED_PARRILLADA_BLOCKS
+        : lang === "en"
+          ? REQUIRED_MENU_BLOCKS_EN
+          : REQUIRED_MENU_BLOCKS;
 
   return {
     ...data,
@@ -82,7 +91,7 @@ export async function saveGeneratedMenu(input: SaveGeneratedMenuInput) {
       name: input.name,
       lang: input.lang,
       people: input.people,
-      data: sanitizeGeneratedMenuData(input.data) as Json,
+      data: sanitizeGeneratedMenuData(input.data, input.lang) as Json,
     });
 
     safeRevalidate("/saved");

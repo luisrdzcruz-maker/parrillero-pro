@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
   publishGeneratedMenu,
   saveGeneratedMenu,
@@ -17,7 +18,6 @@ import {
   type SaveMenuStatus,
   type SelectOption,
 } from "@/components/cooking/CookingWizard";
-import LiveCookingMode from "@/components/cooking/LiveCookingMode";
 import { HomeScreen } from "@/components/home/HomeScreen";
 import {
   BottomNavigation,
@@ -1262,16 +1262,7 @@ ERROR
           </Grid>
         )}
 
-        {mode === "cocina" && (
-          <LiveCookingMode
-            steps={Boolean(blocks.PASOS || blocks.STEPS) ? cookSteps : []}
-            title={[selectedCut?.name, animal].filter(Boolean).join(" · ") || "Parrillero Pro"}
-            subtitle={[selectedCut?.name, equipment].filter(Boolean).join(" · ")}
-            visualImage={cutImages[cut]}
-            onExit={exitLiveCooking}
-            onFinish={exitLiveCooking}
-          />
-        )}
+        {/* Live cooking → /coccion-live (AppHeader.tsx intercepts mode "cocina" and navigates there) */}
 
         {mode === "guardados" && (
           selectedSavedMenu ? (
@@ -5312,6 +5303,8 @@ function CookingResultStep({
   setTimerRunning: (value: boolean) => void;
   t: typeof texts.es;
 }) {
+  const router = useRouter();
+
   return (
     <div className="space-y-4">
       <ResultCards
@@ -5325,8 +5318,8 @@ function CookingResultStep({
         saveMenuStatus={saveMenuStatus}
         setCheckedItems={setCheckedItems}
         onStartCooking={() => {
-          setMode("cocina");
           setTimerRunning(false);
+          router.push("/coccion-live");
         }}
         t={t}
       />

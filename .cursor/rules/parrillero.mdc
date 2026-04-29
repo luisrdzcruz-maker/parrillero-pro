@@ -1,3 +1,10 @@
----
-alwaysApply: true
----
+Always:
+- Return full files
+- Do not modify unrelated files
+- Preserve mobile layout
+- Keep dark premium UI
+
+Agents:
+- UI_AGENT: only React/UI
+- ENGINE_AGENT: only logic/scripts
+- IMAGE_AGENT: only prompts/assets

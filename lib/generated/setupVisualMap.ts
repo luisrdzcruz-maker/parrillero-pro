@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE. DO NOT EDIT MANUALLY.
-// Source: data/assets/setup-prompts.json
+// Source: data\assets\setup-prompts.json
 
 export const setupVisualMap: Record<string, string> = {
   "gas:direct": "/setup/setup_gas_direct_heat.webp",
@@ -20,8 +20,10 @@ export type SetupType =
   | "low-slow"
   | "pan-oven";
 
-export function getSetupVisual(equipment?: SetupEquipment, setup?: SetupType): string {
-  const key = `${equipment}:${setup}`;
+export function getSetupVisual(key?: string): string {
+  if (!key) {
+    return SETUP_VISUAL_FALLBACK;
+  }
   return setupVisualMap[key] ?? SETUP_VISUAL_FALLBACK;
 }
 

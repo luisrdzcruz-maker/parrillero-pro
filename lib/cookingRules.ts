@@ -195,6 +195,34 @@ function secondsToText(seconds: number) {
   return restMinutes === 0 ? `${hours} h` : `${hours} h ${restMinutes} min`;
 }
 
+function formatStepDuration(seconds: number, language: "es" | "en") {
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) {
+    return language === "en" ? `${minutes} min` : `${minutes} min`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const restMinutes = minutes % 60;
+  if (restMinutes === 0) {
+    return language === "en" ? `${hours} h` : `${hours} h`;
+  }
+
+  return language === "en"
+    ? `${hours} h ${restMinutes} min`
+    : `${hours} h ${restMinutes} min`;
+}
+
+function buildPlanStepsText(steps: CookingStep[], language: "es" | "en") {
+  return steps
+    .map((step, index) => {
+      const title = step.title.trim();
+      const description = step.description.trim();
+      const duration = formatStepDuration(step.duration, language);
+      return `${index + 1}. ${title}: ${description} (${duration})`;
+    })
+    .join("\n");
+}
+
 function estimateTimes(input: CookingInput, cut: ProductCut, doneness: DonenessId) {
   const thickness = cut.showThickness
     ? parseNumber(input.thicknessCm, cut.defaultThicknessCm)
@@ -653,6 +681,7 @@ export function generateCookingPlan(input: CookingInput): CookingPlan | null {
   const times = estimateTimes(input, cut, doneness);
   const method = getMethodText(getMethod(cut, input.equipment), input.language);
   const note = getLocalized(cut.notes, input.language);
+  const planSteps = buildPlanStepsText(makeStandardSteps(input, cut, temp), input.language);
 
   if (input.language === "en") {
     return {
@@ -661,10 +690,7 @@ export function generateCookingPlan(input: CookingInput): CookingPlan | null {
       TEMPERATURE: temp
         ? `Pull target: ${temp.pull}°C. Expected final temperature after rest: ${temp.final}°C.`
         : "Cook to tender texture and browned edges.",
-      STEPS:
-        cut.style === "vegetable"
-          ? "1. Prep evenly.\n2. Grill over controlled direct heat.\n3. Season and serve."
-          : "1. Preheat.\n2. Cook according to the cut.\n3. Use oven/indirect heat only if needed.\n4. Rest before slicing.",
+      STEPS: planSteps,
       ...(note ? { TIPS: note } : {}),
       ERROR: cut.error.en,
     };
@@ -676,10 +702,7 @@ export function generateCookingPlan(input: CookingInput): CookingPlan | null {
     TEMPERATURA: temp
       ? `Temperatura de salida: ${temp.pull}°C. Temperatura final esperada tras reposo: ${temp.final}°C.`
       : "Cocina hasta textura tierna y bordes dorados.",
-    PASOS:
-      cut.style === "vegetable"
-        ? "1. Prepara cortes uniformes.\n2. Cocina en parrilla directa controlada.\n3. Sazona y sirve."
-        : "1. Precalienta.\n2. Cocina según el corte.\n3. Usa horno/indirecto solo si hace falta.\n4. Reposa antes de cortar.",
+    PASOS: planSteps,
     ...(note ? { CONSEJOS: note } : {}),
     ERROR: cut.error.es,
   };

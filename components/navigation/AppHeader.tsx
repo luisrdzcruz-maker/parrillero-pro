@@ -1,3 +1,6 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui";
 import { ds } from "@/lib/design-system";
 import type { AppText, Lang } from "@/lib/i18n/texts";
@@ -49,41 +52,44 @@ export function AppHeader({
 export function DesktopModeTabs({
   mode,
   onModeChange,
+  t,
 }: {
   mode: Mode;
   onModeChange: (mode: Mode) => void;
   t: AppText;
 }) {
+  const router = useRouter();
+
   return (
     <nav className="mb-7 hidden justify-center lg:flex">
       <div className="grid w-full max-w-[1180px] grid-cols-5 gap-2 rounded-full border border-white/10 bg-black/45 p-1.5 shadow-2xl shadow-black/30 backdrop-blur-xl xl:max-w-[1280px]">
         <DesktopTab
           active={mode === "inicio"}
-          label="Inicio"
+          label={t.start}
           emoji="🏠"
           onClick={() => onModeChange("inicio")}
         />
         <DesktopTab
           active={mode === "coccion"}
-          label="Cocción"
+          label={t.cooking}
           emoji="🥩"
           onClick={() => onModeChange("coccion")}
         />
         <DesktopTab
           active={mode === "plan" || mode === "menu" || mode === "parrillada"}
-          label="Plan"
+          label={t.menu}
           emoji="🧭"
           onClick={() => onModeChange("plan")}
         />
         <DesktopTab
           active={mode === "cocina"}
-          label="Cocina"
+          label={t.live}
           emoji="⏱️"
-          onClick={() => onModeChange("cocina")}
+          onClick={() => router.push("/coccion-live")}
         />
         <DesktopTab
           active={mode === "guardados"}
-          label="Guardados"
+          label={t.saved}
           emoji="⭐"
           onClick={() => onModeChange("guardados")}
         />
@@ -121,11 +127,14 @@ function DesktopTab({
 export function BottomNavigation({
   mode,
   onModeChange,
+  t,
 }: {
   mode: Mode;
   onModeChange: (mode: Mode) => void;
   t: AppText;
 }) {
+  const router = useRouter();
+
   return (
     <nav
       className={`${ds.nav.bottom} z-50 px-2 pb-[max(0.7rem,env(safe-area-inset-bottom))] pt-2 lg:hidden`}
@@ -133,31 +142,31 @@ export function BottomNavigation({
       <div className="mx-auto grid w-full max-w-[448px] grid-cols-5 items-center gap-0.5 rounded-[2rem] border border-white/10 bg-black/70 p-1.5 shadow-2xl shadow-black/60 backdrop-blur-xl">
         <Tab
           active={mode === "inicio"}
-          label="Inicio"
+          label={t.start}
           emoji="🏠"
           onClick={() => onModeChange("inicio")}
         />
         <Tab
           active={mode === "coccion"}
-          label="Cocción"
+          label={t.cooking}
           emoji="🥩"
           onClick={() => onModeChange("coccion")}
         />
         <Tab
           active={mode === "plan" || mode === "menu" || mode === "parrillada"}
-          label="Plan"
+          label={t.menu}
           emoji="🧭"
           onClick={() => onModeChange("plan")}
         />
         <Tab
           active={mode === "cocina"}
-          label="Cocina"
+          label={t.live}
           emoji="⏱️"
-          onClick={() => onModeChange("cocina")}
+          onClick={() => router.push("/coccion-live")}
         />
         <Tab
           active={mode === "guardados"}
-          label="Guardados"
+          label={t.saved}
           emoji="⭐"
           onClick={() => onModeChange("guardados")}
         />

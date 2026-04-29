@@ -21,20 +21,24 @@ type ResultItem =
   | { key: string; title: string; content: string; type: "grill" }
   | { key: string; title: string; content: string; type: "shopping" };
 
-const fullWidthPanel = `${ds.panel.result} transition-all duration-200 md:col-span-2`;
+// Spans the full 2-column grid on md+ and also on mobile (single-column grids ignore col-span)
+const fullWidthPanel = `${ds.panel.result} transition-all duration-200 col-span-full`;
 
 function ShoppingListCard({
   title,
   content,
   checkedItems,
+  lang,
   setCheckedItems,
 }: {
   title: string;
   content: string;
   checkedItems: Record<string, boolean>;
+  lang: "es" | "en" | "fi";
   setCheckedItems: (value: Record<string, boolean>) => void;
 }) {
   const items = getShoppingItems(content);
+  const isEnglish = lang === "en";
 
   return (
     <div
@@ -46,13 +50,13 @@ function ShoppingListCard({
           <div className={ds.media.iconBox}>🛒</div>
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-emerald-300">
-              Checklist
+              {isEnglish ? "Checklist" : "Checklist"}
             </p>
             <h3 className="mt-1 text-sm font-semibold tracking-wide text-white">{title}</h3>
           </div>
         </div>
         <Badge className="w-fit font-medium" tone="glass">
-          {items.length} items
+          {items.length} {isEnglish ? "items" : "items"}
         </Badge>
       </div>
 
@@ -76,11 +80,21 @@ function ShoppingListCard({
   );
 }
 
-function GrillManagerCard({ title, content }: { title: string; content: string }) {
+function GrillManagerCard({
+  title,
+  content,
+  lang,
+}: {
+  title: string;
+  content: string;
+  lang: "es" | "en" | "fi";
+}) {
   const lines = content
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean);
+
+  const isEnglish = lang === "en";
 
   return (
     <div
@@ -93,7 +107,9 @@ function GrillManagerCard({ title, content }: { title: string; content: string }
           <div>
             <h3 className="text-sm font-semibold tracking-wide text-white">{title}</h3>
             <p className="mt-1 text-sm leading-relaxed text-slate-400">
-              Control inteligente de zonas y prioridades
+              {isEnglish
+                ? "Smart zone and priority control"
+                : "Control inteligente de zonas y prioridades"}
             </p>
           </div>
         </div>
@@ -150,6 +166,9 @@ function combineBlocks(blocks: Blocks, keys: string[]) {
 }
 
 function getOrderedResultItems(blocks: Blocks, keys: string[]): ResultItem[] {
+  const hasEnglishCookingBlocks = Boolean(blocks.TIMES || blocks.TEMPERATURE || blocks.STEPS);
+  const hasEnglishMenuBlocks = Boolean(blocks.ORDER || blocks.SHOPPING || blocks.QUANTITIES);
+  const useEnglish = hasEnglishCookingBlocks || hasEnglishMenuBlocks;
   const setupKey = findBlockKey(keys, ["SETUP", "CONFIGURACION", "CONFIGURACIÓN"]);
   const timeKey = findBlockKey(keys, ["TIEMPOS", "TIMES"]);
   const tempKey = findBlockKey(keys, ["TEMPERATURA", "TEMPERATURE"]);
@@ -173,7 +192,7 @@ function getOrderedResultItems(blocks: Blocks, keys: string[]): ResultItem[] {
     const mergedKeys = [timeKey, tempKey].filter(Boolean) as string[];
     items.push({
       key: mergedKeys.join("-"),
-      title: "Tiempos + Temperatura",
+      title: useEnglish ? "Times + Temperature" : "Tiempos + Temperatura",
       content: combineBlocks(blocks, mergedKeys),
       type: "card",
       variant: "summary",
@@ -193,7 +212,7 @@ function getOrderedResultItems(blocks: Blocks, keys: string[]): ResultItem[] {
   if (errorKey) {
     items.push({
       key: errorKey,
-      title: "Error clave",
+      title: useEnglish ? "Key error" : "Error clave",
       content: blocks[errorKey],
       type: "card",
       variant: "tip",
@@ -204,12 +223,22 @@ function getOrderedResultItems(blocks: Blocks, keys: string[]): ResultItem[] {
     if (usedKeys.has(key)) return;
 
     if (key === "TIMELINE") {
-      items.push({ key, title: "⏱️ Timeline Parrillada", content: blocks[key], type: "timeline" });
+      items.push({
+        key,
+        title: useEnglish ? "⏱️ BBQ Timeline" : "⏱️ Timeline Parrillada",
+        content: blocks[key],
+        type: "timeline",
+      });
       return;
     }
 
     if (key === "GRILL_MANAGER") {
-      items.push({ key, title: "🔥 Grill Manager Pro", content: blocks[key], type: "grill" });
+      items.push({
+        key,
+        title: useEnglish ? "🔥 Grill Manager Pro" : "🔥 Grill Manager Pro",
+        content: blocks[key],
+        type: "grill",
+      });
       return;
     }
 
@@ -229,6 +258,7 @@ export default function ResultGrid({
   checkedItems,
   equipment,
   keys,
+  lang = "es",
   loading,
   setCheckedItems,
   t,
@@ -237,6 +267,7 @@ export default function ResultGrid({
   checkedItems: Record<string, boolean>;
   equipment?: string;
   keys: string[];
+  lang?: "es" | "en" | "fi";
   loading: boolean;
   setCheckedItems: (value: Record<string, boolean>) => void;
   t: {
@@ -247,14 +278,14 @@ export default function ResultGrid({
   const items = getOrderedResultItems(blocks, keys);
 
   return (
-    <Grid className="mx-auto max-w-5xl md:gap-5" variant="cards">
+    <Grid className="mx-auto max-w-5xl gap-4 md:gap-5" variant="cards">
       {items.map((item) => {
         if (item.type === "timeline") {
           return <ResultTimeline key={item.key} title={item.title} content={item.content} />;
         }
 
         if (item.type === "grill") {
-          return <GrillManagerCard key={item.key} title={item.title} content={item.content} />;
+          return <GrillManagerCard key={item.key} title={item.title} content={item.content} lang={lang} />;
         }
 
         if (item.type === "shopping") {
@@ -264,20 +295,26 @@ export default function ResultGrid({
               title={item.title}
               content={item.content}
               checkedItems={checkedItems}
+              lang={lang}
               setCheckedItems={setCheckedItems}
             />
           );
         }
 
         return (
-          <ResultCard
+          <div
             key={item.key}
-            title={item.title}
-            content={item.content}
-            equipment={equipment}
-            setup={item.setup}
-            variant={item.variant}
-          />
+            className={item.variant === "primary" ? "col-span-full" : undefined}
+          >
+            <ResultCard
+              title={item.title}
+              content={item.content}
+              equipment={equipment}
+              setup={item.setup}
+              lang={lang}
+              variant={item.variant}
+            />
+          </div>
         );
       })}
 

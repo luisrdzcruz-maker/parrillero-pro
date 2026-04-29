@@ -104,10 +104,51 @@ function donenessListForAnimal(animalId: AnimalId): string[] {
   return ["medium"];
 }
 
+function validateLanguageRegression(): string | null {
+  const esInput: CookingInput = {
+    animal: "Vacuno",
+    cut: "entrecote",
+    weightKg: WEIGHT_KG,
+    thicknessCm: THICKNESS_CM.medium,
+    doneness: "medium_rare",
+    equipment: "parrilla gas",
+    language: "es",
+  };
+  const enInput: CookingInput = {
+    ...esInput,
+    animal: "Beef",
+    language: "en",
+  };
+
+  const esPlan = generateCookingPlan(esInput);
+  const enPlan = generateCookingPlan(enInput);
+
+  if (!esPlan) return "language regression: Spanish plan is null";
+  if (!enPlan) return "language regression: English plan is null";
+
+  if (!esPlan.TIEMPOS || !esPlan.TEMPERATURA || !esPlan.PASOS) {
+    return "language regression: Spanish plan is missing TIEMPOS/TEMPERATURA/PASOS";
+  }
+
+  if (!enPlan.TIMES || !enPlan.TEMPERATURE || !enPlan.STEPS) {
+    return "language regression: English plan is missing TIMES/TEMPERATURE/STEPS";
+  }
+
+  const englishJoined = Object.keys(enPlan).join(" ").toUpperCase();
+  const bannedSpanishHeadings = ["PASOS", "TIEMPOS", "TEMPERATURA", "COMPRA"];
+  const leakedHeading = bannedSpanishHeadings.find((heading) => englishJoined.includes(heading));
+  if (leakedHeading) {
+    return `language regression: English plan leaked Spanish heading "${leakedHeading}"`;
+  }
+
+  return null;
+}
+
 function main() {
   const failures: Failure[] = [];
   let total = 0;
   let passed = 0;
+  const languageRegressionError = validateLanguageRegression();
 
   for (const animal of animalCatalog) {
     const animalLabel = animal.names.es;
@@ -174,6 +215,12 @@ function main() {
       );
     }
 
+    process.exitCode = 1;
+  }
+
+  if (languageRegressionError) {
+    console.log("Language regression:");
+    console.log(`- ${languageRegressionError}`);
     process.exitCode = 1;
   }
 }

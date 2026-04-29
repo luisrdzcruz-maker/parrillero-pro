@@ -2,16 +2,23 @@ export function parseBlocks(text: string) {
   const sections = [
     "MENU",
     "CANTIDADES",
+    "QUANTITIES",
     "TIMING",
     "TIMELINE",
     "GRILL_MANAGER",
     "ORDEN",
+    "ORDER",
     "COMPRA",
+    "SHOPPING",
     "SETUP",
     "TIEMPOS",
+    "TIMES",
     "TEMPERATURA",
+    "TEMPERATURE",
     "PASOS",
+    "STEPS",
     "ERROR",
+    "KEY ERROR",
   ];
 
   const result: Record<string, string> = {};
@@ -21,7 +28,7 @@ export function parseBlocks(text: string) {
   const lines = text.split("\n");
 
   for (const line of lines) {
-    const trimmed = line.trim().toUpperCase();
+    const trimmed = line.trim().replace(/:$/, "").toUpperCase();
 
     if (sections.includes(trimmed)) {
       if (current) {
