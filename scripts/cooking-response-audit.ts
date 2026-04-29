@@ -27,7 +27,6 @@ type CsvRow = {
   equipment: string;
   language: string;
   status: string;
-  severity: string;
   issue_code: string;
   issue_message: string;
   response_excerpt: string;
@@ -59,7 +58,6 @@ const CSV_HEADERS: Array<keyof CsvRow> = [
   "equipment",
   "language",
   "status",
-  "severity",
   "issue_code",
   "issue_message",
   "response_excerpt",
@@ -197,10 +195,13 @@ function validateCaseOutput(
 
     const oppositeKeysPresent = keys.oppositeKeys.filter((key) => key in plan && planSection(plan, key).trim());
     if (oppositeKeysPresent.length > 0) {
+      const isEnglishMode = input.language === "en";
       issues.push({
-        severity: "warning",
-        issueCode: "mixed_language_sections",
-        issueMessage: `Plan contains sections from the opposite language: ${oppositeKeysPresent.join(", ")}.`,
+        severity: isEnglishMode ? "error" : "warning",
+        issueCode: isEnglishMode ? "wrong_language_heading_en" : "mixed_language_sections",
+        issueMessage: isEnglishMode
+          ? `English mode contains Spanish section headings: ${oppositeKeysPresent.join(", ")}.`
+          : `Plan contains sections from the opposite language: ${oppositeKeysPresent.join(", ")}.`,
       });
     }
 
@@ -409,9 +410,8 @@ function runStepsDiversityProbe(): {
 async function main() {
   const rows: CsvRow[] = [];
   let caseCounter = 0;
-  let passed = 0;
-  let failed = 0;
-  let warnings = 0;
+  let errorCases = 0;
+  let warningCases = 0;
 
   for (const animal of animalCatalog) {
     const animalNameByLanguage = {
@@ -448,10 +448,9 @@ async function main() {
 
                 const hasError = issues.some((issue) => issue.severity === "error");
                 const hasWarning = issues.some((issue) => issue.severity === "warning");
-                const status = hasError ? "failed" : hasWarning ? "warning" : "passed";
+                const status = hasError ? "ERROR" : hasWarning ? "WARNING" : "OK";
 
-                if (status === "passed") {
-                  passed += 1;
+                if (status === "OK") {
                   rows.push({
                     case_id: caseId,
                     animal: input.animal,
@@ -461,7 +460,6 @@ async function main() {
                     equipment: input.equipment,
                     language: input.language,
                     status,
-                    severity: "",
                     issue_code: "",
                     issue_message: "",
                     response_excerpt: excerpt,
@@ -470,9 +468,9 @@ async function main() {
                 }
 
                 if (hasError) {
-                  failed += 1;
-                } else {
-                  warnings += 1;
+                  errorCases += 1;
+                } else if (hasWarning) {
+                  warningCases += 1;
                 }
 
                 for (const issue of issues) {
@@ -484,15 +482,14 @@ async function main() {
                     doneness: input.doneness,
                     equipment: input.equipment,
                     language: input.language,
-                    status,
-                    severity: issue.severity,
+                    status: issue.severity === "error" ? "ERROR" : "WARNING",
                     issue_code: issue.issueCode,
                     issue_message: issue.issueMessage,
                     response_excerpt: excerpt,
                   });
                 }
               } catch (error) {
-                failed += 1;
+                errorCases += 1;
                 rows.push({
                   case_id: caseId,
                   animal: input.animal,
@@ -501,8 +498,7 @@ async function main() {
                   doneness: input.doneness,
                   equipment: input.equipment,
                   language: input.language,
-                  status: "failed",
-                  severity: "error",
+                  status: "ERROR",
                   issue_code: "runtime_error",
                   issue_message: error instanceof Error ? error.message : String(error),
                   response_excerpt: "",
@@ -517,7 +513,7 @@ async function main() {
 
   const diversityProbe = runStepsDiversityProbe();
   if (diversityProbe.repeated) {
-    warnings += 1;
+    warningCases += 1;
 
     console.warn("");
     console.warn("[qa:responses] WARNING: Repeated identical PASOS/STEPS content detected.");
@@ -538,8 +534,7 @@ async function main() {
       doneness: "mixed",
       equipment: "mixed",
       language: "es",
-      status: "warning",
-      severity: "warning",
+      status: "WARNING",
       issue_code: "identical_steps_probe",
       issue_message:
         "Diversity probe detected repeated identical PASOS/STEPS content across all 5 probe cases.",
@@ -552,12 +547,11 @@ async function main() {
   console.log("Cooking response audit");
   console.log("=====================");
   console.log(`Total cases: ${caseCounter}`);
-  console.log(`Passed:      ${passed}`);
-  console.log(`Failed:      ${failed}`);
-  console.log(`Warnings:    ${warnings}`);
+  console.log(`Errors:      ${errorCases}`);
+  console.log(`Warnings:    ${warningCases}`);
   console.log(`CSV path:    ${csvPath}`);
 
-  if (failed > 0) {
+  if (errorCases > 0) {
     process.exitCode = 1;
   }
 }
