@@ -7,6 +7,12 @@ import { CookingLoadingScreen } from "@/components/cooking/CookingLoadingScreen"
 import { Badge, Button, Section } from "@/components/ui";
 import { ds } from "@/lib/design-system";
 import type { AppText, Lang } from "@/lib/i18n/texts";
+import {
+  createLiveCookingPayload,
+  readLiveCookingPayload,
+  saveLiveCookingPayload,
+  type LiveCookingPlanPayload,
+} from "@/lib/liveCookingPlan";
 import { animalOptions, type Animal } from "@/lib/media/animalMedia";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -216,6 +222,8 @@ export function CookingWizard({
             animal={animal}
             blocks={blocks}
             checkedItems={checkedItems}
+            cut={selectedCut?.name ?? cut}
+            doneness={doneness}
             equipment={equipment}
             lang={lang}
             onEdit={() => setCookingStep("details")}
@@ -223,7 +231,9 @@ export function CookingWizard({
             saveMenuMessage={saveMenuMessage}
             saveMenuStatus={saveMenuStatus}
             setCheckedItems={setCheckedItems}
+            showThickness={showThickness}
             t={t}
+            thickness={thickness}
           />
         ) : null}
       </CookingStepTransition>
@@ -767,6 +777,8 @@ function CookingResultStep({
   animal,
   blocks,
   checkedItems,
+  cut,
+  doneness,
   equipment,
   lang,
   onEdit,
@@ -774,11 +786,15 @@ function CookingResultStep({
   saveMenuMessage,
   saveMenuStatus,
   setCheckedItems,
+  showThickness,
   t,
+  thickness,
 }: {
   animal: Animal;
   blocks: Blocks;
   checkedItems: Record<string, boolean>;
+  cut: string;
+  doneness: string;
   equipment: string;
   lang: Lang;
   onEdit: () => void;
@@ -786,9 +802,38 @@ function CookingResultStep({
   saveMenuMessage: string;
   saveMenuStatus: SaveMenuStatus;
   setCheckedItems: (value: Record<string, boolean>) => void;
+  showThickness: boolean;
   t: AppText;
+  thickness: string;
 }) {
   const router = useRouter();
+
+  function handleStartCooking() {
+    const payload = createLiveCookingPayload({
+      input: {
+        animal,
+        cut,
+        equipment,
+        doneness,
+        thickness: showThickness ? thickness : "2",
+        lang,
+      },
+      blocks,
+    });
+
+    const previousPayload: LiveCookingPlanPayload | null = readLiveCookingPayload();
+    if (
+      previousPayload &&
+      previousPayload.signature !== payload.signature &&
+      previousPayload.input.cut === payload.input.cut &&
+      previousPayload.input.animal === payload.input.animal
+    ) {
+      console.info("[live-cooking] plan signature changed for same animal/cut");
+    }
+
+    saveLiveCookingPayload(payload);
+    router.push("/coccion-live");
+  }
 
   return (
     <div className="space-y-4">
@@ -804,7 +849,7 @@ function CookingResultStep({
         saveMenuMessage={saveMenuMessage}
         saveMenuStatus={saveMenuStatus}
         setCheckedItems={setCheckedItems}
-        onStartCooking={() => router.push("/coccion-live")}
+        onStartCooking={handleStartCooking}
         t={t}
       />
     </div>

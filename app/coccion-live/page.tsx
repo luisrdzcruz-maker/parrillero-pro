@@ -1,11 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import LiveCookingScreen, { type LiveStep } from "@/components/live/LiveCookingScreen";
+import {
+  buildLiveStepsFromPayload,
+  buildLiveStepsSignature,
+  hasDistinctLiveSteps,
+  readLiveCookingPayload,
+} from "@/lib/liveCookingPlan";
 
 // ─── Mock cooking plan ────────────────────────────────────────────────────────
 
-const STEPS: LiveStep[] = [
+const MOCK_STEPS: LiveStep[] = [
   {
     id: "preheat",
     label: "Calienta la parrilla.\nMáxima potencia.",
@@ -59,13 +65,32 @@ const STEPS: LiveStep[] = [
 // ─── Page (state + countdown logic only) ──────────────────────────────────────
 
 export default function CoccionLivePage() {
+  const liveSession = useMemo(() => {
+    const payload = readLiveCookingPayload();
+    const built = buildLiveStepsFromPayload(payload, MOCK_STEPS);
+
+    if (!built.usedFallback) {
+      const mockSignature = buildLiveStepsSignature(MOCK_STEPS);
+      if (!hasDistinctLiveSteps(built.steps, MOCK_STEPS)) {
+        console.warn("[live-cooking] Live steps match mock signature unexpectedly", {
+          payloadSignature: payload?.signature ?? "",
+          liveSignature: built.signature,
+          mockSignature,
+        });
+      }
+    }
+
+    return built;
+  }, []);
+
+  const steps = liveSession.steps;
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [remaining, setRemaining] = useState(STEPS[0].duration);
+  const [remaining, setRemaining] = useState((liveSession.steps[0] ?? MOCK_STEPS[0]).duration);
   const [paused, setPaused] = useState(false);
   const advancing = useRef(false);
 
-  const step = STEPS[currentIndex];
-  const isLast = currentIndex === STEPS.length - 1;
+  const step = steps[currentIndex] ?? steps[0];
+  const isLast = currentIndex === steps.length - 1;
   const hasTimer = step.duration > 0;
 
   // ── Countdown ────────────────────────────────────────────────────────────
@@ -87,7 +112,7 @@ export default function CoccionLivePage() {
     const id = setTimeout(() => {
       const next = currentIndex + 1;
       setCurrentIndex(next);
-      setRemaining(STEPS[next].duration);
+      setRemaining((steps[next] ?? steps[steps.length - 1]).duration);
       setPaused(false);
       advancing.current = false;
     }, 1200);
@@ -96,20 +121,20 @@ export default function CoccionLivePage() {
       clearTimeout(id);
       advancing.current = false;
     };
-  }, [remaining, hasTimer, isLast, currentIndex]);
+  }, [remaining, hasTimer, isLast, currentIndex, steps]);
 
   // ── Controls ─────────────────────────────────────────────────────────────
   function completeStep() {
     if (isLast) return;
     const next = currentIndex + 1;
     setCurrentIndex(next);
-    setRemaining(STEPS[next].duration);
+    setRemaining((steps[next] ?? steps[steps.length - 1]).duration);
     setPaused(false);
   }
 
   function goToStep(index: number) {
     setCurrentIndex(index);
-    setRemaining(STEPS[index].duration);
+    setRemaining((steps[index] ?? steps[steps.length - 1]).duration);
     setPaused(false);
   }
 
@@ -125,10 +150,11 @@ export default function CoccionLivePage() {
        */}
       <div className="flex h-screen w-full flex-col overflow-hidden md:h-[844px] md:w-[390px] md:rounded-[3rem] md:border md:border-white/10 md:shadow-[0_32px_80px_rgba(0,0,0,0.8)]">
         <LiveCookingScreen
-          steps={STEPS}
+          steps={steps}
           currentIndex={currentIndex}
           remaining={remaining}
           paused={paused}
+          context={liveSession.usedFallback ? undefined : liveSession.context}
           onPause={() => setPaused((v) => !v)}
           onCompleteStep={completeStep}
           onGoToStep={goToStep}
