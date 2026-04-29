@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
 import type { Mode } from "@/components/navigation/AppHeader";
+import type { Animal } from "@/lib/media/animalMedia";
 import type { AppText, Lang } from "@/lib/i18n/texts";
 import { type ReactNode, useLayoutEffect, useState } from "react";
 
@@ -35,7 +36,13 @@ function FadeIn({ children, delay = 0 }: { children: ReactNode; delay?: number }
 
 // ─── Hero section ─────────────────────────────────────────────────────────────
 
-function HeroSection({ onStartCooking, onPlanSession }: { onStartCooking: () => void; onPlanSession: () => void }) {
+function HeroSection({
+  onStartCooking,
+  onPlanSession,
+}: {
+  onStartCooking: () => void;
+  onPlanSession: () => void;
+}) {
   return (
     <section className="relative overflow-hidden rounded-3xl border border-white/[0.06] bg-[#020617] px-6 pb-9 pt-9 shadow-2xl shadow-black/70 sm:px-8 sm:pb-12 sm:pt-12">
       {/* Animated fire blobs */}
@@ -55,11 +62,9 @@ function HeroSection({ onStartCooking, onPlanSession }: { onStartCooking: () => 
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.04]"
         style={{
-          background:
-            "linear-gradient(115deg, transparent 30%, rgba(251,146,60,0.8) 50%, transparent 70%)",
+          background: "linear-gradient(115deg, transparent 30%, rgba(251,146,60,0.8) 50%, transparent 70%)",
         }}
       />
-
       {/* Top shimmer line */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400/60 to-transparent" />
       {/* Bottom vignette */}
@@ -80,10 +85,7 @@ function HeroSection({ onStartCooking, onPlanSession }: { onStartCooking: () => 
           <br />
           <span
             className="bg-clip-text text-transparent"
-            style={{
-              backgroundImage:
-                "linear-gradient(135deg, #fb923c 0%, #f97316 40%, #ea580c 100%)",
-            }}
+            style={{ backgroundImage: "linear-gradient(135deg, #fb923c 0%, #f97316 40%, #ea580c 100%)" }}
           >
             Pro.
           </span>
@@ -125,6 +127,106 @@ function HeroSection({ onStartCooking, onPlanSession }: { onStartCooking: () => 
   );
 }
 
+// ─── Animal quick-pick shelf ───────────────────────────────────────────────────
+// Horizontal scroll row — each card pre-selects protein and jumps to cut step.
+
+type AnimalEntry = {
+  animal: Animal;
+  label: string;
+  emoji: string;
+  image: string;
+  hint: string;
+};
+
+const ANIMAL_ENTRIES: AnimalEntry[] = [
+  {
+    animal: "Vacuno",
+    label: "Vacuno",
+    emoji: "🥩",
+    image: "/images/vacuno/ribeye-cooked.webp",
+    hint: "Chuletón, picanha…",
+  },
+  {
+    animal: "Cerdo",
+    label: "Cerdo",
+    emoji: "🐷",
+    image: "/images/cerdo/ribs-bbq.webp",
+    hint: "Costillas, secreto…",
+  },
+  {
+    animal: "Pollo",
+    label: "Pollo",
+    emoji: "🍗",
+    image: "/images/pollo/muslos-cooked.webp",
+    hint: "Muslos, alitas…",
+  },
+  {
+    animal: "Verduras",
+    label: "Verduras",
+    emoji: "🌿",
+    image: "/images/verduras/pimientos.webp",
+    hint: "Pimientos, maíz…",
+  },
+];
+
+function AnimalQuickCard({
+  entry,
+  onClick,
+}: {
+  entry: AnimalEntry;
+  onClick: () => void;
+}) {
+  const [imgError, setImgError] = useState(false);
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group relative w-[42vw] max-w-[180px] shrink-0 touch-manipulation snap-start overflow-hidden rounded-2xl border border-white/[0.07] bg-zinc-950 text-left transition-all duration-200 hover:border-orange-400/30 hover:shadow-[0_6px_32px_rgba(255,106,0,0.18)] active:scale-[0.95] sm:w-[160px]"
+      style={{ minHeight: "120px" }}
+    >
+      {/* Background image */}
+      {!imgError ? (
+        <Image
+          src={entry.image}
+          alt=""
+          fill
+          sizes="180px"
+          className="object-cover object-center transition-transform duration-500 group-hover:scale-[1.10]"
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-950/60 via-zinc-900 to-black" />
+      )}
+
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/55 to-black/08" />
+      {/* Warm tint */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_0%,rgba(255,106,0,0.16),transparent_45%)]" />
+      {/* Hover border glow */}
+      <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-orange-400/0 to-transparent transition-all duration-300 group-hover:via-orange-400/55" />
+
+      {/* Content */}
+      <div className="relative z-10 flex h-full min-h-[120px] flex-col justify-between p-3">
+        {/* Emoji chip */}
+        <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/15 bg-black/55 text-base shadow-sm backdrop-blur-sm">
+          {entry.emoji}
+        </span>
+
+        {/* Label */}
+        <div>
+          <p className="text-[15px] font-black tracking-[-0.02em] text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+            {entry.label}
+          </p>
+          <p className="mt-0.5 text-[11px] font-medium text-slate-400 drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
+            {entry.hint}
+          </p>
+        </div>
+      </div>
+    </button>
+  );
+}
+
 // ─── Live feature card (full-width hero card) ─────────────────────────────────
 
 function LiveFeatureCard({ onClick }: { onClick: () => void }) {
@@ -155,10 +257,7 @@ function LiveFeatureCard({ onClick }: { onClick: () => void }) {
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/74 to-black/18" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_0%_100%,rgba(255,106,0,0.30),transparent_50%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_88%_8%,rgba(255,60,0,0.12),transparent_45%)]" />
-
-      {/* Shimmer line always visible */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400/55 to-transparent" />
-      {/* Shimmer on hover */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-200/70 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
       {/* Content */}
@@ -225,7 +324,6 @@ function QuickActionCard({
       onClick={onClick}
       className="group relative min-h-[180px] touch-manipulation select-none overflow-hidden rounded-2xl border border-white/[0.07] bg-zinc-950 text-left transition-all duration-300 hover:border-orange-400/30 hover:shadow-[0_8px_48px_rgba(255,106,0,0.16)] active:scale-[0.96] sm:min-h-[210px]"
     >
-      {/* Background image */}
       {!imgError ? (
         <Image
           src={image}
@@ -239,23 +337,16 @@ function QuickActionCard({
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_15%,rgba(255,106,0,0.22),transparent_48%),linear-gradient(145deg,#18181b,#030303)]" />
       )}
 
-      {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/97 via-black/68 to-black/10" />
-      {/* Warm tint top-left */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_0%,rgba(255,106,0,0.18),transparent_42%)]" />
-      {/* Hover top-right glow */}
       <div className="pointer-events-none absolute -right-8 -top-8 h-36 w-36 rounded-full bg-orange-500/0 blur-3xl transition-all duration-500 group-hover:bg-orange-500/20" />
-      {/* Bottom border glow — appears on hover */}
       <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-orange-400/0 to-transparent transition-all duration-300 group-hover:via-orange-400/50" />
 
-      {/* Content */}
       <div className="relative z-10 flex min-h-[180px] flex-col justify-between p-4 sm:min-h-[210px] sm:p-5">
-        {/* Icon chip */}
         <span className="flex h-11 w-11 items-center justify-center rounded-[14px] border border-white/18 bg-black/58 text-[22px] shadow-[0_2px_16px_rgba(0,0,0,0.7)] backdrop-blur-md">
           {icon}
         </span>
 
-        {/* Label + sub + arrow */}
         <div>
           <p className="text-[16px] font-black tracking-[-0.025em] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]">
             {label}
@@ -313,11 +404,13 @@ export function HomeScreen({
   onLangChange,
   savedMenusCount,
   onModeChange,
+  onStartCookingWith,
 }: {
   lang: Lang;
   onLangChange: (lang: Lang) => void;
   savedMenusCount: number;
   onModeChange: (mode: Mode) => void;
+  onStartCookingWith?: (animal: Animal) => void;
   // t accepted for API compatibility
   t: AppText;
 }) {
@@ -367,13 +460,36 @@ export function HomeScreen({
         />
       </FadeIn>
 
+      {/* ── Animal quick-pick shelf ────────────────────────────────────────── */}
+      <FadeIn delay={60}>
+        <section>
+          <p className="mb-2.5 text-[10px] font-black uppercase tracking-[0.24em] text-white/22">
+            ¿Qué vas a cocinar?
+          </p>
+          {/* Horizontal scroll — hides scrollbar visually but stays accessible */}
+          <div className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {ANIMAL_ENTRIES.map((entry) => (
+              <AnimalQuickCard
+                key={entry.animal}
+                entry={entry}
+                onClick={() =>
+                  onStartCookingWith
+                    ? onStartCookingWith(entry.animal)
+                    : onModeChange("coccion")
+                }
+              />
+            ))}
+          </div>
+        </section>
+      </FadeIn>
+
       {/* ── Live Feature Card ─────────────────────────────────────────────── */}
-      <FadeIn delay={80}>
+      <FadeIn delay={120}>
         <LiveFeatureCard onClick={() => router.push("/coccion-live")} />
       </FadeIn>
 
       {/* ── Quick Actions 2×2 ─────────────────────────────────────────────── */}
-      <FadeIn delay={160}>
+      <FadeIn delay={200}>
         <section>
           <p className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-white/22">
             Acciones rápidas
@@ -394,7 +510,7 @@ export function HomeScreen({
       </FadeIn>
 
       {/* ── Settings strip ─────────────────────────────────────────────────── */}
-      <FadeIn delay={240}>
+      <FadeIn delay={280}>
         <HomeSettingsStrip lang={lang} onLangChange={onLangChange} />
       </FadeIn>
     </div>

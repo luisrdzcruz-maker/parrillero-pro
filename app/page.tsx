@@ -32,6 +32,10 @@ import {
   type SavedMenuType,
   type ShareStatus,
 } from "@/components/results/CookingResultScreen";
+import {
+  OnboardingSlides,
+} from "@/components/onboarding/OnboardingSlides";
+import { ONBOARDING_STORAGE_KEY } from "@/lib/storageKeys";
 import { PlanHub, type PlanMode } from "@/components/planning/PlanHub";
 import { Button, Grid } from "@/components/ui";
 import { track } from "@/lib/analytics";
@@ -217,6 +221,16 @@ function parsePositiveInt(value: string) {
 }
 
 export default function Home() {
+  // ── Onboarding gate ─────────────────────────────────────────────────────────
+  // null = not yet read from localStorage (prevents any flicker)
+  // true  = show onboarding
+  // false = go straight to the app
+  const [showOnboarding, setShowOnboarding] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+  
+    return localStorage.getItem(ONBOARDING_STORAGE_KEY) !== "1";
+  });
+
   const [lang, setLang] = useState<Lang>("es");
   const t = texts[lang];
 
@@ -784,6 +798,12 @@ ERROR
     navigateMode(nextMode);
   }
 
+  // Tap a protein card on Home → pre-select animal, jump to cut step
+  function handleQuickAnimal(selectedAnimal: Animal) {
+    handleAnimalChange(selectedAnimal); // sets animal, clears cut, cookingStep → "cut"
+    setMode("coccion");
+  }
+
   function handleSwipeNavigation(direction: SwipeDirection) {
     if (direction === "back") {
       if (mode === "coccion") {
@@ -857,6 +877,21 @@ ERROR
     handleSwipeNavigation(deltaX > 0 ? "back" : "forward");
   }
 
+  // ── Onboarding gate ─────────────────────────────────────────────────────────
+  // Render a dark placeholder while localStorage hasn't been checked yet.
+  // Body background matches so there is zero visible flash.
+  if (showOnboarding === null) {
+    return <div className="fixed inset-0 bg-[#020617]" aria-hidden />;
+  }
+
+  if (showOnboarding) {
+    return (
+      <OnboardingSlides
+        onDone={() => setShowOnboarding(false)}
+      />
+    );
+  }
+
   return (
     <main
       className={`${ds.shell.page} overflow-x-hidden px-3 pt-2 !pb-[max(120px,env(safe-area-inset-bottom))] sm:px-4 sm:pt-5 lg:px-8 lg:pt-6 lg:!pb-12 xl:px-10`}
@@ -873,6 +908,7 @@ ERROR
             savedMenusCount={savedMenus.length}
             t={t}
             onModeChange={handleModeChange}
+            onStartCookingWith={handleQuickAnimal}
           />
         )}
 
