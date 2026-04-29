@@ -69,6 +69,7 @@ export type TargetTemp = {
 export type ProductCut = {
   id: string;
   animalId: AnimalId;
+  inputProfileId?: string;
   names: Record<Language, string>;
   defaultThicknessCm: number;
   showThickness: boolean;
@@ -184,6 +185,7 @@ export const productCatalog: ProductCut[] = [
   {
     id: "lomo_alto",
     animalId: "beef",
+    inputProfileId: "beef-large",
     names: { es: "Lomo alto", en: "Rib steak", fi: "Entrecote pala" },
     defaultThicknessCm: 5,
     showThickness: true,
@@ -202,6 +204,7 @@ export const productCatalog: ProductCut[] = [
   {
     id: "tomahawk",
     animalId: "beef",
+    inputProfileId: "beef-large",
     names: { es: "Tomahawk", en: "Tomahawk", fi: "Tomahawk" },
     defaultThicknessCm: 6,
     showThickness: true,
@@ -220,6 +223,7 @@ export const productCatalog: ProductCut[] = [
   {
     id: "entrecote",
     animalId: "beef",
+    inputProfileId: "beef-steak",
     names: { es: "Entrecote", en: "Ribeye", fi: "Entrecote" },
     defaultThicknessCm: 3,
     showThickness: true,
@@ -238,6 +242,7 @@ export const productCatalog: ProductCut[] = [
   {
     id: "picanha",
     animalId: "beef",
+    inputProfileId: "beef-large",
     names: { es: "Picanha", en: "Picanha", fi: "Picanha" },
     defaultThicknessCm: 4,
     showThickness: true,
@@ -310,6 +315,7 @@ export const productCatalog: ProductCut[] = [
   {
     id: "secreto_iberico",
     animalId: "pork",
+    inputProfileId: "pork-fast",
     names: { es: "Secreto ibérico", en: "Iberian secreto", fi: "Iberico secreto" },
     defaultThicknessCm: 2,
     showThickness: false,
@@ -328,6 +334,7 @@ export const productCatalog: ProductCut[] = [
   {
     id: "presa_iberica",
     animalId: "pork",
+    inputProfileId: "pork-fast",
     names: { es: "Presa ibérica", en: "Iberian presa", fi: "Iberico presa" },
     defaultThicknessCm: 4,
     showThickness: true,
@@ -364,6 +371,7 @@ export const productCatalog: ProductCut[] = [
   {
     id: "panceta",
     animalId: "pork",
+    inputProfileId: "pork-fast",
     names: { es: "Panceta", en: "Pork belly", fi: "Porsaankylki" },
     defaultThicknessCm: 4,
     showThickness: true,
@@ -454,6 +462,7 @@ export const productCatalog: ProductCut[] = [
   {
     id: "pechuga",
     animalId: "chicken",
+    inputProfileId: "chicken-breast",
     names: { es: "Pechuga", en: "Breast", fi: "Rintafilee" },
     defaultThicknessCm: 3,
     showThickness: true,
@@ -472,6 +481,7 @@ export const productCatalog: ProductCut[] = [
   {
     id: "pollo_entero",
     animalId: "chicken",
+    inputProfileId: "poultry-whole",
     names: { es: "Pollo entero", en: "Whole chicken", fi: "Kokonainen kana" },
     defaultThicknessCm: 6,
     showThickness: false,
@@ -490,6 +500,7 @@ export const productCatalog: ProductCut[] = [
   {
     id: "rodaballo",
     animalId: "fish",
+    inputProfileId: "fish-whole",
     names: { es: "Rodaballo", en: "Turbot", fi: "Piikkikampela" },
     defaultThicknessCm: 3,
     showThickness: true,
@@ -508,6 +519,7 @@ export const productCatalog: ProductCut[] = [
   {
     id: "salmon",
     animalId: "fish",
+    inputProfileId: "fish-fillet",
     names: { es: "Salmón", en: "Salmon", fi: "Lohi" },
     defaultThicknessCm: 3,
     showThickness: true,
@@ -526,6 +538,7 @@ export const productCatalog: ProductCut[] = [
   {
     id: "lubina",
     animalId: "fish",
+    inputProfileId: "fish-whole",
     names: { es: "Lubina", en: "Sea bass", fi: "Meriahven" },
     defaultThicknessCm: 2,
     showThickness: true,
@@ -544,6 +557,7 @@ export const productCatalog: ProductCut[] = [
   {
     id: "dorada",
     animalId: "fish",
+    inputProfileId: "fish-whole",
     names: { es: "Dorada", en: "Sea bream", fi: "Kultaotsa-ahven" },
     defaultThicknessCm: 2,
     showThickness: true,
@@ -574,6 +588,7 @@ export const productCatalog: ProductCut[] = [
       ({
         id,
         animalId: "vegetables",
+        inputProfileId: "vegetable-format",
         names: { es, en, fi },
         defaultThicknessCm: 2,
         showThickness: false,
