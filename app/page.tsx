@@ -33,6 +33,8 @@ import {
   type ShareStatus,
 } from "@/components/results/CookingResultScreen";
 import { SavedCooksScreen } from "@/components/cooks/SavedCooksScreen";
+import { ProModal } from "@/components/pro/ProModal";
+import { isPro } from "@/lib/proStatus";
 import {
   OnboardingSlides,
 } from "@/components/onboarding/OnboardingSlides";
@@ -299,6 +301,7 @@ export default function Home() {
   // mismatch because the server has no localStorage → useState returns false →
   // client may return true → React throws a hydration error.
   const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
+  const [showProModal, setShowProModal] = useState<false | "planning">(false);
 
   useEffect(() => {
     const raf = window.requestAnimationFrame(() => {
@@ -1032,6 +1035,10 @@ ERROR
     }
     if (nextMode === "coccion") setCookingStep("animal");
     if (nextMode !== "guardados") setSelectedSavedMenu(null);
+    // Soft Pro prompt for multi-item planning (non-blocking — navigation still proceeds)
+    if ((nextMode === "plan" || nextMode === "parrillada") && !isPro()) {
+      setShowProModal("planning");
+    }
     setMode(nextMode);
   }
 
@@ -1133,6 +1140,14 @@ ERROR
   }
 
   return (
+    <>
+    {showProModal && (
+      <ProModal
+        trigger={showProModal}
+        onUpgrade={() => setShowProModal(false)}
+        onDismiss={() => setShowProModal(false)}
+      />
+    )}
     <main
       className={`${ds.shell.page} overflow-x-hidden px-3 pt-2 !pb-[max(120px,env(safe-area-inset-bottom))] sm:px-4 sm:pt-5 lg:px-8 lg:pt-6 lg:!pb-12 xl:px-10`}
       onTouchStart={handleTouchStart}
@@ -1457,6 +1472,7 @@ ERROR
 
       {mode !== "cocina" && <AppBottomNav mode={mode} onModeChange={handleModeChange} t={t} />}
     </main>
+    </>
   );
 }
 

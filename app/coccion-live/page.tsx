@@ -8,6 +8,8 @@ import {
   hasDistinctLiveSteps,
   readLiveCookingPayload,
 } from "@/lib/liveCookingPlan";
+import { ProModal } from "@/components/pro/ProModal";
+import { isPro } from "@/lib/proStatus";
 
 // ─── Mock cooking plan (fallback only — used after mount if no real plan) ─────
 
@@ -105,6 +107,10 @@ function persistCook(steps: LiveStep[], context: string | undefined) {
 //     clientReady = true to swap in LiveCookingScreen.
 
 export default function CoccionLivePage() {
+  // ── Pro upgrade modal ─────────────────────────────────────────────────────
+  const [showProModal, setShowProModal] = useState(false);
+  const proModalFiredRef = useRef(false); // only prompt once per session
+
   // ── Hydration gate ────────────────────────────────────────────────────────
   const [clientReady, setClientReady] = useState(false);
 
@@ -182,6 +188,15 @@ export default function CoccionLivePage() {
     };
   }, [clientReady, remaining, hasTimer, isLast, currentIndex, steps]);
 
+  // ── Pro modal: show ~2s after cooking completes (soft, once per session) ──
+  const cookComplete = clientReady && isLast && remaining === 0;
+  useEffect(() => {
+    if (!cookComplete || proModalFiredRef.current || isPro()) return;
+    proModalFiredRef.current = true;
+    const id = setTimeout(() => setShowProModal(true), 2000);
+    return () => clearTimeout(id);
+  }, [cookComplete]);
+
   // ── Controls ──────────────────────────────────────────────────────────────
   function completeStep() {
     if (isLast) return;
@@ -201,6 +216,14 @@ export default function CoccionLivePage() {
   // On mobile: full-screen shell (h-screen, overflow-hidden)
   // On desktop: dark canvas + centered phone shell (390×844)
   return (
+    <>
+    {showProModal && (
+      <ProModal
+        trigger="cook_complete"
+        onUpgrade={() => setShowProModal(false)}
+        onDismiss={() => setShowProModal(false)}
+      />
+    )}
     <div className="bg-[#0a0a0a] md:flex md:min-h-screen md:items-start md:justify-center md:py-8">
       {/*
        * h-screen gives the shell an explicit height so flex-1 children inside
@@ -229,5 +252,6 @@ export default function CoccionLivePage() {
         )}
       </div>
     </div>
+    </>
   );
 }

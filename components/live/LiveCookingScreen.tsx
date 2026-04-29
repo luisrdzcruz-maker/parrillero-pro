@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type TouchEvent } from "react";
+import { useEffect, useRef, useState, type TouchEvent } from "react";
 import TimerDial, { type LivePhase } from "./TimerDial";
 import StepCard from "./StepCard";
 import Timeline from "./Timeline";
@@ -121,6 +121,66 @@ function getBgStyle(phase: LivePhase, zone: string): React.CSSProperties {
   return { backgroundColor: "#020202" };
 }
 
+// ─── Confidence ───────────────────────────────────────────────────────────────
+
+type Confidence = { label: string; dotCls: string; textCls: string };
+
+function fmtDelta(s: number): string {
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return r > 0 ? `${m}m ${r}s` : `${m}m`;
+}
+
+// Pure function — called only inside useEffect (no refs or Date.now in render).
+function computeConfidence({
+  hasTimer,
+  phase,
+  cookStart,
+  accPause,
+  pauseBegan,
+  paused,
+  steps,
+  currentIndex,
+  remaining,
+  isEs,
+}: {
+  hasTimer: boolean;
+  phase: LivePhase;
+  cookStart: number | null;
+  accPause: number;
+  pauseBegan: number | null;
+  paused: boolean;
+  steps: LiveStep[];
+  currentIndex: number;
+  remaining: number;
+  isEs: boolean;
+}): Confidence | null {
+  if (!hasTimer || phase === "complete" || phase === "idle" || cookStart === null) {
+    return null;
+  }
+  const step = steps[currentIndex];
+  if (!step) return null;
+
+  const completedDuration = steps
+    .slice(0, currentIndex)
+    .reduce((sum, s) => sum + s.duration, 0);
+  const expectedTotalElapsed = completedDuration + Math.max(0, step.duration - remaining);
+
+  const nowMs = Date.now();
+  const currentPauseMs = paused && pauseBegan !== null ? nowMs - pauseBegan : 0;
+  const totalPauseMs = accPause + currentPauseMs;
+  const actualTotalElapsed = (nowMs - cookStart - totalPauseMs) / 1000;
+
+  const delta = Math.round(actualTotalElapsed - expectedTotalElapsed);
+  const abs = Math.abs(delta);
+
+  if (delta <= -20) return { label: isEs ? `Adelantado ${fmtDelta(abs)}` : `Ahead ${fmtDelta(abs)}`, dotCls: "bg-amber-400", textCls: "text-amber-300" };
+  if (delta <= 20)  return { label: isEs ? "En tiempo" : "On track", dotCls: "bg-emerald-400", textCls: "text-emerald-300" };
+  if (delta <= 60)  return { label: isEs ? "Ligero retraso" : "Slightly late", dotCls: "bg-amber-400", textCls: "text-amber-300" };
+  return { label: isEs ? `Retrasado ${fmtDelta(abs)}` : `Late ${fmtDelta(abs)}`, dotCls: "bg-red-400", textCls: "text-red-300" };
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatTime(seconds: number): string {
@@ -153,16 +213,65 @@ export default function LiveCookingScreen({
   const touchRef = useRef<TouchPoint | null>(null);
   // "idle" → button shown; "saved" → confirmation shown; stays "saved" permanently
   const [saveState, setSaveState] = useState<"idle" | "saved">("idle");
+
+  // ── Confidence timing refs ────────────────────────────────────────────────
+  // All refs are read only inside effects — never during render.
+  const cookStartRef   = useRef<number | null>(null);
+  const accPauseRef    = useRef(0);
+  const pauseBeganRef  = useRef<number | null>(null);
+
+  // Initialize cook start once, after mount
+  useEffect(() => {
+    if (cookStartRef.current === null) cookStartRef.current = Date.now();
+  }, []);
+
+  // Accumulate paused time on each pause/resume transition
+  useEffect(() => {
+    if (paused) {
+      pauseBeganRef.current = Date.now();
+    } else if (pauseBeganRef.current !== null) {
+      accPauseRef.current += Date.now() - pauseBeganRef.current;
+      pauseBeganRef.current = null;
+    }
+  }, [paused]);
+
   const isEs = lang !== "en";
 
-  const step = steps[currentIndex];
-  if (!step) return null;
-
+  // Derive values that hooks below depend on — use safe fallbacks before early return
+  const step = steps[currentIndex] ?? steps[0];
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === steps.length - 1;
-  const hasTimer = step.duration > 0;
+  const hasTimer = step ? step.duration > 0 : false;
   const nextStep = steps[currentIndex + 1] ?? null;
-  const phase = getPhase(step, remaining, paused, isLast);
+  const phase = step ? getPhase(step, remaining, paused, isLast) : ("idle" as LivePhase);
+
+  // ── Confidence state (updated every second via effect — no refs in render) ──
+  // All hooks must be called before early returns to satisfy rules-of-hooks.
+  const [confidence, setConfidence] = useState<Confidence | null>(null);
+  useEffect(() => {
+    function tick() {
+      setConfidence(
+        computeConfidence({
+          hasTimer,
+          phase,
+          cookStart: cookStartRef.current,
+          accPause: accPauseRef.current,
+          pauseBegan: pauseBeganRef.current,
+          paused,
+          steps,
+          currentIndex,
+          remaining,
+          isEs: lang !== "en",
+        })
+      );
+    }
+    tick(); // immediate first update
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [hasTimer, phase, paused, steps, currentIndex, remaining, lang]);
+
+  // ── Early return after all hooks ──────────────────────────────────────────
+  if (!steps[currentIndex]) return null;
 
   // Zone-aware background glow (direct = orange, indirect = indigo, rest = purple)
   const bgStyle = getBgStyle(phase, step.zone);
@@ -276,6 +385,19 @@ export default function LiveCookingScreen({
           </span>
         </div>
       </header>
+
+      {/* ── Confidence strip ────────────────────────────────────────────────── */}
+      {/* Thin 28px band between the status bar and the timer zone.           */}
+      {/* Updates every second (re-renders with `remaining`). Hidden when      */}
+      {/* cook hasn't started, step is complete, or step has no timer.        */}
+      {confidence && (
+        <div className="flex h-7 shrink-0 items-center justify-center gap-1.5 border-b border-white/[0.04] px-4">
+          <span className={`h-1.5 w-1.5 rounded-full ${confidence.dotCls}`} />
+          <span className={`text-[10.5px] font-bold tracking-[0.04em] ${confidence.textCls}`}>
+            {confidence.label}
+          </span>
+        </div>
+      )}
 
       {/* ── Scrollable content (Zones 2–5) ─────────────────────────────────── */}
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
