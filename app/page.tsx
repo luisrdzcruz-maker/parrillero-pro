@@ -12,11 +12,15 @@ import {
   ResultCards,
   Select,
   equipmentOptions,
+  type CookingSizePreset,
+  type CookingWeightRange,
   type Blocks,
   type CookingWizardStep,
   type SaveMenuStatus,
   type SelectOption,
+  type VegetableFormat,
 } from "@/components/cooking/CookingWizard";
+import { getInputProfileForCut } from "@/lib/cooking/inputProfiles";
 import { HomeScreen } from "@/components/home/HomeScreen";
 import {
   DesktopModeTabs,
@@ -46,6 +50,7 @@ import type { ProductCut } from "@/lib/cookingCatalog";
 import {
   generateCookingPlan as generateLocalCookingPlan,
   generateCookingSteps as generateLocalCookingSteps,
+  getCutById,
   getCutsByAnimal,
   getDonenessOptions,
   shouldShowThickness,
@@ -335,6 +340,30 @@ function buildSearchFromNav(mode: Mode, cookingStep: CookingWizardStep): string 
   return query ? `?${query}` : "";
 }
 
+function mapSizePresetToThickness(sizePreset: CookingSizePreset): string {
+  if (sizePreset === "small") return "2.5";
+  if (sizePreset === "large") return "5";
+  return "3.5";
+}
+
+function mapWeightRangeToKg(weightRange: CookingWeightRange, wholeChicken: boolean): string {
+  if (wholeChicken) {
+    if (weightRange === "light") return "1.2";
+    if (weightRange === "large") return "2";
+    return "1.6";
+  }
+
+  if (weightRange === "light") return "0.8";
+  if (weightRange === "large") return "1.8";
+  return "1.2";
+}
+
+function mapBeefLargeWeightPresetToKg(weightRange: CookingWeightRange): string {
+  if (weightRange === "light") return "0.9";
+  if (weightRange === "large") return "1.6";
+  return "1.2";
+}
+
 export default function Home() {
   const router = useRouter();
 
@@ -368,6 +397,10 @@ export default function Home() {
   const [cut, setCut] = useState("");
   const [weight, setWeight] = useState("1");
   const [thickness, setThickness] = useState("5");
+  const [advancedThicknessEnabled, setAdvancedThicknessEnabled] = useState(false);
+  const [sizePreset, setSizePreset] = useState<CookingSizePreset>("medium");
+  const [weightRange, setWeightRange] = useState<CookingWeightRange>("medium");
+  const [vegetableFormat, setVegetableFormat] = useState<VegetableFormat>("halved");
   const [doneness, setDoneness] = useState("rare");
   const [equipment, setEquipment] = useState("parrilla gas");
 
@@ -409,6 +442,13 @@ export default function Home() {
 
   const currentDonenessOptions = getDonenessSelectOptions(animal, lang);
   const showThickness = cut ? shouldShowThickness(cut) : true;
+
+  function resetAdaptiveDetailInputs() {
+    setAdvancedThicknessEnabled(false);
+    setSizePreset("medium");
+    setWeightRange("medium");
+    setVegetableFormat("halved");
+  }
 
   function commitNav(
     nextMode: Mode,
@@ -701,6 +741,7 @@ export default function Home() {
     setCut(rebuilt.config.cut);
     setWeight(rebuilt.config.weight);
     setThickness(rebuilt.config.thickness);
+    resetAdaptiveDetailInputs();
     setDoneness(rebuilt.config.doneness);
     setEquipment(rebuilt.config.equipment);
     setBlocks(rebuilt.blocks);
@@ -837,6 +878,7 @@ export default function Home() {
   function handleAnimalChange(selectedAnimal: Animal) {
     setAnimal(selectedAnimal);
     setCut("");
+    resetAdaptiveDetailInputs();
     setDoneness(getInitialDoneness(selectedAnimal));
     setBlocks({});
     setCheckedItems({});
@@ -847,6 +889,7 @@ export default function Home() {
 
   function handleCutChange(selectedCutId: string) {
     setCut(selectedCutId);
+    resetAdaptiveDetailInputs();
     setBlocks({});
     setCheckedItems({});
     resetSaveMenuState();
@@ -910,11 +953,43 @@ export default function Home() {
   }
 
   async function generateCookingPlan() {
+    const cutMeta = getCutById(cut);
+    const inputProfile = cutMeta
+      ? getInputProfileForCut({
+          cutId: cutMeta.id,
+          animalId: cutMeta.animalId,
+          style: cutMeta.style,
+          inputProfileId: cutMeta.inputProfileId,
+        })
+      : getInputProfileForCut({
+          cutId: cut,
+          animalId: animalIdsByLabel[animal],
+          style: "fast",
+        });
+    const isVegetableCut = inputProfile.showVegetableFormat;
+    const isWholeChicken = cut === "pollo_entero";
+
+    const resolvedWeightKg =
+      inputProfile.showWeightRange
+        ? mapWeightRangeToKg(weightRange, isWholeChicken)
+        : inputProfile.showWeightPreset
+          ? mapBeefLargeWeightPresetToKg(weightRange)
+          : weight;
+
+    let resolvedThicknessCm = "2";
+    if (inputProfile.showSizePreset) {
+      resolvedThicknessCm = mapSizePresetToThickness(sizePreset);
+      if (inputProfile.allowAdvancedExactThickness && advancedThicknessEnabled && thickness.trim()) {
+        resolvedThicknessCm = thickness;
+      }
+    }
+
     const input = {
       animal,
       cut,
-      weightKg: weight,
-      thicknessCm: showThickness ? thickness : "2",
+      weightKg: resolvedWeightKg,
+      thicknessCm: resolvedThicknessCm,
+      format: isVegetableCut ? vegetableFormat : undefined,
       doneness,
       equipment,
       language: engineLang(lang),
@@ -939,8 +1014,9 @@ export default function Home() {
 Language: ${engineLang(lang) === "es" ? "Spanish" : "English"}.
 Animal: ${animal}
 Cut: ${selectedCut?.name ?? cut}
-Weight: ${weight} kg
-Thickness: ${showThickness ? thickness : "not relevant"} cm
+Weight: ${resolvedWeightKg} kg
+Thickness: ${resolvedThicknessCm} cm
+Format: ${isVegetableCut ? vegetableFormat : "not relevant"}
 Doneness: ${doneness}
 Equipment: ${equipment}
 
@@ -1228,6 +1304,7 @@ ERROR
 
         {mode === "coccion" && (
           <CookingWizard
+            advancedThicknessEnabled={advancedThicknessEnabled}
             animal={animal}
             cookingStep={cookingStep}
             currentDonenessOptions={currentDonenessOptions}
@@ -1244,6 +1321,10 @@ ERROR
             saveMenuMessage={saveMenuMessage}
             saveMenuStatus={saveMenuStatus}
             setCookingStep={setCookingStep}
+            setAdvancedThicknessEnabled={(value) => {
+              setAdvancedThicknessEnabled(value);
+              resetSaveMenuState();
+            }}
             setDoneness={(value) => {
               setDoneness(value);
               resetSaveMenuState();
@@ -1252,21 +1333,31 @@ ERROR
               setEquipment(value);
               resetSaveMenuState();
             }}
+            setSizePreset={(value) => {
+              setSizePreset(value);
+              resetSaveMenuState();
+            }}
             setThickness={(value) => {
               setThickness(value);
               resetSaveMenuState();
             }}
-            setWeight={(value) => {
-              setWeight(value);
+            setVegetableFormat={(value) => {
+              setVegetableFormat(value);
               resetSaveMenuState();
             }}
+            setWeightRange={(value) => {
+              setWeightRange(value);
+              resetSaveMenuState();
+            }}
+            sizePreset={sizePreset}
             showThickness={showThickness}
             onSaveMenu={async () => {
               await saveCurrentMenu();
             }}
             t={t}
-            weight={weight}
             thickness={thickness}
+            vegetableFormat={vegetableFormat}
+            weightRange={weightRange}
             doneness={doneness}
             blocks={blocks}
             checkedItems={checkedItems}

@@ -4,6 +4,8 @@ import ResultGrid from "@/components/ResultGrid";
 import ResultHero from "@/components/ResultHero";
 import FoodCard from "@/components/FoodCard";
 import { CookingLoadingScreen } from "@/components/cooking/CookingLoadingScreen";
+import { getInputProfileForCut } from "@/lib/cooking/inputProfiles";
+import { getCutById } from "@/lib/cookingRules";
 import { Badge, Button, Section } from "@/components/ui";
 import { ds } from "@/lib/design-system";
 import type { AppText, Lang } from "@/lib/i18n/texts";
@@ -37,6 +39,12 @@ export const equipmentOptions = [
   "cocina interior",
   "Napoleon Rogue 525-2",
 ];
+
+const cookingEquipmentOptions = ["parrilla gas", "parrilla carbón", "kamado", "cocina interior"];
+
+export type CookingSizePreset = "small" | "medium" | "large";
+export type CookingWeightRange = "light" | "medium" | "large";
+export type VegetableFormat = "whole" | "halved" | "slices";
 
 const foodImages: Record<Animal, string> = {
   Vacuno: "/images/vacuno/ribeye-cooked.webp",
@@ -94,6 +102,7 @@ function CookingStepTransition({
 }
 
 export function CookingWizard({
+  advancedThicknessEnabled,
   animal,
   blocks,
   checkedItems,
@@ -116,14 +125,20 @@ export function CookingWizard({
   setCheckedItems,
   setCookingStep,
   setDoneness,
+  setAdvancedThicknessEnabled,
   setEquipment,
+  setSizePreset,
   setThickness,
-  setWeight,
+  setVegetableFormat,
+  setWeightRange,
+  sizePreset,
   showThickness,
   t,
   thickness,
-  weight,
+  vegetableFormat,
+  weightRange,
 }: {
+  advancedThicknessEnabled: boolean;
   animal: Animal;
   blocks: Blocks;
   checkedItems: Record<string, boolean>;
@@ -146,13 +161,18 @@ export function CookingWizard({
   setCheckedItems: (value: Record<string, boolean>) => void;
   setCookingStep: (step: CookingWizardStep) => void;
   setDoneness: (value: string) => void;
+  setAdvancedThicknessEnabled: (value: boolean) => void;
   setEquipment: (value: string) => void;
+  setSizePreset: (value: CookingSizePreset) => void;
   setThickness: (value: string) => void;
-  setWeight: (value: string) => void;
+  setVegetableFormat: (value: VegetableFormat) => void;
+  setWeightRange: (value: CookingWeightRange) => void;
+  sizePreset: CookingSizePreset;
   showThickness: boolean;
   t: AppText;
   thickness: string;
-  weight: string;
+  vegetableFormat: VegetableFormat;
+  weightRange: CookingWeightRange;
 }) {
   const hasCookingResult = Object.keys(blocks).length > 0;
   const visibleCookingStep =
@@ -199,6 +219,7 @@ export function CookingWizard({
           />
         ) : visibleCookingStep === "details" && selectedCut ? (
           <CookingDetailsStep
+            advancedThicknessEnabled={advancedThicknessEnabled}
             animal={animal}
             currentDonenessOptions={currentDonenessOptions}
             doneness={doneness}
@@ -209,13 +230,17 @@ export function CookingWizard({
             onBack={() => setCookingStep("cut")}
             selectedCut={selectedCut}
             setDoneness={setDoneness}
+            setAdvancedThicknessEnabled={setAdvancedThicknessEnabled}
             setEquipment={setEquipment}
+            setSizePreset={setSizePreset}
             setThickness={setThickness}
-            setWeight={setWeight}
-            showThickness={showThickness}
+            setVegetableFormat={setVegetableFormat}
+            setWeightRange={setWeightRange}
+            sizePreset={sizePreset}
             t={t}
             thickness={thickness}
-            weight={weight}
+            vegetableFormat={vegetableFormat}
+            weightRange={weightRange}
           />
         ) : visibleCookingStep === "result" ? (
           <CookingResultStep
@@ -426,7 +451,7 @@ function FeaturedCutCard({
           />
         )}
 
-        {/* Gradient layers: heavy bottom + heavy left so text is always readable */}
+        {/* Gradient layers: strong bottom + strong left so text is always readable */}
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/40 to-transparent" />
 
@@ -674,6 +699,7 @@ function CookingCutStep({
 }
 
 function CookingDetailsStep({
+  advancedThicknessEnabled,
   animal,
   currentDonenessOptions,
   doneness,
@@ -684,14 +710,19 @@ function CookingDetailsStep({
   onBack,
   selectedCut,
   setDoneness,
+  setAdvancedThicknessEnabled,
   setEquipment,
+  setSizePreset,
   setThickness,
-  setWeight,
-  showThickness,
+  setVegetableFormat,
+  setWeightRange,
+  sizePreset,
   t,
   thickness,
-  weight,
+  vegetableFormat,
+  weightRange,
 }: {
+  advancedThicknessEnabled: boolean;
   animal: Animal;
   currentDonenessOptions: SelectOption[];
   doneness: string;
@@ -702,14 +733,44 @@ function CookingDetailsStep({
   onBack: () => void;
   selectedCut: CutItem;
   setDoneness: (value: string) => void;
+  setAdvancedThicknessEnabled: (value: boolean) => void;
   setEquipment: (value: string) => void;
+  setSizePreset: (value: CookingSizePreset) => void;
   setThickness: (value: string) => void;
-  setWeight: (value: string) => void;
-  showThickness: boolean;
+  setVegetableFormat: (value: VegetableFormat) => void;
+  setWeightRange: (value: CookingWeightRange) => void;
+  sizePreset: CookingSizePreset;
   t: AppText;
   thickness: string;
-  weight: string;
+  vegetableFormat: VegetableFormat;
+  weightRange: CookingWeightRange;
 }) {
+  const cutMeta = getCutById(selectedCut.id);
+  const inputProfile = cutMeta
+    ? getInputProfileForCut({
+        cutId: cutMeta.id,
+        animalId: cutMeta.animalId,
+        style: cutMeta.style,
+        inputProfileId: cutMeta.inputProfileId,
+      })
+    : getInputProfileForCut({
+        cutId: selectedCut.id,
+        animalId: animal === "Verduras" ? "vegetables" : "beef",
+        style: "fast",
+      });
+  const showDoneness = inputProfile.showDoneness && currentDonenessOptions.length > 0;
+  const showSizePreset = inputProfile.showSizePreset;
+  const showWeightRange = inputProfile.showWeightRange;
+  const showWeightPreset = inputProfile.showWeightPreset;
+  const showVegetableFormat = inputProfile.showVegetableFormat;
+  const showAdvancedExactThickness = inputProfile.allowAdvancedExactThickness;
+  const weightOptions = (inputProfile.weightOptions ?? []).map((option) => ({
+    value: option.id,
+    label: `${t[option.labelKey]} (${option.rangeLabel})`,
+  }));
+  const hasCurrentWeightValue = weightOptions.some((option) => option.value === weightRange);
+  const weightSelectValue = hasCurrentWeightValue ? weightRange : inputProfile.defaults.weightRange;
+
   return (
     <section className="mx-auto max-w-5xl animate-[fadeIn_220ms_ease-out] space-y-5 sm:space-y-7">
       <AppTopBar backLabel={selectedCut.name} onBack={onBack} />
@@ -734,9 +795,63 @@ function CookingDetailsStep({
       </div>
 
       <div className="grid max-w-4xl gap-4 md:grid-cols-2">
-        <Input label={t.weight} value={weight} onChange={setWeight} placeholder="Ej: 1.2" />
+        {showSizePreset && (
+          <Select
+            label={t.sizePreset}
+            value={sizePreset}
+            onChange={(value) => setSizePreset(value as CookingSizePreset)}
+            options={[
+              { value: "small", label: t.sizeSmall },
+              { value: "medium", label: t.sizeMedium },
+              { value: "large", label: t.sizeLarge },
+            ]}
+          />
+        )}
 
-        {showThickness && (
+        {showWeightRange && (
+          <Select
+            label={t.weightRange}
+            value={weightSelectValue}
+            onChange={(value) => setWeightRange(value as CookingWeightRange)}
+            options={weightOptions}
+          />
+        )}
+
+        {showWeightPreset && (
+          <Select
+            label={t.weightPreset}
+            value={weightSelectValue}
+            onChange={(value) => setWeightRange(value as CookingWeightRange)}
+            options={weightOptions}
+          />
+        )}
+
+        {showVegetableFormat && (
+          <Select
+            label={t.vegetableFormat}
+            value={vegetableFormat}
+            onChange={(value) => setVegetableFormat(value as VegetableFormat)}
+            options={[
+              { value: "whole", label: t.vegetableFormatWhole },
+              { value: "halved", label: t.vegetableFormatHalved },
+              { value: "slices", label: t.vegetableFormatSlices },
+            ]}
+          />
+        )}
+
+        {showAdvancedExactThickness && (
+          <div className="md:col-span-2">
+            <button
+              type="button"
+              onClick={() => setAdvancedThicknessEnabled(!advancedThicknessEnabled)}
+              className="inline-flex items-center text-sm font-semibold text-orange-300 transition-colors hover:text-orange-200"
+            >
+              {advancedThicknessEnabled ? t.hideAdvancedThickness : t.advancedThickness}
+            </button>
+          </div>
+        )}
+
+        {showAdvancedExactThickness && advancedThicknessEnabled && (
           <Input
             label={t.thickness}
             value={thickness}
@@ -745,7 +860,7 @@ function CookingDetailsStep({
           />
         )}
 
-        {currentDonenessOptions.length > 0 && (
+        {showDoneness && (
           <Select
             label={t.doneness}
             value={doneness}
@@ -757,7 +872,7 @@ function CookingDetailsStep({
           label={t.equipment}
           value={equipment}
           onChange={setEquipment}
-          options={equipmentOptions}
+          options={cookingEquipmentOptions}
         />
       </div>
 
