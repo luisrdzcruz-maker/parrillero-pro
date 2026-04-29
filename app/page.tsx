@@ -418,6 +418,32 @@ export default function Home() {
   const currentDonenessOptions = getDonenessSelectOptions(animal, lang);
   const showThickness = cut ? shouldShowThickness(cut) : true;
 
+  function commitNav(
+    nextMode: Mode,
+    nextCookingStep: CookingWizardStep,
+    method: "push" | "replace",
+  ) {
+    const mode = isAllowedMode(nextMode) ? nextMode : "inicio";
+    const cookingStep =
+      mode === "coccion" && isAllowedCookingStep(nextCookingStep) ? nextCookingStep : "animal";
+
+    setMode(mode);
+    setCookingStep(cookingStep);
+
+    if (typeof window === "undefined") return;
+    const search = buildSearchFromNav(mode, cookingStep);
+    const url = `${window.location.pathname}${search}${window.location.hash}`;
+    const state = { mode, cookingStep };
+
+    if (method === "replace") {
+      window.history.replaceState(state, "", url);
+    } else {
+      window.history.pushState(state, "", url);
+    }
+
+    lastPushedNavRef.current = state;
+  }
+
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -448,14 +474,8 @@ export default function Home() {
 
     const nav = parseNavFromSearch(window.location.search);
     const raf = window.requestAnimationFrame(() => {
-      setMode(nav.mode);
-      setCookingStep(nav.cookingStep);
+      commitNav(nav.mode, nav.cookingStep, "replace");
     });
-
-    const canonicalSearch = buildSearchFromNav(nav.mode, nav.cookingStep);
-    const canonicalUrl = `${window.location.pathname}${canonicalSearch}${window.location.hash}`;
-    window.history.replaceState({ mode: nav.mode, cookingStep: nav.cookingStep }, "", canonicalUrl);
-    lastPushedNavRef.current = { mode: nav.mode, cookingStep: nav.cookingStep };
 
     return () => window.cancelAnimationFrame(raf);
   }, []);
@@ -849,7 +869,7 @@ export default function Home() {
     setBlocks({});
     setCheckedItems({});
     resetSaveMenuState();
-    setCookingStep("cut");
+    commitNav("coccion", "cut", "push");
     track({ name: "animal_selected", animal: selectedAnimal, lang });
   }
 
@@ -858,7 +878,7 @@ export default function Home() {
     setBlocks({});
     setCheckedItems({});
     resetSaveMenuState();
-    setCookingStep("details");
+    commitNav("coccion", "details", "push");
     track({ name: "cut_selected", animal, cutId: selectedCutId, lang });
   }
 
@@ -937,7 +957,7 @@ export default function Home() {
       setBlocks(normalizedPlan);
       setCheckedItems({});
       resetSaveMenuState();
-      setCookingStep("result");
+      commitNav("coccion", "result", "push");
       return;
     }
 
@@ -964,7 +984,7 @@ ERROR
     if (ok) {
       track({ name: "cooking_plan_result", path: "ai" });
     }
-    setCookingStep("result");
+    commitNav("coccion", "result", "push");
   }
 
   async function generateMenuPlan() {
@@ -1099,7 +1119,11 @@ ERROR
     if ((nextMode === "plan" || nextMode === "parrillada") && !isPro()) {
       setShowProModal("planning");
     }
-    setMode(nextMode);
+    if (trackHistory) {
+      commitNav(nextMode, nextMode === "coccion" ? "animal" : cookingStep, "push");
+    } else {
+      setMode(nextMode);
+    }
   }
 
   function handleModeChange(nextMode: Mode) {
@@ -1148,12 +1172,12 @@ ERROR
     if (mode !== "coccion") return;
 
     if (cookingStep === "animal" && animal) {
-      setCookingStep("cut");
+      commitNav("coccion", "cut", "push");
       return;
     }
 
     if (cookingStep === "cut" && selectedCut) {
-      setCookingStep("details");
+      commitNav("coccion", "details", "push");
     }
   }
 
