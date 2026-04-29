@@ -499,21 +499,21 @@ export default function Home() {
   }, [mode, cookingStep, showOnboarding]);
 
   // ── Browser history: restore state on popstate (back button / swipe) ───────
-  // Registered once. The handler restores mode + cookingStep and sets the
-  // restoring flag so the push effect skips the next render cycle.
+  // Registered once. URL query params are the source of truth for mode/step.
+  // We still keep history.state shape compatibility, but restoration reads from
+  // window.location.search and sets the restoring flag so the push effect skips
+  // writing a new forward entry during back/forward application.
   useEffect(() => {
-    function onPopState(event: PopStateEvent) {
-      const state = event.state as { mode?: Mode; cookingStep?: CookingWizardStep } | null;
-      if (!state?.mode) return;
-      const restoredStep = (state.cookingStep ?? "animal") as CookingWizardStep;
+    function onPopState() {
+      const nav = parseNavFromSearch(window.location.search);
       // Flag must be set BEFORE the setState calls so the subsequent render's
       // useEffect sees it correctly (refs are synchronous).
       isRestoringNavRef.current = true;
-      lastPushedNavRef.current = { mode: state.mode, cookingStep: restoredStep };
-      setMode(state.mode);
-      setCookingStep(restoredStep);
-      if (restoredStep !== "result") setLoading(false);
-      if (state.mode !== "guardados") setSelectedSavedMenu(null);
+      lastPushedNavRef.current = { mode: nav.mode, cookingStep: nav.cookingStep };
+      setMode(nav.mode);
+      setCookingStep(nav.cookingStep);
+      if (nav.cookingStep !== "result") setLoading(false);
+      if (nav.mode !== "guardados") setSelectedSavedMenu(null);
     }
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
