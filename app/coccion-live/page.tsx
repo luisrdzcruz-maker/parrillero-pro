@@ -62,6 +62,39 @@ const MOCK_STEPS: LiveStep[] = [
   },
 ];
 
+// ─── Save-cook storage ────────────────────────────────────────────────────────
+
+const SAVED_COOKS_KEY = "parrillero_saved_cooks_v1";
+
+type SavedCook = {
+  id: string;
+  savedAt: string;
+  context: string;
+  steps: LiveStep[];
+};
+
+function persistCook(steps: LiveStep[], context: string | undefined) {
+  if (typeof window === "undefined") return;
+  try {
+    const existing: SavedCook[] = JSON.parse(
+      localStorage.getItem(SAVED_COOKS_KEY) ?? "[]",
+    );
+    const entry: SavedCook = {
+      id: `cook_${Date.now()}`,
+      savedAt: new Date().toISOString(),
+      context: context ?? "",
+      steps,
+    };
+    // Keep the 20 most recent saves
+    localStorage.setItem(
+      SAVED_COOKS_KEY,
+      JSON.stringify([entry, ...existing].slice(0, 20)),
+    );
+  } catch {
+    // localStorage unavailable or quota exceeded — silently skip
+  }
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 //
 // Hydration-safe pattern:
@@ -191,6 +224,7 @@ export default function CoccionLivePage() {
             onPause={() => setPaused((v) => !v)}
             onCompleteStep={completeStep}
             onGoToStep={goToStep}
+            onSaveCook={() => persistCook(steps, context)}
           />
         )}
       </div>

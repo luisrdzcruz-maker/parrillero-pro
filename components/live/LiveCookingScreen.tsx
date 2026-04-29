@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, type TouchEvent } from "react";
+import { useRef, useState, type TouchEvent } from "react";
 import TimerDial, { type LivePhase } from "./TimerDial";
 import StepCard from "./StepCard";
 import Timeline from "./Timeline";
@@ -39,6 +39,8 @@ type Props = {
   alertMessage?: string;
   alertsEnabled?: boolean;
   onEnableAlerts?: () => Promise<void>;
+  // Save-cook CTA (optional — shown on completion)
+  onSaveCook?: () => void;
 };
 
 type TouchPoint = { x: number; y: number };
@@ -146,8 +148,11 @@ export default function LiveCookingScreen({
   alertMessage,
   alertsEnabled,
   onEnableAlerts,
+  onSaveCook,
 }: Props) {
   const touchRef = useRef<TouchPoint | null>(null);
+  // "idle" → button shown; "saved" → confirmation shown; stays "saved" permanently
+  const [saveState, setSaveState] = useState<"idle" | "saved">("idle");
   const isEs = lang !== "en";
 
   const step = steps[currentIndex];
@@ -339,13 +344,37 @@ export default function LiveCookingScreen({
 
         {/* Complete state */}
         {phase === "complete" && (
-          <div className="mx-4 mt-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-4 text-center">
-            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-emerald-400">
-              {isEs ? "Cocción completada" : "Cooking complete"}
-            </p>
-            <p className="mt-1.5 text-sm font-semibold text-white/60">
-              {isEs ? "Corta, sirve y disfruta." : "Slice, serve, enjoy."}
-            </p>
+          <div className="mx-4 mt-4 space-y-3">
+            {/* Completion message */}
+            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-4 text-center">
+              <p className="text-[11px] font-black uppercase tracking-[0.22em] text-emerald-400">
+                {isEs ? "Cocción completada" : "Cooking complete"}
+              </p>
+              <p className="mt-1.5 text-sm font-semibold text-white/60">
+                {isEs ? "Corta, sirve y disfruta." : "Slice, serve, enjoy."}
+              </p>
+            </div>
+
+            {/* Save-cook CTA — only shown when the page provides a save handler */}
+            {onSaveCook && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (saveState === "saved") return;
+                  onSaveCook();
+                  setSaveState("saved");
+                }}
+                className={`w-full min-h-[3rem] rounded-2xl text-sm font-black transition-all duration-300 active:scale-[0.98] ${
+                  saveState === "saved"
+                    ? "border border-emerald-500/35 bg-emerald-500/15 text-emerald-300"
+                    : "bg-emerald-500 text-black shadow-[0_4px_28px_rgba(16,185,129,0.38)] hover:bg-emerald-400 active:bg-emerald-600"
+                }`}
+              >
+                {saveState === "saved"
+                  ? (isEs ? "✓ Guardado" : "✓ Saved")
+                  : (isEs ? "Guardar cocción" : "Save this cook")}
+              </button>
+            )}
           </div>
         )}
 
