@@ -222,14 +222,23 @@ function parsePositiveInt(value: string) {
 
 export default function Home() {
   // ── Onboarding gate ─────────────────────────────────────────────────────────
-  // null = not yet read from localStorage (prevents any flicker)
+  // null  = not yet resolved (server render + first paint — avoids hydration mismatch)
   // true  = show onboarding
   // false = go straight to the app
-  const [showOnboarding, setShowOnboarding] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-  
-    return localStorage.getItem(ONBOARDING_STORAGE_KEY) !== "1";
-  });
+  //
+  // IMPORTANT: localStorage must only be read inside useEffect (after hydration).
+  // Reading it during render (even via lazy initializer) causes a server/client
+  // mismatch because the server has no localStorage → useState returns false →
+  // client may return true → React throws a hydration error.
+  const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const raf = window.requestAnimationFrame(() => {
+      const done = localStorage.getItem(ONBOARDING_STORAGE_KEY) === "1";
+      setShowOnboarding(!done);
+    });
+    return () => window.cancelAnimationFrame(raf);
+  }, []);
 
   const [lang, setLang] = useState<Lang>("es");
   const t = texts[lang];

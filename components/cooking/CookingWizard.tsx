@@ -3,6 +3,7 @@
 import ResultGrid from "@/components/ResultGrid";
 import ResultHero from "@/components/ResultHero";
 import FoodCard from "@/components/FoodCard";
+import { CookingLoadingScreen } from "@/components/cooking/CookingLoadingScreen";
 import { Badge, Button, Section } from "@/components/ui";
 import { ds } from "@/lib/design-system";
 import type { AppText, Lang } from "@/lib/i18n/texts";
@@ -156,6 +157,18 @@ export function CookingWizard({
           ? "cut"
           : "animal"
       : cookingStep;
+
+  // ── Narrated loading experience ─────────────────────────────────────────────
+  // Replaces the spinner: full-screen image + cycling status messages + stepped bar
+  if (loading && visibleCookingStep === "details" && selectedCut) {
+    return (
+      <CookingLoadingScreen
+        cutImage={selectedCut.image}
+        cutName={selectedCut.name}
+        lang={lang}
+      />
+    );
+  }
 
   return (
     <div className="space-y-5 sm:space-y-7">

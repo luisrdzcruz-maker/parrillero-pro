@@ -1,1 +1,92 @@
-[]
+[
+  {
+    "id": "beef_ribeye_raw",
+    "category": "cuts",
+    "name": "Ribeye Raw",
+    "animal": "beef",
+    "cut": "ribeye",
+    "state": "raw",
+    "prompt": "raw ribeye steak with exceptional marbling, vivid red meat color with creamy white fat streaks running throughout, thick clean butcher cut, resting on dark polished stone surface, close-up detail showing rich fat cap and intricate marbling pattern, ultra realistic food photography, premium steakhouse style, pure dark background, dramatic side lighting, high contrast, cinematic shadows, shallow depth of field, 85mm lens, f1.8, detailed texture, cool tones, professional food styling, no humans, no hands, no text, no labels, centered composition"
+  },
+  {
+    "id": "beef_ribeye_grilled",
+    "category": "cuts",
+    "name": "Ribeye Grilled",
+    "animal": "beef",
+    "cut": "ribeye",
+    "state": "grilled",
+    "prompt": "perfectly grilled ribeye steak with deep cross-hatch grill marks, caramelized dark crust, fat rendered and glistening, juicy pink interior visible at the sliced edge, subtle smoke rising, warm fire glow reflecting on the surface, resting on dark surface, ultra realistic food photography, premium steakhouse style, pure dark background, dramatic side lighting, high contrast, cinematic shadows, shallow depth of field, 85mm lens, f1.8, detailed texture, juicy, warm amber tones, professional food styling, no humans, no hands, no text, no labels, centered composition"
+  },
+  {
+    "id": "beef_tomahawk_raw",
+    "category": "cuts",
+    "name": "Tomahawk Raw",
+    "animal": "beef",
+    "cut": "tomahawk",
+    "state": "raw",
+    "prompt": "raw tomahawk steak with long frenched rib bone extending dramatically, exceptional marbling, vivid red meat with thick fat cap, clean butcher cut, impressive massive size, bone clean and white, resting on dark aged wood surface, ultra realistic food photography, premium steakhouse style, pure dark background, dramatic side lighting, high contrast, cinematic shadows, shallow depth of field, 85mm lens, f1.8, detailed texture, cool fresh tones, professional food styling, no humans, no hands, no text, no labels, centered composition"
+  },
+  {
+    "id": "beef_tomahawk_grilled",
+    "category": "cuts",
+    "name": "Tomahawk Grilled",
+    "animal": "beef",
+    "cut": "tomahawk",
+    "state": "grilled",
+    "prompt": "impressive grilled tomahawk steak with long exposed rib bone, deep charred crust with dramatic grill marks, fat rendered along edges, juicy pink center visible at slice, subtle smoke wisps, warm dramatic fire glow, resting on dark wooden board, ultra realistic food photography, premium steakhouse style, pure dark background, dramatic side lighting, high contrast, cinematic shadows, shallow depth of field, 85mm lens, f1.8, detailed texture, juicy, warm amber tones, professional food styling, no humans, no hands, no text, no labels, centered composition"
+  },
+  {
+    "id": "beef_picanha_raw",
+    "category": "cuts",
+    "name": "Picanha Raw",
+    "animal": "beef",
+    "cut": "picanha",
+    "state": "raw",
+    "prompt": "raw picanha cut with distinctive thick fat cap covering one side, deep red vibrant meat color, clean precise butcher cut, generous fat layer uniform and creamy white, resting on dark stone surface, ultra realistic food photography, premium steakhouse style, pure dark background, dramatic side lighting, high contrast, cinematic shadows, shallow depth of field, 85mm lens, f1.8, detailed texture, cool fresh tones, professional food styling, no humans, no hands, no text, no labels, centered composition"
+  },
+  {
+    "id": "beef_picanha_grilled",
+    "category": "cuts",
+    "name": "Picanha Grilled",
+    "animal": "beef",
+    "cut": "picanha",
+    "state": "grilled",
+    "prompt": "grilled picanha with fat cap rendered golden and caramelized on the outside, deep grill marks, juicy red center visible at the carved face, slight char on edges, subtle smoke, warm fire glow, resting on dark wood surface, ultra realistic food photography, premium steakhouse style, pure dark background, dramatic side lighting, high contrast, cinematic shadows, shallow depth of field, 85mm lens, f1.8, detailed texture, juicy, warm amber tones, professional food styling, no humans, no hands, no text, no labels, centered composition"
+  },
+  {
+    "id": "beef_entrecote_raw",
+    "category": "cuts",
+    "name": "Entrecôte Raw",
+    "animal": "beef",
+    "cut": "entrecote",
+    "state": "raw",
+    "prompt": "raw entrecote steak, fine marbling throughout deep red meat, thin fat rim along edge, clean precise butcher cut, resting on dark polished stone surface, ultra realistic food photography, premium steakhouse style, pure dark background, dramatic side lighting, high contrast, cinematic shadows, shallow depth of field, 85mm lens, f1.8, detailed texture, cool fresh tones, professional food styling, no humans, no hands, no text, no labels, centered composition"
+  },
+  {
+    "id": "beef_entrecote_grilled",
+    "category": "cuts",
+    "name": "Entrecôte Grilled",
+    "animal": "beef",
+    "cut": "entrecote",
+    "state": "grilled",
+    "prompt": "grilled entrecote steak with clean grill marks across the surface, caramelized dark crust, rendered fat rim, juicy interior visible at the cut edge, subtle smoke, warm fire glow reflecting on surface, resting on dark surface, ultra realistic food photography, premium steakhouse style, pure dark background, dramatic side lighting, high contrast, cinematic shadows, shallow depth of field, 85mm lens, f1.8, detailed texture, juicy, warm amber tones, professional food styling, no humans, no hands, no text, no labels, centered composition"
+  },
+  {
+    "id": "beef_chuck_raw",
+    "category": "cuts",
+    "name": "Chuck Raw",
+    "animal": "beef",
+    "cut": "chuck",
+    "state": "raw",
+    "prompt": "raw chuck steak with robust marbling, deep red meat with visible fat streaks, hearty thick cut, clean butcher surface, resting on dark aged wooden surface, ultra realistic food photography, premium steakhouse style, pure dark background, dramatic side lighting, high contrast, cinematic shadows, shallow depth of field, 85mm lens, f1.8, detailed texture, cool fresh tones, professional food styling, no humans, no hands, no text, no labels, centered composition"
+  },
+  {
+    "id": "beef_chuck_grilled",
+    "category": "cuts",
+    "name": "Chuck Grilled",
+    "animal": "beef",
+    "cut": "chuck",
+    "state": "grilled",
+    "prompt": "grilled chuck steak with pronounced grill marks, rich caramelized crust, rendered fat pockets, rustic hearty texture, juicy interior at the sliced face, subtle smoke and warm fire glow, resting on dark wooden board, ultra realistic food photography, premium steakhouse style, pure dark background, dramatic side lighting, high contrast, cinematic shadows, shallow depth of field, 85mm lens, f1.8, detailed texture, juicy, warm amber tones, professional food styling, no humans, no hands, no text, no labels, centered composition"
+  }
+]

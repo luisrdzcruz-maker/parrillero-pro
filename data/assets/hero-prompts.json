@@ -1,0 +1,26 @@
+[
+  {
+    "id": "hero_ribeye_fire",
+    "category": "hero",
+    "name": "Ribeye on Fire",
+    "prompt": "perfectly grilled ribeye steak on cast iron grill grates, intense orange flames rising below, fat rendering and sizzling, smoke drifting upward, coarse salt crystals visible on surface, juicy rich marbled texture, cinematic fire lighting from below, ultra realistic food photography, premium steakhouse style, pure dark background, dramatic side lighting, high contrast, cinematic shadows, shallow depth of field, 85mm lens, f1.8, detailed texture, warm amber tones, professional food styling, no humans, no hands, no text, no labels, centered composition, vertical mobile app hero image, generous negative space above for UI overlay"
+  },
+  {
+    "id": "hero_grill_fire",
+    "category": "hero",
+    "name": "Grill Fire Background",
+    "prompt": "open charcoal grill with glowing fire, mature charcoal bed with intense orange and amber flame glow, heat shimmer rising, dense smoke drifting upward, cast iron grill bars clearly visible and glowing, premium BBQ atmosphere, no food on grill, ultra realistic premium cooking setup photography, pure dark background, dramatic side lighting, high contrast, cinematic shadows, shallow depth of field, 85mm lens, f1.8, warm fire tones, no humans, no hands, no text, no labels, centered composition, vertical mobile app hero image, generous negative space for UI overlay"
+  },
+  {
+    "id": "hero_live_cooking",
+    "category": "hero",
+    "name": "Live Cooking Feature",
+    "prompt": "premium grill scene with a thick ribeye steak searing intensely on hot grill grates, strong circular warm light halo glowing in the dark background evoking a real-time countdown atmosphere, cinematic smoke rising around the steak, intense heat shimmer, deep grill marks forming on the crust, no visible text or numbers or clocks, ultra realistic food photography, premium steakhouse style, pure dark background, dramatic side lighting, high contrast, cinematic shadows, shallow depth of field, 85mm lens, f1.8, warm amber glow, professional food styling, no humans, no hands, no labels, centered composition, vertical mobile app hero image, generous negative space for UI overlay"
+  },
+  {
+    "id": "hero_premium_steak_board",
+    "category": "hero",
+    "name": "Premium Steak Board",
+    "prompt": "thick grilled ribeye steak sliced to reveal pink juicy center, resting on a dark aged wooden cutting board, juices pooling around the slices, coarse salt crystals scattered, fresh rosemary and thyme garnish, warm dramatic side lighting with deep shadows, premium restaurant presentation, ultra realistic food photography, premium steakhouse style, pure dark background, high contrast, cinematic shadows, shallow depth of field, 85mm lens, f1.8, detailed texture, slight smoke, warm amber tones, professional food styling, no humans, no hands, no text, no labels, centered composition, vertical mobile app hero image, generous negative space above for UI overlay"
+  }
+]

@@ -2,11 +2,10 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui";
 import type { Mode } from "@/components/navigation/AppHeader";
 import type { Animal } from "@/lib/media/animalMedia";
 import type { AppText, Lang } from "@/lib/i18n/texts";
-import { type ReactNode, useLayoutEffect, useState } from "react";
+import { type MouseEvent, type ReactNode, useLayoutEffect, useState } from "react";
 
 // ─── Entrance animation ───────────────────────────────────────────────────────
 
@@ -40,7 +39,7 @@ function HeroSection({
   onStartCooking,
   onPlanSession,
 }: {
-  onStartCooking: () => void;
+  onStartCooking: (e: MouseEvent<HTMLButtonElement>) => void;
   onPlanSession: () => void;
 }) {
   return (
@@ -98,19 +97,20 @@ function HeroSection({
 
         {/* CTAs */}
         <div className="mt-8 flex flex-wrap items-center gap-3">
-          {/* Primary */}
+          {/* Primary — plain button so onClick carries clientX/Y for the ripple */}
           <div className="relative">
             <div
               aria-hidden
               className="pointer-events-none absolute -inset-2 rounded-[22px] blur-xl"
               style={{ background: "rgba(234,88,12,0.30)" }}
             />
-            <Button
-              className="relative min-h-[54px] touch-manipulation rounded-2xl px-8 py-3.5 text-base font-black shadow-[0_10px_40px_rgba(234,88,12,0.50)] transition-all duration-200 active:scale-[0.97]"
+            <button
+              type="button"
               onClick={onStartCooking}
+              className="relative min-h-[54px] touch-manipulation rounded-2xl bg-orange-500 px-8 py-3.5 text-base font-black text-black shadow-[0_10px_40px_rgba(234,88,12,0.50)] transition-all duration-200 hover:bg-orange-400 active:scale-[0.97]"
             >
               Empezar cocción <span aria-hidden className="ml-1.5">→</span>
-            </Button>
+            </button>
           </div>
 
           {/* Secondary */}
@@ -174,7 +174,7 @@ function AnimalQuickCard({
   onClick,
 }: {
   entry: AnimalEntry;
-  onClick: () => void;
+  onClick: (e: MouseEvent<HTMLButtonElement>) => void;
 }) {
   const [imgError, setImgError] = useState(false);
 
@@ -399,6 +399,10 @@ function HomeSettingsStrip({
 
 // ─── HomeScreen ───────────────────────────────────────────────────────────────
 
+// ─── Ripple transition state ──────────────────────────────────────────────────
+
+type RippleState = { x: number; y: number; id: number } | null;
+
 export function HomeScreen({
   lang,
   onLangChange,
@@ -415,6 +419,15 @@ export function HomeScreen({
   t: AppText;
 }) {
   const router = useRouter();
+
+  // Radial ripple that plays on tap then resolves into the cooking screen
+  const [ripple, setRipple] = useState<RippleState>(null);
+
+  function fireRipple(x: number, y: number, action: () => void) {
+    setRipple({ x, y, id: Date.now() });
+    // Fire the action mid-animation (feels instant to the user)
+    setTimeout(action, 150);
+  }
 
   const quickActions: { icon: string; image: string; label: string; sub: string; mode: Mode }[] = [
     {
@@ -451,11 +464,36 @@ export function HomeScreen({
   ];
 
   return (
+    <>
+      {/* ── Tap-origin radial ripple overlay ─────────────────────────────────
+          Fixed at z-[60], pointer-events-none so it doesn't block the
+          underlying navigation. Cleared when the animation ends.         */}
+      {ripple && (
+        <div
+          key={ripple.id}
+          className="pointer-events-none fixed inset-0 z-[60] overflow-hidden"
+          aria-hidden
+        >
+          <div
+            className="animate-tap-ripple absolute rounded-full"
+            style={{
+              left: ripple.x,
+              top: ripple.y,
+              width: 8,
+              height: 8,
+              background:
+                "radial-gradient(circle, rgba(255,140,0,0.90) 0%, rgba(249,115,22,0.70) 30%, rgba(234,88,12,0.40) 65%, transparent 100%)",
+            }}
+            onAnimationEnd={() => setRipple(null)}
+          />
+        </div>
+      )}
+
     <div className="mx-auto w-full max-w-2xl space-y-3 overflow-x-hidden sm:space-y-4 lg:max-w-3xl">
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <FadeIn>
         <HeroSection
-          onStartCooking={() => onModeChange("coccion")}
+          onStartCooking={(e) => fireRipple(e.clientX, e.clientY, () => onModeChange("coccion"))}
           onPlanSession={() => onModeChange("plan")}
         />
       </FadeIn>
@@ -472,10 +510,12 @@ export function HomeScreen({
               <AnimalQuickCard
                 key={entry.animal}
                 entry={entry}
-                onClick={() =>
-                  onStartCookingWith
-                    ? onStartCookingWith(entry.animal)
-                    : onModeChange("coccion")
+                onClick={(e) =>
+                  fireRipple(e.clientX, e.clientY, () =>
+                    onStartCookingWith
+                      ? onStartCookingWith(entry.animal)
+                      : onModeChange("coccion"),
+                  )
                 }
               />
             ))}
@@ -514,5 +554,6 @@ export function HomeScreen({
         <HomeSettingsStrip lang={lang} onLangChange={onLangChange} />
       </FadeIn>
     </div>
+    </>
   );
 }

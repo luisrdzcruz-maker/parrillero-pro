@@ -62,20 +62,62 @@ function getPhase(
 // ─── Style maps ───────────────────────────────────────────────────────────────
 
 const STATUS_COLOR: Record<LivePhase, string> = {
-  idle: "text-zinc-400",
-  active: "text-orange-400",
-  urgent: "text-yellow-400",
-  rest: "text-indigo-400",
+  idle:     "text-zinc-400",
+  active:   "text-orange-400",
+  urgent:   "text-yellow-400",
+  rest:     "text-indigo-400",
   complete: "text-emerald-400",
 };
 
-const AMBIENT_COLOR: Record<LivePhase, string> = {
-  idle: "",
-  active: "rgba(249,115,22,0.10)",
-  urgent: "rgba(234,179,8,0.09)",
-  rest: "rgba(129,140,248,0.08)",
-  complete: "rgba(16,185,129,0.09)",
+// CTA button shadow by phase (the "complete step" primary button)
+const CTA_SHADOW: Record<LivePhase, string> = {
+  idle:     "shadow-none",
+  active:   "shadow-[0_8px_32px_rgba(249,115,22,0.40)]",
+  urgent:   "shadow-[0_8px_32px_rgba(234,179,8,0.45)]",
+  rest:     "shadow-none",
+  complete: "shadow-[0_8px_32px_rgba(16,185,129,0.40)]",
 };
+
+// ─── Zone-aware background glow ───────────────────────────────────────────────
+// direct heat → warm orange; indirect → cool indigo; rest/serve → soft purple
+
+function getBgStyle(phase: LivePhase, zone: string): React.CSSProperties {
+  const z = zone.toLowerCase();
+
+  if (phase === "complete") {
+    return {
+      backgroundImage:
+        "radial-gradient(ellipse at 50% 0%, rgba(16,185,129,0.18), transparent 58%), linear-gradient(180deg, #020202, #040404)",
+    };
+  }
+  if (phase === "urgent") {
+    return {
+      backgroundImage:
+        "radial-gradient(ellipse at 50% 15%, rgba(234,179,8,0.20), transparent 58%), radial-gradient(ellipse at 50% 100%, rgba(234,179,8,0.10), transparent 45%), linear-gradient(180deg, #020202, #040404)",
+    };
+  }
+  if (phase === "rest" || z === "reposo" || z === "servir") {
+    return {
+      backgroundImage:
+        "radial-gradient(ellipse at 50% 0%, rgba(129,140,248,0.14), transparent 55%), linear-gradient(180deg, #020202, #040404)",
+    };
+  }
+  // active / idle — distinguish by zone heat
+  if (z.includes("directo") || z === "directo") {
+    return {
+      backgroundImage:
+        "radial-gradient(ellipse at 50% 20%, rgba(249,115,22,0.22), transparent 60%), radial-gradient(ellipse at 50% 100%, rgba(234,88,12,0.10), transparent 45%), linear-gradient(180deg, #020202, #040404)",
+    };
+  }
+  if (z.includes("indirecto") || z === "indirecto") {
+    return {
+      backgroundImage:
+        "radial-gradient(ellipse at 50% 18%, rgba(99,102,241,0.13), transparent 55%), linear-gradient(180deg, #020202, #040404)",
+    };
+  }
+  // fallback (idle / unknown zone)
+  return { backgroundColor: "#020202" };
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -117,13 +159,8 @@ export default function LiveCookingScreen({
   const nextStep = steps[currentIndex + 1] ?? null;
   const phase = getPhase(step, remaining, paused, isLast);
 
-  // Ambient background shifts by phase
-  const ambientColor = AMBIENT_COLOR[phase];
-  const bgStyle = ambientColor
-    ? {
-        backgroundImage: `radial-gradient(circle at 50% 0%, ${ambientColor}, transparent 50%), linear-gradient(180deg, #030303, #050505)`,
-      }
-    : { backgroundColor: "#030303" };
+  // Zone-aware background glow (direct = orange, indirect = indigo, rest = purple)
+  const bgStyle = getBgStyle(phase, step.zone);
 
   // ── Derived labels ──────────────────────────────────────────────────────────
   const pauseLabel = paused ? (isEs ? "Reanudar" : "Resume") : (isEs ? "Pausar" : "Pause");
@@ -226,8 +263,10 @@ export default function LiveCookingScreen({
               </button>
             )
           )}
-          <span className="text-[10px] font-semibold text-white/22">
-            {currentIndex + 1}/{steps.length}
+          {/* Step counter — prominent so user feels orientation immediately */}
+          <span className="rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-0.5 text-[11px] font-black tabular-nums text-white/70">
+            {currentIndex + 1}
+            <span className="font-medium text-white/30"> / {steps.length}</span>
           </span>
         </div>
       </header>
@@ -241,8 +280,8 @@ export default function LiveCookingScreen({
           </div>
         )}
 
-        {/* ── Zone 2: Timer Dial (~200px) ────────────────────────────────── */}
-        <div className="flex justify-center py-7">
+        {/* ── Zone 2: Timer Dial ──────────────────────────────────────────── */}
+        <div className="flex justify-center py-5">
           <TimerDial total={step.duration} remaining={remaining} phase={phase} />
         </div>
 
@@ -261,18 +300,27 @@ export default function LiveCookingScreen({
           />
         </div>
 
-        {/* ── Zone 4: Next Step Preview (~60px) ──────────────────────────── */}
+        {/* ── Zone 4: Next Step Preview ────────────────────────────────────── */}
         {nextStep && (
-          <div className="mx-4 mt-2 flex items-center gap-3 rounded-2xl border border-white/[0.05] bg-white/[0.012] px-4 py-3">
+          <div className="mx-4 mt-2 flex items-center gap-3 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.018] px-4 py-3">
+            {/* Phase-colored left accent bar */}
+            <div
+              className={`h-full w-[3px] self-stretch rounded-full opacity-60 ${
+                phase === "urgent"  ? "bg-yellow-400" :
+                phase === "rest"    ? "bg-indigo-400" :
+                phase === "complete"? "bg-emerald-400" :
+                                     "bg-orange-400"
+              }`}
+            />
             <div className="min-w-0 flex-1">
-              <p className="text-[9px] font-black uppercase tracking-[0.22em] text-white/25">
+              <p className="text-[9px] font-black uppercase tracking-[0.24em] text-white/28">
                 {isEs ? "Siguiente" : "Next"}
               </p>
-              <p className="mt-0.5 line-clamp-1 text-sm font-bold text-white/45">
+              <p className="mt-0.5 line-clamp-1 text-[13px] font-bold text-white/52">
                 {nextStep.label}
               </p>
             </div>
-            <span className="shrink-0 text-[11px] font-bold text-white/25">
+            <span className="shrink-0 font-mono text-[11px] font-semibold tabular-nums text-white/28">
               {nextStep.duration ? formatTime(nextStep.duration) : "—"}
             </span>
           </div>
@@ -335,12 +383,12 @@ export default function LiveCookingScreen({
             type="button"
             onClick={onCompleteStep}
             disabled={phase === "complete"}
-            className={`min-h-[3.5rem] flex-1 rounded-2xl text-base font-black transition active:scale-[0.97] disabled:opacity-35 ${
+            className={`min-h-[3.5rem] flex-1 rounded-2xl text-base font-black transition-all duration-200 active:scale-[0.97] disabled:opacity-35 ${CTA_SHADOW[phase]} ${
               phase === "complete"
-                ? "bg-emerald-500 text-black shadow-lg shadow-emerald-500/20"
+                ? "bg-emerald-500 text-black"
                 : phase === "urgent"
-                  ? "bg-yellow-400 text-black shadow-lg shadow-yellow-400/25 hover:bg-yellow-300"
-                  : "bg-orange-500 text-black shadow-lg shadow-orange-500/20 hover:bg-orange-400"
+                  ? "bg-yellow-400 text-black hover:bg-yellow-300"
+                  : "bg-orange-500 text-black hover:bg-orange-400"
             }`}
           >
             {completeLabel}

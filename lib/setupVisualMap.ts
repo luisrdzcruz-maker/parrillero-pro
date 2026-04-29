@@ -1,72 +1,49 @@
 // AUTO-GENERATED FILE. DO NOT EDIT MANUALLY.
 // Source: data/assets/setup-prompts.json
 
+export type SetupEquipment = string;
+export type SetupType = string;
+
 export const setupVisualMap: Record<string, string> = {
   "gas:direct": "/setup/setup_gas_direct_heat.webp",
   "gas:two-zone": "/setup/setup_gas_two_zone.webp",
-  "charcoal:two-zone": "/setup/setup_charcoal_two_zone.webp",
+  "charcoal:two-zone": "/setup/setup_fire_two_zone.webp",
   "kamado:indirect": "/setup/setup_kamado_indirect_deflector.webp",
-  "indoor:pan-oven": "/setup/setup_indoor_pan_oven.webp"
+  "indoor:pan-oven": "/setup/setup_indoor_pan_oven.webp",
+  "charcoal:direct": "/setup/setup_charcoal_embers.webp",
+  "charcoal:indirect": "/setup/setup_fire_indirect_heat.webp"
 };
 
 export const SETUP_VISUAL_FALLBACK = "/setup/setup_gas_direct_heat.webp";
 
-export type SetupEquipment = "gas" | "charcoal" | "kamado" | "indoor";
-export type SetupType =
-  | "direct"
-  | "two-zone"
-  | "indirect"
-  | "reverse-sear"
-  | "low-slow"
-  | "pan-oven";
-
-export function getSetupVisual(equipment?: SetupEquipment, setup?: SetupType): string {
+export function getSetupVisual(equipment?: string, setup?: string): string {
   const key = `${equipment}:${setup}`;
   return setupVisualMap[key] ?? SETUP_VISUAL_FALLBACK;
 }
 
-export function detectSetupFromText(text: string): SetupType {
-  const normalized = (text ?? "")
+function normalizeSetupText(text = ""): string {
+  return text
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, " ");
+    .replace(/[\u0300-\u036f]/g, "");
+}
 
-  if (normalized.includes("reverse sear") || normalized.includes("reverse-sear")) {
-    return "reverse-sear";
-  }
+export function detectSetupFromText(text?: string): SetupType {
+  const normalized = normalizeSetupText(text);
+  if (!normalized) return "two-zone";
 
+  if (/(reverse sear|reverse-sear|sellado inverso)/.test(normalized)) return "reverse-sear";
   if (
-    normalized.includes("two zone") ||
-    normalized.includes("two-zone") ||
-    normalized.includes("direct + indirect")
+    /(two zone|two-zone|direct\s*\+\s*indirect|directo\s*\+\s*indirecto|dos zonas)/.test(
+      normalized
+    )
   ) {
     return "two-zone";
   }
-
-  if (normalized.includes("indirect")) {
-    return "indirect";
-  }
-
-  if (normalized.includes("direct heat") || normalized.includes("directo")) {
-    return "direct";
-  }
-
-  if (
-    normalized.includes("smoke") ||
-    normalized.includes("smoking") ||
-    normalized.includes("low and slow")
-  ) {
-    return "low-slow";
-  }
-
-  if (
-    normalized.includes("pan") ||
-    normalized.includes("sarten") ||
-    normalized.includes("oven") ||
-    normalized.includes("horno")
-  ) {
-    return "pan-oven";
-  }
+  if (/(indirect|indirecto)/.test(normalized)) return "indirect";
+  if (/(direct heat|direct|directo)/.test(normalized)) return "direct";
+  if (/(smoke|smoking|ahumado|low and slow)/.test(normalized)) return "low-slow";
+  if (/(pan|sarten|oven|horno)/.test(normalized)) return "pan-oven";
 
   return "two-zone";
 }

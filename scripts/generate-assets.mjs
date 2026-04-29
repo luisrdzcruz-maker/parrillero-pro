@@ -4,7 +4,7 @@ dotenv.config({ path: ".env.local" });
 import fs from "fs";
 import path from "path";
 
-const SUPPORTED_CATEGORIES = ["setup", "cuts", "vegetables", "icons", "steps"];
+const SUPPORTED_CATEGORIES = ["setup", "cuts", "vegetables", "icons", "steps", "hero"];
 const dryRun = ["1", "true", "yes"].includes(String(process.env.DRY_RUN ?? "").toLowerCase());
 const maxImagesPerRun = parseMaxImagesPerRun(process.env.MAX_IMAGES_PER_RUN);
 const maxAttempts = 3;

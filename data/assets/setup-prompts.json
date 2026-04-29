@@ -28,5 +28,29 @@
     "equipment": "indoor",
     "setup": "pan-oven",
     "prompt": "modern kitchen setup for pan sear and gentle oven finish, hot cast iron skillet on stovetop in foreground, softly glowing oven in background, premium indoor cooking workflow, dark cinematic kitchen, no food, no humans, ultra realistic premium cooking setup photography, dramatic side lighting, high contrast, warm oven glow, shallow depth of field, 85mm lens, f1.8, realistic materials, no text, no labels, centered composition, vertical mobile app hero image, clean negative space, high detail, cinematic shadows"
+  },
+  {
+    "id": "setup_fire_direct_heat",
+    "equipment": "charcoal",
+    "setup": "direct",
+    "prompt": "open charcoal grill with intense direct flames burning vigorously under cast iron grates, every grate bar glowing hot, orange and yellow flame tongues rising through the bars, dramatic heat shimmer above grates, no food on grill, pure dark background, ultra realistic premium cooking setup photography, dramatic side lighting, high contrast, warm fire glow, shallow depth of field, 85mm lens, f1.8, realistic materials, no humans, no hands, no text, no labels, centered composition, vertical mobile app hero image, clean negative space, high detail, cinematic shadows"
+  },
+  {
+    "id": "setup_fire_indirect_heat",
+    "equipment": "charcoal",
+    "setup": "indirect",
+    "prompt": "open charcoal grill with fire and coals pushed entirely to one side, that side glowing intensely with orange flames, the opposite side cooler and darker creating a clear indirect heat zone, no food on grill, subtle smoke, pure dark background, ultra realistic premium cooking setup photography, dramatic side lighting, high contrast, warm fire glow vs cool shadow contrast, shallow depth of field, 85mm lens, f1.8, realistic materials, no humans, no hands, no text, no labels, centered composition, vertical mobile app hero image, clean negative space, high detail, cinematic shadows"
+  },
+  {
+    "id": "setup_fire_two_zone",
+    "equipment": "charcoal",
+    "setup": "two-zone",
+    "prompt": "open charcoal grill prepared for two-zone cooking, left half blazing with tall orange flames and glowing coals, right half empty dark and cool, sharp visual separation between the hot fire zone and the cool indirect zone, no food, subtle smoke over hot side, pure dark background, ultra realistic premium cooking setup photography, dramatic side lighting, high contrast, warm fire orange versus cool dark shadow, shallow depth of field, 85mm lens, f1.8, realistic materials, no humans, no hands, no text, no labels, centered composition, vertical mobile app hero image, clean negative space, high detail, cinematic shadows"
+  },
+  {
+    "id": "setup_charcoal_embers",
+    "equipment": "charcoal",
+    "setup": "direct",
+    "prompt": "mature charcoal ember bed fully ashed over, ash-grey coals with deep red-orange glow pulsing underneath, no open flames, stable and even radiant cooking heat, thin wisps of white smoke, pure dark background, ultra realistic premium cooking setup photography, dramatic side lighting, high contrast, warm ember glow, shallow depth of field, 85mm lens, f1.8, realistic materials, no humans, no hands, no text, no labels, centered composition, vertical mobile app hero image, clean negative space, high detail, cinematic shadows"
   }
 ]

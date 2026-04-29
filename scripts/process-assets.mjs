@@ -5,7 +5,7 @@ import sharp from "sharp";
 import fs from "fs";
 import path from "path";
 
-const SUPPORTED_CATEGORIES = ["setup", "cuts", "vegetables", "icons", "steps"];
+const SUPPORTED_CATEGORIES = ["setup", "cuts", "vegetables", "icons", "steps", "hero"];
 const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg"]);
 const QUALITY = 86;
 
@@ -20,6 +20,7 @@ const CATEGORY_CONFIG = {
     background: { r: 0, g: 0, b: 0, alpha: 0 },
   },
   steps: { width: 1200, height: 1600, fit: "cover" },
+  hero: { width: 1200, height: 1600, fit: "cover" },
 };
 
 function getCategoryFromArgs() {

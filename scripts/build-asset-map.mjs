@@ -4,7 +4,7 @@ dotenv.config({ path: ".env.local" });
 import fs from "fs";
 import path from "path";
 
-const SUPPORTED_CATEGORIES = ["setup", "cuts", "vegetables", "icons", "steps"];
+const SUPPORTED_CATEGORIES = ["setup", "cuts", "vegetables", "icons", "steps", "hero"];
 
 function getCategoryFromArgs() {
   const category = process.argv[2];
@@ -67,13 +67,17 @@ function buildMapFileContent({ category, items, promptsPath }) {
   const getterName = `get${pascalCategory}Visual`;
   const defaultFallback = items.length > 0 ? `/${category}/${items[0].id}.webp` : `/${category}/fallback.webp`;
 
-  const entries = items.map((item) => {
+  const visualEntries = new Map();
+  items.forEach((item) => {
     if (typeof item.id !== "string") {
       throw new Error(`Each item must include id: ${JSON.stringify(item)}`);
     }
     const key = buildKey(item);
-    return `  "${key}": "/${category}/${item.id}.webp"`;
+    visualEntries.set(key, `/${category}/${item.id}.webp`);
   });
+  const entries = Array.from(visualEntries.entries()).map(
+    ([key, visualPath]) => `  "${key}": "${visualPath}"`
+  );
 
   return `// AUTO-GENERATED FILE. DO NOT EDIT MANUALLY.
 // Source: ${path.relative(process.cwd(), promptsPath)}
@@ -102,12 +106,19 @@ function buildLegacySetupMapContent(items) {
     ? `/setup/${firstSetupItem.id}.webp`
     : "/setup/setup_gas_two_zone.webp";
 
-  const entries = setupItems.map(
-    (item) => `  "${item.equipment}:${item.setup}": "/setup/${item.id}.webp"`
+  const visualEntries = new Map();
+  setupItems.forEach((item) => {
+    visualEntries.set(`${item.equipment}:${item.setup}`, `/setup/${item.id}.webp`);
+  });
+  const entries = Array.from(visualEntries.entries()).map(
+    ([key, visualPath]) => `  "${key}": "${visualPath}"`
   );
 
   return `// AUTO-GENERATED FILE. DO NOT EDIT MANUALLY.
 // Source: data/assets/setup-prompts.json
+
+export type SetupEquipment = string;
+export type SetupType = string;
 
 export const setupVisualMap: Record<string, string> = {
 ${entries.join(",\n")}
@@ -118,6 +129,33 @@ export const SETUP_VISUAL_FALLBACK = "${fallbackPath}";
 export function getSetupVisual(equipment?: string, setup?: string): string {
   const key = \`\${equipment}:\${setup}\`;
   return setupVisualMap[key] ?? SETUP_VISUAL_FALLBACK;
+}
+
+function normalizeSetupText(text = ""): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\\u0300-\\u036f]/g, "");
+}
+
+export function detectSetupFromText(text?: string): SetupType {
+  const normalized = normalizeSetupText(text);
+  if (!normalized) return "two-zone";
+
+  if (/(reverse sear|reverse-sear|sellado inverso)/.test(normalized)) return "reverse-sear";
+  if (
+    /(two zone|two-zone|direct\\s*\\+\\s*indirect|directo\\s*\\+\\s*indirecto|dos zonas)/.test(
+      normalized
+    )
+  ) {
+    return "two-zone";
+  }
+  if (/(indirect|indirecto)/.test(normalized)) return "indirect";
+  if (/(direct heat|direct|directo)/.test(normalized)) return "direct";
+  if (/(smoke|smoking|ahumado|low and slow)/.test(normalized)) return "low-slow";
+  if (/(pan|sarten|oven|horno)/.test(normalized)) return "pan-oven";
+
+  return "two-zone";
 }
 `;
 }

@@ -25,6 +25,7 @@
     "pipeline:vegetables": "npm run pipeline:assets -- vegetables",
     "pipeline:icons": "npm run pipeline:assets -- icons",
     "pipeline:steps": "npm run pipeline:assets -- steps",
+    "pipeline:hero": "npm run pipeline:assets -- hero",
     "qa:responses": "tsx scripts/cooking-response-audit.ts",
     "check:ui": "tsx scripts/print-ui-checklist.ts",
     "check": "npm run lint && npm run build && npm run qa:cooking && npm run check:ui",

@@ -3,7 +3,7 @@ dotenv.config({ path: ".env.local" });
 
 import { spawn } from "child_process";
 
-const SUPPORTED_CATEGORIES = ["setup", "cuts", "vegetables", "icons", "steps"];
+const SUPPORTED_CATEGORIES = ["setup", "cuts", "vegetables", "icons", "steps", "hero"];
 
 function getCategoryFromArgs() {
   const category = process.argv[2];
