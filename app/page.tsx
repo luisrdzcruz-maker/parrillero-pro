@@ -20,10 +20,18 @@ import {
 } from "@/components/cooking/CookingWizard";
 import { HomeScreen } from "@/components/home/HomeScreen";
 import {
-  BottomNavigation,
   DesktopModeTabs,
   type Mode,
 } from "@/components/navigation/AppHeader";
+import { AppBottomNav } from "@/components/navigation/AppBottomNav";
+import {
+  CookingResultScreen,
+  copySavedMenu,
+  isLocalSavedMenu,
+  type SavedMenu,
+  type SavedMenuType,
+  type ShareStatus,
+} from "@/components/results/CookingResultScreen";
 import { PlanHub, type PlanMode } from "@/components/planning/PlanHub";
 import { Button, Card, Grid, Section } from "@/components/ui";
 import { track } from "@/lib/analytics";
@@ -63,19 +71,6 @@ type TouchPoint = {
   x: number;
   y: number;
 };
-
-type SavedMenu = {
-  id: string;
-  title: string;
-  date: string;
-  blocks: Blocks;
-  type?: SavedMenuType;
-  is_public?: boolean;
-  share_slug?: string | null;
-};
-
-type SavedMenuType = "cooking_plan" | "generated_menu" | "parrillada_plan";
-type ShareStatus = "idle" | "publishing" | "copied" | "error";
 
 type SavedMenuActionMenu = {
   id: string;
@@ -261,34 +256,6 @@ function getSafeBlocksForSave(currentBlocks: Blocks, savedType: SavedMenuType): 
         : REQUIRED_MENU_BLOCKS;
 
   return normalizeBlocks(sanitized, required, savedType);
-}
-
-function getSavedMenuTypeLabel(type: SavedMenuType, lang: Lang) {
-  if (type === "cooking_plan") return lang === "es" ? "Cocción" : "Cooking";
-  if (type === "parrillada_plan") return "Parrillada";
-  return lang === "es" ? "Menú" : "Menu";
-}
-
-function getSavedMenuType(menu: SavedMenu): SavedMenuType {
-  return menu.type ?? "generated_menu";
-}
-
-function isLocalSavedMenu(menu: Pick<SavedMenu, "id">) {
-  return !menu.id || menu.id.startsWith("local_");
-}
-
-function getShareButtonLabel({
-  isPublic,
-  isSharing,
-  shareStatus,
-}: {
-  isPublic: boolean;
-  isSharing: boolean;
-  shareStatus: ShareStatus;
-}) {
-  if (isSharing || shareStatus === "publishing") return "Publicando...";
-  if (isPublic || shareStatus === "copied") return "Copiar link";
-  return "Publicar";
 }
 
 function buildCookStepsFromPlan(blocks: Blocks): CookingStep[] {
