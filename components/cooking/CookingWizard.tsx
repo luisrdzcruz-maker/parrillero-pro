@@ -60,6 +60,10 @@ function buildText(blocks: Blocks) {
     .join("\n\n");
 }
 
+function withoutSizeUnits(label: string) {
+  return label.replace(/\s*\(~[^)]*\)/g, "").trim();
+}
+
 function CookingStepTransition({
   stepKey,
   children,
@@ -764,6 +768,21 @@ function CookingDetailsStep({
   const showWeightPreset = inputProfile.showWeightPreset;
   const showVegetableFormat = inputProfile.showVegetableFormat;
   const showAdvancedExactThickness = inputProfile.allowAdvancedExactThickness;
+  const showTechnicalSizeLabels = showAdvancedExactThickness || advancedThicknessEnabled;
+  const sizeOptions = [
+    {
+      value: "small",
+      label: showTechnicalSizeLabels ? t.sizeSmall : withoutSizeUnits(t.sizeSmall),
+    },
+    {
+      value: "medium",
+      label: showTechnicalSizeLabels ? t.sizeMedium : withoutSizeUnits(t.sizeMedium),
+    },
+    {
+      value: "large",
+      label: showTechnicalSizeLabels ? t.sizeLarge : withoutSizeUnits(t.sizeLarge),
+    },
+  ];
   const weightOptions = (inputProfile.weightOptions ?? []).map((option) => ({
     value: option.id,
     label: `${t[option.labelKey]} (${option.rangeLabel})`,
@@ -800,11 +819,7 @@ function CookingDetailsStep({
             label={t.sizePreset}
             value={sizePreset}
             onChange={(value) => setSizePreset(value as CookingSizePreset)}
-            options={[
-              { value: "small", label: t.sizeSmall },
-              { value: "medium", label: t.sizeMedium },
-              { value: "large", label: t.sizeLarge },
-            ]}
+            options={sizeOptions}
           />
         )}
 
