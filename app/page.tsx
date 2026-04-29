@@ -288,6 +288,53 @@ function parsePositiveInt(value: string) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
+const ALLOWED_MODES: readonly Mode[] = [
+  "inicio",
+  "coccion",
+  "plan",
+  "menu",
+  "parrillada",
+  "cocina",
+  "guardados",
+];
+
+const ALLOWED_COOKING_STEPS: readonly CookingWizardStep[] = [
+  "animal",
+  "cut",
+  "details",
+  "result",
+];
+
+function isAllowedMode(value: string | null): value is Mode {
+  return value != null && ALLOWED_MODES.includes(value as Mode);
+}
+
+function isAllowedCookingStep(value: string | null): value is CookingWizardStep {
+  return value != null && ALLOWED_COOKING_STEPS.includes(value as CookingWizardStep);
+}
+
+function parseNavFromSearch(search: string): { mode: Mode; cookingStep: CookingWizardStep } {
+  const params = new URLSearchParams(search);
+  const modeParam = params.get("mode");
+  const stepParam = params.get("step");
+
+  const mode: Mode = isAllowedMode(modeParam) ? modeParam : "inicio";
+  const cookingStep: CookingWizardStep =
+    mode === "coccion" && isAllowedCookingStep(stepParam) ? stepParam : "animal";
+
+  return { mode, cookingStep };
+}
+
+function buildSearchFromNav(mode: Mode, cookingStep: CookingWizardStep): string {
+  const params = new URLSearchParams();
+  params.set("mode", mode);
+  if (mode === "coccion") {
+    params.set("step", cookingStep);
+  }
+  const query = params.toString();
+  return query ? `?${query}` : "";
+}
+
 export default function Home() {
   const router = useRouter();
 
@@ -393,11 +440,24 @@ export default function Home() {
     };
   }, []);
 
-  // ── Browser history: seed the initial entry ────────────────────────────────
-  // replaceState (not push) so the very first page doesn't create an extra entry.
+  // ── Browser history + URL nav init ─────────────────────────────────────────
+  // Parse mode/step from query params, initialize local nav state, then
+  // canonicalize URL with replaceState so the first entry is always normalized.
   useEffect(() => {
-    window.history.replaceState({ mode: "inicio", cookingStep: "animal" }, "");
-    lastPushedNavRef.current = { mode: "inicio", cookingStep: "animal" };
+    if (typeof window === "undefined") return;
+
+    const nav = parseNavFromSearch(window.location.search);
+    const raf = window.requestAnimationFrame(() => {
+      setMode(nav.mode);
+      setCookingStep(nav.cookingStep);
+    });
+
+    const canonicalSearch = buildSearchFromNav(nav.mode, nav.cookingStep);
+    const canonicalUrl = `${window.location.pathname}${canonicalSearch}${window.location.hash}`;
+    window.history.replaceState({ mode: nav.mode, cookingStep: nav.cookingStep }, "", canonicalUrl);
+    lastPushedNavRef.current = { mode: nav.mode, cookingStep: nav.cookingStep };
+
+    return () => window.cancelAnimationFrame(raf);
   }, []);
 
   // ── Browser history: push on every forward navigation ──────────────────────
