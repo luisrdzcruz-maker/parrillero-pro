@@ -1,6 +1,5 @@
 ﻿"use client";
 
-import { useRouter } from "next/navigation";
 import {
   publishGeneratedMenu,
   saveGeneratedMenu,
@@ -34,20 +33,18 @@ import {
   type ShareStatus,
 } from "@/components/results/CookingResultScreen";
 import { PlanHub, type PlanMode } from "@/components/planning/PlanHub";
-import { Button, Card, Grid, Section } from "@/components/ui";
+import { Button, Grid } from "@/components/ui";
 import { track } from "@/lib/analytics";
-import type { AnimalId, CookingMethod, CookingStep, ProductCut } from "@/lib/cookingCatalog";
-import { getCookingStepImage } from "@/lib/cookingVisuals";
+import type { ProductCut } from "@/lib/cookingCatalog";
 import {
   generateCookingPlan as generateLocalCookingPlan,
   generateCookingSteps as generateLocalCookingSteps,
-  getCutById,
   getCutsByAnimal,
   getDonenessOptions,
   shouldShowThickness,
 } from "@/lib/cookingRules";
 import { ds } from "@/lib/design-system";
-import { texts, type AppText, type Lang } from "@/lib/i18n/texts";
+import { texts, type Lang } from "@/lib/i18n/texts";
 import { animalIdsByLabel, type Animal } from "@/lib/media/animalMedia";
 import { cutImages } from "@/lib/media/cutImages";
 import {
@@ -61,11 +58,6 @@ import { generateParrilladaPlan } from "@/lib/parrilladaEngine";
 import { type TouchEvent, useEffect, useMemo, useRef, useState } from "react";
 
 type EngineLang = "es" | "en";
-type CookingVisualContext = {
-  animalId?: AnimalId;
-  cutId?: string;
-  method?: CookingMethod;
-};
 
 type SwipeDirection = "back" | "forward";
 type TouchPoint = {
@@ -103,30 +95,6 @@ type CutItem = {
   image: string;
   description: string;
 };
-
-const defaultCookSteps: CookingStep[] = [
-  {
-    title: "Precalentar",
-    duration: 600,
-    description: "Precalienta la parrilla con tapa cerrada.",
-    image: getCookingStepImage({ stepTitle: "Precalentar" }),
-    tips: ["Parrilla caliente", "Tapa cerrada", "Rejillas limpias"],
-  },
-  {
-    title: "Sellar lado 1",
-    duration: 180,
-    description: "Carne en zona directa. No mover.",
-    image: getCookingStepImage({ stepTitle: "Sellar lado 1" }),
-    tips: ["No tocar", "Buscar costra", "No aplastar"],
-  },
-  {
-    title: "Reposo",
-    duration: 300,
-    description: "Reposar antes de cortar.",
-    image: getCookingStepImage({ stepTitle: "Reposo" }),
-    tips: ["No cortar al momento", "Estabilizar jugos", "Cortar después del reposo"],
-  },
-];
 
 function engineLang(lang: Lang): EngineLang {
   return lang === "es" ? "es" : "en";
@@ -185,28 +153,6 @@ function isMobileSwipeViewport() {
   return window.innerWidth < 768;
 }
 
-function getCookingVisualContext(animal: Animal, cutId?: string): CookingVisualContext {
-  const cut = cutId ? getCutById(cutId) : undefined;
-
-  return {
-    animalId: animalIdsByLabel[animal],
-    cutId,
-    method: cut?.defaultMethod,
-  };
-}
-
-function withCookingStepImages(steps: CookingStep[], context: CookingVisualContext): CookingStep[] {
-  return steps.map((step) => ({
-    ...step,
-    image: getCookingStepImage({
-      animalId: context.animalId,
-      cutId: context.cutId,
-      method: context.method,
-      stepTitle: `${step.title} ${step.description}`,
-    }),
-  }));
-}
-
 function parseResponse(text: string): Blocks {
   const blocks: Blocks = {};
   const sections = text.split(/\n(?=[A-ZÁÉÍÓÚ]+)/);
@@ -257,42 +203,6 @@ function getSafeBlocksForSave(currentBlocks: Blocks, savedType: SavedMenuType): 
         : REQUIRED_MENU_BLOCKS;
 
   return normalizeBlocks(sanitized, required, savedType);
-}
-
-function buildCookStepsFromPlan(blocks: Blocks): CookingStep[] {
-  const text = blocks.PASOS || blocks.STEPS || blocks.ORDEN || blocks.ORDER || "";
-  const lines = text
-    .split("\n")
-    .map((line) => line.replace(/^[-•*\d.)\s]+/, "").trim())
-    .filter(Boolean);
-
-  if (lines.length === 0) return defaultCookSteps;
-
-  return lines.map((line) => {
-    const lower = line.toLowerCase();
-    let duration = 300;
-    const image = getCookingStepImage({ stepTitle: line });
-
-    if (lower.includes("precal") || lower.includes("preheat")) {
-      duration = 600;
-    }
-
-    if (lower.includes("indirect")) {
-      duration = 300;
-    }
-
-    if (lower.includes("repos") || lower.includes("rest")) {
-      duration = 300;
-    }
-
-    return {
-      title: line.length > 32 ? line.slice(0, 32) + "..." : line,
-      duration,
-      description: line,
-      image,
-      tips: [],
-    };
-  });
 }
 
 function localeForLang(lang: Lang) {
@@ -349,7 +259,6 @@ export default function Home() {
   const [shareMessageMenuId, setShareMessageMenuId] = useState<string | null>(null);
   const [sharingMenuId, setSharingMenuId] = useState<string | null>(null);
 
-  const [cookSteps, setCookSteps] = useState<CookingStep[]>(defaultCookSteps);
   const touchStartRef = useRef<TouchPoint | null>(null);
   const modeHistoryRef = useRef<Mode[]>([]);
 
@@ -643,7 +552,6 @@ export default function Home() {
   async function callAI(
     message: string,
     createCookSteps = false,
-    visualContext?: CookingVisualContext,
     parseAsMenu = false,
   ): Promise<boolean> {
     setLoading(true);
@@ -679,12 +587,6 @@ export default function Home() {
       }
 
       setBlocks(normalized);
-
-      if (createCookSteps) {
-        const baseSteps = buildCookStepsFromPlan(normalized);
-        const steps = visualContext ? withCookingStepImages(baseSteps, visualContext) : baseSteps;
-        setCookSteps(steps);
-      }
     } catch (e) {
       if (createCookSteps) {
         const msg = e instanceof Error ? e.message : String(e);
@@ -703,7 +605,6 @@ export default function Home() {
   }
 
   async function generateCookingPlan() {
-    const visualContext = getCookingVisualContext(animal, cut);
     const input = {
       animal,
       cut,
@@ -720,11 +621,9 @@ export default function Home() {
     if (localPlan && localSteps) {
       track({ name: "cooking_plan_result", path: "local" });
       const normalizedPlan = normalizeBlocks(localPlan, REQUIRED_COOKING_BLOCKS, "cooking_plan");
-      const visualSteps = withCookingStepImages(localSteps, visualContext);
       setBlocks(normalizedPlan);
       setCheckedItems({});
       resetSaveMenuState();
-      setCookSteps(visualSteps);
       setCookingStep("result");
       return;
     }
@@ -748,7 +647,6 @@ PASOS
 ERROR
 `,
       true,
-      visualContext,
     );
     if (ok) {
       track({ name: "cooking_plan_result", path: "ai" });
@@ -783,7 +681,7 @@ TIMING
 ORDER
 SHOPPING
 ERROR
-`, false, undefined, true);
+`, false, true);
   }
 
   async function generatePlanExperience() {
@@ -829,7 +727,7 @@ TIMING
 ORDER
 SHOPPING
 ERROR
-`, false, undefined, true);
+`, false, true);
 
     if (ok) setPlanGenerated(true);
   }
@@ -864,11 +762,6 @@ ERROR
     setBlocks(normalizeBlocks(plan, REQUIRED_PARRILLADA_BLOCKS, "parrillada_plan"));
     setCheckedItems({});
     resetSaveMenuState();
-  }
-
-  function exitLiveCooking() {
-    setMode("coccion");
-    setCookingStep("result");
   }
 
   function handleLanguageChange(nextLang: Lang) {
@@ -1048,7 +941,6 @@ ERROR
               setEquipment(value);
               resetSaveMenuState();
             }}
-            setMode={setMode}
             setThickness={(value) => {
               setThickness(value);
               resetSaveMenuState();

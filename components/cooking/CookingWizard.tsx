@@ -4,7 +4,6 @@ import ResultGrid from "@/components/ResultGrid";
 import ResultHero from "@/components/ResultHero";
 import FoodCard from "@/components/FoodCard";
 import { Badge, Button, Section } from "@/components/ui";
-import type { Mode } from "@/components/navigation/AppHeader";
 import { ds } from "@/lib/design-system";
 import type { AppText, Lang } from "@/lib/i18n/texts";
 import { animalOptions, type Animal } from "@/lib/media/animalMedia";
@@ -111,7 +110,6 @@ export function CookingWizard({
   setCookingStep,
   setDoneness,
   setEquipment,
-  setMode,
   setThickness,
   setWeight,
   showThickness,
@@ -142,7 +140,6 @@ export function CookingWizard({
   setCookingStep: (step: CookingWizardStep) => void;
   setDoneness: (value: string) => void;
   setEquipment: (value: string) => void;
-  setMode: (mode: Mode) => void;
   setThickness: (value: string) => void;
   setWeight: (value: string) => void;
   showThickness: boolean;

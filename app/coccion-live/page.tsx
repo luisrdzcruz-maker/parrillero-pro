@@ -77,9 +77,7 @@ export default function CoccionLivePage() {
     }, 1000);
 
     return () => clearInterval(id);
-    // `remaining` intentionally excluded — interval runs continuously
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paused, hasTimer, currentIndex]);
+  }, [paused, hasTimer, currentIndex]); // `remaining` intentionally excluded — interval runs continuously
 
   // ── Auto-advance when timer hits 0 ───────────────────────────────────────
   useEffect(() => {

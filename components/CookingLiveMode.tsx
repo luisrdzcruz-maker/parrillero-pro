@@ -67,7 +67,6 @@ export default function CookingLiveMode({
   onCompleteStep,
   onEnableAlerts,
   onGoToStep,
-  onNextStep: _onNextStep,
   onPreviousStep,
   onReset,
   setTimerRunning,
@@ -75,7 +74,6 @@ export default function CookingLiveMode({
   timerRunning,
   cookingAlertsEnabled,
   cookingAlertMessage,
-  notificationPermission: _notificationPermission,
 }: CookingLiveModeProps) {
   const isSpanish = lang === "es";
 
