@@ -10,7 +10,7 @@ import {
   type SetupEquipment,
   type SetupType,
 } from "@/lib/setupVisualMap";
-import { Badge, Panel } from "@/components/ui";
+import { Panel } from "@/components/ui";
 import { ds } from "@/lib/design-system";
 
 type ResultCardProps = {
@@ -201,6 +201,83 @@ function resolveSetupEquipment(value = ""): SetupEquipment | undefined {
   return undefined;
 }
 
+type SetupOverlayChip = {
+  label: string;
+  tone: "direct" | "indirect" | "neutral";
+};
+
+function getSetupOverlayChips({
+  content,
+  lang,
+  setup,
+}: {
+  content: string;
+  lang: "es" | "en" | "fi";
+  setup?: SetupType;
+}): SetupOverlayChip[] {
+  const isEnglish = lang === "en";
+  const normalizedSetup = normalizeSetupText(setup).replace(/_/g, "-");
+  const normalizedContent = normalizeSetupText(content);
+  const combined = `${normalizedSetup} ${normalizedContent}`;
+
+  const labels = {
+    direct: isEnglish ? "Direct" : "Directo",
+    indirect: isEnglish ? "Indirect" : "Indirecto",
+    twoZones: isEnglish ? "2 zones" : "2 zonas",
+    finalSear: isEnglish ? "Final sear" : "Sellado final",
+    lowTemp: isEnglish ? "Low temperature" : "Baja temperatura",
+  };
+
+  if (/(reverse-sear|reverse sear|sellado inverso)/.test(combined)) {
+    return [
+      { label: `❄️ ${labels.indirect}`, tone: "indirect" },
+      { label: labels.finalSear, tone: "direct" },
+    ];
+  }
+
+  if (/(low-slow|low and slow|smoke|smoking|ahumado|baja temperatura)/.test(combined)) {
+    return [
+      { label: `❄️ ${labels.indirect}`, tone: "indirect" },
+      { label: labels.lowTemp, tone: "neutral" },
+    ];
+  }
+
+  if (/(two-zone|two zone|dos zonas|direct\s*\+\s*indirect|directo\s*\+\s*indirecto)/.test(combined)) {
+    return [
+      { label: `🔥 ${labels.direct} + ❄️ ${labels.indirect}`, tone: "neutral" },
+      { label: labels.twoZones, tone: "neutral" },
+    ];
+  }
+
+  if (/(indirect|indirecto)/.test(combined)) {
+    return [{ label: `❄️ ${labels.indirect}`, tone: "indirect" }];
+  }
+
+  if (/(direct-heat|direct heat|direct|directo)/.test(combined)) {
+    return [{ label: `🔥 ${labels.direct}`, tone: "direct" }];
+  }
+
+  return [
+    { label: `🔥 ${labels.direct} + ❄️ ${labels.indirect}`, tone: "neutral" },
+    { label: labels.twoZones, tone: "neutral" },
+  ];
+}
+
+function getSetupOverlayChipClass(tone: SetupOverlayChip["tone"]) {
+  const base =
+    "rounded-full px-3 py-1.5 text-[11px] font-black leading-none tracking-[0.08em] shadow-lg backdrop-blur-md ring-1 ring-inset";
+
+  if (tone === "direct") {
+    return `${base} border border-orange-300/25 bg-orange-500/20 text-orange-100 shadow-orange-950/25 ring-orange-200/15`;
+  }
+
+  if (tone === "indirect") {
+    return `${base} border border-sky-300/25 bg-sky-500/20 text-sky-100 shadow-sky-950/25 ring-sky-200/15`;
+  }
+
+  return `${base} border border-white/15 bg-black/40 text-white shadow-black/25 ring-white/10`;
+}
+
 function SetupVisualImage({ src }: { src: string }) {
   const [fallbackStep, setFallbackStep] = useState<"none" | "asset" | "inline">("none");
   const imageSrc =
@@ -246,6 +323,7 @@ function SetupVisualToggle({
   const detectedSetup = setup ?? detectSetupFromText(content);
   const setupImage = getSetupVisual(setupEquipment, detectedSetup);
   const isEnglish = lang === "en";
+  const overlayChips = getSetupOverlayChips({ content, lang, setup: detectedSetup });
 
   if (!isSetupCard(title)) return null;
 
@@ -298,18 +376,14 @@ function SetupVisualToggle({
 
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(251,146,60,0.28),transparent_34%),linear-gradient(to_top,rgba(2,6,23,0.9)_0%,rgba(2,6,23,0.38)_54%,rgba(255,255,255,0.08)_100%)]"
+                className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_16%_0%,rgba(251,146,60,0.22),transparent_30%),radial-gradient(circle_at_80%_8%,rgba(56,189,248,0.16),transparent_28%),linear-gradient(135deg,rgba(2,6,23,0.82)_0%,rgba(2,6,23,0.34)_30%,transparent_62%),linear-gradient(to_top,rgba(2,6,23,0.42),transparent_46%)]"
               />
-              <div className="pointer-events-none absolute bottom-0 left-0 right-0 p-4">
-                <Badge
-                  className="border-orange-400/30 bg-black/45 text-orange-200"
-                  tone="glass"
-                >
-                  {isEnglish ? "Fire setup" : "Setup del fuego"}
-                </Badge>
-                <p className="mt-2 text-sm font-semibold text-white">
-                  {isEnglish ? "Check heat zones before cooking" : "Visualiza zonas antes de cocinar"}
-                </p>
+              <div className="pointer-events-none absolute left-0 right-0 top-0 flex flex-wrap gap-2 p-3 sm:p-4">
+                {overlayChips.map((chip) => (
+                  <span key={`${chip.tone}-${chip.label}`} className={getSetupOverlayChipClass(chip.tone)}>
+                    {chip.label}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
