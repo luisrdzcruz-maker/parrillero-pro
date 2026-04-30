@@ -668,15 +668,15 @@ function CookingCutStep({
 
       <div className="max-w-3xl pl-11 md:pl-0">
         <p className="text-[11px] font-black uppercase tracking-[0.22em] text-orange-300/75">
-          {lang === "en" ? "Category" : "Categoría"}
+          {lang === "es" ? "Categoría" : "Category"}
         </p>
         <h1 className="mt-2 text-4xl font-black tracking-tight text-white sm:text-5xl">
           {t.chooseCut}
         </h1>
         <p className="mt-2 text-sm font-medium leading-6 text-slate-400 sm:text-base">
-          {lang === "en"
-            ? "Select the cut to tune heat and timings."
-            : "Selecciona el corte para ajustar fuego y tiempos."}
+          {lang === "es"
+            ? "Selecciona el corte para ajustar fuego y tiempos."
+            : "Select the cut to tune heat and timings."}
         </p>
       </div>
 
@@ -694,7 +694,7 @@ function CookingCutStep({
       {gridCuts.length > 0 && (
         <div className="space-y-3 sm:space-y-4">
           <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/25">
-            {lang === "en" ? "All cuts" : "Todos los cortes"}
+            {lang === "es" ? "Todos los cortes" : "All cuts"}
           </p>
           <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {gridCuts.map((item) => (
@@ -726,10 +726,10 @@ function getDetailsHeroBadge({
   showDoneness: boolean;
   showWeightPreset: boolean;
 }) {
-  if (showWeightPreset) return lang === "en" ? "Critical cut" : "Corte crítico";
-  if (showAdvancedExactThickness) return lang === "en" ? "Fine control" : "Control fino";
-  if (showDoneness) return lang === "en" ? "High precision" : "Alta precisión";
-  return lang === "en" ? "Fine control" : "Control fino";
+  if (showWeightPreset) return lang === "es" ? "Corte crítico" : "Critical cut";
+  if (showAdvancedExactThickness) return lang === "es" ? "Control fino" : "Fine control";
+  if (showDoneness) return lang === "es" ? "Alta precisión" : "High precision";
+  return lang === "es" ? "Control fino" : "Fine control";
 }
 
 function CookingDetailsHero({
@@ -746,9 +746,9 @@ function CookingDetailsHero({
   const [imageFailed, setImageFailed] = useState(false);
   const showImage = Boolean(selectedCut.image) && !imageFailed;
   const fallbackTip =
-    lang === "en"
-      ? "Heat and timing tuned to this cut."
-      : "Fuego y tiempos ajustados a este corte.";
+    lang === "es"
+      ? "Fuego y tiempos ajustados a este corte."
+      : "Heat and timing tuned to this cut.";
 
   return (
     <div className="animate-live-enter relative overflow-hidden rounded-[1.75rem] border border-orange-300/15 bg-zinc-950 shadow-[0_22px_70px_rgba(0,0,0,0.45)] ring-1 ring-inset ring-white/[0.04] sm:rounded-[2rem]">
@@ -965,8 +965,8 @@ function CookingDetailsStep({
     showDoneness,
     showWeightPreset,
   });
-  const measurementsTitle = lang === "en" ? "Size and weight" : "Tamaño y peso";
-  const cookingTitle = lang === "en" ? "Doneness and gear" : "Punto y equipo";
+  const measurementsTitle = lang === "es" ? "Tamaño y peso" : "Size and weight";
+  const cookingTitle = lang === "es" ? "Punto y equipo" : "Doneness and gear";
   const hasMeasurementFields =
     showSizePreset || showWeightRange || showWeightPreset || showVegetableFormat || showAdvancedExactThickness;
 
@@ -987,10 +987,10 @@ function CookingDetailsStep({
           <div className="flex items-end justify-between gap-3">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-200/75">
-                {lang === "en" ? "Cooking setup" : "Configuración"}
+                {lang === "es" ? "Configuración" : "Cooking setup"}
               </p>
               <h2 className="mt-1 text-xl font-black tracking-tight text-white">
-                {lang === "en" ? "Adjust details" : "Ajusta los detalles"}
+                {lang === "es" ? "Ajusta los detalles" : "Adjust details"}
               </h2>
             </div>
             <div className="hidden rounded-full border border-orange-300/20 bg-orange-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-orange-200 sm:block">
@@ -1215,7 +1215,7 @@ export function ResultCards({
     if (typeof window === "undefined" || !navigator.clipboard) return;
 
     navigator.clipboard.writeText(buildText(blocks));
-    alert(lang === "en" ? "Copied" : "Copiado");
+    alert(lang === "es" ? "Copiado" : "Copied");
   }
 
   function shareWhatsApp() {
@@ -1241,10 +1241,10 @@ export function ResultCards({
         t={{
           copy: t.copy,
           result: t.result,
-          save: lang === "en" ? "Save" : "Guardar",
-          saving: lang === "en" ? "Saving..." : "Guardando...",
-          share: lang === "en" ? "Share" : "Compartir",
-          startCooking: lang === "en" ? "Start Live Cooking" : "Empezar Live Cooking",
+          save: lang === "es" ? "Guardar" : "Save",
+          saving: lang === "es" ? "Guardando..." : "Saving...",
+          share: lang === "es" ? "Compartir" : "Share",
+          startCooking: lang === "es" ? "Empezar Live Cooking" : "Start Live Cooking",
         }}
       />
 

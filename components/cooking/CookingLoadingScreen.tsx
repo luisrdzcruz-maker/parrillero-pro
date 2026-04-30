@@ -32,7 +32,7 @@ type Props = {
 };
 
 export function CookingLoadingScreen({ cutImage, cutName, lang = "es" }: Props) {
-  const messages = lang === "en" ? MESSAGES_EN : MESSAGES_ES;
+  const messages = lang === "es" ? MESSAGES_ES : MESSAGES_EN;
   const [step, setStep] = useState(0);
   const [imgError, setImgError] = useState(false);
 
