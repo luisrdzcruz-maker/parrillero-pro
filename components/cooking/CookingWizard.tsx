@@ -327,6 +327,20 @@ function AppTopBar({
   );
 }
 
+function DetailsBackButton({ label, onBack }: { label: string; onBack: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onBack}
+      className="absolute left-2 top-2 z-30 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/55 text-lg font-black leading-none text-white shadow-xl shadow-black/30 backdrop-blur-md transition-all duration-200 hover:border-orange-300/45 hover:bg-black/70 hover:text-orange-200 active:scale-95 sm:left-3 sm:top-3"
+      aria-label={label}
+      title={label}
+    >
+      ←
+    </button>
+  );
+}
+
 // ─── Cut metadata derivation ──────────────────────────────────────────────────
 // Derives 1–2 display tags from the cut name without any engine dependency.
 
@@ -702,6 +716,163 @@ function CookingCutStep({
   );
 }
 
+function getDetailsHeroBadge({
+  lang,
+  showAdvancedExactThickness,
+  showDoneness,
+  showWeightPreset,
+}: {
+  lang: Lang;
+  showAdvancedExactThickness: boolean;
+  showDoneness: boolean;
+  showWeightPreset: boolean;
+}) {
+  if (showWeightPreset) return lang === "en" ? "Large cut" : "Corte grande";
+  if (showAdvancedExactThickness) return lang === "en" ? "Thick cut" : "Corte grueso";
+  if (showDoneness) return lang === "en" ? "High precision" : "Alta precisión";
+  return lang === "en" ? "Smart setup" : "Ajuste preciso";
+}
+
+function CookingDetailsHero({
+  animal,
+  badge,
+  lang,
+  selectedCut,
+}: {
+  animal: Animal;
+  badge: string;
+  lang: Lang;
+  selectedCut: CutItem;
+}) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const showImage = Boolean(selectedCut.image) && !imageFailed;
+  const fallbackTip =
+    lang === "en"
+      ? "Heat and timing tuned to this cut."
+      : "Fuego y tiempos ajustados a este corte.";
+
+  return (
+    <div className="animate-live-enter relative overflow-hidden rounded-[2rem] border border-orange-300/15 bg-zinc-950 shadow-[0_22px_70px_rgba(0,0,0,0.45)] ring-1 ring-inset ring-white/[0.04]">
+      <div className="relative h-[168px] overflow-hidden sm:h-[208px]">
+        {!showImage && (
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_68%_28%,rgba(255,106,0,0.28),transparent_34%),radial-gradient(circle_at_22%_75%,rgba(251,146,60,0.13),transparent_32%),linear-gradient(145deg,#18181b_0%,#09090b_50%,#000000_100%)]" />
+        )}
+        {showImage && (
+          <Image
+            src={selectedCut.image}
+            alt={selectedCut.name}
+            fill
+            sizes="(min-width: 768px) 760px, 100vw"
+            className="scale-[1.08] object-cover object-center"
+            priority={false}
+            onError={() => setImageFailed(true)}
+          />
+        )}
+
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_18%,rgba(0,0,0,0.48)_62%,rgba(0,0,0,0.92)_100%)]" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/92 via-black/58 to-black/12" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/36 to-black/30" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_0%,rgba(255,106,0,0.22),transparent_35%)]" />
+        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-orange-300/45 to-transparent" />
+
+        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-orange-300/35 bg-orange-500/18 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-orange-200 shadow-lg shadow-orange-950/20 backdrop-blur-md">
+              {badge}
+            </span>
+            <span className="rounded-full border border-white/10 bg-black/45 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/55 backdrop-blur-md">
+              {animal}
+            </span>
+          </div>
+          <h1 className="max-w-2xl text-2xl font-black leading-none tracking-tight text-white drop-shadow-[0_3px_18px_rgba(0,0,0,0.85)] sm:text-4xl">
+            {selectedCut.name}
+          </h1>
+          <p className="mt-2 line-clamp-2 max-w-xl text-xs font-medium leading-5 text-slate-200/78 sm:text-sm">
+            {selectedCut.description || fallbackTip}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DetailsFieldGroup({
+  children,
+  title,
+}: {
+  children: ReactNode;
+  title: string;
+}) {
+  return (
+    <div className="rounded-[1.35rem] border border-white/[0.075] bg-black/18 p-3 shadow-inner shadow-black/20 ring-1 ring-inset ring-orange-300/[0.035] sm:p-3.5">
+      <p className="mb-2.5 text-[10px] font-black uppercase tracking-[0.18em] text-orange-200/70">
+        {title}
+      </p>
+      <div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-2">{children}</div>
+    </div>
+  );
+}
+
+function DetailsInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <div>
+      <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
+        {label}
+      </label>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="mt-1.5 w-full rounded-2xl border border-white/10 bg-slate-950/85 px-3 py-2.5 text-sm font-semibold text-slate-100 shadow-inner shadow-black/25 outline-none transition placeholder:text-slate-600 focus:border-orange-400/55 focus:ring-2 focus:ring-orange-500/15"
+      />
+    </div>
+  );
+}
+
+function DetailsSelect({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: SelectOption[];
+}) {
+  return (
+    <div>
+      <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
+        {label}
+      </label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1.5 w-full rounded-2xl border border-white/10 bg-slate-950/85 px-3 py-2.5 text-sm font-semibold text-slate-100 shadow-inner shadow-black/25 outline-none transition focus:border-orange-400/55 focus:ring-2 focus:ring-orange-500/15"
+      >
+        {options.map((item) => (
+          <option
+            key={typeof item === "string" ? item : item.value}
+            value={typeof item === "string" ? item : item.value}
+          >
+            {typeof item === "string" ? item : item.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 function CookingDetailsStep({
   advancedThicknessEnabled,
   animal,
@@ -789,114 +960,136 @@ function CookingDetailsStep({
   }));
   const hasCurrentWeightValue = weightOptions.some((option) => option.value === weightRange);
   const weightSelectValue = hasCurrentWeightValue ? weightRange : inputProfile.defaults.weightRange;
+  const detailsHeroBadge = getDetailsHeroBadge({
+    lang,
+    showAdvancedExactThickness,
+    showDoneness,
+    showWeightPreset,
+  });
+  const measurementsTitle = lang === "en" ? "Size and weight" : "Tamaño y peso";
+  const cookingTitle = lang === "en" ? "Doneness and gear" : "Punto y equipo";
+  const hasMeasurementFields =
+    showSizePreset || showWeightRange || showWeightPreset || showVegetableFormat || showAdvancedExactThickness;
 
   return (
-    <section className="mx-auto max-w-5xl animate-[fadeIn_220ms_ease-out] space-y-5 sm:space-y-7">
-      <AppTopBar backLabel={selectedCut.name} onBack={onBack} />
+    <section className="relative mx-auto max-w-4xl animate-[fadeIn_220ms_ease-out] space-y-3 pt-1 sm:space-y-4">
+      <DetailsBackButton label={selectedCut.name} onBack={onBack} />
 
-      <div className="max-w-2xl">
-        <p className="text-[11px] font-black uppercase tracking-[0.22em] text-orange-300/75">
-          {animal}
-        </p>
-        <h1 className="mt-2 text-4xl font-black tracking-tight text-white sm:text-5xl">
-          {lang === "en" ? "Adjust details" : "Ajusta los detalles"}
-        </h1>
-        <p className="mt-2 text-sm font-medium leading-6 text-slate-400 sm:text-base">
-          {lang === "en"
-            ? "Set doneness, thickness, and equipment for precise timings."
-            : "Define punto, grosor y equipo para calcular tiempos precisos."}
-        </p>
-      </div>
+      <CookingDetailsHero
+        animal={animal}
+        badge={detailsHeroBadge}
+        lang={lang}
+        selectedCut={selectedCut}
+      />
 
-      <div className="max-w-3xl rounded-[2rem] border border-white/10 bg-white/[0.045] p-4 shadow-2xl shadow-black/25 sm:p-5">
-        <h2 className="text-lg font-black text-white">{selectedCut.name}</h2>
-        <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-400">{selectedCut.description}</p>
-      </div>
-
-      <div className="grid max-w-4xl gap-4 md:grid-cols-2">
-        {showSizePreset && (
-          <Select
-            label={t.sizePreset}
-            value={sizePreset}
-            onChange={(value) => setSizePreset(value as CookingSizePreset)}
-            options={sizeOptions}
-          />
-        )}
-
-        {showWeightRange && (
-          <Select
-            label={t.weightRange}
-            value={weightSelectValue}
-            onChange={(value) => setWeightRange(value as CookingWeightRange)}
-            options={weightOptions}
-          />
-        )}
-
-        {showWeightPreset && (
-          <Select
-            label={t.weightPreset}
-            value={weightSelectValue}
-            onChange={(value) => setWeightRange(value as CookingWeightRange)}
-            options={weightOptions}
-          />
-        )}
-
-        {showVegetableFormat && (
-          <Select
-            label={t.vegetableFormat}
-            value={vegetableFormat}
-            onChange={(value) => setVegetableFormat(value as VegetableFormat)}
-            options={[
-              { value: "whole", label: t.vegetableFormatWhole },
-              { value: "halved", label: t.vegetableFormatHalved },
-              { value: "slices", label: t.vegetableFormatSlices },
-            ]}
-          />
-        )}
-
-        {showAdvancedExactThickness && (
-          <div className="md:col-span-2">
-            <button
-              type="button"
-              onClick={() => setAdvancedThicknessEnabled(!advancedThicknessEnabled)}
-              className="inline-flex items-center text-sm font-semibold text-orange-300 transition-colors hover:text-orange-200"
-            >
-              {advancedThicknessEnabled ? t.hideAdvancedThickness : t.advancedThickness}
-            </button>
+      <div className="animate-live-enter relative overflow-hidden rounded-[2rem] border border-orange-300/15 bg-[radial-gradient(circle_at_18%_0%,rgba(255,106,0,0.18),transparent_34%),linear-gradient(145deg,rgba(24,24,27,0.98),rgba(3,7,18,0.96)_58%,rgba(0,0,0,0.98))] p-[1px] shadow-[0_22px_70px_rgba(0,0,0,0.42),0_0_34px_rgba(255,106,0,0.07)] ring-1 ring-inset ring-white/[0.045] [animation-delay:70ms]">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(251,146,60,0.14),transparent_42%)]" />
+        <div className="relative space-y-3 rounded-[calc(2rem-1px)] bg-black/12 p-3.5 backdrop-blur-sm sm:p-4">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-200/75">
+                {lang === "en" ? "Cooking setup" : "Configuración"}
+              </p>
+              <h2 className="mt-1 text-xl font-black tracking-tight text-white">
+                {lang === "en" ? "Adjust details" : "Ajusta los detalles"}
+              </h2>
+            </div>
+            <div className="hidden rounded-full border border-orange-300/20 bg-orange-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-orange-200 sm:block">
+              {detailsHeroBadge}
+            </div>
           </div>
-        )}
 
-        {showAdvancedExactThickness && advancedThicknessEnabled && (
-          <Input
-            label={t.thickness}
-            value={thickness}
-            onChange={setThickness}
-            placeholder="Ej: 5"
-          />
-        )}
+          {hasMeasurementFields && (
+            <DetailsFieldGroup title={measurementsTitle}>
+              {showSizePreset && (
+                <DetailsSelect
+                  label={t.sizePreset}
+                  value={sizePreset}
+                  onChange={(value) => setSizePreset(value as CookingSizePreset)}
+                  options={sizeOptions}
+                />
+              )}
 
-        {showDoneness && (
-          <Select
-            label={t.doneness}
-            value={doneness}
-            onChange={setDoneness}
-            options={currentDonenessOptions}
-          />
-        )}
-        <Select
-          label={t.equipment}
-          value={equipment}
-          onChange={setEquipment}
-          options={cookingEquipmentOptions}
-        />
+              {showWeightRange && (
+                <DetailsSelect
+                  label={t.weightRange}
+                  value={weightSelectValue}
+                  onChange={(value) => setWeightRange(value as CookingWeightRange)}
+                  options={weightOptions}
+                />
+              )}
+
+              {showWeightPreset && (
+                <DetailsSelect
+                  label={t.weightPreset}
+                  value={weightSelectValue}
+                  onChange={(value) => setWeightRange(value as CookingWeightRange)}
+                  options={weightOptions}
+                />
+              )}
+
+              {showVegetableFormat && (
+                <DetailsSelect
+                  label={t.vegetableFormat}
+                  value={vegetableFormat}
+                  onChange={(value) => setVegetableFormat(value as VegetableFormat)}
+                  options={[
+                    { value: "whole", label: t.vegetableFormatWhole },
+                    { value: "halved", label: t.vegetableFormatHalved },
+                    { value: "slices", label: t.vegetableFormatSlices },
+                  ]}
+                />
+              )}
+
+              {showAdvancedExactThickness && (
+                <div className="min-[390px]:col-span-2">
+                  <button
+                    type="button"
+                    onClick={() => setAdvancedThicknessEnabled(!advancedThicknessEnabled)}
+                    className="inline-flex items-center rounded-full border border-orange-300/20 bg-orange-500/10 px-3 py-1.5 text-xs font-black text-orange-200 transition-all duration-200 hover:border-orange-300/35 hover:bg-orange-500/15 active:scale-[0.98]"
+                  >
+                    {advancedThicknessEnabled ? t.hideAdvancedThickness : t.advancedThickness}
+                  </button>
+                </div>
+              )}
+
+              {showAdvancedExactThickness && advancedThicknessEnabled && (
+                <DetailsInput
+                  label={t.thickness}
+                  value={thickness}
+                  onChange={setThickness}
+                  placeholder="Ej: 5"
+                />
+              )}
+            </DetailsFieldGroup>
+          )}
+
+          <DetailsFieldGroup title={cookingTitle}>
+            {showDoneness && (
+              <DetailsSelect
+                label={t.doneness}
+                value={doneness}
+                onChange={setDoneness}
+                options={currentDonenessOptions}
+              />
+            )}
+            <DetailsSelect
+              label={t.equipment}
+              value={equipment}
+              onChange={setEquipment}
+              options={cookingEquipmentOptions}
+            />
+          </DetailsFieldGroup>
+        </div>
       </div>
 
-      <div className="max-w-md">
+      <div className="animate-live-enter max-w-md [animation-delay:140ms] sm:max-w-sm">
         <PrimaryButton
           onClick={generateCookingPlan}
           loading={loading}
           text={t.generatePlan}
           loadingText={t.generating}
+          className="min-h-[3.35rem] rounded-[1.35rem] border border-orange-200/25 shadow-[0_18px_50px_rgba(249,115,22,0.34),0_0_28px_rgba(255,106,0,0.14)] ring-1 ring-orange-300/25 hover:shadow-[0_22px_60px_rgba(249,115,22,0.42),0_0_34px_rgba(255,106,0,0.18)]"
         />
       </div>
     </section>
@@ -1092,11 +1285,13 @@ export function ResultCards({
 }
 
 export function PrimaryButton({
+  className = "",
   onClick,
   loading,
   text,
   loadingText,
 }: {
+  className?: string;
   onClick: () => void;
   loading: boolean;
   text: string;
@@ -1107,7 +1302,7 @@ export function PrimaryButton({
       fullWidth
       onClick={onClick}
       disabled={loading}
-      className="inline-flex min-h-[3.25rem] touch-manipulation items-center justify-center gap-2 px-5 py-4 font-bold transition-all duration-200 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-85 disabled:active:scale-100"
+      className={`inline-flex min-h-[3.25rem] touch-manipulation items-center justify-center gap-2 px-5 py-4 font-bold transition-all duration-200 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-85 disabled:active:scale-100 ${className}`}
     >
       {loading ? (
         <>
