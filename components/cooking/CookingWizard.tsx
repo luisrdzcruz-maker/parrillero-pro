@@ -314,16 +314,15 @@ function AppTopBar({
   onBack: () => void;
 }) {
   return (
-    <div className="flex min-h-12 items-center">
-      <button
-        type="button"
-        onClick={onBack}
-        className="inline-flex min-h-11 max-w-full items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-3.5 py-2 text-sm font-black text-slate-100 shadow-lg shadow-black/10 transition-all duration-200 hover:bg-white/[0.08] active:scale-[0.97]"
-      >
-        <span className="text-lg leading-none">←</span>
-        <span className="truncate">{backLabel}</span>
-      </button>
-    </div>
+    <button
+      type="button"
+      onClick={onBack}
+      className="absolute left-2 top-1 z-30 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/40 text-lg font-black leading-none text-white shadow-lg shadow-black/20 backdrop-blur transition-all duration-200 hover:bg-black/55 active:scale-95 md:hidden"
+      aria-label={backLabel}
+      title={backLabel}
+    >
+      ←
+    </button>
   );
 }
 
@@ -332,7 +331,7 @@ function DetailsBackButton({ label, onBack }: { label: string; onBack: () => voi
     <button
       type="button"
       onClick={onBack}
-      className="absolute left-2 top-2 z-30 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/55 text-lg font-black leading-none text-white shadow-xl shadow-black/30 backdrop-blur-md transition-all duration-200 hover:border-orange-300/45 hover:bg-black/70 hover:text-orange-200 active:scale-95 sm:left-3 sm:top-3"
+      className="absolute left-2 top-2 z-30 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/40 text-lg font-black leading-none text-white shadow-lg shadow-black/20 backdrop-blur transition-all duration-200 hover:bg-black/55 active:scale-95 md:hidden"
       aria-label={label}
       title={label}
     >
@@ -664,10 +663,10 @@ function CookingCutStep({
   const gridCuts = cuts.slice(1);
 
   return (
-    <section className="mx-auto max-w-[1480px] animate-[fadeIn_220ms_ease-out] space-y-5 sm:space-y-6 lg:space-y-7 2xl:max-w-[1520px]">
+    <section className="relative mx-auto max-w-[1480px] animate-[fadeIn_220ms_ease-out] space-y-5 sm:space-y-6 lg:space-y-7 2xl:max-w-[1520px]">
       <AppTopBar backLabel={animal} onBack={onBack} />
 
-      <div className="max-w-3xl">
+      <div className="max-w-3xl pl-11 md:pl-0">
         <p className="text-[11px] font-black uppercase tracking-[0.22em] text-orange-300/75">
           {lang === "en" ? "Category" : "Categoría"}
         </p>
