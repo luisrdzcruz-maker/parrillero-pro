@@ -5,10 +5,14 @@ import { useState } from "react";
 export default function ShareActions({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
 
+  function getShareTextWithUrl() {
+    return [text, window.location.href].filter(Boolean).join("\n\n");
+  }
+
   async function copyPlan() {
     if (!navigator.clipboard) return;
 
-    await navigator.clipboard.writeText(text);
+    await navigator.clipboard.writeText(getShareTextWithUrl());
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1800);
   }
@@ -18,6 +22,7 @@ export default function ShareActions({ text }: { text: string }) {
       await navigator.share({
         title: "Plan de parrilla listo | Parrillero Pro",
         text,
+        url: window.location.href,
       });
       return;
     }

@@ -130,6 +130,15 @@ export default function ResultActions({
     }
   }
 
+  async function handleShare() {
+    if (actions.onShare) {
+      actions.onShare();
+      return;
+    }
+
+    await handleNativeShare();
+  }
+
   return (
     <div className={compact ? "flex flex-col gap-2" : "flex flex-col gap-3"}>
       <div className={compact ? "grid grid-cols-3 gap-2" : "flex flex-wrap items-center gap-2"}>
@@ -157,17 +166,15 @@ export default function ResultActions({
           </Button>
         )}
 
-        {actions.onShare && (
-          <Button
-            aria-busy={shareStatus === "sharing"}
-            className={compact ? "px-3 py-2 text-xs" : undefined}
-            onClick={handleNativeShare}
-            disabled={shareStatus === "sharing"}
-            variant="secondary"
-          >
-            {shareLabel}
-          </Button>
-        )}
+        <Button
+          aria-busy={shareStatus === "sharing"}
+          className={compact ? "px-3 py-2 text-xs" : undefined}
+          onClick={handleShare}
+          disabled={shareStatus === "sharing"}
+          variant="secondary"
+        >
+          {shareLabel}
+        </Button>
       </div>
 
       <div className={compact ? "flex min-h-0 items-center" : "flex min-h-5 items-center"}>
