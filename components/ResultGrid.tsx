@@ -1,8 +1,16 @@
 "use client";
 
+import Image from "next/image";
+import { useState } from "react";
 import { Badge, Card, Grid } from "@/components/ui";
 import { ds } from "@/lib/design-system";
-import { detectSetupFromText, type SetupType } from "@/lib/setupVisualMap";
+import {
+  detectSetupFromText,
+  getSetupVisual,
+  SETUP_VISUAL_FALLBACK,
+  type SetupEquipment,
+  type SetupType,
+} from "@/lib/setupVisualMap";
 import { formatTitle, getGrillManagerLineClass, getShoppingItems } from "@/lib/uiHelpers";
 import ResultCard from "@/components/ResultCard";
 import ResultTimeline from "./ResultTimeline";
@@ -13,7 +21,6 @@ type ResultItem =
       key: string;
       title: string;
       content: string;
-      setup?: SetupType;
       type: "card";
       variant?: "default" | "primary" | "summary" | "tip" | "setup";
     }
@@ -23,6 +30,8 @@ type ResultItem =
 
 // Spans the full 2-column grid on md+ and also on mobile (single-column grids ignore col-span)
 const fullWidthPanel = `${ds.panel.result} transition-all duration-200 col-span-full`;
+const inlineFallbackImage =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='700' viewBox='0 0 1200 700'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='30%25' r='70%25'%3E%3Cstop offset='0%25' stop-color='%23f97316' stop-opacity='.45'/%3E%3Cstop offset='60%25' stop-color='%230f172a'/%3E%3Cstop offset='100%25' stop-color='%23020617'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='1200' height='700' fill='url(%23g)'/%3E%3Cpath d='M280 470h640' stroke='%23fb923c' stroke-width='18' stroke-linecap='round' opacity='.55'/%3E%3Cpath d='M340 405h520' stroke='%23fed7aa' stroke-width='10' stroke-linecap='round' opacity='.38'/%3E%3Ccircle cx='600' cy='300' r='105' fill='%23f97316' opacity='.18'/%3E%3C/svg%3E";
 
 type SummaryLabels = {
   badge: string;
@@ -82,6 +91,171 @@ function getFirstUsefulLine(value = "") {
 function compactSummaryValue(value: string) {
   const clean = getFirstUsefulLine(value);
   return clean.length > 78 ? `${clean.slice(0, 75).trim()}...` : clean;
+}
+
+function normalizeSetupText(value = "") {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function resolveSetupEquipment(value = ""): SetupEquipment | undefined {
+  const normalized = normalizeSetupText(value);
+
+  if (normalized.includes("kamado")) return "kamado";
+  if (
+    normalized.includes("interior") ||
+    normalized.includes("indoor") ||
+    normalized.includes("cocina") ||
+    normalized.includes("sarten") ||
+    normalized.includes("horno") ||
+    normalized.includes("oven")
+  ) {
+    return "indoor";
+  }
+  if (normalized.includes("carbon") || normalized.includes("charcoal")) return "charcoal";
+  if (normalized.includes("gas") || normalized.includes("napoleon") || normalized.includes("rogue")) {
+    return "gas";
+  }
+
+  return undefined;
+}
+
+type SetupOverlayChip = {
+  label: string;
+  tone: "direct" | "indirect" | "neutral";
+};
+
+function getSetupOverlayChips(setup?: SetupType): SetupOverlayChip[] {
+  const normalizedSetup = normalizeSetupText(setup).replace(/[_\s]+/g, "-");
+
+  if (normalizedSetup === "reverse-sear") {
+    return [
+      { label: "❄️ Indirecto", tone: "indirect" },
+      { label: "Sellado final", tone: "direct" },
+    ];
+  }
+
+  if (normalizedSetup === "low-slow" || normalizedSetup === "low-and-slow") {
+    return [
+      { label: "❄️ Indirecto", tone: "indirect" },
+      { label: "Baja temperatura", tone: "neutral" },
+    ];
+  }
+
+  if (normalizedSetup === "two-zone") {
+    return [
+      { label: "🔥 Directo + ❄️ Indirecto", tone: "neutral" },
+      { label: "2 zonas", tone: "neutral" },
+    ];
+  }
+
+  if (normalizedSetup === "indirect" || normalizedSetup === "indirecto") {
+    return [{ label: "❄️ Indirecto", tone: "indirect" }];
+  }
+
+  if (normalizedSetup === "direct" || normalizedSetup === "direct-heat" || normalizedSetup === "directo") {
+    return [{ label: "🔥 Directo", tone: "direct" }];
+  }
+
+  return [
+    { label: "🔥 Directo + ❄️ Indirecto", tone: "neutral" },
+    { label: "2 zonas", tone: "neutral" },
+  ];
+}
+
+function getSetupOverlayChipClass(tone: SetupOverlayChip["tone"]) {
+  const base =
+    "rounded-full border border-white/15 bg-black/40 px-3 py-1 text-xs font-black uppercase leading-none tracking-[0.08em] shadow-lg backdrop-blur-md ring-1 ring-inset ring-white/10";
+
+  if (tone === "direct") {
+    return `${base} text-orange-200 shadow-orange-950/40`;
+  }
+
+  if (tone === "indirect") {
+    return `${base} text-sky-200 shadow-sky-950/40`;
+  }
+
+  return `${base} text-white shadow-black/30`;
+}
+
+function SetupVisualImage({ src }: { src: string }) {
+  const [fallbackStep, setFallbackStep] = useState<"none" | "asset" | "inline">("none");
+  const imageSrc =
+    fallbackStep === "inline"
+      ? inlineFallbackImage
+      : fallbackStep === "asset"
+        ? SETUP_VISUAL_FALLBACK
+        : src;
+
+  function handleImageError() {
+    setFallbackStep((current) =>
+      current === "none" && src !== SETUP_VISUAL_FALLBACK ? "asset" : "inline",
+    );
+  }
+
+  return (
+    <Image
+      src={imageSrc}
+      alt=""
+      fill
+      sizes="(min-width: 768px) 896px, 100vw"
+      className="object-cover"
+      onError={handleImageError}
+    />
+  );
+}
+
+function SetupVisualAnchor({
+  content,
+  equipment,
+  lang,
+  setup,
+}: {
+  content?: string;
+  equipment?: string;
+  lang: "es" | "en" | "fi";
+  setup?: SetupType;
+}) {
+  if (!content?.trim()) return null;
+
+  const setupEquipment = resolveSetupEquipment(equipment) ?? resolveSetupEquipment(content);
+  const detectedSetup = setup ?? detectSetupFromText(content);
+  const setupImage = getSetupVisual(setupEquipment, detectedSetup);
+  const overlayChips = getSetupOverlayChips(detectedSetup);
+  const setupLine = compactSummaryValue(content);
+  const isEnglish = lang === "en";
+
+  return (
+    <section className="relative col-span-full overflow-hidden rounded-[2rem] border border-orange-300/20 bg-slate-950 shadow-2xl shadow-black/30 ring-1 ring-inset ring-white/[0.04]">
+      <div className="relative h-64 w-full sm:h-80">
+        <SetupVisualImage key={setupImage} src={setupImage} />
+      </div>
+
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_4%,rgba(251,146,60,0.22),transparent_28%),radial-gradient(circle_at_28%_0%,rgba(56,189,248,0.13),transparent_24%),linear-gradient(135deg,rgba(2,6,23,0.88)_0%,rgba(2,6,23,0.5)_26%,rgba(2,6,23,0.12)_48%,transparent_68%)]"
+      />
+
+      <div className="pointer-events-none absolute left-0 top-0 flex max-w-[82%] flex-wrap items-start gap-2 p-4 sm:max-w-[70%] sm:p-5">
+        {overlayChips.map((chip) => (
+          <span key={`${chip.tone}-${chip.label}`} className={getSetupOverlayChipClass(chip.tone)}>
+            {chip.label}
+          </span>
+        ))}
+      </div>
+
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950 via-slate-950/82 to-transparent p-4 pt-16 sm:p-5 sm:pt-20">
+        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300/90">
+          {isEnglish ? "Setup visual" : "Setup visual"}
+        </p>
+        <p className="mt-1 line-clamp-2 max-w-2xl text-sm font-semibold leading-relaxed text-white">
+          {setupLine}
+        </p>
+      </div>
+    </section>
+  );
 }
 
 function extractDonenessValue(blocks: Blocks, keys: string[]) {
@@ -318,13 +492,6 @@ function findBlockKey(keys: string[], candidates: string[]) {
   return keys.find((key) => candidates.includes(key.toUpperCase()));
 }
 
-function combineBlocks(blocks: Blocks, keys: string[]) {
-  return keys
-    .map((key) => blocks[key])
-    .filter(Boolean)
-    .join("\n");
-}
-
 function getOrderedResultItems(blocks: Blocks, keys: string[]): ResultItem[] {
   const hasEnglishCookingBlocks = Boolean(blocks.TIMES || blocks.TEMPERATURE || blocks.STEPS);
   const hasEnglishMenuBlocks = Boolean(blocks.ORDER || blocks.SHOPPING || blocks.QUANTITIES);
@@ -337,25 +504,13 @@ function getOrderedResultItems(blocks: Blocks, keys: string[]): ResultItem[] {
   const usedKeys = new Set([setupKey, timeKey, tempKey, stepsKey, errorKey].filter(Boolean));
   const items: ResultItem[] = [];
 
-  if (setupKey) {
+  if (errorKey) {
     items.push({
-      key: setupKey,
-      title: formatTitle(setupKey),
-      content: blocks[setupKey],
-      setup: detectSetupFromText(blocks[setupKey]),
+      key: errorKey,
+      title: useEnglish ? "Error that ruins this cut" : "Error que arruina este corte",
+      content: blocks[errorKey],
       type: "card",
-      variant: "setup",
-    });
-  }
-
-  if (timeKey || tempKey) {
-    const mergedKeys = [timeKey, tempKey].filter(Boolean) as string[];
-    items.push({
-      key: mergedKeys.join("-"),
-      title: useEnglish ? "Times + Temperature" : "Tiempos + Temperatura",
-      content: combineBlocks(blocks, mergedKeys),
-      type: "card",
-      variant: "summary",
+      variant: "tip",
     });
   }
 
@@ -366,16 +521,6 @@ function getOrderedResultItems(blocks: Blocks, keys: string[]): ResultItem[] {
       content: blocks[stepsKey],
       type: "card",
       variant: "primary",
-    });
-  }
-
-  if (errorKey) {
-    items.push({
-      key: errorKey,
-      title: useEnglish ? "Key error" : "Error clave",
-      content: blocks[errorKey],
-      type: "card",
-      variant: "tip",
     });
   }
 
@@ -436,10 +581,17 @@ export default function ResultGrid({
   };
 }) {
   const items = getOrderedResultItems(blocks, keys);
+  const setupKey = findBlockKey(keys, ["SETUP", "CONFIGURACION", "CONFIGURACIÓN"]);
 
   return (
     <Grid className="mx-auto max-w-5xl gap-4 md:gap-5" variant="cards">
       <PremiumResultSummaryCard blocks={blocks} keys={keys} lang={lang} />
+      <SetupVisualAnchor
+        content={setupKey ? blocks[setupKey] : undefined}
+        equipment={equipment}
+        lang={lang}
+        setup={setupKey ? detectSetupFromText(blocks[setupKey]) : undefined}
+      />
 
       {items.map((item) => {
         if (item.type === "timeline") {
