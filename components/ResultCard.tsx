@@ -299,7 +299,7 @@ function SetupVisualToggle({
   setup?: SetupType;
   title: string;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const setupEquipment = resolveSetupEquipment(equipment) ?? resolveSetupEquipment(content);
   const detectedSetup = setup ?? detectSetupFromText(content);
   const setupImage = getSetupVisual(setupEquipment, detectedSetup);
@@ -309,7 +309,7 @@ function SetupVisualToggle({
   if (!isSetupCard(title)) return null;
 
   return (
-    <div className="mt-4 rounded-2xl border border-orange-400/25 bg-orange-500/[0.05] p-3 ring-1 ring-inset ring-orange-300/[0.04]">
+    <div className="mt-4 rounded-[1.5rem] border border-orange-300/25 bg-[radial-gradient(circle_at_16%_0%,rgba(251,146,60,0.18),transparent_34%),rgba(249,115,22,0.055)] p-3 shadow-xl shadow-orange-950/10 ring-1 ring-inset ring-orange-200/[0.05]">
       <button
         type="button"
         aria-expanded={open}
@@ -330,7 +330,7 @@ function SetupVisualToggle({
           </div>
         </div>
 
-        <span className="shrink-0 rounded-full border border-orange-400/30 bg-orange-500/15 px-3 py-1.5 text-xs font-black text-orange-200 transition-colors hover:bg-orange-500/25 active:scale-[0.97]">
+        <span className="shrink-0 rounded-full border border-orange-400/30 bg-orange-500/15 px-3 py-1.5 text-xs font-black text-orange-200 shadow-lg shadow-orange-950/10 transition-colors hover:bg-orange-500/25 active:scale-[0.97]">
           {open ? (isEnglish ? "Hide" : "Ocultar") : isEnglish ? "View →" : "Ver →"}
         </span>
       </button>
@@ -350,8 +350,8 @@ function SetupVisualToggle({
                 : "mt-4 translate-y-2 transition-transform duration-300 ease-out"
             }
           >
-            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950 shadow-2xl shadow-black/25">
-              <div className="relative h-44 w-full sm:h-56">
+            <div className="relative overflow-hidden rounded-[1.25rem] border border-orange-200/15 bg-slate-950 shadow-2xl shadow-black/30 ring-1 ring-inset ring-white/[0.04]">
+              <div className="relative h-52 w-full sm:h-64">
                 <SetupVisualImage key={setupImage} src={setupImage} />
               </div>
 

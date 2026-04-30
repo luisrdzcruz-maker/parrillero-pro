@@ -54,13 +54,22 @@ const TEMP_COLOR: Record<LivePhase, string> = {
   complete: "text-emerald-300",
 };
 
-// Notes hint strip
-const HINT_STYLE: Record<LivePhase, string> = {
+// AHORA block border + background tint
+const AHORA_STYLE: Record<LivePhase, string> = {
   idle:     "border-zinc-600/20  bg-zinc-500/6",
-  active:   "border-orange-500/20 bg-orange-500/7",
-  urgent:   "border-yellow-500/30 bg-yellow-500/8",
-  rest:     "border-indigo-500/20 bg-indigo-500/7",
-  complete: "border-emerald-500/20 bg-emerald-500/7",
+  active:   "border-orange-500/22 bg-orange-500/7",
+  urgent:   "border-yellow-500/32 bg-yellow-500/8",
+  rest:     "border-indigo-500/22 bg-indigo-500/7",
+  complete: "border-emerald-500/22 bg-emerald-500/7",
+};
+
+// AHORA label color
+const AHORA_LABEL: Record<LivePhase, string> = {
+  idle:     "text-zinc-500",
+  active:   "text-orange-500/70",
+  urgent:   "text-yellow-500/80",
+  rest:     "text-indigo-400/70",
+  complete: "text-emerald-500/70",
 };
 
 function formatDuration(seconds: number): string {
@@ -72,9 +81,11 @@ function formatDuration(seconds: number): string {
 type Props = {
   step: Step;
   phase: LivePhase;
+  guidanceOpen: boolean;
+  onToggleGuidance: () => void;
 };
 
-export default function StepCard({ step, phase }: Props) {
+export default function StepCard({ step, phase, guidanceOpen, onToggleGuidance }: Props) {
   return (
     <div
       className={`rounded-2xl border ${CARD_BORDER[phase]} p-5 transition-[background-color,box-shadow,border-color] duration-700`}
@@ -82,7 +93,6 @@ export default function StepCard({ step, phase }: Props) {
     >
       {/* Header row: zone chip + duration */}
       <div className="flex items-center justify-between gap-2">
-        {/* Zone as pill chip */}
         <span
           className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-[0.22em] transition-colors duration-500 ${ZONE_CHIP_BORDER[phase]}`}
         >
@@ -96,12 +106,12 @@ export default function StepCard({ step, phase }: Props) {
         )}
       </div>
 
-      {/* Primary command — multi-line rhythm via whitespace-pre-line */}
+      {/* Primary command */}
       <p className="mt-3 whitespace-pre-line text-[32px] font-black leading-[1.12] tracking-[-0.02em] text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)]">
         {step.label}
       </p>
 
-      {/* Temperature target — badge style */}
+      {/* Temperature target */}
       {step.tempTarget !== null && (
         <p className={`mt-2 text-[14px] font-black ${TEMP_COLOR[phase]}`}>
           {step.tempTarget}°C
@@ -109,12 +119,37 @@ export default function StepCard({ step, phase }: Props) {
         </p>
       )}
 
-      {/* Contextual hint strip */}
+      {/* Guidance block — AHORA section + collapsible toggle */}
       {step.notes && (
-        <div className={`mt-3.5 rounded-xl border px-3.5 py-2.5 ${HINT_STYLE[phase]}`}>
-          <p className="line-clamp-2 text-[12px] font-semibold leading-[1.5] text-white/58">
-            {step.notes}
-          </p>
+        <div className={`mt-3.5 rounded-xl border ${AHORA_STYLE[phase]} overflow-hidden`}>
+          {guidanceOpen && (
+            <div className="px-3.5 pt-3 pb-2.5">
+              <p className={`mb-1.5 text-[9px] font-black uppercase tracking-[0.22em] ${AHORA_LABEL[phase]}`}>
+                Ahora
+              </p>
+              <p className="text-[12.5px] font-semibold leading-[1.55] text-white/65">
+                {step.notes}
+              </p>
+            </div>
+          )}
+
+          {/* Toggle row */}
+          <button
+            type="button"
+            onClick={onToggleGuidance}
+            className={`flex w-full items-center justify-center gap-1.5 px-3.5 py-2 text-[10px] font-bold text-white/30 transition-colors hover:text-white/50 active:scale-[0.98] ${guidanceOpen ? "border-t border-white/[0.06]" : ""}`}
+          >
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 10 10"
+              className={`shrink-0 transition-transform duration-200 ${guidanceOpen ? "rotate-180" : ""}`}
+              aria-hidden
+            >
+              <path d="M1 3l4 4 4-4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span>{guidanceOpen ? "Ocultar guía" : "Ver guía"}</span>
+          </button>
         </div>
       )}
     </div>

@@ -199,7 +199,12 @@ export default function CoccionLivePage() {
 
   // ── Controls ──────────────────────────────────────────────────────────────
   function completeStep() {
-    if (isLast) return;
+    if (isLast) {
+      // Force completion state: remaining → 0 triggers cookComplete.
+      // Auto-advance is already blocked for isLast, so this is safe.
+      setRemaining(0);
+      return;
+    }
     const next = currentIndex + 1;
     setCurrentIndex(next);
     setRemaining((steps[next] ?? steps[steps.length - 1]).duration);

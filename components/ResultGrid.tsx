@@ -24,6 +24,166 @@ type ResultItem =
 // Spans the full 2-column grid on md+ and also on mobile (single-column grids ignore col-span)
 const fullWidthPanel = `${ds.panel.result} transition-all duration-200 col-span-full`;
 
+type SummaryLabels = {
+  badge: string;
+  title: string;
+  subtitle: string;
+  method: string;
+  time: string;
+  temperature: string;
+  doneness: string;
+};
+
+function getSummaryLabels(lang: "es" | "en" | "fi"): SummaryLabels {
+  if (lang === "en") {
+    return {
+      badge: "Result ready",
+      title: "Premium cook summary",
+      subtitle: "The key plan details, ready to follow at the grill.",
+      method: "Method",
+      time: "Time",
+      temperature: "Temperature",
+      doneness: "Doneness",
+    };
+  }
+
+  if (lang === "fi") {
+    return {
+      badge: "Tulos valmis",
+      title: "Premium-yhteenveto",
+      subtitle: "Tärkeimmät tiedot selkeästi ennen grilliä.",
+      method: "Menetelmä",
+      time: "Aika",
+      temperature: "Lämpötila",
+      doneness: "Kypsyys",
+    };
+  }
+
+  return {
+    badge: "Resultado listo",
+    title: "Resumen premium de cocción",
+    subtitle: "Lo esencial del plan, claro y listo para la parrilla.",
+    method: "Método",
+    time: "Tiempo",
+    temperature: "Temperatura",
+    doneness: "Punto",
+  };
+}
+
+function getFirstUsefulLine(value = "") {
+  return (
+    value
+      .split("\n")
+      .map((line) => line.trim().replace(/^[-•]\s*/, ""))
+      .find(Boolean) ?? ""
+  );
+}
+
+function compactSummaryValue(value: string) {
+  const clean = getFirstUsefulLine(value);
+  return clean.length > 78 ? `${clean.slice(0, 75).trim()}...` : clean;
+}
+
+function extractDonenessValue(blocks: Blocks, keys: string[]) {
+  const explicitKey = findBlockKey(keys, ["PUNTO", "DONENESS", "POINT", "KYPSYYS"]);
+  if (explicitKey) return compactSummaryValue(blocks[explicitKey]);
+
+  const candidateText = keys
+    .map((key) => blocks[key])
+    .filter(Boolean)
+    .join("\n");
+  const line = candidateText
+    .split("\n")
+    .map((value) => value.trim())
+    .find((value) =>
+      /(^|\b)(punto|doneness|point|t[eé]rmino|termino|kypsyys)(\b|:)/i.test(value),
+    );
+
+  if (!line) return "";
+
+  const [, value = ""] = line.split(/:\s+(.+)/);
+  return compactSummaryValue(value || line);
+}
+
+function SummaryMetric({
+  label,
+  value,
+  featured = false,
+}: {
+  label: string;
+  value: string;
+  featured?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-2xl border p-3.5 shadow-lg shadow-black/10 ring-1 ring-inset ${
+        featured
+          ? "border-orange-300/25 bg-orange-500/[0.09] ring-orange-200/[0.05]"
+          : "border-white/10 bg-white/[0.045] ring-white/[0.03]"
+      }`}
+    >
+      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300/90">
+        {label}
+      </p>
+      <p className="mt-2 line-clamp-2 text-sm font-black leading-snug text-white">{value}</p>
+    </div>
+  );
+}
+
+function PremiumResultSummaryCard({
+  blocks,
+  keys,
+  lang,
+}: {
+  blocks: Blocks;
+  keys: string[];
+  lang: "es" | "en" | "fi";
+}) {
+  const labels = getSummaryLabels(lang);
+  const setupKey = findBlockKey(keys, ["SETUP", "CONFIGURACION", "CONFIGURACIÓN"]);
+  const timeKey = findBlockKey(keys, ["TIEMPOS", "TIMES"]);
+  const tempKey = findBlockKey(keys, ["TEMPERATURA", "TEMPERATURE"]);
+  const method = setupKey ? compactSummaryValue(blocks[setupKey]) : "";
+  const time = timeKey ? compactSummaryValue(blocks[timeKey]) : "";
+  const temperature = tempKey ? compactSummaryValue(blocks[tempKey]) : "";
+  const doneness = extractDonenessValue(blocks, keys);
+
+  if (!method && !time && !temperature && !doneness) return null;
+
+  return (
+    <section className="col-span-full overflow-hidden rounded-[2rem] border border-orange-300/25 bg-[radial-gradient(circle_at_12%_0%,rgba(251,146,60,0.26),transparent_30%),linear-gradient(135deg,rgba(15,23,42,0.98),rgba(2,6,23,0.96)_58%,rgba(67,20,7,0.72))] shadow-2xl shadow-orange-950/25 ring-1 ring-inset ring-white/[0.05]">
+      <div className="relative p-4 sm:p-5">
+        <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-orange-400/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-16 left-1/4 h-28 w-28 rounded-full bg-amber-300/10 blur-3xl" />
+
+        <div className="relative z-10">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="inline-flex rounded-full border border-orange-300/25 bg-orange-500/15 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-orange-200">
+                {labels.badge}
+              </p>
+              <h2 className="mt-3 text-2xl font-black tracking-tight text-white sm:text-3xl">
+                {labels.title}
+              </h2>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">{labels.subtitle}</p>
+            </div>
+            <div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-3xl border border-orange-300/20 bg-orange-500/15 text-2xl shadow-xl shadow-orange-950/30 sm:flex">
+              🔥
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {method && <SummaryMetric featured label={labels.method} value={method} />}
+            {time && <SummaryMetric label={labels.time} value={time} />}
+            {temperature && <SummaryMetric label={labels.temperature} value={temperature} />}
+            {doneness && <SummaryMetric label={labels.doneness} value={doneness} />}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function ShoppingListCard({
   title,
   content,
@@ -279,6 +439,8 @@ export default function ResultGrid({
 
   return (
     <Grid className="mx-auto max-w-5xl gap-4 md:gap-5" variant="cards">
+      <PremiumResultSummaryCard blocks={blocks} keys={keys} lang={lang} />
+
       {items.map((item) => {
         if (item.type === "timeline") {
           return <ResultTimeline key={item.key} title={item.title} content={item.content} />;

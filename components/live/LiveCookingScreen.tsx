@@ -71,6 +71,39 @@ const STATUS_COLOR: Record<LivePhase, string> = {
   complete: "text-emerald-400",
 };
 
+// Phase Identity Strip styles
+const STRIP_BG: Record<LivePhase, string> = {
+  idle:     "rgba(82,82,91,0.10)",
+  active:   "rgba(249,115,22,0.10)",
+  urgent:   "rgba(234,179,8,0.12)",
+  rest:     "rgba(129,140,248,0.10)",
+  complete: "rgba(16,185,129,0.10)",
+};
+
+const STRIP_BORDER: Record<LivePhase, string> = {
+  idle:     "border-zinc-600/18",
+  active:   "border-orange-500/22",
+  urgent:   "border-yellow-400/30",
+  rest:     "border-indigo-400/22",
+  complete: "border-emerald-500/22",
+};
+
+const STRIP_DOT: Record<LivePhase, string> = {
+  idle:     "bg-zinc-500",
+  active:   "animate-pulse bg-orange-500",
+  urgent:   "animate-pulse bg-yellow-400",
+  rest:     "bg-indigo-400",
+  complete: "bg-emerald-400",
+};
+
+// Static prep hints per next-step zone
+const PREP_HINT: Record<string, string> = {
+  Directo:   "Asegura calor directo en la parrilla",
+  Indirecto: "Ve bajando el fuego a temperatura baja",
+  Reposo:    "Ten una tabla y cuchillo a mano",
+  Servir:    "Ten el plato listo para servir",
+};
+
 // CTA button shadow by phase (the "complete step" primary button)
 const CTA_SHADOW: Record<LivePhase, string> = {
   idle:     "shadow-none",
@@ -213,6 +246,8 @@ export default function LiveCookingScreen({
   const touchRef = useRef<TouchPoint | null>(null);
   // "idle" → button shown; "saved" → confirmation shown; stays "saved" permanently
   const [saveState, setSaveState] = useState<"idle" | "saved">("idle");
+  // Guidance panel: open by default, reset to open on each step change
+  const [guidanceOpen, setGuidanceOpen] = useState(true);
 
   // ── Confidence timing refs ────────────────────────────────────────────────
   // All refs are read only inside effects — never during render.
@@ -234,6 +269,15 @@ export default function LiveCookingScreen({
       pauseBeganRef.current = null;
     }
   }, [paused]);
+
+  // Re-open guidance for each new step so users never miss instructions on a fresh phase.
+  // State update is deferred to next animation frame — satisfies react-hooks/set-state-in-effect.
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      setGuidanceOpen(true);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [currentIndex]);
 
   const isEs = lang !== "en";
 
@@ -399,6 +443,26 @@ export default function LiveCookingScreen({
         </div>
       )}
 
+      {/* ── Phase Identity Strip ────────────────────────────────────────────── */}
+      {/* Always visible between header and scrollable area — instant phase read */}
+      <div
+        className={`flex shrink-0 items-center justify-center gap-2.5 border-b py-2.5 transition-colors duration-700 ${STRIP_BORDER[phase]}`}
+        style={{ backgroundColor: STRIP_BG[phase] }}
+      >
+        <span className={`h-1.5 w-1.5 rounded-full ${STRIP_DOT[phase]}`} />
+        <span className={`text-[13px] font-black uppercase tracking-[0.20em] transition-colors duration-700 ${STATUS_COLOR[phase]}`}>
+          {step.zone}
+        </span>
+        {step.tempTarget != null && (
+          <>
+            <span className="text-[10px] text-white/22">·</span>
+            <span className={`text-[12px] font-black tabular-nums transition-colors duration-700 ${STATUS_COLOR[phase]}`}>
+              {step.tempTarget}°C
+            </span>
+          </>
+        )}
+      </div>
+
       {/* ── Scrollable content (Zones 2–5) ─────────────────────────────────── */}
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         {/* Alert banner */}
@@ -413,7 +477,7 @@ export default function LiveCookingScreen({
           <TimerDial total={step.duration} remaining={remaining} phase={phase} />
         </div>
 
-        {/* ── Zone 3: Current Step Card (~140px) ─────────────────────────── */}
+        {/* ── Zone 3: Current Step Card ───────────────────────────────────── */}
         <div className="px-4">
           <StepCard
             step={{
@@ -425,6 +489,8 @@ export default function LiveCookingScreen({
               notes: step.notes ?? null,
             }}
             phase={phase}
+            guidanceOpen={guidanceOpen}
+            onToggleGuidance={() => setGuidanceOpen((v) => !v)}
           />
         </div>
 
@@ -447,8 +513,18 @@ export default function LiveCookingScreen({
               <p className="mt-0.5 line-clamp-1 text-[13px] font-bold text-white/52">
                 {nextStep.label}
               </p>
+              {/* PREPARA hint — static zone-based prep cue */}
+              {PREP_HINT[nextStep.zone] && (
+                <p className="mt-1 text-[10.5px] leading-snug text-white/32">
+                  <span className="font-black uppercase tracking-[0.14em] text-white/22">
+                    {isEs ? "Prepara" : "Prep"}
+                  </span>
+                  {" · "}
+                  {PREP_HINT[nextStep.zone]}
+                </p>
+              )}
             </div>
-            <span className="shrink-0 font-mono text-[11px] font-semibold tabular-nums text-white/28">
+            <span className="shrink-0 self-start font-mono text-[11px] font-semibold tabular-nums text-white/28">
               {nextStep.duration ? formatTime(nextStep.duration) : "—"}
             </span>
           </div>
