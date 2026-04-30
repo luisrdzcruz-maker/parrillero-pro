@@ -206,76 +206,57 @@ type SetupOverlayChip = {
   tone: "direct" | "indirect" | "neutral";
 };
 
-function getSetupOverlayChips({
-  content,
-  lang,
-  setup,
-}: {
-  content: string;
-  lang: "es" | "en" | "fi";
-  setup?: SetupType;
-}): SetupOverlayChip[] {
-  const isEnglish = lang === "en";
-  const normalizedSetup = normalizeSetupText(setup).replace(/_/g, "-");
-  const normalizedContent = normalizeSetupText(content);
-  const combined = `${normalizedSetup} ${normalizedContent}`;
+function getSetupOverlayChips(setup?: SetupType): SetupOverlayChip[] {
+  const normalizedSetup = normalizeSetupText(setup).replace(/[_\s]+/g, "-");
 
-  const labels = {
-    direct: isEnglish ? "Direct" : "Directo",
-    indirect: isEnglish ? "Indirect" : "Indirecto",
-    twoZones: isEnglish ? "2 zones" : "2 zonas",
-    finalSear: isEnglish ? "Final sear" : "Sellado final",
-    lowTemp: isEnglish ? "Low temperature" : "Baja temperatura",
-  };
-
-  if (/(reverse-sear|reverse sear|sellado inverso)/.test(combined)) {
+  if (normalizedSetup === "reverse-sear") {
     return [
-      { label: `❄️ ${labels.indirect}`, tone: "indirect" },
-      { label: labels.finalSear, tone: "direct" },
+      { label: "❄️ Indirecto", tone: "indirect" },
+      { label: "Sellado final", tone: "direct" },
     ];
   }
 
-  if (/(low-slow|low and slow|smoke|smoking|ahumado|baja temperatura)/.test(combined)) {
+  if (normalizedSetup === "low-slow" || normalizedSetup === "low-and-slow") {
     return [
-      { label: `❄️ ${labels.indirect}`, tone: "indirect" },
-      { label: labels.lowTemp, tone: "neutral" },
+      { label: "❄️ Indirecto", tone: "indirect" },
+      { label: "Baja temperatura", tone: "neutral" },
     ];
   }
 
-  if (/(two-zone|two zone|dos zonas|direct\s*\+\s*indirect|directo\s*\+\s*indirecto)/.test(combined)) {
+  if (normalizedSetup === "two-zone") {
     return [
-      { label: `🔥 ${labels.direct} + ❄️ ${labels.indirect}`, tone: "neutral" },
-      { label: labels.twoZones, tone: "neutral" },
+      { label: "🔥 Directo + ❄️ Indirecto", tone: "neutral" },
+      { label: "2 zonas", tone: "neutral" },
     ];
   }
 
-  if (/(indirect|indirecto)/.test(combined)) {
-    return [{ label: `❄️ ${labels.indirect}`, tone: "indirect" }];
+  if (normalizedSetup === "indirect" || normalizedSetup === "indirecto") {
+    return [{ label: "❄️ Indirecto", tone: "indirect" }];
   }
 
-  if (/(direct-heat|direct heat|direct|directo)/.test(combined)) {
-    return [{ label: `🔥 ${labels.direct}`, tone: "direct" }];
+  if (normalizedSetup === "direct" || normalizedSetup === "direct-heat" || normalizedSetup === "directo") {
+    return [{ label: "🔥 Directo", tone: "direct" }];
   }
 
   return [
-    { label: `🔥 ${labels.direct} + ❄️ ${labels.indirect}`, tone: "neutral" },
-    { label: labels.twoZones, tone: "neutral" },
+    { label: "🔥 Directo + ❄️ Indirecto", tone: "neutral" },
+    { label: "2 zonas", tone: "neutral" },
   ];
 }
 
 function getSetupOverlayChipClass(tone: SetupOverlayChip["tone"]) {
   const base =
-    "rounded-full px-3 py-1.5 text-[11px] font-black leading-none tracking-[0.08em] shadow-lg backdrop-blur-md ring-1 ring-inset";
+    "rounded-full border border-white/15 bg-black/40 px-3 py-1 text-xs font-black uppercase leading-none tracking-[0.08em] shadow-lg backdrop-blur-md ring-1 ring-inset ring-white/10";
 
   if (tone === "direct") {
-    return `${base} border border-orange-300/25 bg-orange-500/20 text-orange-100 shadow-orange-950/25 ring-orange-200/15`;
+    return `${base} text-orange-200 shadow-orange-950/40`;
   }
 
   if (tone === "indirect") {
-    return `${base} border border-sky-300/25 bg-sky-500/20 text-sky-100 shadow-sky-950/25 ring-sky-200/15`;
+    return `${base} text-sky-200 shadow-sky-950/40`;
   }
 
-  return `${base} border border-white/15 bg-black/40 text-white shadow-black/25 ring-white/10`;
+  return `${base} text-white shadow-black/30`;
 }
 
 function SetupVisualImage({ src }: { src: string }) {
@@ -323,7 +304,7 @@ function SetupVisualToggle({
   const detectedSetup = setup ?? detectSetupFromText(content);
   const setupImage = getSetupVisual(setupEquipment, detectedSetup);
   const isEnglish = lang === "en";
-  const overlayChips = getSetupOverlayChips({ content, lang, setup: detectedSetup });
+  const overlayChips = getSetupOverlayChips(detectedSetup);
 
   if (!isSetupCard(title)) return null;
 
@@ -376,9 +357,9 @@ function SetupVisualToggle({
 
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_16%_0%,rgba(251,146,60,0.22),transparent_30%),radial-gradient(circle_at_80%_8%,rgba(56,189,248,0.16),transparent_28%),linear-gradient(135deg,rgba(2,6,23,0.82)_0%,rgba(2,6,23,0.34)_30%,transparent_62%),linear-gradient(to_top,rgba(2,6,23,0.42),transparent_46%)]"
+                className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_4%,rgba(251,146,60,0.2),transparent_28%),radial-gradient(circle_at_28%_0%,rgba(56,189,248,0.13),transparent_24%),linear-gradient(135deg,rgba(2,6,23,0.88)_0%,rgba(2,6,23,0.5)_26%,rgba(2,6,23,0.12)_48%,transparent_68%)]"
               />
-              <div className="pointer-events-none absolute left-0 right-0 top-0 flex flex-wrap gap-2 p-3 sm:p-4">
+              <div className="pointer-events-none absolute left-0 top-0 flex max-w-[82%] flex-wrap items-start gap-2 p-3 sm:max-w-[70%] sm:p-4">
                 {overlayChips.map((chip) => (
                   <span key={`${chip.tone}-${chip.label}`} className={getSetupOverlayChipClass(chip.tone)}>
                     {chip.label}
