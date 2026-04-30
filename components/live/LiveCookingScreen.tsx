@@ -279,7 +279,7 @@ export default function LiveCookingScreen({
     return () => window.cancelAnimationFrame(frame);
   }, [currentIndex]);
 
-  const isEs = lang !== "en";
+  const isEs = lang === "es";
 
   // Derive values that hooks below depend on — use safe fallbacks before early return
   const step = steps[currentIndex] ?? steps[0];
@@ -305,7 +305,7 @@ export default function LiveCookingScreen({
           steps,
           currentIndex,
           remaining,
-          isEs: lang !== "en",
+          isEs: lang === "es",
         })
       );
     }

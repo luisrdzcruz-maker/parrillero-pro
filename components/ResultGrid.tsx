@@ -21,6 +21,7 @@ type ResultItem =
       key: string;
       title: string;
       content: string;
+      setup?: SetupType;
       type: "card";
       variant?: "default" | "primary" | "summary" | "tip" | "setup";
     }
@@ -428,7 +429,7 @@ function GrillManagerCard({
     .map((line) => line.trim())
     .filter(Boolean);
 
-  const isEnglish = lang === "en";
+  const isEs = lang === "es";
 
   return (
     <div
@@ -441,9 +442,9 @@ function GrillManagerCard({
           <div>
             <h3 className="text-sm font-semibold tracking-wide text-white">{title}</h3>
             <p className="mt-1 text-sm leading-relaxed text-slate-400">
-              {isEnglish
-                ? "Smart zone and priority control"
-                : "Control inteligente de zonas y prioridades"}
+              {isEs
+                ? "Control inteligente de zonas y prioridades"
+                : "Smart zone and priority control"}
             </p>
           </div>
         </div>
@@ -503,6 +504,17 @@ function getOrderedResultItems(blocks: Blocks, keys: string[]): ResultItem[] {
   const errorKey = findBlockKey(keys, ["ERROR", "ERROR CLAVE", "KEY ERROR"]);
   const usedKeys = new Set([setupKey, timeKey, tempKey, stepsKey, errorKey].filter(Boolean));
   const items: ResultItem[] = [];
+
+  if (setupKey) {
+    items.push({
+      key: setupKey,
+      title: formatTitle(setupKey),
+      content: blocks[setupKey],
+      setup: detectSetupFromText(blocks[setupKey]),
+      type: "card",
+      variant: "setup",
+    });
+  }
 
   if (errorKey) {
     items.push({

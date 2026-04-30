@@ -34,16 +34,16 @@ function getVariantLabel(
   variant: NonNullable<ResultCardProps["variant"]>,
   lang: "es" | "en" | "fi",
 ): string {
-  const isEnglish = lang === "en";
+  const isEs = lang === "es";
   switch (variant) {
     case "primary":
-      return isEnglish ? "Cooking steps" : "Pasos de cocción";
+      return isEs ? "Pasos de cocción" : "Cooking steps";
     case "tip":
-      return isEnglish ? "Error to avoid" : "Error a evitar";
+      return isEs ? "Error a evitar" : "Error to avoid";
     case "summary":
-      return isEnglish ? "Times · Temperature" : "Tiempos · Temperatura";
+      return isEs ? "Tiempos · Temperatura" : "Times · Temperature";
     case "setup":
-      return isEnglish ? "Fire setup" : "Setup del fuego";
+      return isEs ? "Setup del fuego" : "Fire setup";
     default:
       return "Plan";
   }
@@ -303,7 +303,7 @@ function SetupVisualToggle({
   const setupEquipment = resolveSetupEquipment(equipment) ?? resolveSetupEquipment(content);
   const detectedSetup = setup ?? detectSetupFromText(content);
   const setupImage = getSetupVisual(setupEquipment, detectedSetup);
-  const isEnglish = lang === "en";
+  const isEs = lang === "es";
   const overlayChips = getSetupOverlayChips(detectedSetup);
 
   if (!isSetupCard(title)) return null;
@@ -325,13 +325,13 @@ function SetupVisualToggle({
               Setup visual
             </p>
             <p className="mt-0.5 line-clamp-1 text-[11px] text-slate-400">
-              {isEnglish ? "Heat zones and suggested flow" : "Zonas de calor y flujo recomendado"}
+              {isEs ? "Zonas de calor y flujo recomendado" : "Heat zones and suggested flow"}
             </p>
           </div>
         </div>
 
         <span className="shrink-0 rounded-full border border-orange-400/30 bg-orange-500/15 px-3 py-1.5 text-xs font-black text-orange-200 shadow-lg shadow-orange-950/10 transition-colors hover:bg-orange-500/25 active:scale-[0.97]">
-          {open ? (isEnglish ? "Hide" : "Ocultar") : isEnglish ? "View →" : "Ver →"}
+          {open ? (isEs ? "Ocultar" : "Hide") : isEs ? "Ver →" : "View →"}
         </span>
       </button>
 

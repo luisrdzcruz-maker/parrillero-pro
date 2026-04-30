@@ -34,7 +34,7 @@ export default function ResultHero({
     startCooking: string;
   };
 }) {
-  const isEnglish = lang === "en";
+  const isEs = lang === "es";
   return (
     <Panel as="section" className="relative mb-3 overflow-hidden p-3 sm:mb-5 sm:p-5" tone="hero">
       {/* Top shimmer */}
@@ -48,10 +48,10 @@ export default function ResultHero({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="truncate text-[11px] font-black uppercase tracking-[0.2em] text-orange-300/90">
-              {context || (isEnglish ? "Cooking plan" : "Plan de cocción")}
+              {context || (isEs ? "Plan de cocción" : "Cooking plan")}
             </p>
             <h2 className="mt-0.5 text-2xl font-black tracking-tight text-white sm:text-3xl">
-              {isEnglish ? "Result ready 🔥" : "Resultado listo 🔥"}
+              {isEs ? "Resultado listo 🔥" : "Result ready 🔥"}
             </h2>
           </div>
 
@@ -61,7 +61,7 @@ export default function ResultHero({
               onClick={onEdit}
               variant="secondary"
             >
-              {isEnglish ? "← Edit" : "← Editar"}
+              {isEs ? "← Editar" : "← Edit"}
             </Button>
           )}
         </div>
@@ -87,7 +87,7 @@ export default function ResultHero({
               {/* Labels */}
               <div className="min-w-0 flex-1 text-left">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-300">
-                  {isEnglish ? "Ready to cook" : "Listo para cocinar"}
+                  {isEs ? "Listo para cocinar" : "Ready to cook"}
                 </p>
                 <p className="mt-0.5 truncate text-base font-black text-white">
                   {t.startCooking}
@@ -98,7 +98,7 @@ export default function ResultHero({
               <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-orange-400/30 bg-orange-500/15 px-2.5 py-1 shadow-sm shadow-orange-500/10">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-orange-400" />
                 <span className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-300">
-                  {isEnglish ? "Live" : "En vivo"}
+                  {isEs ? "En vivo" : "Live"}
                 </span>
               </div>
             </button>
@@ -110,6 +110,7 @@ export default function ResultHero({
           actions={{ ...actions, onStartCooking: undefined }}
           compact
           hasResult={hasResult}
+          lang={lang}
           secondary
           status={saveMenuStatus}
           t={{
