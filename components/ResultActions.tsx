@@ -9,6 +9,7 @@ export default function ResultActions({
   actions,
   compact = false,
   hasResult,
+  lang = "es",
   secondary = false,
   status: rawStatus,
   t,
@@ -21,6 +22,7 @@ export default function ResultActions({
   };
   compact?: boolean;
   hasResult: boolean;
+  lang?: "es" | "en" | "fi";
   secondary?: boolean;
   status?: SaveMenuStatus;
   t: {
@@ -34,7 +36,7 @@ export default function ResultActions({
   const [localSaveStatus, setLocalSaveStatus] = useState<SaveMenuStatus>("idle");
   const status = rawStatus ?? localSaveStatus;
   const [shareStatus, setShareStatus] = useState<"idle" | "sharing" | "shared" | "copied">("idle");
-  const isEnglish = t.copy.toLowerCase().includes("copy");
+  const isEnglish = lang !== "es";
   const saveLabel =
     status === "saving"
       ? isEnglish
