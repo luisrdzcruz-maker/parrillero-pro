@@ -246,8 +246,8 @@ export default function LiveCookingScreen({
   const touchRef = useRef<TouchPoint | null>(null);
   // "idle" → button shown; "saved" → confirmation shown; stays "saved" permanently
   const [saveState, setSaveState] = useState<"idle" | "saved">("idle");
-  // Guidance panel: open by default, reset to open on each step change
-  const [guidanceOpen, setGuidanceOpen] = useState(true);
+  // Guidance panel: collapsed by default so experienced users can ignore it.
+  const [guidanceOpen, setGuidanceOpen] = useState(false);
 
   // ── Confidence timing refs ────────────────────────────────────────────────
   // All refs are read only inside effects — never during render.
@@ -270,11 +270,11 @@ export default function LiveCookingScreen({
     }
   }, [paused]);
 
-  // Re-open guidance for each new step so users never miss instructions on a fresh phase.
+  // Keep guidance opt-in on each new step so it does not clutter the live screen.
   // State update is deferred to next animation frame — satisfies react-hooks/set-state-in-effect.
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
-      setGuidanceOpen(true);
+      setGuidanceOpen(false);
     });
     return () => window.cancelAnimationFrame(frame);
   }, [currentIndex]);
@@ -489,6 +489,7 @@ export default function LiveCookingScreen({
               notes: step.notes ?? null,
             }}
             phase={phase}
+            context={context}
             guidanceOpen={guidanceOpen}
             onToggleGuidance={() => setGuidanceOpen((v) => !v)}
           />

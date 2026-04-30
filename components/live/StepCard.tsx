@@ -1,4 +1,6 @@
 import type { LivePhase } from "./TimerDial";
+import LiveVisualGuideCard from "./LiveVisualGuideCard";
+import { getLiveVisualGuide } from "./liveVisualGuide";
 
 export type Step = {
   id: string;
@@ -81,11 +83,14 @@ function formatDuration(seconds: number): string {
 type Props = {
   step: Step;
   phase: LivePhase;
+  context?: string;
   guidanceOpen: boolean;
   onToggleGuidance: () => void;
 };
 
-export default function StepCard({ step, phase, guidanceOpen, onToggleGuidance }: Props) {
+export default function StepCard({ step, phase, context, guidanceOpen, onToggleGuidance }: Props) {
+  const visualGuide = getLiveVisualGuide(step, context);
+
   return (
     <div
       className={`rounded-2xl border ${CARD_BORDER[phase]} p-5 transition-[background-color,box-shadow,border-color] duration-700`}
@@ -119,17 +124,22 @@ export default function StepCard({ step, phase, guidanceOpen, onToggleGuidance }
         </p>
       )}
 
-      {/* Guidance block — AHORA section + collapsible toggle */}
-      {step.notes && (
+      {/* Guidance block — AHORA section + collapsible visual guide */}
+      {visualGuide && (
         <div className={`mt-3.5 rounded-xl border ${AHORA_STYLE[phase]} overflow-hidden`}>
           {guidanceOpen && (
             <div className="px-3.5 pt-3 pb-2.5">
-              <p className={`mb-1.5 text-[9px] font-black uppercase tracking-[0.22em] ${AHORA_LABEL[phase]}`}>
-                Ahora
-              </p>
-              <p className="text-[12.5px] font-semibold leading-[1.55] text-white/65">
-                {step.notes}
-              </p>
+              {step.notes && (
+                <>
+                  <p className={`mb-1.5 text-[9px] font-black uppercase tracking-[0.22em] ${AHORA_LABEL[phase]}`}>
+                    Ahora
+                  </p>
+                  <p className="text-[12.5px] font-semibold leading-[1.55] text-white/65">
+                    {step.notes}
+                  </p>
+                </>
+              )}
+              <LiveVisualGuideCard guide={visualGuide} />
             </div>
           )}
 
