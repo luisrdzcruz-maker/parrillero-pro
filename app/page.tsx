@@ -2196,6 +2196,7 @@ ERROR
           cookingStep === "cut" ? (
             <CutSelectionScreen
               selectedAnimal={animalIdsByLabel[animal] as GeneratedAnimalId}
+              lang={lang}
               isAnimalPreselected={Boolean(parseCookingAnimal(searchParams.get("animal")))}
               onAnimalChange={handleCutSelectionAnimalChange}
               onStartCooking={handleCutSelectionStartCooking}
