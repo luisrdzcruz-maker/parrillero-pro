@@ -651,6 +651,12 @@ function HomeContent() {
   const touchStartRef = useRef<TouchPoint | null>(null);
   const isApplyingPopRef = useRef(false);
   const liveAdvanceRef = useRef(false);
+  const cookingContextRef = useRef({
+    animal,
+    cut,
+    doneness,
+    thickness,
+  });
 
   const baseCuts = useMemo(() => getCutItems(animal, lang), [animal, lang]);
   const selectedCutMeta = useMemo(() => (cut ? getCutById(cut) : undefined), [cut]);
@@ -694,6 +700,14 @@ function HomeContent() {
       cookingContext.animal || cookingContext.cut || cookingContext.doneness || cookingContext.thickness;
     if (!hasContext) return;
 
+    const currentContext = cookingContextRef.current;
+    const contextChanged = Boolean(
+      (cookingContext.animal && cookingContext.animal !== currentContext.animal) ||
+        (cookingContext.cut && cookingContext.cut !== currentContext.cut) ||
+        (cookingContext.doneness && cookingContext.doneness !== currentContext.doneness) ||
+        (cookingContext.thickness && cookingContext.thickness !== currentContext.thickness),
+    );
+
     if (cookingContext.animal) setAnimal(cookingContext.animal);
     if (cookingContext.cut) setCut(cookingContext.cut);
     if (cookingContext.doneness) {
@@ -708,34 +722,38 @@ function HomeContent() {
     setAdvancedThicknessEnabled(false);
     setWeightRange("medium");
     setVegetableFormat("halved");
-    setBlocks({});
-    setCheckedItems({});
-    setSaveMenuStatus("idle");
-    setSaveMenuMessage("");
-    setShareStatus("idle");
-    setShareMessage("");
-    setShareMessageMenuId(null);
+    if (contextChanged) {
+      setBlocks({});
+      setCheckedItems({});
+      setSaveMenuStatus("idle");
+      setSaveMenuMessage("");
+      setShareStatus("idle");
+      setShareMessage("");
+      setShareMessageMenuId(null);
+    }
   }, []);
 
   function commitNav(
-    nextMode: Mode,
-    nextCookingStep: CookingWizardStep,
-    method: "push" | "replace",
+    requestedMode: Mode,
+    requestedCookingStep: CookingWizardStep,
+    requestedMethod: "push" | "replace",
     cookingContext: CookingNavContext = {},
   ) {
+    const nextMode = isAllowedMode(requestedMode) ? requestedMode : "inicio";
+    const nextCookingStep =
+      nextMode === "coccion" && isAllowedCookingStep(requestedCookingStep) ? requestedCookingStep : "animal";
+    const shouldReplaceDuplicateStep =
+      requestedMethod === "push" && nextMode === mode && nextCookingStep === cookingStep;
+    const method: "push" | "replace" = shouldReplaceDuplicateStep ? "replace" : requestedMethod;
     if (isApplyingPopRef.current && method === "push") return;
 
-    const mode = isAllowedMode(nextMode) ? nextMode : "inicio";
-    const cookingStep =
-      mode === "coccion" && isAllowedCookingStep(nextCookingStep) ? nextCookingStep : "animal";
-
-    setMode(mode);
-    setCookingStep(cookingStep);
+    setMode(nextMode);
+    setCookingStep(nextCookingStep);
 
     if (typeof window === "undefined") return;
-    const search = buildSearchFromNav(mode, cookingStep, cookingContext);
+    const search = buildSearchFromNav(nextMode, nextCookingStep, cookingContext);
     const url = `${window.location.pathname}${search}${window.location.hash}`;
-    const state = { mode, cookingStep, cookingContext };
+    const state = { mode: nextMode, cookingStep: nextCookingStep, cookingContext };
 
     if (method === "replace") {
       window.history.replaceState(state, "", url);
@@ -817,6 +835,7 @@ function HomeContent() {
   }, [applyCookingNavContext]);
 
   useEffect(() => {
+    if (isApplyingPopRef.current) return;
     const query = searchParams.toString();
     const nav = parseNavFromSearch(query ? `?${query}` : "");
     if (nav.mode === mode && nav.cookingStep === cookingStep) return;
@@ -840,6 +859,15 @@ function HomeContent() {
   const liveIsLast = liveCurrentIndex === liveSteps.length - 1;
   const liveHasTimer = liveStep ? liveStep.duration > 0 : false;
   const liveCookComplete = mode === "cocina" && liveClientReady && liveIsLast && liveRemaining === 0;
+
+  useEffect(() => {
+    cookingContextRef.current = {
+      animal,
+      cut,
+      doneness,
+      thickness,
+    };
+  }, [animal, cut, doneness, thickness]);
 
   useEffect(() => {
     if (mode !== "cocina") {
@@ -1639,6 +1667,30 @@ ERROR
     setLivePaused(false);
   }
 
+  function handleLiveBackNavigation() {
+    if (typeof window === "undefined") return;
+
+    if (window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+
+    const liveFromUrl = parseLiveUrlState(lang);
+    if (!liveFromUrl.cutId) {
+      router.replace("/?mode=inicio");
+      return;
+    }
+
+    const params = new URLSearchParams();
+    params.set("mode", "coccion");
+    params.set("step", "details");
+    params.set("animal", animalIdsByLabel[liveFromUrl.animal]);
+    params.set("cutId", liveFromUrl.cutId);
+    params.set("doneness", liveFromUrl.doneness);
+    params.set("thickness", liveFromUrl.thickness);
+    router.replace(`/?${params.toString()}`);
+  }
+
   // ── Onboarding gate ─────────────────────────────────────────────────────────
   // Render a dark placeholder while localStorage hasn't been checked yet.
   // Body background matches so there is zero visible flash.
@@ -1678,7 +1730,7 @@ ERROR
                 paused={livePaused}
                 context={liveContext}
                 lang={lang}
-                onBack={() => window.history.back()}
+                onBack={handleLiveBackNavigation}
                 onPause={() => setLivePaused((value) => !value)}
                 onCompleteStep={handleCompleteLiveStep}
                 onGoToStep={handleGoToLiveStep}

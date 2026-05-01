@@ -1,4 +1,4 @@
-# Live Cooking QA Report
+# Live Cooking QA Report (Re-run)
 
 Date: 2026-05-01
 Branch: `feature/product-core-data-driven-cuts`
@@ -6,37 +6,42 @@ Model/Agent: Codex 5.3
 
 ## PASSED
 
-- Direct Live entry works without crash for `/?mode=cocina&animal=beef&cutId=ribeye` and renders the Live screen with step/timer/CTA UI.
-- Fail-safe rendering works for missing/invalid/partial params (`?mode=cocina`, invalid animal/cut, partial animal-only): app falls back safely instead of crashing.
-- Countdown runs in live mode after pressing `Start cooking` (observed `5:00 -> 4:53`) and progress updates (`0% -> 1%`).
-- Manual step completion works: CTA advances step index and updates step/progress context (observed `Step 1 -> Step 2`, progress to `17%`, completed list visible).
-- CTA label changes dynamically during progression (observed `Start cooking -> Mark step done -> Flip now`) and CTA clicks are functional (no dead click on tested paths).
-- Production build passes (`npm run build`).
+- Validation gates pass: `npm run lint` and `npm run build` both complete successfully.
+- Direct Live URL works and keeps canonical animal id unchanged: `/?mode=cocina&animal=beef&cutId=ribeye` stays with `animal=beef` (no rewrite to localized labels).
+- Missing/invalid params are fail-safe and non-crashing:
+  - `/?mode=cocina` loads Live safely.
+  - `/?mode=cocina&animal=Vacuno&cutId=unknown` safely falls back without crashing.
+- URL/UI step sync for direct mode checks is correct:
+  - `?mode=coccion&step=details...` renders details controls.
+  - `?mode=coccion&step=result...` renders result view (not details controls).
+- Live timer and progression core behavior works:
+  - `Start cooking` starts countdown (`5:00 -> 4:49` observed) and progress increments (`0% -> 1%`).
+  - CTA advances steps and updates labels dynamically (`Start cooking -> Mark step done -> Flip now -> Rest now` observed).
+  - Completed step state is shown and updates as steps are completed.
+- No crashes observed during tested navigation and flow transitions.
 
 ## ISSUES FOUND
 
-- **Lint gate failing**: `npm run lint` fails with `react-hooks/set-state-in-effect` in `components/live/LiveCookingScreen.tsx` (setState called synchronously inside effect). This blocks clean CI quality gating.
-- **URL normalization regression in Live mode**: entering `animal=beef` gets rewritten client-side to `animal=Vacuno` (localized label). This creates inconsistent URL contracts and can break deep-link stability/analytics assumptions.
-- **Navigation/state desync risk**: in repeated wizard/result navigation, URL reported `?mode=coccion&step=result` while UI intermittently rendered details-step controls. This indicates URL/state mismatch under real navigation flow.
-- **Back button behavior on direct Live entry**: top-left `Plan` button can no-op when history stack has no previous route. No fallback navigation is provided in that case.
-- **Microinteraction timing mismatch with target**: root live entry animation is `360ms` (`animate-live-enter`) which exceeds requested `150-250ms` transition target.
+- **Result screen state regression after generation**: after generating a plan, the rich result with Live CTA appears briefly and then collapses into an empty result state (`El resultado aparecerá aquí.`), removing the `Start Live Cooking` action. This blocks reliable Result -> Live entry validation in normal user flow.
+- **Back navigation from result not working as expected**: after details -> result transition, browser back did not return to details in-browser (`browser_navigate_back` reported no previous page). This does not satisfy the expected "back from result returns to details when history exists" behavior.
+- **Direct-entry Live back fallback still missing**: on a fresh direct Live URL tab, pressing `Plan` leaves URL unchanged and does not navigate away (no fallback route when history is missing).
+- **Entry animation duration still above target**: `.animate-live-enter` remains `360ms` in `app/globals.css`, outside the requested `150-250ms` range.
 
 ## EDGE CASES
 
-- Urgency thresholds (`<=15s`, `<=5s`) and timeout auto-advance were validated by code path and partial runtime only; full long-duration runtime confirmation was limited by step durations.
-- Zero/missing-duration behavior is handled by implementation (`duration <= 0` renders manual-step UI), but full browser runtime coverage for all generated payload variants was not exhaustive.
-- Reduced motion path is implemented (`prefers-reduced-motion` checks and CSS `@media (prefers-reduced-motion: reduce)`), but explicit browser-level media emulation was not available in this run.
-- No server crashes were observed for tested routes; local server returned HTTP 200 for all tested live URL variants.
+- Urgency threshold verification (`<=15s`, `<=5s`) and timeout auto-advance were not fully runtime-verified due long step durations in tested plans; core logic paths are present but full threshold crossing was not observed in-session.
+- Feedback toast visibility/disappearance could not be reliably captured from accessibility snapshots, although step completion states and transitions updated correctly.
+- Reduced motion behavior is implemented in code/CSS, but explicit browser media emulation was not available in this QA run.
 
 ## RISKS
 
-- URL contract drift (`animal` id vs localized label) can cause brittle deep links and inconsistent behavior across reload/share/navigation.
-- URL/UI desynchronization may produce user confusion and hard-to-reproduce regressions (especially after rapid navigation or history events).
-- Current lint error can block release pipelines and indicates a potential render-loop/perf smell around Live step transitions.
-- Animation durations above target can hurt perceived responsiveness on mobile and conflict with QA acceptance criteria.
+- The transient result-state collapse can prevent users from launching Live Cooking from result, degrading conversion into the core live experience.
+- Missing/weak history fallback paths can strand users in Live or break expected backward flow.
+- Navigation regressions around history handling can reintroduce URL/UI trust issues, even with canonical param fixes already in place.
+- Longer-than-target motion timing can still affect perceived responsiveness on mobile.
 
 ## VERDICT
 
 **NEEDS FIXES**
 
-Live Cooking is broadly functional for core interactions, but navigation/URL consistency issues plus lint gate failure are release blockers for production confidence.
+Core fixes for lint and canonical URL behavior are in place and validated, but production readiness is blocked by result-state instability and unresolved back-navigation/fallback behavior.
