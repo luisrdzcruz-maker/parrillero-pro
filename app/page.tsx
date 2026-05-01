@@ -1603,6 +1603,21 @@ function HomeContent() {
     track({ name: "animal_selected", animal: selectedAnimal, lang });
   }
 
+  function handleCutSelectionAnimalChange(selectedAnimalId: GeneratedAnimalId) {
+    const selectedAnimal = animalLabelsById[selectedAnimalId] ?? animal;
+    if (selectedAnimal === animal) return;
+
+    setAnimal(selectedAnimal);
+    setCut("");
+    resetAdaptiveDetailInputs();
+    setDoneness(getInitialDoneness(selectedAnimal));
+    setBlocks({});
+    setCheckedItems({});
+    resetSaveMenuState();
+    commitNav("coccion", "cut", "replace", { animal: selectedAnimal });
+    track({ name: "animal_selected", animal: selectedAnimal, lang });
+  }
+
   function handleCutChange(selectedCutId: string) {
     setCut(selectedCutId);
     resetAdaptiveDetailInputs();
@@ -2125,6 +2140,8 @@ ERROR
           cookingStep === "cut" ? (
             <CutSelectionScreen
               selectedAnimal={animalIdsByLabel[animal] as GeneratedAnimalId}
+              isAnimalPreselected={Boolean(parseCookingAnimal(searchParams.get("animal")))}
+              onAnimalChange={handleCutSelectionAnimalChange}
               onStartCooking={handleCutSelectionStartCooking}
             />
           ) : (

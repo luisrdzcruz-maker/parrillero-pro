@@ -321,7 +321,7 @@ export function HomeScreen({
         <HeroSection
           t={t}
           onStartCooking={(e) =>
-            fireRipple(e.clientX, e.clientY, () => router.push("/?mode=coccion&step=cut&animal=beef"))
+            fireRipple(e.clientX, e.clientY, () => router.push("/?mode=coccion&step=cut"))
           }
           onPlanBbq={() => onModeChange("plan")}
           onUnknown={() => onModeChange("plan")}

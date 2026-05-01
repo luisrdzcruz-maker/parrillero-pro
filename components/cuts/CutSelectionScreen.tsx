@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import type { GeneratedCutProfile } from "@/lib/generated/cutProfiles";
+import type { GeneratedAnimalId, GeneratedCutProfile } from "@/lib/generated/cutProfiles";
 import { CutBottomSheet } from "./CutBottomSheet";
 import { CutList } from "./CutList";
 import { CutMap } from "./CutMap";
@@ -41,6 +41,8 @@ export function CutSelectionScreen({
   selectedAnimal,
   intentFilter = null,
   onStartCooking,
+  onAnimalChange,
+  isAnimalPreselected = true,
 }: CutSelectionScreenProps) {
   const router = useRouter();
   const [intentState, setIntentState] = useState<{
@@ -72,6 +74,7 @@ export function CutSelectionScreen({
     zoneState.sourceAnimal === selectedAnimal ? zoneState.selectedZone : null;
   const selectedProfile =
     profileState.sourceAnimal === selectedAnimal ? profileState.selectedProfile : null;
+  const animalOptions = Object.entries(animalLabels) as [GeneratedAnimalId, string][];
 
   const handleIntentChange = (nextIntent: CutIntent | null) => {
     setIntentState({
@@ -114,6 +117,10 @@ export function CutSelectionScreen({
     handleIntentChange(null);
     handleZoneChange(null);
   };
+  const handleAnimalSelect = (nextAnimal: GeneratedAnimalId) => {
+    if (!onAnimalChange || nextAnimal === selectedAnimal) return;
+    onAnimalChange(nextAnimal);
+  };
 
   return (
     <main className="relative min-h-full w-full max-w-full overflow-x-hidden bg-[#030201] text-white">
@@ -131,18 +138,44 @@ export function CutSelectionScreen({
           <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_300px] lg:items-end">
             <div>
               <h1 className="text-[clamp(2.25rem,12vw,5.5rem)] font-black leading-[0.9] tracking-[-0.06em]">
-                Choose your cut first.
+                {isAnimalPreselected ? "Choose your cut first." : "Choose what you are cooking."}
               </h1>
               <p className="mt-4 max-w-2xl text-sm leading-6 text-zinc-300 sm:text-base">
-                Pick a cut, see why it fits, then review details before live cooking starts.
+                {isAnimalPreselected
+                  ? "Pick a cut, see why it fits, then review details before live cooking starts."
+                  : "Start by choosing an animal or category, then pick a cut and continue to details."}
               </p>
             </div>
             <div className="rounded-[1.5rem] border border-white/10 bg-black/35 p-4">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">Animal</p>
               <p className="mt-2 text-2xl font-black text-orange-300">{animalLabels[selectedAnimal]}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {animalOptions.map(([animalId, label]) => {
+                  const selected = animalId === selectedAnimal;
+                  return (
+                    <button
+                      key={animalId}
+                      type="button"
+                      onClick={() => handleAnimalSelect(animalId)}
+                      className={`rounded-full border px-3 py-1.5 text-xs font-black transition active:scale-[0.98] ${
+                        selected
+                          ? "border-orange-400/60 bg-orange-500/20 text-orange-200"
+                          : "border-white/15 bg-white/5 text-zinc-200 hover:border-orange-300/40 hover:bg-orange-500/10"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
               <p className="mt-1 text-xs leading-5 text-zinc-500">
                 {visibleProfiles.length} cuts · {activeFilterLabel}
               </p>
+              {!isAnimalPreselected && (
+                <p className="mt-2 text-xs font-semibold text-orange-200">
+                  Choose what you are cooking to unlock the best cuts.
+                </p>
+              )}
             </div>
           </div>
         </header>

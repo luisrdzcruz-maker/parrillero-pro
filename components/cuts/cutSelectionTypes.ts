@@ -17,6 +17,8 @@ export type CutSelectionScreenProps = {
   selectedAnimal: GeneratedAnimalId;
   intentFilter?: CutIntent | null;
   onStartCooking?: (profile: GeneratedCutProfile) => void;
+  onAnimalChange?: (animal: GeneratedAnimalId) => void;
+  isAnimalPreselected?: boolean;
 };
 
 export const animalLabels: Record<GeneratedAnimalId, string> = {
