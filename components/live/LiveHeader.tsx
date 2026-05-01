@@ -15,6 +15,7 @@ type Props = {
   dotClass: string;
   isEs: boolean;
   onBack?: () => void;
+  overallProgressPct: string;
   phase: LivePhase;
   stepCount: number;
   alertsEnabled?: boolean;
@@ -27,18 +28,19 @@ export default function LiveHeader({
   dotClass,
   isEs,
   onBack,
+  overallProgressPct,
   phase,
   stepCount,
   alertsEnabled,
   onEnableAlerts,
 }: Props) {
   return (
-    <header className="flex h-11 shrink-0 items-center gap-2 border-b border-white/[0.055] px-4">
+    <header className="relative flex h-10 shrink-0 items-center gap-2 border-b border-white/[0.055] px-3.5">
       {onBack && (
         <button
           type="button"
           onClick={onBack}
-          className="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-bold text-white/50 transition active:scale-[0.97]"
+          className="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-bold text-white/55 transition active:scale-[0.97]"
         >
           {isEs ? "Plan" : "Plan"}
         </button>
@@ -54,15 +56,15 @@ export default function LiveHeader({
           </>
         )}
         <span
-          className={`truncate text-[11px] font-black uppercase tracking-[0.16em] ${STATUS_COLOR[phase]}`}
+          className={`truncate text-[10px] font-black uppercase tracking-[0.14em] ${STATUS_COLOR[phase]}`}
         >
           {currentStep.displayZone}
         </span>
       </div>
 
-      <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">
+      <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5">
         <span className={`h-1.5 w-1.5 rounded-full ${dotClass}`} />
-        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/80">
+        <span className="text-[9px] font-black uppercase tracking-[0.18em] text-white/80">
           Live
         </span>
       </div>
@@ -83,13 +85,19 @@ export default function LiveHeader({
               {isEs ? "Avisos" : "Alerts"}
             </button>
           ))}
-        <span className="rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-0.5 text-[11px] tabular-nums">
+        <span className="rounded-full border border-white/10 bg-white/[0.05] px-2 py-0.5 text-[10px] tabular-nums">
           <span className="font-semibold text-white/38">{isEs ? "Paso " : "Step "}</span>
           <span className="font-black text-white/75">{currentIndex + 1}</span>
           <span className="font-medium text-white/30">
             {isEs ? ` de ${stepCount}` : ` of ${stepCount}`}
           </span>
         </span>
+      </div>
+      <div className="absolute inset-x-0 bottom-0 h-0.5 bg-white/[0.05]" aria-hidden>
+        <div
+          className="h-full bg-orange-300 transition-[width] duration-300 ease-out"
+          style={{ width: overallProgressPct }}
+        />
       </div>
     </header>
   );

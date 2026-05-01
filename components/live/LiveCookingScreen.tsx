@@ -44,15 +44,6 @@ const CTA_STYLE: Record<UrgencyLevel | "complete", string> = {
   complete: "bg-emerald-500 text-black shadow-[0_10px_36px_rgba(16,185,129,0.34)]",
 };
 
-const ZONE_BAR_STYLE: Record<LiveZone, string> = {
-  direct:
-    "border-red-300/20 bg-[linear-gradient(90deg,rgba(239,68,68,0.20),rgba(249,115,22,0.08))] text-red-100",
-  indirect:
-    "border-orange-300/16 bg-[linear-gradient(90deg,rgba(251,146,60,0.13),rgba(251,191,36,0.05))] text-orange-100",
-  rest:
-    "border-blue-300/16 bg-[linear-gradient(90deg,rgba(96,165,250,0.12),rgba(14,165,233,0.04))] text-blue-100",
-};
-
 const DOT_CLASS: Record<LivePhase, string> = {
   idle: "bg-zinc-500",
   active: "animate-pulse bg-orange-500",
@@ -160,14 +151,12 @@ export default function LiveCookingScreen({
   const [stepTransition, setStepTransition] = useState<"idle" | "exit" | "enter">("idle");
   const {
     allSteps,
-    completedSteps,
     currentStep,
     currentStepIndex,
     ctaLabel,
     feedback,
     hasTimer,
     isComplete,
-    nextStep,
     phase,
     urgency,
   } = useLiveCooking({
@@ -195,8 +184,6 @@ export default function LiveCookingScreen({
   const displayedIndex = allSteps.findIndex((step) => step.id === displayedStepId);
   const visualStepIndex = displayedIndex >= 0 ? displayedIndex : currentStepIndex;
   const visualStep = allSteps[visualStepIndex] ?? currentStep;
-  const visualNextStep = allSteps[visualStepIndex + 1] ?? null;
-  const visualCompletedSteps = allSteps.filter((_, index) => index < visualStepIndex);
   const overallProgress = isComplete
     ? 1
     : allSteps.length > 0
@@ -317,7 +304,7 @@ export default function LiveCookingScreen({
 
   return (
     <div
-      className="animate-live-enter flex min-h-0 flex-1 flex-col text-white"
+      className="animate-live-enter flex h-dvh max-h-dvh min-h-0 flex-1 flex-col overflow-hidden text-white"
       style={bgStyle}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
@@ -330,55 +317,19 @@ export default function LiveCookingScreen({
         isEs={false}
         onBack={onBack ? handleBack : undefined}
         onEnableAlerts={onEnableAlerts}
+        overallProgressPct={overallProgressPct}
         phase={phase}
         stepCount={allSteps.length}
       />
 
-      {!hasStarted && (
-        <div className="border-b border-white/[0.055] px-4 py-4 text-center">
-          <p className="text-[11px] font-black uppercase tracking-[0.26em] text-orange-300/80">
-            Ready to start cooking?
-          </p>
-          <p className="mt-1 text-sm font-semibold text-white/45">
-            The assistant will guide one action at a time.
-          </p>
-        </div>
-      )}
-
-      {currentStep.displayZone && (
-        <div className={`flex shrink-0 items-center justify-center gap-2 border-b py-2.5 ${ZONE_BAR_STYLE[currentStep.zone]}`}>
-          <span className={`h-2.5 w-2.5 rounded-full ${dotClass} shadow-[0_0_16px_currentColor]`} />
-          <span className="text-[11px] font-black uppercase tracking-[0.22em] opacity-80">
-            {currentStep.displayZone}
-          </span>
-        </div>
-      )}
-
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <main className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden px-3.5 py-2">
         {alertMessage && (
-          <div className="mx-4 mt-3 rounded-2xl border border-orange-400/30 bg-orange-500/10 px-4 py-2.5 text-sm font-bold text-orange-100">
+          <div className="rounded-2xl border border-orange-400/30 bg-orange-500/10 px-3.5 py-2 text-xs font-bold text-orange-100">
             {alertMessage}
           </div>
         )}
 
-        <div className="px-4 pt-4">
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] px-4 py-3">
-            <div className="flex items-center justify-between gap-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/42">
-                Step {currentStepIndex + 1} of {allSteps.length}
-              </p>
-              <p className="font-mono text-[10px] font-bold text-white/28">{overallProgressPct}</p>
-            </div>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
-              <div
-                className="h-full rounded-full bg-orange-300 transition-[width] duration-300 ease-out"
-                style={{ width: overallProgressPct }}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="px-4 pt-4">
+        <div className="shrink-0">
           <LiveTimer
             duration={currentStep.duration}
             remainingTime={currentStep.remainingTime}
@@ -386,38 +337,34 @@ export default function LiveCookingScreen({
             phase={phase}
             reduceMotion={reduceMotion}
             urgency={urgency}
-          />
+          >
+            <LiveTimeline
+              currentIndex={currentStepIndex}
+              isEs={false}
+              onGoToStep={handleGoToStep}
+              phase={phase}
+              steps={allSteps}
+            />
+          </LiveTimer>
         </div>
 
-        <div className="px-4 pt-4">
+        <div className="min-h-0 shrink">
           <LiveStepCard
-            completedSteps={visualCompletedSteps.length > 0 ? visualCompletedSteps : completedSteps}
             currentStep={visualStep}
             feedback={feedback}
-            nextStep={visualNextStep ?? nextStep}
             reduceMotion={reduceMotion}
             transitionState={stepTransition}
             urgency={urgency}
           />
         </div>
 
-        <div className="px-4 pt-4">
-          <LiveTimeline
-            currentIndex={currentStepIndex}
-            isEs={false}
-            onGoToStep={handleGoToStep}
-            phase={phase}
-            steps={allSteps}
-          />
-        </div>
-
         {isComplete && (
-          <div className="mx-4 mt-4 space-y-3">
-            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-4 text-center">
-              <p className="text-[11px] font-black uppercase tracking-[0.22em] text-emerald-400">
+          <div className="shrink-0 space-y-2">
+            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-center">
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-400">
                 Cooking complete
               </p>
-              <p className="mt-1.5 text-sm font-semibold text-white/60">
+              <p className="mt-1 text-xs font-semibold text-white/60">
                 Slice, serve, enjoy.
               </p>
             </div>
@@ -430,7 +377,7 @@ export default function LiveCookingScreen({
                   onSaveCook();
                   setSaveState("saved");
                 }}
-                className={`w-full min-h-[3rem] rounded-2xl text-sm font-black transition-all duration-300 active:scale-[0.98] ${
+                className={`min-h-11 w-full rounded-2xl text-sm font-black transition-all duration-300 active:scale-[0.98] ${
                   saveState === "saved"
                     ? "border border-emerald-500/35 bg-emerald-500/15 text-emerald-300"
                     : "bg-emerald-500 text-black shadow-[0_4px_28px_rgba(16,185,129,0.38)] hover:bg-emerald-400 active:bg-emerald-600"
@@ -445,29 +392,29 @@ export default function LiveCookingScreen({
         )}
 
         {(resolvedContext || onReset) && (
-          <div className="flex items-center justify-center gap-3 px-4 py-4">
+          <div className="mt-auto flex min-h-6 shrink-0 items-center justify-center gap-3">
             {resolvedContext && (
-              <span className="text-[10px] font-semibold text-white/18">{resolvedContext}</span>
+              <span className="truncate text-[10px] font-semibold text-white/18">{resolvedContext}</span>
             )}
             {onReset && (
               <button
                 type="button"
                 onClick={onReset}
-                className="px-3 py-2 text-[10px] font-bold text-white/18 transition hover:text-white/38 active:scale-[0.98]"
+                className="shrink-0 px-2 py-1 text-[10px] font-bold text-white/18 transition hover:text-white/38 active:scale-[0.98]"
               >
                 Reset
               </button>
             )}
           </div>
         )}
-      </div>
+      </main>
 
-      <nav className="shrink-0 border-t border-white/[0.08] bg-black/[0.72] px-4 py-3 shadow-[0_-18px_42px_rgba(0,0,0,0.38)] backdrop-blur-xl pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <nav className="shrink-0 border-t border-white/[0.08] bg-black/[0.72] px-3.5 py-2 shadow-[0_-18px_42px_rgba(0,0,0,0.38)] backdrop-blur-xl pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         <button
           type="button"
           onClick={handlePrimaryAction}
           disabled={isComplete}
-          className={`min-h-[4.5rem] w-full rounded-[1.55rem] px-5 text-xl font-black tracking-[-0.02em] transition-all duration-200 active:scale-[0.98] disabled:opacity-80 ${
+          className={`min-h-14 w-full rounded-[1.25rem] px-4 text-lg font-black tracking-[-0.02em] transition-all duration-200 active:scale-[0.98] disabled:opacity-80 ${
             shouldPulseCta ? "animate-pulse" : ""
           } ${
             isComplete ? CTA_STYLE.complete : CTA_STYLE[ctaUrgency]

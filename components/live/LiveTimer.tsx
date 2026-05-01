@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { UrgencyLevel } from "@/hooks/useLiveCooking";
 import type { LivePhase } from "./TimerDial";
 
@@ -31,6 +32,7 @@ type Props = {
   phase: LivePhase;
   reduceMotion?: boolean;
   urgency: UrgencyLevel;
+  children?: ReactNode;
 };
 
 export default function LiveTimer({
@@ -40,6 +42,7 @@ export default function LiveTimer({
   phase,
   reduceMotion = false,
   urgency,
+  children,
 }: Props) {
   const hasTimer = duration > 0;
   const isAttention = hasTimer && remainingTime <= 15 && phase !== "idle" && phase !== "complete";
@@ -48,17 +51,18 @@ export default function LiveTimer({
 
   if (!hasTimer) {
     return (
-      <section className="rounded-[2rem] border border-white/[0.07] bg-white/[0.035] px-5 py-6 text-center">
-        <p className="text-[10px] font-black uppercase tracking-[0.26em] text-white/30">Manual step</p>
-        <p className="mt-2 text-3xl font-black text-white">Follow the action</p>
-        <p className="mt-1 text-sm font-semibold text-white/42">Advance when this step is done.</p>
+      <section className="rounded-[1.35rem] border border-white/[0.07] bg-white/[0.035] px-4 py-3.5 text-center">
+        <p className="text-[9px] font-black uppercase tracking-[0.24em] text-white/30">Manual step</p>
+        <p className="mt-1 text-[clamp(1.8rem,9vw,2.7rem)] font-black leading-none text-white">Follow the action</p>
+        <p className="mt-1 text-xs font-semibold text-white/42">Advance when this step is done.</p>
+        {children && <div className="mt-2.5">{children}</div>}
       </section>
     );
   }
 
   return (
     <section
-      className={`rounded-[2rem] border px-5 py-6 text-center transition-all duration-500 ${
+      className={`rounded-[1.35rem] border px-4 py-3.5 text-center transition-all duration-500 ${
         urgency === "critical"
           ? "border-yellow-200/75 bg-yellow-300/[0.11] shadow-[0_0_52px_rgba(250,204,21,0.30)]"
           : urgency === "attention"
@@ -66,26 +70,27 @@ export default function LiveTimer({
             : "border-white/[0.07] bg-white/[0.035]"
       } ${isAttention && !reduceMotion ? "animate-pulse" : ""}`}
     >
-      <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/32">
+      <p className="text-[9px] font-black uppercase tracking-[0.24em] text-white/32">
         {phase === "complete" ? "Done" : "Time remaining"}
       </p>
       <p
-        className={`mt-2 font-mono font-black leading-none tabular-nums tracking-[-0.08em] transition-all duration-200 ${
-          isCritical ? "text-[clamp(5.25rem,26vw,7.75rem)]" : "text-[clamp(4.5rem,23vw,7rem)]"
+        className={`mt-1 font-mono font-black leading-none tabular-nums tracking-[-0.08em] transition-all duration-200 ${
+          isCritical ? "text-[clamp(4.25rem,20vw,5.6rem)]" : "text-[clamp(3.8rem,18vw,5.15rem)]"
         } ${TIMER_COLOR[phase]}`}
       >
         {formatTime(remainingTime)}
       </p>
-      <div className="mt-5 h-3 overflow-hidden rounded-full bg-white/[0.08]">
+      <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-white/[0.08]">
         <div
           className={`h-full rounded-full transition-[width,background-color] duration-700 ease-linear ${BAR_COLOR[phase]}`}
           style={{ width: phase === "complete" ? "100%" : progressPct }}
         />
       </div>
-      <div className="mt-2 flex items-center justify-between text-[10px] font-bold text-white/30">
+      <div className="mt-1.5 flex items-center justify-between text-[9px] font-bold text-white/30">
         <span>{formatTime(duration)}</span>
         <span>{Math.round(Math.max(0, Math.min(1, progress)) * 100)}%</span>
       </div>
+      {children && <div className="mt-2.5">{children}</div>}
     </section>
   );
 }

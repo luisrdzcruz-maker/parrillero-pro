@@ -29,8 +29,8 @@ export default function LiveTimeline({
   );
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-end gap-[3px]">
+    <div>
+      <div className="flex items-center gap-[3px]" aria-label={isEs ? "Progreso de pasos" : "Step progress"}>
         {steps.map((step, index) => {
           const barClass = step.isCompleted
             ? "bg-white/18"
@@ -46,12 +46,13 @@ export default function LiveTimeline({
               key={step.id}
               type="button"
               onClick={() => onGoToStep?.(index)}
-              className={`group flex flex-1 flex-col items-center gap-1.5 py-1 ${
+              className={`group flex min-h-5 flex-1 items-center py-1 ${
                 step.isCompleted ? "opacity-45" : ""
               }`}
+              aria-label={isEs ? `Ir al paso ${index + 1}` : `Go to step ${index + 1}`}
               title={step.name}
             >
-              <div className={`h-[4px] w-full overflow-hidden rounded-full ${barClass}`}>
+              <div className={`h-[5px] w-full overflow-hidden rounded-full ${barClass}`}>
                 <div
                   className={`h-full rounded-full transition-[width] duration-500 ${
                     step.isActive ? "bg-white/55" : step.isCompleted ? "bg-white/35" : "bg-transparent"
@@ -59,21 +60,12 @@ export default function LiveTimeline({
                   style={{ width: progressWidth }}
                 />
               </div>
-              {(step.isActive || step.isNext) && (
-                <p
-                  className={`max-w-full truncate text-center text-[9px] font-bold leading-none ${
-                    step.isActive ? "text-white/45" : "text-white/26"
-                  }`}
-                >
-                  {step.name}
-                </p>
-              )}
             </button>
           );
         })}
       </div>
 
-      <div className="flex items-center justify-between px-0.5">
+      <div className="mt-0.5 flex items-center justify-between px-0.5">
         <span className="text-[9px] font-semibold text-white/20">
           {isEs ? `Paso ${currentIndex + 1} de ${steps.length}` : `Step ${currentIndex + 1} of ${steps.length}`}
         </span>
