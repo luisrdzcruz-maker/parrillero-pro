@@ -615,6 +615,27 @@ function parseNavFromSearch(search: string): ParsedNav {
   return { mode, cookingStep, cookingContext };
 }
 
+function isCutSelectionFilterContextChangeOnly(
+  currentContext: CookingNavContext,
+  nextContext: CookingNavContext,
+) {
+  const currentAnimal = normalizeCookingContextValue(currentContext.animal);
+  const nextAnimal = normalizeCookingContextValue(nextContext.animal);
+  const currentCut = normalizeCookingContextValue(currentContext.cut);
+  const nextCut = normalizeCookingContextValue(nextContext.cut);
+  const currentDoneness = normalizeCookingContextValue(currentContext.doneness);
+  const nextDoneness = normalizeCookingContextValue(nextContext.doneness);
+  const currentThickness = normalizeCookingContextValue(currentContext.thickness);
+  const nextThickness = normalizeCookingContextValue(nextContext.thickness);
+
+  return (
+    currentAnimal !== nextAnimal &&
+    currentCut === nextCut &&
+    currentDoneness === nextDoneness &&
+    currentThickness === nextThickness
+  );
+}
+
 function buildSearchFromNav(
   mode: Mode,
   cookingStep: CookingWizardStep,
@@ -884,7 +905,23 @@ function HomeContent() {
     const stepChanged = nextCookingStep !== currentNav.cookingStep;
     const contextChanged = !isSameCookingContext(nextCookingContext, currentNav.cookingContext);
     const navChanged = modeChanged || stepChanged || contextChanged;
-    const shouldPush = requestedMethod === "push" && navChanged && !isApplyingPopRef.current;
+    const isCutSelectionContextOnlyChange =
+      currentNav.mode === "coccion" &&
+      nextMode === "coccion" &&
+      currentNav.cookingStep === "cut" &&
+      nextCookingStep === "cut" &&
+      !modeChanged &&
+      !stepChanged &&
+      contextChanged;
+    const isAnimalOnlyCutSelectionFilterChange =
+      isCutSelectionContextOnlyChange &&
+      isCutSelectionFilterContextChangeOnly(currentNav.cookingContext, nextCookingContext);
+    const shouldPush =
+      requestedMethod === "push" &&
+      navChanged &&
+      !isApplyingPopRef.current &&
+      !isCutSelectionContextOnlyChange &&
+      !isAnimalOnlyCutSelectionFilterChange;
     const method: "push" | "replace" = shouldPush ? "push" : "replace";
 
     setMode(nextMode);
@@ -894,6 +931,19 @@ function HomeContent() {
     const search = buildSearchFromNav(nextMode, nextCookingStep, nextCookingContext);
     const url = `${window.location.pathname}${search}${window.location.hash}`;
     const state = { mode: nextMode, cookingStep: nextCookingStep, cookingContext: nextCookingContext };
+    if (
+      process.env.NODE_ENV !== "production" &&
+      nextMode === "coccion" &&
+      nextCookingStep === "cut" &&
+      contextChanged
+    ) {
+      console.debug("[cut-selection-animal] commitNav", {
+        requestedMethod,
+        resolvedMethod: method,
+        from: window.location.search,
+        to: search,
+      });
+    }
 
     if (method === "replace") {
       window.history.replaceState(state, "", url);
@@ -1595,8 +1645,18 @@ function HomeContent() {
     setBlocks({});
     setCheckedItems({});
     resetSaveMenuState();
-    commitNav("coccion", "cut", "push", { animal: selectedAnimal });
+    const navMethod: "push" | "replace" =
+      mode === "coccion" && cookingStep === "cut" ? "replace" : "push";
+    commitNav("coccion", "cut", navMethod, { animal: selectedAnimal });
     track({ name: "animal_selected", animal: selectedAnimal, lang });
+  }
+
+  function replaceCutSelectionAnimal(nextAnimal: AnimalLabel) {
+    commitNav("coccion", "cut", "replace", { animal: nextAnimal });
+    if (process.env.NODE_ENV !== "production") {
+      const canonicalAnimal = animalIdsByLabel[nextAnimal];
+      console.debug("[cut-selection-animal] replace", canonicalAnimal);
+    }
   }
 
   function handleCutSelectionAnimalChange(selectedAnimalId: GeneratedAnimalId) {
@@ -1610,7 +1670,7 @@ function HomeContent() {
     setBlocks({});
     setCheckedItems({});
     resetSaveMenuState();
-    commitNav("coccion", "cut", "replace", { animal: selectedAnimal });
+    replaceCutSelectionAnimal(selectedAnimal);
     track({ name: "animal_selected", animal: selectedAnimal, lang });
   }
 
