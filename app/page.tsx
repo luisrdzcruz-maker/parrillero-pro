@@ -378,6 +378,7 @@ const MOCK_LIVE_STEPS: LiveStep[] = [
 ];
 
 const SAVED_COOKS_KEY = "parrillero_saved_cooks_v1";
+const LIVE_IN_APP_BACK_MARKER = "__pp_live_in_app_back_target_v1";
 
 type SavedCookEntry = {
   id: string;
@@ -491,6 +492,8 @@ function parseLiveUrlState(lang: Lang) {
       cutId: null as string | null,
       doneness: getInitialDoneness("Vacuno"),
       thickness: "2",
+      donenessFromUrl: undefined as string | undefined,
+      thicknessFromUrl: undefined as string | undefined,
       context: undefined as string | undefined,
     };
   }
@@ -503,14 +506,16 @@ function parseLiveUrlState(lang: Lang) {
   const liveCutMeta = liveCutParam ? getCutById(liveCutParam) : undefined;
   const cutId = liveCutMeta?.id ?? null;
   const donenessParam = rawDoneness?.trim();
-  const doneness =
+  const donenessFromUrl =
     donenessParam && getDonenessOptions(animalIdsByLabel[liveAnimal]).some((option) => option.id === donenessParam)
       ? donenessParam
-      : getInitialDoneness(liveAnimal);
-  const thickness = parsePositiveNumberParam(rawThickness != null ? String(rawThickness) : null) ?? "2";
+      : undefined;
+  const doneness = donenessFromUrl ?? getInitialDoneness(liveAnimal);
+  const thicknessFromUrl = parsePositiveNumberParam(rawThickness != null ? String(rawThickness) : null);
+  const thickness = thicknessFromUrl ?? "2";
   const context = liveCutMeta ? `${liveAnimal} · ${getCutName(liveCutMeta, lang)}` : liveAnimal;
 
-  return { animal: liveAnimal, cutId, doneness, thickness, context };
+  return { animal: liveAnimal, cutId, doneness, thickness, donenessFromUrl, thicknessFromUrl, context };
 }
 
 function normalizeLiveContextToken(value: string | undefined) {
@@ -532,13 +537,14 @@ function doesPayloadMatchLiveUrlContext(
 ) {
   if (!payload) return false;
   if (!liveFromUrl.cutId) return false;
+  if (!liveFromUrl.donenessFromUrl || !liveFromUrl.thicknessFromUrl) return false;
 
   const sameAnimal =
     normalizeLiveContextToken(payload.input.animal) === normalizeLiveContextToken(liveFromUrl.animal);
   const sameCut = normalizeLiveContextToken(payload.input.cut) === normalizeLiveContextToken(liveFromUrl.cutId);
   const sameDoneness =
-    normalizeLiveContextToken(payload.input.doneness) === normalizeLiveContextToken(liveFromUrl.doneness);
-  const sameThickness = isMatchingThickness(liveFromUrl.thickness, payload.input.thickness);
+    normalizeLiveContextToken(payload.input.doneness) === normalizeLiveContextToken(liveFromUrl.donenessFromUrl);
+  const sameThickness = isMatchingThickness(liveFromUrl.thicknessFromUrl, payload.input.thickness);
 
   return sameAnimal && sameCut && sameDoneness && sameThickness;
 }
@@ -574,7 +580,7 @@ function buildSearchFromNav(
   if (mode === "coccion") {
     params.set("step", cookingStep);
     if (cookingContext.animal) params.set("animal", animalIdsByLabel[cookingContext.animal]);
-    if (cookingContext.cut) params.set("cut", cookingContext.cut);
+    if (cookingContext.cut) params.set("cutId", cookingContext.cut);
     if (cookingContext.doneness) params.set("doneness", cookingContext.doneness);
     if (cookingContext.thickness) params.set("thickness", cookingContext.thickness);
   } else if (mode === "cocina") {
@@ -586,6 +592,30 @@ function buildSearchFromNav(
   }
   const query = params.toString();
   return query ? `?${query}` : "";
+}
+
+function buildCookingDetailsUrl({
+  animal,
+  cutId,
+  doneness,
+  thickness,
+}: {
+  animal?: AnimalLabel;
+  cutId?: string;
+  doneness?: string;
+  thickness?: string;
+}) {
+  if (!animal || !cutId) return "/?mode=inicio";
+
+  const params = new URLSearchParams();
+  params.set("mode", "coccion");
+  params.set("step", "details");
+  params.set("animal", animalIdsByLabel[animal]);
+  params.set("cutId", cutId);
+  if (doneness) params.set("doneness", doneness);
+  if (thickness) params.set("thickness", thickness);
+
+  return `/?${params.toString()}`;
 }
 
 function mapSizePresetToThickness(sizePreset: CookingSizePreset): string {
@@ -698,7 +728,9 @@ function HomeContent() {
   const liveAdvanceRef = useRef(false);
   const navInitializedRef = useRef(false);
   const previousModeRef = useRef<Mode>("inicio");
+  const previousCookingStepRef = useRef<CookingWizardStep>("animal");
   const liveHasInAppBackTargetRef = useRef(false);
+  const liveEnteredFromResultRef = useRef(false);
   const cookingContextRef = useRef({
     animal,
     cut,
@@ -788,23 +820,46 @@ function HomeContent() {
     cookingContext: CookingNavContext = {},
   ) {
     const nextMode = isAllowedMode(requestedMode) ? requestedMode : "inicio";
-    const nextCookingStep =
+    const requestedStep =
       nextMode === "coccion" && isAllowedCookingStep(requestedCookingStep) ? requestedCookingStep : "animal";
+    let nextCookingStep = requestedStep;
+    const nextCookingContext = nextMode === "coccion" || nextMode === "cocina" ? cookingContext : {};
+    if (nextMode === "coccion" && (requestedStep === "details" || requestedStep === "result")) {
+      const hasBaseContext = Boolean(nextCookingContext.animal && nextCookingContext.cut);
+      const hasFullResultContext = Boolean(
+        nextCookingContext.animal &&
+          nextCookingContext.cut &&
+          nextCookingContext.doneness &&
+          nextCookingContext.thickness,
+      );
+      if (!hasBaseContext) {
+        nextCookingStep = nextCookingContext.animal ? "cut" : "animal";
+      } else if (requestedStep === "result" && !hasFullResultContext) {
+        nextCookingStep = "details";
+      }
+    }
     const currentNav =
-      typeof window === "undefined" ? { mode, cookingStep } : parseNavFromSearch(window.location.search);
+      typeof window === "undefined"
+        ? { mode, cookingStep, cookingContext: {} as CookingNavContext }
+        : parseNavFromSearch(window.location.search);
     const modeChanged = nextMode !== currentNav.mode;
     const stepChanged = nextCookingStep !== currentNav.cookingStep;
+    const contextChanged = !isSameCookingContext(nextCookingContext, currentNav.cookingContext);
     const isInitializationReplace = requestedMethod === "replace" && !navInitializedRef.current;
-    const shouldPush = !isInitializationReplace && !isApplyingPopRef.current && (modeChanged || stepChanged);
+    const navChanged = modeChanged || stepChanged || contextChanged;
+    const shouldPush =
+      !isInitializationReplace &&
+      navChanged &&
+      (requestedMethod === "push" || !isApplyingPopRef.current);
     const method: "push" | "replace" = shouldPush ? "push" : "replace";
 
     setMode(nextMode);
     setCookingStep(nextCookingStep);
 
     if (typeof window === "undefined") return;
-    const search = buildSearchFromNav(nextMode, nextCookingStep, cookingContext);
+    const search = buildSearchFromNav(nextMode, nextCookingStep, nextCookingContext);
     const url = `${window.location.pathname}${search}${window.location.hash}`;
-    const state = { mode: nextMode, cookingStep: nextCookingStep, cookingContext };
+    const state = { mode: nextMode, cookingStep: nextCookingStep, cookingContext: nextCookingContext };
 
     if (method === "replace") {
       window.history.replaceState(state, "", url);
@@ -869,15 +924,31 @@ function HomeContent() {
   useEffect(() => {
     if (!navInitializedRef.current) {
       previousModeRef.current = mode;
+      previousCookingStepRef.current = cookingStep;
       return;
     }
 
     const previousMode = previousModeRef.current;
-    if (previousMode !== "cocina" && mode === "cocina") {
-      liveHasInAppBackTargetRef.current = true;
+    const previousStep = previousCookingStepRef.current;
+    if (mode === "cocina") {
+      const enteredFromResult = previousMode === "coccion" && previousStep === "result";
+      liveEnteredFromResultRef.current = enteredFromResult;
+      liveHasInAppBackTargetRef.current = enteredFromResult;
+      if (enteredFromResult && typeof window !== "undefined") {
+        const currentState = asRecord(window.history.state) ?? {};
+        window.history.replaceState(
+          { ...currentState, [LIVE_IN_APP_BACK_MARKER]: true },
+          "",
+          window.location.href,
+        );
+      }
+    } else {
+      liveEnteredFromResultRef.current = false;
+      liveHasInAppBackTargetRef.current = false;
     }
     previousModeRef.current = mode;
-  }, [mode]);
+    previousCookingStepRef.current = cookingStep;
+  }, [mode, cookingStep]);
 
   // ── Browser history: restore state on popstate (back button / swipe) ───────
   // Registered once. URL query params are the source of truth for mode/step.
@@ -930,6 +1001,23 @@ function HomeContent() {
       isApplyingPopRef.current = false;
     };
   }, [searchParams, mode, cookingStep, animal, cut, doneness, thickness, applyCookingNavContext]);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+
+    const query = searchParams.toString();
+    const nav = parseNavFromSearch(query ? `?${query}` : "");
+    if (nav.mode !== "coccion" && nav.mode !== "cocina") return;
+    const urlCutId = nav.cookingContext.cut;
+    if (!urlCutId) return;
+    if (cut && cut !== urlCutId) {
+      console.warn("[navigation-context-mismatch] active cut differs from URL cut", {
+        mode: nav.mode,
+        urlCutId,
+        activeCutId: cut,
+      });
+    }
+  }, [searchParams, cut]);
 
   const liveStep = liveSteps[liveCurrentIndex] ?? liveSteps[0];
   const liveIsLast = liveCurrentIndex === liveSteps.length - 1;
@@ -1388,7 +1476,7 @@ function HomeContent() {
     setBlocks({});
     setCheckedItems({});
     resetSaveMenuState();
-    commitNav("coccion", "cut", "push");
+    commitNav("coccion", "cut", "push", { animal: selectedAnimal });
     track({ name: "animal_selected", animal: selectedAnimal, lang });
   }
 
@@ -1694,12 +1782,12 @@ ERROR
     if (mode !== "coccion") return;
 
     if (cookingStep === "animal" && animal) {
-      commitNav("coccion", "cut", "push");
+      commitNav("coccion", "cut", "push", { animal });
       return;
     }
 
     if (cookingStep === "cut" && selectedCut) {
-      commitNav("coccion", "details", "push");
+      commitNav("coccion", "details", "push", getCurrentCookingNavContext());
     }
   }
 
@@ -1751,26 +1839,37 @@ ERROR
   function handleLiveBackNavigation() {
     if (typeof window === "undefined") return;
 
-    if (liveHasInAppBackTargetRef.current) {
+    const historyState = asRecord(window.history.state);
+    const hasInAppMarker = historyState?.[LIVE_IN_APP_BACK_MARKER] === true;
+    if (liveEnteredFromResultRef.current && liveHasInAppBackTargetRef.current && hasInAppMarker) {
+      liveEnteredFromResultRef.current = false;
       liveHasInAppBackTargetRef.current = false;
       window.history.back();
       return;
     }
 
-    const liveFromUrl = parseLiveUrlState(lang);
-    if (!liveFromUrl.cutId) {
-      router.replace("/?mode=inicio");
-      return;
-    }
-
-    const params = new URLSearchParams();
-    params.set("mode", "coccion");
-    params.set("step", "details");
-    params.set("animal", animalIdsByLabel[liveFromUrl.animal]);
-    params.set("cutId", liveFromUrl.cutId);
-    params.set("doneness", liveFromUrl.doneness);
-    params.set("thickness", liveFromUrl.thickness);
-    router.replace(`/?${params.toString()}`);
+    const liveParams = parseLiveParams(window.location.search);
+    const liveCutMeta = liveParams.cutId ? getCutById(liveParams.cutId) : undefined;
+    const liveAnimal =
+      parseCookingAnimal(liveParams.animal ?? null) ?? (liveCutMeta ? animalLabelsById[liveCutMeta.animalId] : undefined);
+    const donenessParam = liveParams.doneness?.trim();
+    const liveDoneness =
+      liveAnimal &&
+      donenessParam &&
+      getDonenessOptions(animalIdsByLabel[liveAnimal]).some((option) => option.id === donenessParam)
+        ? donenessParam
+        : undefined;
+    const liveThickness = parsePositiveNumberParam(
+      liveParams.thickness != null ? String(liveParams.thickness) : null,
+    );
+    router.replace(
+      buildCookingDetailsUrl({
+        animal: liveAnimal,
+        cutId: liveCutMeta?.id,
+        doneness: liveDoneness,
+        thickness: liveThickness,
+      }),
+    );
   }
 
   // ── Onboarding gate ─────────────────────────────────────────────────────────
