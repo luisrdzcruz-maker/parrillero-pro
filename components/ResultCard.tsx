@@ -39,7 +39,7 @@ function getVariantLabel(
     case "primary":
       return isEs ? "Pasos de cocción" : "Cooking steps";
     case "tip":
-      return isEs ? "Error a evitar" : "Error to avoid";
+      return isEs ? "Error crítico" : "Critical error";
     case "summary":
       return isEs ? "Tiempos · Temperatura" : "Times · Temperature";
     case "setup":
@@ -147,7 +147,7 @@ function ResultCardContent({
           isPrimary
             ? "p-4 text-base leading-7 text-slate-100"
             : isTip
-              ? "border-orange-400/15 bg-orange-500/[0.04] p-3 text-sm leading-6 text-orange-100"
+              ? "border-red-400/20 bg-red-500/[0.06] p-3 text-sm font-semibold leading-6 text-red-50"
               : "p-3.5 text-sm leading-relaxed text-slate-300"
         }`}
       >
@@ -382,7 +382,7 @@ function getCardTone(variant: NonNullable<ResultCardProps["variant"]>) {
   }
 
   if (variant === "tip") {
-    return "border-orange-400/20 bg-gradient-to-br from-slate-900/95 to-orange-950/20";
+    return "border-red-400/30 bg-gradient-to-br from-slate-900/95 to-red-950/22 shadow-red-950/10";
   }
 
   if (variant === "summary") {

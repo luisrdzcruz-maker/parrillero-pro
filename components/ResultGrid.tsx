@@ -42,6 +42,12 @@ type SummaryLabels = {
   time: string;
   temperature: string;
   doneness: string;
+  rest: string;
+  cutting: string;
+  safety: string;
+  criticalError: string;
+  cookFacts: string;
+  finishWell: string;
 };
 
 function getSummaryLabels(lang: "es" | "en" | "fi"): SummaryLabels {
@@ -54,6 +60,12 @@ function getSummaryLabels(lang: "es" | "en" | "fi"): SummaryLabels {
       time: "Time",
       temperature: "Temperature",
       doneness: "Doneness",
+      rest: "Rest",
+      cutting: "Cut",
+      safety: "Safety",
+      criticalError: "Critical error",
+      cookFacts: "Cook facts",
+      finishWell: "Finish well",
     };
   }
 
@@ -66,6 +78,12 @@ function getSummaryLabels(lang: "es" | "en" | "fi"): SummaryLabels {
       time: "Aika",
       temperature: "Lämpötila",
       doneness: "Kypsyys",
+      rest: "Lepo",
+      cutting: "Leikkaus",
+      safety: "Turva",
+      criticalError: "Kriittinen virhe",
+      cookFacts: "Kypsennyksen tiedot",
+      finishWell: "Viimeistely",
     };
   }
 
@@ -77,6 +95,12 @@ function getSummaryLabels(lang: "es" | "en" | "fi"): SummaryLabels {
     time: "Tiempo",
     temperature: "Temperatura",
     doneness: "Punto",
+    rest: "Reposo",
+    cutting: "Corte",
+    safety: "Seguridad",
+    criticalError: "Error crítico",
+    cookFacts: "Datos de cocción",
+    finishWell: "Final correcto",
   };
 }
 
@@ -92,6 +116,24 @@ function getFirstUsefulLine(value = "") {
 function compactSummaryValue(value: string) {
   const clean = getFirstUsefulLine(value);
   return clean.length > 78 ? `${clean.slice(0, 75).trim()}...` : clean;
+}
+
+function compactDetailValue(value: string) {
+  const clean = getFirstUsefulLine(value).replace(/^[^:]{1,28}:\s*/, "");
+  return clean.length > 96 ? `${clean.slice(0, 93).trim()}...` : clean;
+}
+
+function getSearchableLines(blocks: Blocks, keys: string[]) {
+  return keys
+    .flatMap((key) => blocks[key]?.split("\n") ?? [])
+    .map((line) => line.trim().replace(/^[-•*\d.)\s]+/, ""))
+    .filter(Boolean);
+}
+
+function extractMatchingLine(blocks: Blocks, keys: string[], patterns: RegExp[]) {
+  const lines = getSearchableLines(blocks, keys);
+  const match = lines.find((line) => patterns.some((pattern) => pattern.test(line)));
+  return match ? compactDetailValue(match) : "";
 }
 
 function normalizeSetupText(value = "") {
@@ -284,23 +326,48 @@ function SummaryMetric({
   label,
   value,
   featured = false,
+  tone = "default",
 }: {
   label: string;
   value: string;
   featured?: boolean;
+  tone?: "default" | "finish" | "temperature";
 }) {
-  return (
-    <div
-      className={`rounded-2xl border p-3.5 shadow-lg shadow-black/10 ring-1 ring-inset ${
-        featured
+  const toneClass =
+    tone === "temperature"
+      ? "border-red-300/25 bg-red-500/[0.08] ring-red-200/[0.04]"
+      : tone === "finish"
+        ? "border-sky-300/20 bg-sky-500/[0.07] ring-sky-200/[0.04]"
+        : featured
           ? "border-orange-300/25 bg-orange-500/[0.09] ring-orange-200/[0.05]"
-          : "border-white/10 bg-white/[0.045] ring-white/[0.03]"
-      }`}
-    >
+          : "border-white/10 bg-white/[0.045] ring-white/[0.03]";
+
+  return (
+    <div className={`rounded-2xl border p-3.5 shadow-lg shadow-black/10 ring-1 ring-inset ${toneClass}`}>
       <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300/90">
         {label}
       </p>
       <p className="mt-2 line-clamp-2 text-sm font-black leading-snug text-white">{value}</p>
+    </div>
+  );
+}
+
+function CriticalErrorCard({ label, value }: { label: string; value: string }) {
+  if (!value) return null;
+
+  return (
+    <div className="mt-5 rounded-2xl border border-red-400/35 bg-red-500/[0.1] p-4 shadow-xl shadow-red-950/15 ring-1 ring-inset ring-red-200/[0.06]">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-red-300/25 bg-red-500/15 text-lg">
+          ⚠️
+        </div>
+        <div className="min-w-0">
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-red-200">
+            {label}
+          </p>
+          <p className="mt-1 text-sm font-semibold leading-6 text-red-50">{value}</p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -318,12 +385,27 @@ function PremiumResultSummaryCard({
   const setupKey = findBlockKey(keys, ["SETUP", "CONFIGURACION", "CONFIGURACIÓN"]);
   const timeKey = findBlockKey(keys, ["TIEMPOS", "TIMES"]);
   const tempKey = findBlockKey(keys, ["TEMPERATURA", "TEMPERATURE"]);
+  const errorKey = findBlockKey(keys, ["ERROR", "ERROR CLAVE", "KEY ERROR"]);
   const method = setupKey ? compactSummaryValue(blocks[setupKey]) : "";
   const time = timeKey ? compactSummaryValue(blocks[timeKey]) : "";
   const temperature = tempKey ? compactSummaryValue(blocks[tempKey]) : "";
   const doneness = extractDonenessValue(blocks, keys);
+  const rest = extractMatchingLine(blocks, keys, [
+    /\b(reposo|reposar|descanso|rest|resting)\b/i,
+  ]);
+  const cutting = extractMatchingLine(blocks, keys, [
+    /\b(cortar|corte|cortarlo|trinchar|slice|cutting|carve)\b/i,
+    /\b(contra\s+(la\s+)?fibra|against\s+the\s+grain)\b/i,
+  ]);
+  const safety = extractMatchingLine(blocks, keys, [
+    /\b(seguridad|seguro|inocuo|safety|safe)\b/i,
+    /\b(term[oó]metro|thermometer|no\s+servir|do\s+not\s+serve)\b/i,
+  ]);
+  const criticalError = errorKey ? compactDetailValue(blocks[errorKey]) : "";
 
-  if (!method && !time && !temperature && !doneness) return null;
+  if (!method && !time && !temperature && !doneness && !rest && !cutting && !safety && !criticalError) {
+    return null;
+  }
 
   return (
     <section className="col-span-full overflow-hidden rounded-[2rem] border border-orange-300/25 bg-[radial-gradient(circle_at_12%_0%,rgba(251,146,60,0.26),transparent_30%),linear-gradient(135deg,rgba(15,23,42,0.98),rgba(2,6,23,0.96)_58%,rgba(67,20,7,0.72))] shadow-2xl shadow-orange-950/25 ring-1 ring-inset ring-white/[0.05]">
@@ -342,17 +424,41 @@ function PremiumResultSummaryCard({
               </h2>
               <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">{labels.subtitle}</p>
             </div>
-            <div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-3xl border border-orange-300/20 bg-orange-500/15 text-2xl shadow-xl shadow-orange-950/30 sm:flex">
-              🔥
+            <div className="hidden shrink-0 rounded-3xl border border-orange-300/20 bg-orange-500/15 px-4 py-3 text-right shadow-xl shadow-orange-950/30 sm:block">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-200">
+                {labels.cookFacts}
+              </p>
+              <p className="mt-1 text-xs font-semibold text-orange-50/80">3 sec scan</p>
             </div>
           </div>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {method && <SummaryMetric featured label={labels.method} value={method} />}
             {time && <SummaryMetric label={labels.time} value={time} />}
-            {temperature && <SummaryMetric label={labels.temperature} value={temperature} />}
+            {temperature && (
+              <SummaryMetric label={labels.temperature} tone="temperature" value={temperature} />
+            )}
             {doneness && <SummaryMetric label={labels.doneness} value={doneness} />}
           </div>
+
+          {(rest || cutting || safety) && (
+            <div className="mt-3 rounded-3xl border border-white/10 bg-black/20 p-3.5 shadow-inner shadow-black/10 ring-1 ring-inset ring-white/[0.03]">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300/90">
+                  {labels.finishWell}
+                </p>
+                <div className="h-px flex-1 bg-gradient-to-r from-orange-400/20 to-transparent" />
+              </div>
+
+              <div className="grid gap-2.5 md:grid-cols-3">
+                {rest && <SummaryMetric label={labels.rest} tone="finish" value={rest} />}
+                {cutting && <SummaryMetric label={labels.cutting} tone="finish" value={cutting} />}
+                {safety && <SummaryMetric label={labels.safety} tone="temperature" value={safety} />}
+              </div>
+            </div>
+          )}
+
+          <CriticalErrorCard label={labels.criticalError} value={criticalError} />
         </div>
       </div>
     </section>
