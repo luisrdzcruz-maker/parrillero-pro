@@ -23,7 +23,9 @@ function buildCutProfilesModule(profiles) {
   return `// AUTO-GENERATED FILE. DO NOT EDIT MANUALLY.
 // Source: ${CUT_PROFILES_SOURCE}
 
-export type GeneratedAnimalId = "beef" | "pork" | "chicken" | "fish" | "vegetables";
+import type { Animal } from "@/lib/types/domain";
+
+export type GeneratedAnimalId = Animal;
 export type GeneratedCookingMethod =
   | "grill_direct"
   | "grill_indirect"

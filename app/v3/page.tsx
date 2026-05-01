@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import type { Doneness as DomainDoneness } from "@/lib/types/domain";
 
-type Doneness = "rare" | "medium_rare" | "medium" | "well_done";
+type Doneness = Extract<DomainDoneness, "rare" | "medium_rare" | "medium" | "well_done">;
 
 type Cut = {
   id: string;

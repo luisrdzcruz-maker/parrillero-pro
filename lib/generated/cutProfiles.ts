@@ -1,7 +1,9 @@
 // AUTO-GENERATED FILE. DO NOT EDIT MANUALLY.
 // Source: data\cuts\parrillero_pro_input_profiles_en.csv
 
-export type GeneratedAnimalId = "beef" | "pork" | "chicken" | "fish" | "vegetables";
+import type { Animal } from "@/lib/types/domain";
+
+export type GeneratedAnimalId = Animal;
 export type GeneratedCookingMethod =
   | "grill_direct"
   | "grill_indirect"

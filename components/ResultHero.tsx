@@ -1,14 +1,19 @@
 "use client";
 
+import Image from "next/image";
+import { useMemo, useState } from "react";
 import ResultActions from "@/components/ResultActions";
 import { Button, Panel } from "@/components/ui";
 import type { ResultSummary } from "@/components/ResultGrid";
+import { getSetupVisual } from "@/lib/setup/getSetupVisual";
+import { SETUP_VISUAL_FALLBACK } from "@/lib/setupVisualMap";
 
 type SaveMenuStatus = "idle" | "saving" | "success" | "error";
 
 export default function ResultHero({
   actions,
   context,
+  cutId,
   hasResult,
   lang = "es",
   onEdit,
@@ -23,6 +28,7 @@ export default function ResultHero({
     onStartCooking?: () => void;
   };
   context?: string;
+  cutId?: string;
   hasResult: boolean;
   lang?: "es" | "en" | "fi";
   onEdit?: () => void;
@@ -38,7 +44,10 @@ export default function ResultHero({
   };
 }) {
   const isEs = lang === "es";
+  const [visualFallbackStep, setVisualFallbackStep] = useState<"none" | "fallback">("none");
   const risk = summary?.criticalError || summary?.safety || "";
+  const setupVisualSrc = useMemo(() => getSetupVisual(cutId ?? ""), [cutId]);
+  const visualSrc = visualFallbackStep === "fallback" ? SETUP_VISUAL_FALLBACK : setupVisualSrc;
   const heroMetrics = [
     { label: isEs ? "Tiempo" : "Time", value: summary?.time, tone: "orange" },
     { label: isEs ? "Temperatura" : "Temperature", value: summary?.temperature, tone: "red" },
@@ -132,6 +141,32 @@ export default function ResultHero({
               ))}
             </div>
           )}
+
+          <div className="overflow-hidden rounded-[1.35rem] border border-orange-300/20 bg-slate-950/80 shadow-xl shadow-black/20 ring-1 ring-inset ring-white/[0.04]">
+            <div className="relative aspect-[16/9] w-full">
+              {visualSrc ? (
+                <Image
+                  src={visualSrc}
+                  alt={isEs ? "Visual del setup para este corte" : "Setup visual for this cut"}
+                  fill
+                  loading="lazy"
+                  sizes="(min-width: 1024px) 720px, 100vw"
+                  className="object-cover"
+                  onError={() => {
+                    if (visualFallbackStep === "none" && visualSrc !== SETUP_VISUAL_FALLBACK) {
+                      setVisualFallbackStep("fallback");
+                    }
+                  }}
+                />
+              ) : (
+                <div className="h-full w-full bg-[radial-gradient(circle_at_20%_0%,rgba(251,146,60,0.22),transparent_38%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(2,6,23,0.94))]" />
+              )}
+              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent_52%,rgba(2,6,23,0.8)_100%)]" />
+              <p className="absolute bottom-3 left-3 rounded-full border border-white/15 bg-black/45 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-orange-200 backdrop-blur-md">
+                {isEs ? "Setup visual" : "Setup visual"}
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="space-y-3">

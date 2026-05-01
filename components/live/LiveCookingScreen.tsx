@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, type TouchEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type TouchEvent } from "react";
+import LiveHeader from "./LiveHeader";
+import LiveStepCard from "./LiveStepCard";
+import LiveTimeline from "./LiveTimeline";
 import TimerDial, { type LivePhase } from "./TimerDial";
-import StepCard from "./StepCard";
-import Timeline from "./Timeline";
+import { parseLiveParams } from "@/lib/navigation/parseLiveParams";
 
 // ─── Shared step contract ─────────────────────────────────────────────────────
 
@@ -14,6 +16,24 @@ export type LiveStep = {
   duration: number;
   tempTarget?: number | null;
   notes?: string | null;
+};
+
+export type LiveZone = "direct" | "indirect" | "rest";
+
+export type LiveCookingStepState = {
+  id: string;
+  name: string;
+  duration: number;
+  zone: LiveZone;
+  displayZone: string;
+  instructions: string;
+  visualHint?: string | null;
+  tempTarget: number | null;
+  isActive: boolean;
+  isCompleted: boolean;
+  isNext: boolean;
+  remainingTime: number;
+  progress: number;
 };
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -55,10 +75,63 @@ function getPhase(
 ): LivePhase {
   const complete = isLast && (step.duration === 0 || remaining === 0);
   if (complete) return "complete";
-  if (step.zone === "Reposo" || step.zone === "Servir") return "rest";
+  if (normalizeLiveZone(step.zone) === "rest") return "rest";
   if (!step.duration || paused) return "idle";
   if (step.duration > 0 && remaining / step.duration <= 0.2) return "urgent";
   return "active";
+}
+
+function normalizeLiveZone(zone: string): LiveZone {
+  const normalized = zone
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+  if (normalized.includes("indirect")) return "indirect";
+  if (normalized.includes("repos") || normalized.includes("rest") || normalized.includes("serv")) {
+    return "rest";
+  }
+  return "direct";
+}
+
+function pickStepName(step: LiveStep) {
+  return step.label.trim() || "Cooking step";
+}
+
+function pickInstructions(step: LiveStep) {
+  return step.notes?.trim() || step.label.trim() || "Keep heat stable and move when this step is done.";
+}
+
+function buildLiveStepStates(
+  steps: LiveStep[],
+  currentIndex: number,
+  remainingTime: number,
+): LiveCookingStepState[] {
+  return steps.map((step, index) => {
+    const isActive = index === currentIndex;
+    const isCompleted = index < currentIndex;
+    const isNext = index === currentIndex + 1;
+    const progress = isCompleted
+      ? 1
+      : isActive && step.duration > 0
+        ? Math.max(0, Math.min(1, 1 - remainingTime / step.duration))
+        : 0;
+
+    return {
+      id: step.id,
+      name: pickStepName(step),
+      duration: step.duration,
+      zone: normalizeLiveZone(step.zone),
+      displayZone: step.zone,
+      instructions: pickInstructions(step),
+      tempTarget: step.tempTarget ?? null,
+      isActive,
+      isCompleted,
+      isNext,
+      remainingTime: isActive ? remainingTime : step.duration,
+      progress,
+    };
+  });
 }
 
 // ─── Style maps ───────────────────────────────────────────────────────────────
@@ -96,14 +169,6 @@ const STRIP_DOT: Record<LivePhase, string> = {
   complete: "bg-emerald-400",
 };
 
-// Static prep hints per next-step zone
-const PREP_HINT: Record<string, string> = {
-  Directo:   "Asegura calor directo en la parrilla",
-  Indirecto: "Ve bajando el fuego a temperatura baja",
-  Reposo:    "Ten una tabla y cuchillo a mano",
-  Servir:    "Ten el plato listo para servir",
-};
-
 // CTA button shadow by phase (the "complete step" primary button)
 const CTA_SHADOW: Record<LivePhase, string> = {
   idle:     "shadow-none",
@@ -116,7 +181,7 @@ const CTA_SHADOW: Record<LivePhase, string> = {
 // ─── Zone-aware background glow ───────────────────────────────────────────────
 // direct heat → warm orange; indirect → cool indigo; rest/serve → soft purple
 
-function getBgStyle(phase: LivePhase, zone: string): React.CSSProperties {
+function getBgStyle(phase: LivePhase, zone: string): CSSProperties {
   const z = zone.toLowerCase();
 
   if (phase === "complete") {
@@ -216,11 +281,56 @@ function computeConfidence({
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatTime(seconds: number): string {
-  const s = Math.max(0, seconds);
-  const m = Math.floor(s / 60);
-  const r = s % 60;
-  return `${m}:${r.toString().padStart(2, "0")}`;
+function includesAny(value: string, terms: string[]) {
+  const normalized = value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  return terms.some((term) => normalized.includes(term));
+}
+
+function getPrimaryCtaLabel({
+  currentIndex,
+  currentStep,
+  isEs,
+  nextStep,
+  phase,
+}: {
+  currentIndex: number;
+  currentStep: LiveCookingStepState;
+  isEs: boolean;
+  nextStep: LiveCookingStepState | null;
+  phase: LivePhase;
+}) {
+  if (phase === "complete") return isEs ? "¡Listo!" : "Done!";
+
+  const currentText = `${currentStep.name} ${currentStep.instructions}`;
+  const nextText = nextStep ? `${nextStep.name} ${nextStep.instructions}` : "";
+
+  if (
+    includesAny(`${currentText} ${nextText}`, [
+      "flip",
+      "turn",
+      "lado 2",
+      "side 2",
+      "voltea",
+      "dar vuelta",
+    ])
+  ) {
+    return isEs ? "Voltear ahora" : "Flip now";
+  }
+
+  if (nextStep?.zone === "indirect") return isEs ? "Mover a indirecto" : "Move to indirect";
+  if (nextStep?.zone === "rest") return isEs ? "Reposar ahora" : "Rest now";
+
+  if (
+    currentIndex === 0 &&
+    includesAny(currentText, ["preheat", "precalent", "setup", "calienta", "stabilize"])
+  ) {
+    return isEs ? "Empezar cocción" : "Start cooking";
+  }
+
+  return isEs ? "Siguiente paso" : "Next step";
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -243,6 +353,25 @@ export default function LiveCookingScreen({
   onEnableAlerts,
   onSaveCook,
 }: Props) {
+  const liveUrlState = useMemo(() => {
+    if (typeof window === "undefined") {
+      return {
+        animal: undefined,
+        cutId: undefined,
+        doneness: undefined,
+        thickness: undefined,
+      };
+    }
+
+    const { animal, cutId, doneness, thickness } = parseLiveParams(window.location.search);
+    return {
+      animal: animal?.trim() || undefined,
+      cutId: cutId?.trim() || undefined,
+      doneness: doneness?.trim() || undefined,
+      thickness: thickness !== undefined ? String(thickness) : undefined,
+    };
+  }, []);
+
   const touchRef = useRef<TouchPoint | null>(null);
   // "idle" → button shown; "saved" → confirmation shown; stays "saved" permanently
   const [saveState, setSaveState] = useState<"idle" | "saved">("idle");
@@ -286,8 +415,21 @@ export default function LiveCookingScreen({
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === steps.length - 1;
   const hasTimer = step ? step.duration > 0 : false;
-  const nextStep = steps[currentIndex + 1] ?? null;
   const phase = step ? getPhase(step, remaining, paused, isLast) : ("idle" as LivePhase);
+  const liveSteps = buildLiveStepStates(steps, currentIndex, remaining);
+  const currentStep = liveSteps[currentIndex] ?? liveSteps[0];
+  const nextStep = liveSteps[currentIndex + 1] ?? null;
+  const fallbackContext = useMemo(() => {
+    const safeAnimal = liveUrlState.animal || "Vacuno";
+    const parts = [
+      safeAnimal,
+      liveUrlState.cutId,
+      liveUrlState.doneness,
+      liveUrlState.thickness ? `${liveUrlState.thickness}cm` : null,
+    ].filter(Boolean) as string[];
+    return parts.length > 0 ? parts.join(" · ") : undefined;
+  }, [liveUrlState]);
+  const resolvedContext = context ?? fallbackContext;
 
   // ── Confidence state (updated every second via effect — no refs in render) ──
   // All hooks must be called before early returns to satisfy rules-of-hooks.
@@ -315,21 +457,20 @@ export default function LiveCookingScreen({
   }, [hasTimer, phase, paused, steps, currentIndex, remaining, lang]);
 
   // ── Early return after all hooks ──────────────────────────────────────────
-  if (!steps[currentIndex]) return null;
+  if (!steps[currentIndex] || !currentStep) return null;
 
   // Zone-aware background glow (direct = orange, indirect = indigo, rest = purple)
   const bgStyle = getBgStyle(phase, step.zone);
 
   // ── Derived labels ──────────────────────────────────────────────────────────
   const pauseLabel = paused ? (isEs ? "Reanudar" : "Resume") : (isEs ? "Pausar" : "Pause");
-  const completeLabel =
-    phase === "complete"
-      ? isEs
-        ? "¡Listo!"
-        : "Done!"
-      : isEs
-        ? "Completar paso"
-        : "Complete step";
+  const primaryCtaLabel = getPrimaryCtaLabel({
+    currentIndex,
+    currentStep,
+    isEs,
+    nextStep,
+    phase,
+  });
 
   // ── LIVE dot class ──────────────────────────────────────────────────────────
   const dotClass =
@@ -368,67 +509,17 @@ export default function LiveCookingScreen({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* ── Zone 1: Status Bar (~44px) ──────────────────────────────────────── */}
-      <header className="flex h-11 shrink-0 items-center gap-2 border-b border-white/[0.055] px-4">
-        {/* Optional back button — shown in embedded mode only */}
-        {onBack && (
-          <button
-            type="button"
-            onClick={onBack}
-            className="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-bold text-white/50 transition active:scale-[0.97]"
-          >
-            ← {isEs ? "Plan" : "Plan"}
-          </button>
-        )}
-
-        {/* Zone + temp */}
-        <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
-          {step.tempTarget != null && (
-            <>
-              <span className="text-[10px] font-bold text-white/35">{step.tempTarget}°C</span>
-              <span className="text-[9px] text-white/20">·</span>
-            </>
-          )}
-          <span
-            className={`truncate text-[11px] font-black uppercase tracking-[0.16em] ${STATUS_COLOR[phase]}`}
-          >
-            {step.zone}
-          </span>
-        </div>
-
-        {/* LIVE badge */}
-        <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">
-          <span className={`h-1.5 w-1.5 rounded-full ${dotClass}`} />
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/80">
-            Live
-          </span>
-        </div>
-
-        {/* Right cluster: alerts + step count */}
-        <div className="flex shrink-0 items-center gap-2">
-          {alertsEnabled !== undefined && onEnableAlerts && (
-            alertsEnabled ? (
-              <span className={`text-[9px] font-bold ${STATUS_COLOR[phase]}`}>
-                {isEs ? "Avisos" : "Alerts"}
-              </span>
-            ) : (
-              <button
-                type="button"
-                onClick={onEnableAlerts}
-                className="rounded-full border border-orange-500/25 bg-orange-500/10 px-2 py-0.5 text-[9px] font-black text-orange-200 transition active:scale-[0.97]"
-              >
-                {isEs ? "Avisos" : "Alerts"}
-              </button>
-            )
-          )}
-          {/* Step counter — "Paso 1 de 5" gives instant orientation */}
-          <span className="rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-0.5 text-[11px] tabular-nums">
-            <span className="font-semibold text-white/38">{isEs ? "Paso " : "Step "}</span>
-            <span className="font-black text-white/75">{currentIndex + 1}</span>
-            <span className="font-medium text-white/30">{isEs ? ` de ${steps.length}` : ` of ${steps.length}`}</span>
-          </span>
-        </div>
-      </header>
+      <LiveHeader
+        alertsEnabled={alertsEnabled}
+        currentIndex={currentIndex}
+        currentStep={currentStep}
+        dotClass={dotClass}
+        isEs={isEs}
+        onBack={onBack}
+        onEnableAlerts={onEnableAlerts}
+        phase={phase}
+        stepCount={liveSteps.length}
+      />
 
       {/* ── Confidence strip ────────────────────────────────────────────────── */}
       {/* Thin 28px band between the status bar and the timer zone.           */}
@@ -477,67 +568,26 @@ export default function LiveCookingScreen({
           <TimerDial total={step.duration} remaining={remaining} phase={phase} />
         </div>
 
-        {/* ── Zone 3: Current Step Card ───────────────────────────────────── */}
         <div className="px-4">
-          <StepCard
-            step={{
-              id: step.id,
-              label: step.label,
-              duration: step.duration,
-              zone: step.zone,
-              tempTarget: step.tempTarget ?? null,
-              notes: step.notes ?? null,
-            }}
-            phase={phase}
-            context={context}
+          <LiveStepCard
+            context={resolvedContext}
+            currentStep={currentStep}
             guidanceOpen={guidanceOpen}
+            isEs={isEs}
+            nextStep={nextStep}
             onToggleGuidance={() => setGuidanceOpen((v) => !v)}
+            phase={phase}
           />
         </div>
 
-        {/* ── Zone 4: Next Step Preview ────────────────────────────────────── */}
-        {nextStep && (
-          <div className="mx-4 mt-2 flex items-center gap-3 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.018] px-4 py-3">
-            {/* Phase-colored left accent bar */}
-            <div
-              className={`h-full w-[3px] self-stretch rounded-full opacity-60 ${
-                phase === "urgent"  ? "bg-yellow-400" :
-                phase === "rest"    ? "bg-indigo-400" :
-                phase === "complete"? "bg-emerald-400" :
-                                     "bg-orange-400"
-              }`}
-            />
-            <div className="min-w-0 flex-1">
-              <p className="text-[9px] font-black uppercase tracking-[0.24em] text-white/28">
-                {isEs ? "Siguiente" : "Next"}
-              </p>
-              <p className="mt-0.5 line-clamp-1 text-[13px] font-bold text-white/52">
-                {nextStep.label}
-              </p>
-              {/* PREPARA hint — static zone-based prep cue */}
-              {PREP_HINT[nextStep.zone] && (
-                <p className="mt-1 text-[10.5px] leading-snug text-white/32">
-                  <span className="font-black uppercase tracking-[0.14em] text-white/22">
-                    {isEs ? "Prepara" : "Prep"}
-                  </span>
-                  {" · "}
-                  {PREP_HINT[nextStep.zone]}
-                </p>
-              )}
-            </div>
-            <span className="shrink-0 self-start font-mono text-[11px] font-semibold tabular-nums text-white/28">
-              {nextStep.duration ? formatTime(nextStep.duration) : "—"}
-            </span>
-          </div>
-        )}
-
         {/* ── Zone 5: Timeline Scrubber (~52px) ──────────────────────────── */}
         <div className="px-4 pt-4">
-          <Timeline
-            steps={steps}
+          <LiveTimeline
             currentIndex={currentIndex}
-            phase={phase}
+            isEs={isEs}
             onGoToStep={onGoToStep}
+            phase={phase}
+            steps={liveSteps}
           />
         </div>
 
@@ -578,10 +628,10 @@ export default function LiveCookingScreen({
         )}
 
         {/* Context / reset (minimal) */}
-        {(context || onReset) && (
+        {(resolvedContext || onReset) && (
           <div className="flex items-center justify-center gap-3 px-4 py-4">
-            {context && (
-              <span className="text-[10px] font-semibold text-white/18">{context}</span>
+            {resolvedContext && (
+              <span className="text-[10px] font-semibold text-white/18">{resolvedContext}</span>
             )}
             {onReset && (
               <button
@@ -620,7 +670,7 @@ export default function LiveCookingScreen({
                   : "bg-orange-500 text-black hover:bg-orange-400"
             }`}
           >
-            {completeLabel}
+            {primaryCtaLabel}
           </button>
         </div>
       </nav>

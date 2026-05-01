@@ -1,6 +1,10 @@
 "use client";
 
+import Image from "next/image";
+import { useMemo, useState } from "react";
 import type { GeneratedCutProfile } from "@/lib/generated/cutProfiles";
+import { getSetupVisual } from "@/lib/setup/getSetupVisual";
+import { SETUP_VISUAL_FALLBACK } from "@/lib/setupVisualMap";
 import {
   getCuttingInstruction,
   getDisplayName,
@@ -18,6 +22,9 @@ type CutBottomSheetProps = {
 };
 
 export function CutBottomSheet({ profile, onClose, onStartCooking }: CutBottomSheetProps) {
+  const [visualFallbackStep, setVisualFallbackStep] = useState<"none" | "fallback">("none");
+  const setupVisualSrc = useMemo(() => (profile ? getSetupVisual(profile.id) : null), [profile]);
+  const visualSrc = visualFallbackStep === "fallback" ? SETUP_VISUAL_FALLBACK : setupVisualSrc;
   if (!profile) return null;
 
   const temperature = getTemperatureLabel(profile);
@@ -47,6 +54,32 @@ export function CutBottomSheet({ profile, onClose, onStartCooking }: CutBottomSh
           <SheetPanel title="Metodos" value={profile.allowedMethods.map((method) => methodLabels[method]).join(", ")} />
           <SheetPanel title="Temp" value={temperature ?? "Visual"} />
           <SheetPanel title="Tiempo" value={`${getEstimatedTimeLabel(profile)} · reposo ${profile.restingMinutes} min`} />
+        </div>
+
+        <div className="mt-3 overflow-hidden rounded-[1.35rem] border border-white/10 bg-slate-950 shadow-lg shadow-black/25 ring-1 ring-inset ring-white/[0.04]">
+          <div className="relative aspect-[16/10] w-full">
+            {visualSrc ? (
+              <Image
+                src={visualSrc}
+                alt={`Setup visual for ${getDisplayName(profile)}`}
+                fill
+                loading="lazy"
+                sizes="(min-width: 640px) 560px, 100vw"
+                className="object-cover"
+                onError={() => {
+                  if (visualFallbackStep === "none" && visualSrc !== SETUP_VISUAL_FALLBACK) {
+                    setVisualFallbackStep("fallback");
+                  }
+                }}
+              />
+            ) : (
+              <div className="h-full w-full bg-[radial-gradient(circle_at_20%_0%,rgba(251,146,60,0.22),transparent_38%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(2,6,23,0.94))]" />
+            )}
+            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent_56%,rgba(2,6,23,0.78)_100%)]" />
+            <p className="absolute bottom-3 left-3 rounded-full border border-white/15 bg-black/45 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-orange-200 backdrop-blur-md">
+              Setup visual
+            </p>
+          </div>
         </div>
 
         <div className="mt-3 grid gap-3 sm:grid-cols-2">

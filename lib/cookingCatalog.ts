@@ -1,3 +1,5 @@
+import type { Animal } from "@/lib/types/domain";
+
 export type CookingInput = {
   animal: string;
   cut: string;
@@ -21,7 +23,7 @@ export type CookingStep = {
 };
 
 export type Language = "es" | "en" | "fi";
-export type AnimalId = "beef" | "pork" | "chicken" | "fish" | "vegetables";
+export type AnimalId = Animal;
 export type CookingMethod =
   | "grill_direct"
   | "grill_indirect"

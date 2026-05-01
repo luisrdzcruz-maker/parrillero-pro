@@ -37,6 +37,7 @@ import {
   type ShareStatus,
 } from "@/components/results/CookingResultScreen";
 import { SavedCooksScreen } from "@/components/cooks/SavedCooksScreen";
+import LiveCookingScreen, { type LiveStep } from "@/components/live/LiveCookingScreen";
 import { ProModal } from "@/components/pro/ProModal";
 import { isPro } from "@/lib/proStatus";
 import {
@@ -57,8 +58,18 @@ import {
 } from "@/lib/cookingRules";
 import { ds } from "@/lib/design-system";
 import { texts, type Lang } from "@/lib/i18n/texts";
-import { createLiveCookingPayload, saveLiveCookingPayload } from "@/lib/liveCookingPlan";
-import { animalIdsByLabel, type Animal } from "@/lib/media/animalMedia";
+import {
+  buildLiveStepsFromPayload,
+  buildLiveStepsSignature,
+  createLiveCookingPayload,
+  hasDistinctLiveSteps,
+  readLiveCookingPayload,
+  saveLiveCookingPayload,
+} from "@/lib/liveCookingPlan";
+import { buildLiveUrl } from "@/lib/navigation/buildLiveUrl";
+import { parseLiveParams } from "@/lib/navigation/parseLiveParams";
+import type { Doneness } from "@/lib/types/domain";
+import { animalIdsByLabel, type AnimalLabel } from "@/lib/media/animalMedia";
 import { cutImages } from "@/lib/media/cutImages";
 import {
   REQUIRED_COOKING_BLOCKS,
@@ -69,8 +80,8 @@ import {
 } from "@/lib/parser/normalizeBlocks";
 import { parseBlocks } from "@/lib/parser/parseBlocks";
 import { generateParrilladaPlan } from "@/lib/parrilladaEngine";
-import { useRouter } from "next/navigation";
-import { type TouchEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, type TouchEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type EngineLang = "es" | "en";
 
@@ -88,6 +99,8 @@ type SavedMenuActionMenu = {
   is_public?: boolean;
   share_slug?: string | null;
 };
+
+const LIVE_DONENESS_VALUES: Doneness[] = ["rare", "medium_rare", "medium", "medium_well", "well_done", "safe"];
 
 type SaveGeneratedMenuResponse =
   | { ok: true; menu: SavedMenuActionMenu }
@@ -113,7 +126,7 @@ type CutItem = {
 };
 
 type SavedCookConfig = {
-  animal: Animal;
+  animal: AnimalLabel;
   cut: string;
   weight: string;
   thickness: string;
@@ -123,7 +136,7 @@ type SavedCookConfig = {
 };
 
 type CookingNavContext = {
-  animal?: Animal;
+  animal?: AnimalLabel;
   cut?: string;
   doneness?: string;
   thickness?: string;
@@ -152,16 +165,20 @@ function parseSavedLang(value: unknown): Lang {
   return "es";
 }
 
-function parseSavedAnimal(value: unknown, fallback: Animal): Animal {
+function parseSavedAnimal(value: unknown, fallback: AnimalLabel): AnimalLabel {
   const text = asText(value);
-  if (text && text in animalIdsByLabel) return text as Animal;
+  if (text && text in animalIdsByLabel) return text as AnimalLabel;
   return fallback;
+}
+
+function toLiveDoneness(value: string): Doneness | undefined {
+  return LIVE_DONENESS_VALUES.includes(value as Doneness) ? (value as Doneness) : undefined;
 }
 
 function parseSavedCookConfig(
   menu: SavedMenu,
   fallback: {
-    animal: Animal;
+    animal: AnimalLabel;
     equipment: string;
     doneness: string;
     weight: string;
@@ -190,11 +207,11 @@ function engineLang(lang: Lang): EngineLang {
   return lang === "es" ? "es" : "en";
 }
 
-function getInitialDoneness(animal: Animal) {
+function getInitialDoneness(animal: AnimalLabel) {
   return getDonenessOptions(animalIdsByLabel[animal])[0]?.id ?? "";
 }
 
-function getDonenessSelectOptions(animal: Animal, lang: Lang): SelectOption[] {
+function getDonenessSelectOptions(animal: AnimalLabel, lang: Lang): SelectOption[] {
   const labelLang = lang === "fi" ? "en" : lang;
 
   return getDonenessOptions(animalIdsByLabel[animal]).map((option) => ({
@@ -215,7 +232,7 @@ function getCutDescription(cut: ProductCut, lang: Lang) {
   return cut.notes?.[catalogLang(lang)] ?? cut.error[engineLang(lang)] ?? "";
 }
 
-function getCutItems(animal: Animal, lang: Lang): CutItem[] {
+function getCutItems(animal: AnimalLabel, lang: Lang): CutItem[] {
   return getCutsByAnimal(animalIdsByLabel[animal]).map((cut) => ({
     id: cut.id,
     name: getCutName(cut, lang),
@@ -224,7 +241,7 @@ function getCutItems(animal: Animal, lang: Lang): CutItem[] {
   }));
 }
 
-function getAnimalPreview(animal: Animal, lang: Lang) {
+function getAnimalPreview(animal: AnimalLabel, lang: Lang) {
   return getCutItems(animal, lang)
     .slice(0, 2)
     .map((cut) => cut.name)
@@ -306,6 +323,82 @@ function parsePositiveInt(value: string) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
+const MOCK_LIVE_STEPS: LiveStep[] = [
+  {
+    id: "preheat",
+    label: "Calienta la parrilla.\nMáxima potencia.",
+    duration: 300,
+    zone: "Directo",
+    tempTarget: 230,
+    notes: "Tapa cerrada. Espera a que alcance temperatura.",
+  },
+  {
+    id: "sear1",
+    label: "Sella.\nLado 1.",
+    duration: 240,
+    zone: "Directo",
+    tempTarget: 230,
+    notes: "No la muevas. Déjala hasta que se despegue sola.",
+  },
+  {
+    id: "sear2",
+    label: "Sella.\nLado 2.",
+    duration: 240,
+    zone: "Directo",
+    tempTarget: 230,
+    notes: "Busca costra dorada y uniforme en toda la superficie.",
+  },
+  {
+    id: "indirect",
+    label: "Cocción indirecta.\nFuego bajo.",
+    duration: 420,
+    zone: "Indirecto",
+    tempTarget: 150,
+    notes: "Tapa cerrada. Deja que el calor circule sin llama directa.",
+  },
+  {
+    id: "rest",
+    label: "Reposa.\nNo cortes aún.",
+    duration: 360,
+    zone: "Reposo",
+    tempTarget: null,
+    notes: "Los jugos se redistribuyen. Vale la pena esperar.",
+  },
+  {
+    id: "serve",
+    label: "Listo.\nSirve ahora.",
+    duration: 0,
+    zone: "Servir",
+    tempTarget: null,
+    notes: null,
+  },
+];
+
+const SAVED_COOKS_KEY = "parrillero_saved_cooks_v1";
+
+type SavedCookEntry = {
+  id: string;
+  savedAt: string;
+  context: string;
+  steps: LiveStep[];
+};
+
+function persistSavedCook(steps: LiveStep[], context: string | undefined) {
+  if (typeof window === "undefined") return;
+  try {
+    const existing: SavedCookEntry[] = JSON.parse(localStorage.getItem(SAVED_COOKS_KEY) ?? "[]");
+    const entry: SavedCookEntry = {
+      id: `cook_${Date.now()}`,
+      savedAt: new Date().toISOString(),
+      context: context ?? "",
+      steps,
+    };
+    localStorage.setItem(SAVED_COOKS_KEY, JSON.stringify([entry, ...existing].slice(0, 20)));
+  } catch {
+    // Ignore localStorage failures.
+  }
+}
+
 const ALLOWED_MODES: readonly Mode[] = [
   "inicio",
   "coccion",
@@ -323,9 +416,9 @@ const ALLOWED_COOKING_STEPS: readonly CookingWizardStep[] = [
   "result",
 ];
 
-const animalLabelsById: Record<string, Animal> = Object.fromEntries(
+const animalLabelsById: Record<string, AnimalLabel> = Object.fromEntries(
   Object.entries(animalIdsByLabel).map(([label, id]) => [id, label]),
-) as Record<string, Animal>;
+) as Record<string, AnimalLabel>;
 
 function isAllowedMode(value: string | null): value is Mode {
   return value != null && ALLOWED_MODES.includes(value as Mode);
@@ -335,10 +428,10 @@ function isAllowedCookingStep(value: string | null): value is CookingWizardStep 
   return value != null && ALLOWED_COOKING_STEPS.includes(value as CookingWizardStep);
 }
 
-function parseCookingAnimal(value: string | null): Animal | undefined {
+function parseCookingAnimal(value: string | null): AnimalLabel | undefined {
   const trimmed = value?.trim();
   if (!trimmed) return undefined;
-  if (trimmed in animalIdsByLabel) return trimmed as Animal;
+  if (trimmed in animalIdsByLabel) return trimmed as AnimalLabel;
 
   return animalLabelsById[trimmed.toLowerCase()];
 }
@@ -351,17 +444,21 @@ function parsePositiveNumberParam(value: string | null) {
   return Number.isFinite(parsed) && parsed > 0 ? trimmed : undefined;
 }
 
-function parseCookingContext(params: URLSearchParams): CookingNavContext {
-  const cutParam = params.get("cut") ?? params.get("cutId");
+function parseCookingContext(params: URLSearchParams, mode: Mode): CookingNavContext {
+  const liveParams = mode === "cocina" ? parseLiveParams(params.toString()) : null;
+  const cutParam = mode === "cocina" ? liveParams?.cutId : params.get("cut") ?? params.get("cutId");
   const cutMeta = cutParam ? getCutById(cutParam) : undefined;
-  const animal = parseCookingAnimal(params.get("animal")) ?? (cutMeta ? animalLabelsById[cutMeta.animalId] : undefined);
+  const animalSource = mode === "cocina" ? liveParams?.animal ?? null : params.get("animal");
+  const animal = parseCookingAnimal(animalSource) ?? (cutMeta ? animalLabelsById[cutMeta.animalId] : undefined);
   const cut = cutMeta?.id;
-  const donenessParam = params.get("doneness")?.trim();
+  const donenessParam = mode === "cocina" ? liveParams?.doneness?.trim() : params.get("doneness")?.trim();
   const doneness =
     animal && donenessParam && getDonenessOptions(animalIdsByLabel[animal]).some((option) => option.id === donenessParam)
       ? donenessParam
       : undefined;
-  const thickness = parsePositiveNumberParam(params.get("thickness"));
+  const thickness = parsePositiveNumberParam(
+    mode === "cocina" ? (liveParams?.thickness != null ? String(liveParams.thickness) : null) : params.get("thickness"),
+  );
 
   return {
     ...(animal ? { animal } : {}),
@@ -371,13 +468,42 @@ function parseCookingContext(params: URLSearchParams): CookingNavContext {
   };
 }
 
+function parseLiveUrlState(lang: Lang) {
+  if (typeof window === "undefined") {
+    return {
+      animal: "Vacuno" as AnimalLabel,
+      cutId: null as string | null,
+      doneness: getInitialDoneness("Vacuno"),
+      thickness: "2",
+      context: undefined as string | undefined,
+    };
+  }
+
+  const { animal, cutId: rawCutId, doneness: rawDoneness, thickness: rawThickness } = parseLiveParams(
+    window.location.search,
+  );
+  const liveAnimal = parseCookingAnimal(animal ?? null) ?? "Vacuno";
+  const liveCutParam = rawCutId;
+  const liveCutMeta = liveCutParam ? getCutById(liveCutParam) : undefined;
+  const cutId = liveCutMeta?.id ?? null;
+  const donenessParam = rawDoneness?.trim();
+  const doneness =
+    donenessParam && getDonenessOptions(animalIdsByLabel[liveAnimal]).some((option) => option.id === donenessParam)
+      ? donenessParam
+      : getInitialDoneness(liveAnimal);
+  const thickness = parsePositiveNumberParam(rawThickness != null ? String(rawThickness) : null) ?? "2";
+  const context = liveCutMeta ? `${liveAnimal} · ${getCutName(liveCutMeta, lang)}` : liveAnimal;
+
+  return { animal: liveAnimal, cutId, doneness, thickness, context };
+}
+
 function parseNavFromSearch(search: string): ParsedNav {
   const params = new URLSearchParams(search);
   const modeParam = params.get("mode");
   const stepParam = params.get("step");
 
   const mode: Mode = isAllowedMode(modeParam) ? modeParam : "inicio";
-  const cookingContext = mode === "coccion" ? parseCookingContext(params) : {};
+  const cookingContext = mode === "coccion" || mode === "cocina" ? parseCookingContext(params, mode) : {};
   const inferredStep: CookingWizardStep = cookingContext.cut ? "details" : cookingContext.animal ? "cut" : "animal";
   const cookingStep: CookingWizardStep =
     mode === "coccion" && isAllowedCookingStep(stepParam) ? stepParam : inferredStep;
@@ -396,6 +522,11 @@ function buildSearchFromNav(
     params.set("step", cookingStep);
     if (cookingContext.animal) params.set("animal", animalIdsByLabel[cookingContext.animal]);
     if (cookingContext.cut) params.set("cut", cookingContext.cut);
+    if (cookingContext.doneness) params.set("doneness", cookingContext.doneness);
+    if (cookingContext.thickness) params.set("thickness", cookingContext.thickness);
+  } else if (mode === "cocina") {
+    if (cookingContext.animal) params.set("animal", cookingContext.animal);
+    if (cookingContext.cut) params.set("cutId", cookingContext.cut);
     if (cookingContext.doneness) params.set("doneness", cookingContext.doneness);
     if (cookingContext.thickness) params.set("thickness", cookingContext.thickness);
   }
@@ -435,8 +566,9 @@ function mapBeefLargeWeightPresetToKg(weightRange: CookingWeightRange): string {
   return "1.2";
 }
 
-export default function Home() {
+function HomeContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // ── Onboarding gate ─────────────────────────────────────────────────────────
   // null  = not yet resolved (server render + first paint — avoids hydration mismatch)
@@ -449,6 +581,8 @@ export default function Home() {
   // client may return true → React throws a hydration error.
   const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
   const [showProModal, setShowProModal] = useState<false | "planning">(false);
+  const [showCookCompleteProModal, setShowCookCompleteProModal] = useState(false);
+  const cookCompleteModalFiredRef = useRef(false);
 
   useEffect(() => {
     const raf = window.requestAnimationFrame(() => {
@@ -464,7 +598,7 @@ export default function Home() {
   const [mode, setMode] = useState<Mode>("inicio");
   const [cookingStep, setCookingStep] = useState<CookingWizardStep>("animal");
 
-  const [animal, setAnimal] = useState<Animal>("Vacuno");
+  const [animal, setAnimal] = useState<AnimalLabel>("Vacuno");
   const [cut, setCut] = useState("");
   const [weight, setWeight] = useState("1");
   const [thickness, setThickness] = useState("5");
@@ -507,6 +641,7 @@ export default function Home() {
 
   const touchStartRef = useRef<TouchPoint | null>(null);
   const isApplyingPopRef = useRef(false);
+  const liveAdvanceRef = useRef(false);
 
   const baseCuts = useMemo(() => getCutItems(animal, lang), [animal, lang]);
   const selectedCutMeta = useMemo(() => (cut ? getCutById(cut) : undefined), [cut]);
@@ -531,6 +666,12 @@ export default function Home() {
 
   const currentDonenessOptions = getDonenessSelectOptions(animal, lang);
   const showThickness = cut ? shouldShowThickness(cut) : true;
+  const [liveClientReady, setLiveClientReady] = useState(false);
+  const [liveSteps, setLiveSteps] = useState<LiveStep[]>(MOCK_LIVE_STEPS);
+  const [liveContext, setLiveContext] = useState<string | undefined>(undefined);
+  const [liveCurrentIndex, setLiveCurrentIndex] = useState(0);
+  const [liveRemaining, setLiveRemaining] = useState(0);
+  const [livePaused, setLivePaused] = useState(false);
 
   function resetAdaptiveDetailInputs() {
     setAdvancedThicknessEnabled(false);
@@ -539,7 +680,7 @@ export default function Home() {
     setVegetableFormat("halved");
   }
 
-  function applyCookingNavContext(cookingContext: CookingNavContext) {
+  const applyCookingNavContext = useCallback((cookingContext: CookingNavContext) => {
     const hasContext =
       cookingContext.animal || cookingContext.cut || cookingContext.doneness || cookingContext.thickness;
     if (!hasContext) return;
@@ -560,8 +701,12 @@ export default function Home() {
     setVegetableFormat("halved");
     setBlocks({});
     setCheckedItems({});
-    resetSaveMenuState();
-  }
+    setSaveMenuStatus("idle");
+    setSaveMenuMessage("");
+    setShareStatus("idle");
+    setShareMessage("");
+    setShareMessageMenuId(null);
+  }, []);
 
   function commitNav(
     nextMode: Mode,
@@ -625,7 +770,7 @@ export default function Home() {
     });
 
     return () => window.cancelAnimationFrame(raf);
-  }, []);
+  }, [applyCookingNavContext]);
 
   // ── Browser history: restore state on popstate (back button / swipe) ───────
   // Registered once. URL query params are the source of truth for mode/step.
@@ -646,7 +791,106 @@ export default function Home() {
     }
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
-  }, []);
+  }, [applyCookingNavContext]);
+
+  useEffect(() => {
+    const query = searchParams.toString();
+    const nav = parseNavFromSearch(query ? `?${query}` : "");
+    if (nav.mode === mode && nav.cookingStep === cookingStep) return;
+
+    isApplyingPopRef.current = true;
+    const frame = window.requestAnimationFrame(() => {
+      applyCookingNavContext(nav.cookingContext);
+      setMode(nav.mode);
+      setCookingStep(nav.cookingStep);
+      if (nav.cookingStep !== "result") setLoading(false);
+      if (nav.mode !== "guardados") setSelectedSavedMenu(null);
+      isApplyingPopRef.current = false;
+    });
+    return () => {
+      window.cancelAnimationFrame(frame);
+      isApplyingPopRef.current = false;
+    };
+  }, [searchParams, mode, cookingStep, applyCookingNavContext]);
+
+  const liveStep = liveSteps[liveCurrentIndex] ?? liveSteps[0];
+  const liveIsLast = liveCurrentIndex === liveSteps.length - 1;
+  const liveHasTimer = liveStep ? liveStep.duration > 0 : false;
+  const liveCookComplete = mode === "cocina" && liveClientReady && liveIsLast && liveRemaining === 0;
+
+  useEffect(() => {
+    if (mode !== "cocina") {
+      const frame = window.requestAnimationFrame(() => {
+        setLiveClientReady(false);
+      });
+      return () => window.cancelAnimationFrame(frame);
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      const payload = readLiveCookingPayload();
+      const built = buildLiveStepsFromPayload(payload, MOCK_LIVE_STEPS);
+      const liveFromUrl = parseLiveUrlState(lang);
+
+      if (!built.usedFallback && !hasDistinctLiveSteps(built.steps, MOCK_LIVE_STEPS)) {
+        console.warn("[live-cooking] Live steps match mock signature unexpectedly", {
+          payloadSignature: payload?.signature ?? "",
+          liveSignature: built.signature,
+          mockSignature: buildLiveStepsSignature(MOCK_LIVE_STEPS),
+        });
+      }
+
+      setLiveSteps(built.steps);
+      setLiveContext(built.usedFallback ? liveFromUrl.context : built.context ?? liveFromUrl.context);
+      setLiveCurrentIndex(0);
+      setLiveRemaining((built.steps[0] ?? MOCK_LIVE_STEPS[0]).duration);
+      setLivePaused(false);
+      setLiveClientReady(true);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [mode, lang]);
+
+  useEffect(() => {
+    if (mode !== "cocina" || !liveClientReady || livePaused || !liveHasTimer) return;
+    const id = window.setInterval(() => {
+      setLiveRemaining((previous) => Math.max(0, previous - 1));
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [mode, liveClientReady, livePaused, liveHasTimer]);
+
+  useEffect(() => {
+    if (
+      mode !== "cocina" ||
+      !liveClientReady ||
+      liveRemaining > 0 ||
+      !liveHasTimer ||
+      liveIsLast ||
+      liveAdvanceRef.current
+    ) {
+      return;
+    }
+
+    liveAdvanceRef.current = true;
+    const id = window.setTimeout(() => {
+      const next = liveCurrentIndex + 1;
+      setLiveCurrentIndex(next);
+      setLiveRemaining((liveSteps[next] ?? liveSteps[liveSteps.length - 1]).duration);
+      setLivePaused(false);
+      liveAdvanceRef.current = false;
+    }, 1200);
+
+    return () => {
+      window.clearTimeout(id);
+      liveAdvanceRef.current = false;
+    };
+  }, [mode, liveClientReady, liveRemaining, liveHasTimer, liveIsLast, liveCurrentIndex, liveSteps]);
+
+  useEffect(() => {
+    if (!liveCookComplete || cookCompleteModalFiredRef.current || isPro()) return;
+    cookCompleteModalFiredRef.current = true;
+    const id = window.setTimeout(() => setShowCookCompleteProModal(true), 2000);
+    return () => window.clearTimeout(id);
+  }, [liveCookComplete]);
 
   function updateSavedMenus(nextMenus: SavedMenu[]) {
     setSavedMenus(nextMenus);
@@ -887,7 +1131,15 @@ export default function Home() {
     });
 
     saveLiveCookingPayload(payload);
-    router.push("/coccion-live");
+    const thicknessValue = shouldShowThickness(rebuilt.config.cut) ? rebuilt.config.thickness : "2";
+    router.push(
+      buildLiveUrl({
+        animal: animalIdsByLabel[rebuilt.config.animal],
+        cutId: rebuilt.config.cut,
+        doneness: toLiveDoneness(rebuilt.config.doneness),
+        thickness: Number(thicknessValue),
+      }),
+    );
   }
 
   function updateSharedMenu(updatedMenu: SavedMenu) {
@@ -991,7 +1243,7 @@ export default function Home() {
     setShareMessageMenuId(menu.id);
   }
 
-  function handleAnimalChange(selectedAnimal: Animal) {
+  function handleAnimalChange(selectedAnimal: AnimalLabel) {
     setAnimal(selectedAnimal);
     setCut("");
     resetAdaptiveDetailInputs();
@@ -1290,7 +1542,7 @@ ERROR
   }
 
   // Tap a protein card on Home → pre-select animal, jump to cut step
-  function handleQuickAnimal(selectedAnimal: Animal) {
+  function handleQuickAnimal(selectedAnimal: AnimalLabel) {
     handleAnimalChange(selectedAnimal); // sets animal, clears cut, cookingStep → "cut"
   }
 
@@ -1341,6 +1593,24 @@ ERROR
     handleSwipeNavigation(deltaX > 0 ? "back" : "forward");
   }
 
+  function handleCompleteLiveStep() {
+    if (liveIsLast) {
+      setLiveRemaining(0);
+      return;
+    }
+
+    const next = liveCurrentIndex + 1;
+    setLiveCurrentIndex(next);
+    setLiveRemaining((liveSteps[next] ?? liveSteps[liveSteps.length - 1]).duration);
+    setLivePaused(false);
+  }
+
+  function handleGoToLiveStep(index: number) {
+    setLiveCurrentIndex(index);
+    setLiveRemaining((liveSteps[index] ?? liveSteps[liveSteps.length - 1]).duration);
+    setLivePaused(false);
+  }
+
   // ── Onboarding gate ─────────────────────────────────────────────────────────
   // Render a dark placeholder while localStorage hasn't been checked yet.
   // Body background matches so there is zero visible flash.
@@ -1353,6 +1623,43 @@ ERROR
       <OnboardingSlides
         onDone={() => setShowOnboarding(false)}
       />
+    );
+  }
+
+  if (mode === "cocina") {
+    return (
+      <>
+        {showCookCompleteProModal && (
+          <ProModal
+            trigger="cook_complete"
+            onUpgrade={() => setShowCookCompleteProModal(false)}
+            onDismiss={() => setShowCookCompleteProModal(false)}
+          />
+        )}
+        <div className="bg-[#0a0a0a] md:flex md:min-h-screen md:items-start md:justify-center md:py-8">
+          <div className="flex h-screen w-full flex-col overflow-hidden md:h-[844px] md:w-[390px] md:rounded-[3rem] md:border md:border-white/10 md:shadow-[0_32px_80px_rgba(0,0,0,0.8)]">
+            {!liveClientReady ? (
+              <div className="flex flex-1 flex-col items-center justify-center bg-[#020202]">
+                <div className="h-[3px] w-14 rounded-full bg-orange-500/35" />
+              </div>
+            ) : (
+              <LiveCookingScreen
+                steps={liveSteps}
+                currentIndex={liveCurrentIndex}
+                remaining={liveRemaining}
+                paused={livePaused}
+                context={liveContext}
+                lang={lang}
+                onBack={() => window.history.back()}
+                onPause={() => setLivePaused((value) => !value)}
+                onCompleteStep={handleCompleteLiveStep}
+                onGoToStep={handleGoToLiveStep}
+                onSaveCook={() => persistSavedCook(liveSteps, liveContext)}
+              />
+            )}
+          </div>
+        </div>
+      </>
     );
   }
 
@@ -1639,8 +1946,6 @@ ERROR
           </Grid>
         )}
 
-        {/* Live cooking → /coccion-live (AppHeader.tsx intercepts mode "cocina" and navigates there) */}
-
         {mode === "guardados" && (
           <div>
             {/* ── Tab toggle: Planes | Cocciones ─────────────────────────── */}
@@ -1702,9 +2007,17 @@ ERROR
         )}
       </div>
 
-      {mode !== "cocina" && <AppBottomNav mode={mode} onModeChange={handleModeChange} t={t} />}
+      <AppBottomNav mode={mode} onModeChange={handleModeChange} t={t} />
     </main>
     </>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="fixed inset-0 bg-[#020617]" aria-hidden />}>
+      <HomeContent />
+    </Suspense>
   );
 }
 
