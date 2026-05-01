@@ -20,26 +20,26 @@ export type CutSelectionScreenProps = {
 };
 
 export const animalLabels: Record<GeneratedAnimalId, string> = {
-  beef: "Vacuno",
-  pork: "Cerdo",
-  chicken: "Pollo",
-  fish: "Pescado",
-  vegetables: "Verduras",
+  beef: "Beef",
+  pork: "Pork",
+  chicken: "Chicken",
+  fish: "Fish",
+  vegetables: "Vegetables",
 };
 
 export const methodLabels: Record<GeneratedCookingMethod, string> = {
-  grill_direct: "Parrilla directa",
-  grill_indirect: "Parrilla indirecta",
+  grill_direct: "Direct grill",
+  grill_indirect: "Indirect grill",
   reverse_sear: "Reverse sear",
-  oven_pan: "Sarten / horno",
-  vegetables_grill: "Verduras a la parrilla",
+  oven_pan: "Pan or oven",
+  vegetables_grill: "Grilled vegetables",
 };
 
 export const intentLabels: Record<CutIntent, string> = {
   quick: "Quick",
   premium: "Premium",
   easy: "Easy",
-  slow: "Slow",
+  slow: "Slow cook",
   value: "Value",
-  argentinian: "Argentinian",
+  argentinian: "Argentine style",
 };

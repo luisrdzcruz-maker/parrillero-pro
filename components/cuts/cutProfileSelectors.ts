@@ -8,31 +8,39 @@ import type { CutGroup, CutIntent } from "./cutSelectionTypes";
 
 const categoryLabels: Record<string, string> = {
   bbq: "BBQ",
-  breast: "Pechuga",
-  fillet: "Filetes",
-  ground: "Picada",
-  leg: "Pierna",
-  loin: "Lomo",
-  ribs: "Costillas",
-  roast: "Asados",
+  breast: "Breast",
+  fillet: "Fillets",
+  ground: "Ground",
+  leg: "Leg",
+  loin: "Loin",
+  ribs: "Ribs",
+  roast: "Roasts",
   steak: "Steaks",
-  tail: "Cola",
-  thigh: "Muslos",
-  vegetable: "Verduras",
-  whole: "Enteros",
-  wing: "Alitas",
+  tail: "Tail",
+  thigh: "Thighs",
+  vegetable: "Vegetables",
+  whole: "Whole",
+  wing: "Wings",
 };
 
 const styleLabels: Record<GeneratedCookingStyle, string> = {
   crispy: "Crispy",
-  fast: "Directo",
-  fatcap: "Grasa",
-  fish: "Pescado",
-  lowSlow: "Low & slow",
-  poultry: "Ave",
-  reverse: "Reverse",
-  thick: "Grueso",
-  vegetable: "Vegetal",
+  fast: "Direct heat",
+  fatcap: "Fat cap",
+  fish: "Fish",
+  lowSlow: "Low and slow",
+  poultry: "Poultry",
+  reverse: "Reverse sear",
+  thick: "Thick cut",
+  vegetable: "Vegetables",
+};
+
+const helpfulAliasByCutId: Record<string, string> = {
+  ribeye: "Rib eye",
+  striploin: "New York strip",
+  tenderloin: "Filet",
+  tomahawk: "Bone-in ribeye",
+  pork_tenderloin: "Pork fillet",
 };
 
 export function getCutsByAnimal(animal: GeneratedAnimalId) {
@@ -83,8 +91,16 @@ export function getDisplayName(profile: GeneratedCutProfile) {
   return profile.canonicalNameEn;
 }
 
-export function getShortAlias(profile: GeneratedCutProfile) {
-  return profile.aliasesEn.find((alias) => alias.toLowerCase() !== profile.canonicalNameEn.toLowerCase()) ?? profile.category;
+export function getCutDescriptor(profile: GeneratedCutProfile) {
+  return toDisplaySentence(profile.notesEn || profile.errorEn || `${getStyleLabel(profile)} method.`);
+}
+
+export function getHelpfulAlias(profile: GeneratedCutProfile) {
+  return helpfulAliasByCutId[profile.id] ?? null;
+}
+
+export function getWhyChooseLabel(profile: GeneratedCutProfile) {
+  return toDisplaySentence(profile.textureResultEn || profile.notesEn || profile.errorEn || "A reliable choice for this cooking path.");
 }
 
 export function getDifficultyLabel(profile: GeneratedCutProfile) {
@@ -105,7 +121,7 @@ export function getStyleLabel(profile: GeneratedCutProfile) {
 }
 
 export function getTemperatureLabel(profile: GeneratedCutProfile) {
-  return profile.targetTempC ? `${profile.targetTempC} C` : null;
+  return profile.targetTempC ? `${profile.targetTempC}°C` : null;
 }
 
 export function getCategoryLabel(category: string) {
@@ -114,11 +130,6 @@ export function getCategoryLabel(category: string) {
 
 export function getSafetyNote(profile: GeneratedCutProfile) {
   return profile.safetyNoteEn || profile.errorEn || "Use visual doneness and safe handling.";
-}
-
-export function getCuttingInstruction(profile: GeneratedCutProfile) {
-  const cuttingTip = profile.tipsEn.find((tip) => /grain|bone|slice|carve|portion|halve|round|wedge|fillet|joint/i.test(tip));
-  return cuttingTip ?? "Rest first, then slice cleanly.";
 }
 
 function getTagSet(profile: GeneratedCutProfile) {
@@ -131,4 +142,10 @@ function titleCase(value: string) {
     .filter(Boolean)
     .map((part) => part[0]?.toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function toDisplaySentence(value: string) {
+  const cleaned = value.trim();
+  if (!cleaned) return cleaned;
+  return cleaned.endsWith(".") ? cleaned : `${cleaned}.`;
 }
