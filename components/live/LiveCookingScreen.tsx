@@ -1,339 +1,117 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type TouchEvent } from "react";
+import {
+  useLiveCooking,
+  type LiveStep,
+  type LiveZone,
+  type UrgencyLevel,
+} from "@/hooks/useLiveCooking";
+import { parseLiveParams } from "@/lib/navigation/parseLiveParams";
 import LiveHeader from "./LiveHeader";
 import LiveStepCard from "./LiveStepCard";
 import LiveTimeline from "./LiveTimeline";
-import TimerDial, { type LivePhase } from "./TimerDial";
-import { parseLiveParams } from "@/lib/navigation/parseLiveParams";
+import LiveTimer from "./LiveTimer";
+import type { LivePhase } from "./TimerDial";
 
-// ─── Shared step contract ─────────────────────────────────────────────────────
-
-export type LiveStep = {
-  id: string;
-  label: string;
-  zone: string;
-  duration: number;
-  tempTarget?: number | null;
-  notes?: string | null;
-};
-
-export type LiveZone = "direct" | "indirect" | "rest";
-
-export type LiveCookingStepState = {
-  id: string;
-  name: string;
-  duration: number;
-  zone: LiveZone;
-  displayZone: string;
-  instructions: string;
-  visualHint?: string | null;
-  tempTarget: number | null;
-  isActive: boolean;
-  isCompleted: boolean;
-  isNext: boolean;
-  remainingTime: number;
-  progress: number;
-};
-
-// ─── Props ────────────────────────────────────────────────────────────────────
+export type { LiveCookingStepState, LiveStep, LiveZone } from "@/hooks/useLiveCooking";
 
 type Props = {
-  // Data
   steps: LiveStep[];
   currentIndex: number;
   remaining: number;
   paused: boolean;
-  // UI metadata
   context?: string;
   lang?: "es" | "en" | "fi";
-  // Navigation
   onBack?: () => void;
   onReset?: () => void;
-  // Step controls
   onPause: () => void;
   onCompleteStep: () => void;
   onPreviousStep?: () => void;
   onGoToStep?: (index: number) => void;
-  // Alerts (optional — embedded mode only)
   alertMessage?: string;
   alertsEnabled?: boolean;
   onEnableAlerts?: () => Promise<void>;
-  // Save-cook CTA (optional — shown on completion)
   onSaveCook?: () => void;
 };
 
 type TouchPoint = { x: number; y: number };
 
-// ─── Phase derivation ─────────────────────────────────────────────────────────
-
-function getPhase(
-  step: LiveStep,
-  remaining: number,
-  paused: boolean,
-  isLast: boolean,
-): LivePhase {
-  const complete = isLast && (step.duration === 0 || remaining === 0);
-  if (complete) return "complete";
-  if (normalizeLiveZone(step.zone) === "rest") return "rest";
-  if (!step.duration || paused) return "idle";
-  if (step.duration > 0 && remaining / step.duration <= 0.2) return "urgent";
-  return "active";
-}
-
-function normalizeLiveZone(zone: string): LiveZone {
-  const normalized = zone
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-
-  if (normalized.includes("indirect")) return "indirect";
-  if (normalized.includes("repos") || normalized.includes("rest") || normalized.includes("serv")) {
-    return "rest";
-  }
-  return "direct";
-}
-
-function pickStepName(step: LiveStep) {
-  return step.label.trim() || "Cooking step";
-}
-
-function pickInstructions(step: LiveStep) {
-  return step.notes?.trim() || step.label.trim() || "Keep heat stable and move when this step is done.";
-}
-
-function buildLiveStepStates(
-  steps: LiveStep[],
-  currentIndex: number,
-  remainingTime: number,
-): LiveCookingStepState[] {
-  return steps.map((step, index) => {
-    const isActive = index === currentIndex;
-    const isCompleted = index < currentIndex;
-    const isNext = index === currentIndex + 1;
-    const progress = isCompleted
-      ? 1
-      : isActive && step.duration > 0
-        ? Math.max(0, Math.min(1, 1 - remainingTime / step.duration))
-        : 0;
-
-    return {
-      id: step.id,
-      name: pickStepName(step),
-      duration: step.duration,
-      zone: normalizeLiveZone(step.zone),
-      displayZone: step.zone,
-      instructions: pickInstructions(step),
-      tempTarget: step.tempTarget ?? null,
-      isActive,
-      isCompleted,
-      isNext,
-      remainingTime: isActive ? remainingTime : step.duration,
-      progress,
-    };
-  });
-}
-
-// ─── Style maps ───────────────────────────────────────────────────────────────
-
-const STATUS_COLOR: Record<LivePhase, string> = {
-  idle:     "text-zinc-400",
-  active:   "text-orange-400",
-  urgent:   "text-yellow-400",
-  rest:     "text-indigo-400",
-  complete: "text-emerald-400",
+const CTA_STYLE: Record<UrgencyLevel | "complete", string> = {
+  normal: "bg-orange-500 text-black shadow-[0_10px_36px_rgba(249,115,22,0.34)] hover:bg-orange-400",
+  attention: "bg-orange-300 text-black shadow-[0_14px_46px_rgba(253,186,116,0.46)] hover:bg-orange-200",
+  critical: "bg-yellow-300 text-black shadow-[0_0_54px_rgba(250,204,21,0.58)] hover:bg-yellow-200",
+  complete: "bg-emerald-500 text-black shadow-[0_10px_36px_rgba(16,185,129,0.34)]",
 };
 
-// Phase Identity Strip styles
-const STRIP_BG: Record<LivePhase, string> = {
-  idle:     "rgba(82,82,91,0.10)",
-  active:   "rgba(249,115,22,0.10)",
-  urgent:   "rgba(234,179,8,0.12)",
-  rest:     "rgba(129,140,248,0.10)",
-  complete: "rgba(16,185,129,0.10)",
+const ZONE_BAR_STYLE: Record<LiveZone, string> = {
+  direct:
+    "border-red-300/20 bg-[linear-gradient(90deg,rgba(239,68,68,0.20),rgba(249,115,22,0.08))] text-red-100",
+  indirect:
+    "border-orange-300/16 bg-[linear-gradient(90deg,rgba(251,146,60,0.13),rgba(251,191,36,0.05))] text-orange-100",
+  rest:
+    "border-blue-300/16 bg-[linear-gradient(90deg,rgba(96,165,250,0.12),rgba(14,165,233,0.04))] text-blue-100",
 };
 
-const STRIP_BORDER: Record<LivePhase, string> = {
-  idle:     "border-zinc-600/18",
-  active:   "border-orange-500/22",
-  urgent:   "border-yellow-400/30",
-  rest:     "border-indigo-400/22",
-  complete: "border-emerald-500/22",
-};
-
-const STRIP_DOT: Record<LivePhase, string> = {
-  idle:     "bg-zinc-500",
-  active:   "animate-pulse bg-orange-500",
-  urgent:   "animate-pulse bg-yellow-400",
-  rest:     "bg-indigo-400",
+const DOT_CLASS: Record<LivePhase, string> = {
+  idle: "bg-zinc-500",
+  active: "animate-pulse bg-orange-500",
+  urgent: "animate-pulse bg-yellow-400",
+  rest: "bg-blue-400",
   complete: "bg-emerald-400",
 };
 
-// CTA button shadow by phase (the "complete step" primary button)
-const CTA_SHADOW: Record<LivePhase, string> = {
-  idle:     "shadow-none",
-  active:   "shadow-[0_8px_32px_rgba(249,115,22,0.40)]",
-  urgent:   "shadow-[0_8px_32px_rgba(234,179,8,0.45)]",
-  rest:     "shadow-none",
-  complete: "shadow-[0_8px_32px_rgba(16,185,129,0.40)]",
-};
-
-// ─── Zone-aware background glow ───────────────────────────────────────────────
-// direct heat → warm orange; indirect → cool indigo; rest/serve → soft purple
-
-function getBgStyle(phase: LivePhase, zone: string): CSSProperties {
-  const z = zone.toLowerCase();
-
+function getBgStyle(phase: LivePhase, zone?: LiveZone | null): CSSProperties {
   if (phase === "complete") {
     return {
       backgroundImage:
         "radial-gradient(ellipse at 50% 0%, rgba(16,185,129,0.18), transparent 58%), linear-gradient(180deg, #020202, #040404)",
     };
   }
+
   if (phase === "urgent") {
     return {
       backgroundImage:
-        "radial-gradient(ellipse at 50% 15%, rgba(234,179,8,0.20), transparent 58%), radial-gradient(ellipse at 50% 100%, rgba(234,179,8,0.10), transparent 45%), linear-gradient(180deg, #020202, #040404)",
+        "radial-gradient(ellipse at 50% 16%, rgba(234,179,8,0.22), transparent 58%), linear-gradient(180deg, #020202, #040404)",
     };
   }
-  if (phase === "rest" || z === "reposo" || z === "servir") {
+
+  if (zone === "rest") {
     return {
       backgroundImage:
-        "radial-gradient(ellipse at 50% 0%, rgba(129,140,248,0.14), transparent 55%), linear-gradient(180deg, #020202, #040404)",
+        "radial-gradient(ellipse at 50% 0%, rgba(59,130,246,0.16), transparent 58%), linear-gradient(180deg, #020202, #040404)",
     };
   }
-  // active / idle — distinguish by zone heat
-  if (z.includes("directo") || z === "directo") {
+
+  if (zone === "indirect") {
     return {
       backgroundImage:
-        "radial-gradient(ellipse at 50% 18%, rgba(249,115,22,0.30), transparent 58%), radial-gradient(ellipse at 50% 100%, rgba(234,88,12,0.14), transparent 45%), linear-gradient(180deg, #020202, #040404)",
+        "radial-gradient(ellipse at 50% 12%, rgba(249,115,22,0.15), transparent 55%), linear-gradient(180deg, #020202, #040404)",
     };
   }
-  if (z.includes("indirecto") || z === "indirecto") {
-    return {
-      backgroundImage:
-        "radial-gradient(ellipse at 50% 18%, rgba(99,102,241,0.13), transparent 55%), linear-gradient(180deg, #020202, #040404)",
-    };
-  }
-  // fallback (idle / unknown zone)
-  return { backgroundColor: "#020202" };
+
+  return {
+    backgroundImage:
+      "radial-gradient(ellipse at 50% 16%, rgba(239,68,68,0.18), transparent 58%), radial-gradient(ellipse at 50% 100%, rgba(249,115,22,0.10), transparent 44%), linear-gradient(180deg, #020202, #040404)",
+  };
 }
 
-// ─── Confidence ───────────────────────────────────────────────────────────────
+function usePrefersReducedMotion() {
+  const [reduceMotion, setReduceMotion] = useState(false);
 
-type Confidence = { label: string; dotCls: string; textCls: string };
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
 
-function fmtDelta(s: number): string {
-  if (s < 60) return `${s}s`;
-  const m = Math.floor(s / 60);
-  const r = s % 60;
-  return r > 0 ? `${m}m ${r}s` : `${m}m`;
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const syncPreference = () => setReduceMotion(mediaQuery.matches);
+    syncPreference();
+    mediaQuery.addEventListener("change", syncPreference);
+
+    return () => mediaQuery.removeEventListener("change", syncPreference);
+  }, []);
+
+  return reduceMotion;
 }
-
-// Pure function — called only inside useEffect (no refs or Date.now in render).
-function computeConfidence({
-  hasTimer,
-  phase,
-  cookStart,
-  accPause,
-  pauseBegan,
-  paused,
-  steps,
-  currentIndex,
-  remaining,
-  isEs,
-}: {
-  hasTimer: boolean;
-  phase: LivePhase;
-  cookStart: number | null;
-  accPause: number;
-  pauseBegan: number | null;
-  paused: boolean;
-  steps: LiveStep[];
-  currentIndex: number;
-  remaining: number;
-  isEs: boolean;
-}): Confidence | null {
-  if (!hasTimer || phase === "complete" || phase === "idle" || cookStart === null) {
-    return null;
-  }
-  const step = steps[currentIndex];
-  if (!step) return null;
-
-  const completedDuration = steps
-    .slice(0, currentIndex)
-    .reduce((sum, s) => sum + s.duration, 0);
-  const expectedTotalElapsed = completedDuration + Math.max(0, step.duration - remaining);
-
-  const nowMs = Date.now();
-  const currentPauseMs = paused && pauseBegan !== null ? nowMs - pauseBegan : 0;
-  const totalPauseMs = accPause + currentPauseMs;
-  const actualTotalElapsed = (nowMs - cookStart - totalPauseMs) / 1000;
-
-  const delta = Math.round(actualTotalElapsed - expectedTotalElapsed);
-  const abs = Math.abs(delta);
-
-  if (delta <= -20) return { label: isEs ? `Adelantado ${fmtDelta(abs)}` : `Ahead ${fmtDelta(abs)}`, dotCls: "bg-amber-400", textCls: "text-amber-300" };
-  if (delta <= 20)  return { label: isEs ? "En tiempo" : "On track", dotCls: "bg-emerald-400", textCls: "text-emerald-300" };
-  if (delta <= 60)  return { label: isEs ? "Ligero retraso" : "Slightly late", dotCls: "bg-amber-400", textCls: "text-amber-300" };
-  return { label: isEs ? `Retrasado ${fmtDelta(abs)}` : `Late ${fmtDelta(abs)}`, dotCls: "bg-red-400", textCls: "text-red-300" };
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function includesAny(value: string, terms: string[]) {
-  const normalized = value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-  return terms.some((term) => normalized.includes(term));
-}
-
-function getPrimaryCtaLabel({
-  currentIndex,
-  currentStep,
-  isEs,
-  nextStep,
-  phase,
-}: {
-  currentIndex: number;
-  currentStep: LiveCookingStepState;
-  isEs: boolean;
-  nextStep: LiveCookingStepState | null;
-  phase: LivePhase;
-}) {
-  if (phase === "complete") return isEs ? "¡Listo!" : "Done!";
-
-  const currentText = `${currentStep.name} ${currentStep.instructions}`;
-  const nextText = nextStep ? `${nextStep.name} ${nextStep.instructions}` : "";
-
-  if (
-    includesAny(`${currentText} ${nextText}`, [
-      "flip",
-      "turn",
-      "lado 2",
-      "side 2",
-      "voltea",
-      "dar vuelta",
-    ])
-  ) {
-    return isEs ? "Voltear ahora" : "Flip now";
-  }
-
-  if (nextStep?.zone === "indirect") return isEs ? "Mover a indirecto" : "Move to indirect";
-  if (nextStep?.zone === "rest") return isEs ? "Reposar ahora" : "Rest now";
-
-  if (
-    currentIndex === 0 &&
-    includesAny(currentText, ["preheat", "precalent", "setup", "calienta", "stabilize"])
-  ) {
-    return isEs ? "Empezar cocción" : "Start cooking";
-  }
-
-  return isEs ? "Siguiente paso" : "Next step";
-}
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function LiveCookingScreen({
   steps,
@@ -341,7 +119,6 @@ export default function LiveCookingScreen({
   remaining,
   paused,
   context,
-  lang = "es",
   onBack,
   onReset,
   onPause,
@@ -353,6 +130,8 @@ export default function LiveCookingScreen({
   onEnableAlerts,
   onSaveCook,
 }: Props) {
+  const [hasStarted, setHasStarted] = useState(false);
+  const reduceMotion = usePrefersReducedMotion();
   const liveUrlState = useMemo(() => {
     if (typeof window === "undefined") {
       return {
@@ -373,52 +152,29 @@ export default function LiveCookingScreen({
   }, []);
 
   const touchRef = useRef<TouchPoint | null>(null);
-  // "idle" → button shown; "saved" → confirmation shown; stays "saved" permanently
   const [saveState, setSaveState] = useState<"idle" | "saved">("idle");
-  // Guidance panel: collapsed by default so experienced users can ignore it.
-  const [guidanceOpen, setGuidanceOpen] = useState(false);
-
-  // ── Confidence timing refs ────────────────────────────────────────────────
-  // All refs are read only inside effects — never during render.
-  const cookStartRef   = useRef<number | null>(null);
-  const accPauseRef    = useRef(0);
-  const pauseBeganRef  = useRef<number | null>(null);
-
-  // Initialize cook start once, after mount
-  useEffect(() => {
-    if (cookStartRef.current === null) cookStartRef.current = Date.now();
-  }, []);
-
-  // Accumulate paused time on each pause/resume transition
-  useEffect(() => {
-    if (paused) {
-      pauseBeganRef.current = Date.now();
-    } else if (pauseBeganRef.current !== null) {
-      accPauseRef.current += Date.now() - pauseBeganRef.current;
-      pauseBeganRef.current = null;
-    }
-  }, [paused]);
-
-  // Keep guidance opt-in on each new step so it does not clutter the live screen.
-  // State update is deferred to next animation frame — satisfies react-hooks/set-state-in-effect.
-  useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      setGuidanceOpen(false);
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [currentIndex]);
-
-  const isEs = lang === "es";
-
-  // Derive values that hooks below depend on — use safe fallbacks before early return
-  const step = steps[currentIndex] ?? steps[0];
-  const isFirst = currentIndex === 0;
-  const isLast = currentIndex === steps.length - 1;
-  const hasTimer = step ? step.duration > 0 : false;
-  const phase = step ? getPhase(step, remaining, paused, isLast) : ("idle" as LivePhase);
-  const liveSteps = buildLiveStepStates(steps, currentIndex, remaining);
-  const currentStep = liveSteps[currentIndex] ?? liveSteps[0];
-  const nextStep = liveSteps[currentIndex + 1] ?? null;
+  const [displayedStepId, setDisplayedStepId] = useState<string | null>(null);
+  const displayedStepIdRef = useRef<string | null>(null);
+  const [stepTransition, setStepTransition] = useState<"idle" | "exit" | "enter">("idle");
+  const {
+    allSteps,
+    completedSteps,
+    currentStep,
+    currentStepIndex,
+    ctaLabel,
+    feedback,
+    hasTimer,
+    isComplete,
+    nextStep,
+    phase,
+    urgency,
+  } = useLiveCooking({
+    steps,
+    currentIndex,
+    remaining,
+    paused,
+    started: hasStarted,
+  });
   const fallbackContext = useMemo(() => {
     const safeAnimal = liveUrlState.animal || "Vacuno";
     const parts = [
@@ -431,60 +187,82 @@ export default function LiveCookingScreen({
   }, [liveUrlState]);
   const resolvedContext = context ?? fallbackContext;
 
-  // ── Confidence state (updated every second via effect — no refs in render) ──
-  // All hooks must be called before early returns to satisfy rules-of-hooks.
-  const [confidence, setConfidence] = useState<Confidence | null>(null);
+  const bgStyle = getBgStyle(phase, currentStep?.zone);
+  const isFirst = currentStepIndex === 0;
+  const isLast = currentStepIndex === allSteps.length - 1;
+  const displayedIndex = allSteps.findIndex((step) => step.id === displayedStepId);
+  const visualStepIndex = displayedIndex >= 0 ? displayedIndex : currentStepIndex;
+  const visualStep = allSteps[visualStepIndex] ?? currentStep;
+  const visualNextStep = allSteps[visualStepIndex + 1] ?? null;
+  const visualCompletedSteps = allSteps.filter((_, index) => index < visualStepIndex);
+  const overallProgress = isComplete
+    ? 1
+    : allSteps.length > 0
+      ? Math.max(0, Math.min(1, (currentStepIndex + (currentStep?.progress ?? 0)) / allSteps.length))
+      : 0;
+  const overallProgressPct = `${Math.round(overallProgress * 100)}%`;
+  const ctaUrgency = ctaLabel === "Mark step done" && urgency === "normal" ? "normal" : urgency;
+  const shouldPulseCta = !reduceMotion && (urgency === "attention" || urgency === "critical");
+  const dotClass = reduceMotion ? DOT_CLASS[phase].replace("animate-pulse ", "") : DOT_CLASS[phase];
+
   useEffect(() => {
-    function tick() {
-      setConfidence(
-        computeConfidence({
-          hasTimer,
-          phase,
-          cookStart: cookStartRef.current,
-          accPause: accPauseRef.current,
-          pauseBegan: pauseBeganRef.current,
-          paused,
-          steps,
-          currentIndex,
-          remaining,
-          isEs: lang === "es",
-        })
-      );
+    if (!currentStep) return;
+
+    const displayed = displayedStepIdRef.current;
+    if (displayed === null) {
+      displayedStepIdRef.current = currentStep.id;
+      setDisplayedStepId(currentStep.id);
+      return;
     }
-    tick(); // immediate first update
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [hasTimer, phase, paused, steps, currentIndex, remaining, lang]);
 
-  // ── Early return after all hooks ──────────────────────────────────────────
-  if (!steps[currentIndex] || !currentStep) return null;
+    if (displayed === currentStep.id) return;
 
-  // Zone-aware background glow (direct = orange, indirect = indigo, rest = purple)
-  const bgStyle = getBgStyle(phase, step.zone);
+    if (reduceMotion) {
+      displayedStepIdRef.current = currentStep.id;
+      setDisplayedStepId(currentStep.id);
+      setStepTransition("idle");
+      return;
+    }
 
-  // ── Derived labels ──────────────────────────────────────────────────────────
-  const pauseLabel = paused ? (isEs ? "Reanudar" : "Resume") : (isEs ? "Pausar" : "Pause");
-  const primaryCtaLabel = getPrimaryCtaLabel({
-    currentIndex,
-    currentStep,
-    isEs,
-    nextStep,
-    phase,
-  });
+    let enterTimer: number | undefined;
+    setStepTransition("exit");
+    const exitTimer = window.setTimeout(() => {
+      displayedStepIdRef.current = currentStep.id;
+      setDisplayedStepId(currentStep.id);
+      setStepTransition("enter");
+      enterTimer = window.setTimeout(() => setStepTransition("idle"), 25);
+    }, 100);
 
-  // ── LIVE dot class ──────────────────────────────────────────────────────────
-  const dotClass =
-    phase === "complete"
-      ? "bg-emerald-400"
-      : phase === "urgent"
-        ? "animate-pulse bg-yellow-400"
-        : phase === "rest"
-          ? "bg-indigo-400"
-          : paused
-            ? "bg-zinc-500"
-            : "animate-pulse bg-red-500";
+    return () => {
+      window.clearTimeout(exitTimer);
+      if (enterTimer !== undefined) window.clearTimeout(enterTimer);
+    };
+  }, [currentStep, reduceMotion]);
 
-  // ── Swipe ───────────────────────────────────────────────────────────────────
+  function handleBack() {
+    if (hasStarted && hasTimer && !paused && !isComplete && !window.confirm("Cooking in progress - leave?")) {
+      return;
+    }
+    onBack?.();
+  }
+
+  function handlePrimaryAction() {
+    if (!hasStarted) {
+      setHasStarted(true);
+      if (paused) onPause();
+      return;
+    }
+
+    if (!isComplete) {
+      onCompleteStep();
+    }
+  }
+
+  function handleGoToStep(index: number) {
+    if (!hasStarted) return;
+    onGoToStep?.(index);
+  }
+
   function handleTouchStart(e: TouchEvent) {
     const t = e.touches[0];
     touchRef.current = { x: t.clientX, y: t.clientY };
@@ -498,8 +276,27 @@ export default function LiveCookingScreen({
     const dx = t.clientX - start.x;
     const dy = t.clientY - start.y;
     if (Math.abs(dx) < 70 || Math.abs(dx) <= Math.abs(dy)) return;
+    if (!hasStarted) return;
     if (dx < 0 && !isLast) onCompleteStep();
     if (dx > 0 && !isFirst) onPreviousStep?.();
+  }
+
+  if (!currentStep) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center bg-[#020202] px-6 text-center text-white">
+        <p className="text-2xl font-black">No live steps available</p>
+        <p className="mt-2 text-sm font-semibold text-white/45">Return to the plan and start again.</p>
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="mt-6 rounded-2xl bg-orange-500 px-5 py-3 text-sm font-black text-black"
+          >
+            Back to plan
+          </button>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -511,100 +308,104 @@ export default function LiveCookingScreen({
     >
       <LiveHeader
         alertsEnabled={alertsEnabled}
-        currentIndex={currentIndex}
+        currentIndex={currentStepIndex}
         currentStep={currentStep}
         dotClass={dotClass}
-        isEs={isEs}
-        onBack={onBack}
+        isEs={false}
+        onBack={onBack ? handleBack : undefined}
         onEnableAlerts={onEnableAlerts}
         phase={phase}
-        stepCount={liveSteps.length}
+        stepCount={allSteps.length}
       />
 
-      {/* ── Confidence strip ────────────────────────────────────────────────── */}
-      {/* Thin 28px band between the status bar and the timer zone.           */}
-      {/* Updates every second (re-renders with `remaining`). Hidden when      */}
-      {/* cook hasn't started, step is complete, or step has no timer.        */}
-      {confidence && (
-        <div className="flex h-7 shrink-0 items-center justify-center gap-1.5 border-b border-white/[0.04] px-4">
-          <span className={`h-1.5 w-1.5 rounded-full ${confidence.dotCls}`} />
-          <span className={`text-[10.5px] font-bold tracking-[0.04em] ${confidence.textCls}`}>
-            {confidence.label}
+      {!hasStarted && (
+        <div className="border-b border-white/[0.055] px-4 py-4 text-center">
+          <p className="text-[11px] font-black uppercase tracking-[0.26em] text-orange-300/80">
+            Ready to start cooking?
+          </p>
+          <p className="mt-1 text-sm font-semibold text-white/45">
+            The assistant will guide one action at a time.
+          </p>
+        </div>
+      )}
+
+      {currentStep.displayZone && (
+        <div className={`flex shrink-0 items-center justify-center gap-2 border-b py-2.5 ${ZONE_BAR_STYLE[currentStep.zone]}`}>
+          <span className={`h-2.5 w-2.5 rounded-full ${dotClass} shadow-[0_0_16px_currentColor]`} />
+          <span className="text-[11px] font-black uppercase tracking-[0.22em] opacity-80">
+            {currentStep.displayZone}
           </span>
         </div>
       )}
 
-      {/* ── Phase Identity Strip ────────────────────────────────────────────── */}
-      {/* Always visible between header and scrollable area — instant phase read */}
-      <div
-        className={`flex shrink-0 items-center justify-center gap-2.5 border-b py-2.5 transition-colors duration-700 ${STRIP_BORDER[phase]}`}
-        style={{ backgroundColor: STRIP_BG[phase] }}
-      >
-        <span className={`h-1.5 w-1.5 rounded-full ${STRIP_DOT[phase]}`} />
-        <span className={`text-[13px] font-black uppercase tracking-[0.20em] transition-colors duration-700 ${STATUS_COLOR[phase]}`}>
-          {step.zone}
-        </span>
-        {step.tempTarget != null && (
-          <>
-            <span className="text-[10px] text-white/22">·</span>
-            <span className={`text-[12px] font-black tabular-nums transition-colors duration-700 ${STATUS_COLOR[phase]}`}>
-              {step.tempTarget}°C
-            </span>
-          </>
-        )}
-      </div>
-
-      {/* ── Scrollable content (Zones 2–5) ─────────────────────────────────── */}
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-        {/* Alert banner */}
         {alertMessage && (
           <div className="mx-4 mt-3 rounded-2xl border border-orange-400/30 bg-orange-500/10 px-4 py-2.5 text-sm font-bold text-orange-100">
             {alertMessage}
           </div>
         )}
 
-        {/* ── Zone 2: Timer Dial ──────────────────────────────────────────── */}
-        <div className="flex justify-center py-5">
-          <TimerDial total={step.duration} remaining={remaining} phase={phase} />
+        <div className="px-4 pt-4">
+          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] px-4 py-3">
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/42">
+                Step {currentStepIndex + 1} of {allSteps.length}
+              </p>
+              <p className="font-mono text-[10px] font-bold text-white/28">{overallProgressPct}</p>
+            </div>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
+              <div
+                className="h-full rounded-full bg-orange-300 transition-[width] duration-300 ease-out"
+                style={{ width: overallProgressPct }}
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="px-4">
-          <LiveStepCard
-            context={resolvedContext}
-            currentStep={currentStep}
-            guidanceOpen={guidanceOpen}
-            isEs={isEs}
-            nextStep={nextStep}
-            onToggleGuidance={() => setGuidanceOpen((v) => !v)}
+        <div className="px-4 pt-4">
+          <LiveTimer
+            duration={currentStep.duration}
+            remainingTime={currentStep.remainingTime}
+            progress={currentStep.progress}
             phase={phase}
+            reduceMotion={reduceMotion}
+            urgency={urgency}
           />
         </div>
 
-        {/* ── Zone 5: Timeline Scrubber (~52px) ──────────────────────────── */}
+        <div className="px-4 pt-4">
+          <LiveStepCard
+            completedSteps={visualCompletedSteps.length > 0 ? visualCompletedSteps : completedSteps}
+            currentStep={visualStep}
+            feedback={feedback}
+            nextStep={visualNextStep ?? nextStep}
+            reduceMotion={reduceMotion}
+            transitionState={stepTransition}
+            urgency={urgency}
+          />
+        </div>
+
         <div className="px-4 pt-4">
           <LiveTimeline
-            currentIndex={currentIndex}
-            isEs={isEs}
-            onGoToStep={onGoToStep}
+            currentIndex={currentStepIndex}
+            isEs={false}
+            onGoToStep={handleGoToStep}
             phase={phase}
-            steps={liveSteps}
+            steps={allSteps}
           />
         </div>
 
-        {/* Complete state */}
-        {phase === "complete" && (
+        {isComplete && (
           <div className="mx-4 mt-4 space-y-3">
-            {/* Completion message */}
             <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-4 text-center">
               <p className="text-[11px] font-black uppercase tracking-[0.22em] text-emerald-400">
-                {isEs ? "Cocción completada" : "Cooking complete"}
+                Cooking complete
               </p>
               <p className="mt-1.5 text-sm font-semibold text-white/60">
-                {isEs ? "Corta, sirve y disfruta." : "Slice, serve, enjoy."}
+                Slice, serve, enjoy.
               </p>
             </div>
 
-            {/* Save-cook CTA — only shown when the page provides a save handler */}
             {onSaveCook && (
               <button
                 type="button"
@@ -620,14 +421,13 @@ export default function LiveCookingScreen({
                 }`}
               >
                 {saveState === "saved"
-                  ? (isEs ? "✓ Guardado" : "✓ Saved")
-                  : (isEs ? "Guardar cocción" : "Save this cook")}
+                  ? "Saved"
+                  : "Save this cook"}
               </button>
             )}
           </div>
         )}
 
-        {/* Context / reset (minimal) */}
         {(resolvedContext || onReset) && (
           <div className="flex items-center justify-center gap-3 px-4 py-4">
             {resolvedContext && (
@@ -646,33 +446,19 @@ export default function LiveCookingScreen({
         )}
       </div>
 
-      {/* ── Zone 6: Bottom Nav — exactly 2 actions ─────────────────────────── */}
-      <nav className="shrink-0 border-t border-white/[0.065] px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={onPause}
-            disabled={!hasTimer || phase === "complete"}
-            className="min-h-[3.5rem] flex-none rounded-2xl border border-white/10 bg-white/[0.06] px-5 text-sm font-black text-white/75 transition active:scale-[0.97] disabled:opacity-35"
-          >
-            {pauseLabel}
-          </button>
-
-          <button
-            type="button"
-            onClick={onCompleteStep}
-            disabled={phase === "complete"}
-            className={`min-h-[3.5rem] flex-1 rounded-2xl text-base font-black transition-all duration-200 active:scale-[0.97] disabled:opacity-35 ${CTA_SHADOW[phase]} ${
-              phase === "complete"
-                ? "bg-emerald-500 text-black"
-                : phase === "urgent"
-                  ? "bg-yellow-400 text-black hover:bg-yellow-300"
-                  : "bg-orange-500 text-black hover:bg-orange-400"
-            }`}
-          >
-            {primaryCtaLabel}
-          </button>
-        </div>
+      <nav className="shrink-0 border-t border-white/[0.08] bg-black/[0.72] px-4 py-3 shadow-[0_-18px_42px_rgba(0,0,0,0.38)] backdrop-blur-xl pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <button
+          type="button"
+          onClick={handlePrimaryAction}
+          disabled={isComplete}
+          className={`min-h-[4.5rem] w-full rounded-[1.55rem] px-5 text-xl font-black tracking-[-0.02em] transition-all duration-200 active:scale-[0.98] disabled:opacity-80 ${
+            shouldPulseCta ? "animate-pulse" : ""
+          } ${
+            isComplete ? CTA_STYLE.complete : CTA_STYLE[ctaUrgency]
+          }`}
+        >
+          {ctaLabel}
+        </button>
       </nav>
     </div>
   );

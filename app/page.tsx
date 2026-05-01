@@ -671,7 +671,7 @@ function HomeContent() {
   const [liveContext, setLiveContext] = useState<string | undefined>(undefined);
   const [liveCurrentIndex, setLiveCurrentIndex] = useState(0);
   const [liveRemaining, setLiveRemaining] = useState(0);
-  const [livePaused, setLivePaused] = useState(false);
+  const [livePaused, setLivePaused] = useState(true);
 
   function resetAdaptiveDetailInputs() {
     setAdvancedThicknessEnabled(false);
@@ -843,7 +843,7 @@ function HomeContent() {
       setLiveContext(built.usedFallback ? liveFromUrl.context : built.context ?? liveFromUrl.context);
       setLiveCurrentIndex(0);
       setLiveRemaining((built.steps[0] ?? MOCK_LIVE_STEPS[0]).duration);
-      setLivePaused(false);
+      setLivePaused(true);
       setLiveClientReady(true);
     });
 
