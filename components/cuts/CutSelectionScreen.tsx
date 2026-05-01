@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { GeneratedCutProfile } from "@/lib/generated/cutProfiles";
 import { CutBottomSheet } from "./CutBottomSheet";
@@ -17,11 +18,31 @@ import {
 import type { CutIntent, CutSelectionScreenProps, CutViewMode } from "./cutSelectionTypes";
 import { animalLabels, intentLabels } from "./cutSelectionTypes";
 
+function buildCookingWizardHref(profile: GeneratedCutProfile) {
+  const params = new URLSearchParams({
+    mode: "coccion",
+    step: "details",
+    animal: profile.animalId,
+    cut: profile.id,
+  });
+
+  if (profile.defaultDoneness) {
+    params.set("doneness", profile.defaultDoneness);
+  }
+
+  if (profile.showThickness && Number.isFinite(profile.defaultThicknessCm)) {
+    params.set("thickness", `${profile.defaultThicknessCm}`);
+  }
+
+  return `/?${params.toString()}`;
+}
+
 export function CutSelectionScreen({
   selectedAnimal,
   intentFilter = null,
   onStartCooking,
 }: CutSelectionScreenProps) {
+  const router = useRouter();
   const [intentState, setIntentState] = useState<{
     sourceFilter: CutIntent | null;
     selectedIntent: CutIntent | null;
@@ -80,6 +101,14 @@ export function CutSelectionScreen({
 
   const groupedProfiles = useMemo(() => getCategoryGroups(visibleProfiles), [visibleProfiles]);
   const activeFilterLabel = selectedIntent ? intentLabels[selectedIntent] : "Todos";
+  const handleStartCooking = (profile: GeneratedCutProfile) => {
+    if (onStartCooking) {
+      onStartCooking(profile);
+      return;
+    }
+
+    router.push(buildCookingWizardHref(profile));
+  };
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#030201] text-white">
@@ -146,7 +175,7 @@ export function CutSelectionScreen({
       <CutBottomSheet
         profile={selectedProfile}
         onClose={() => handleProfileChange(null)}
-        onStartCooking={onStartCooking}
+        onStartCooking={handleStartCooking}
       />
     </main>
   );

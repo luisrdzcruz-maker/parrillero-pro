@@ -122,6 +122,19 @@ type SavedCookConfig = {
   lang: Lang;
 };
 
+type CookingNavContext = {
+  animal?: Animal;
+  cut?: string;
+  doneness?: string;
+  thickness?: string;
+};
+
+type ParsedNav = {
+  mode: Mode;
+  cookingStep: CookingWizardStep;
+  cookingContext: CookingNavContext;
+};
+
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   return value as Record<string, unknown>;
@@ -310,6 +323,10 @@ const ALLOWED_COOKING_STEPS: readonly CookingWizardStep[] = [
   "result",
 ];
 
+const animalLabelsById: Record<string, Animal> = Object.fromEntries(
+  Object.entries(animalIdsByLabel).map(([label, id]) => [id, label]),
+) as Record<string, Animal>;
+
 function isAllowedMode(value: string | null): value is Mode {
   return value != null && ALLOWED_MODES.includes(value as Mode);
 }
@@ -318,23 +335,69 @@ function isAllowedCookingStep(value: string | null): value is CookingWizardStep 
   return value != null && ALLOWED_COOKING_STEPS.includes(value as CookingWizardStep);
 }
 
-function parseNavFromSearch(search: string): { mode: Mode; cookingStep: CookingWizardStep } {
+function parseCookingAnimal(value: string | null): Animal | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+  if (trimmed in animalIdsByLabel) return trimmed as Animal;
+
+  return animalLabelsById[trimmed.toLowerCase()];
+}
+
+function parsePositiveNumberParam(value: string | null) {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+
+  const parsed = Number(trimmed.replace(",", "."));
+  return Number.isFinite(parsed) && parsed > 0 ? trimmed : undefined;
+}
+
+function parseCookingContext(params: URLSearchParams): CookingNavContext {
+  const cutParam = params.get("cut") ?? params.get("cutId");
+  const cutMeta = cutParam ? getCutById(cutParam) : undefined;
+  const animal = parseCookingAnimal(params.get("animal")) ?? (cutMeta ? animalLabelsById[cutMeta.animalId] : undefined);
+  const cut = cutMeta?.id;
+  const donenessParam = params.get("doneness")?.trim();
+  const doneness =
+    animal && donenessParam && getDonenessOptions(animalIdsByLabel[animal]).some((option) => option.id === donenessParam)
+      ? donenessParam
+      : undefined;
+  const thickness = parsePositiveNumberParam(params.get("thickness"));
+
+  return {
+    ...(animal ? { animal } : {}),
+    ...(cut ? { cut } : {}),
+    ...(doneness ? { doneness } : {}),
+    ...(thickness ? { thickness } : {}),
+  };
+}
+
+function parseNavFromSearch(search: string): ParsedNav {
   const params = new URLSearchParams(search);
   const modeParam = params.get("mode");
   const stepParam = params.get("step");
 
   const mode: Mode = isAllowedMode(modeParam) ? modeParam : "inicio";
+  const cookingContext = mode === "coccion" ? parseCookingContext(params) : {};
+  const inferredStep: CookingWizardStep = cookingContext.cut ? "details" : cookingContext.animal ? "cut" : "animal";
   const cookingStep: CookingWizardStep =
-    mode === "coccion" && isAllowedCookingStep(stepParam) ? stepParam : "animal";
+    mode === "coccion" && isAllowedCookingStep(stepParam) ? stepParam : inferredStep;
 
-  return { mode, cookingStep };
+  return { mode, cookingStep, cookingContext };
 }
 
-function buildSearchFromNav(mode: Mode, cookingStep: CookingWizardStep): string {
+function buildSearchFromNav(
+  mode: Mode,
+  cookingStep: CookingWizardStep,
+  cookingContext: CookingNavContext = {},
+): string {
   const params = new URLSearchParams();
   params.set("mode", mode);
   if (mode === "coccion") {
     params.set("step", cookingStep);
+    if (cookingContext.animal) params.set("animal", animalIdsByLabel[cookingContext.animal]);
+    if (cookingContext.cut) params.set("cut", cookingContext.cut);
+    if (cookingContext.doneness) params.set("doneness", cookingContext.doneness);
+    if (cookingContext.thickness) params.set("thickness", cookingContext.thickness);
   }
   const query = params.toString();
   return query ? `?${query}` : "";
@@ -356,6 +419,14 @@ function mapWeightRangeToKg(weightRange: CookingWeightRange, wholeChicken: boole
   if (weightRange === "light") return "0.8";
   if (weightRange === "large") return "1.8";
   return "1.2";
+}
+
+function mapThicknessToSizePreset(thicknessValue: string): CookingSizePreset {
+  const parsed = Number(thicknessValue.replace(",", "."));
+  if (!Number.isFinite(parsed)) return "medium";
+  if (parsed <= 2.75) return "small";
+  if (parsed >= 4.5) return "large";
+  return "medium";
 }
 
 function mapBeefLargeWeightPresetToKg(weightRange: CookingWeightRange): string {
@@ -437,7 +508,25 @@ export default function Home() {
   const touchStartRef = useRef<TouchPoint | null>(null);
   const isApplyingPopRef = useRef(false);
 
-  const cuts = useMemo(() => getCutItems(animal, lang), [animal, lang]);
+  const baseCuts = useMemo(() => getCutItems(animal, lang), [animal, lang]);
+  const selectedCutMeta = useMemo(() => (cut ? getCutById(cut) : undefined), [cut]);
+  const selectedCutFallback = useMemo<CutItem | undefined>(() => {
+    if (!selectedCutMeta || selectedCutMeta.animalId !== animalIdsByLabel[animal]) return undefined;
+
+    return {
+      id: selectedCutMeta.id,
+      name: getCutName(selectedCutMeta, lang),
+      image: cutImages[selectedCutMeta.id] ?? "/images/vacuno/ribeye-cooked.webp",
+      description: getCutDescription(selectedCutMeta, lang),
+    };
+  }, [animal, lang, selectedCutMeta]);
+  const cuts = useMemo(() => {
+    if (!selectedCutFallback || baseCuts.some((item) => item.id === selectedCutFallback.id)) {
+      return baseCuts;
+    }
+
+    return [selectedCutFallback, ...baseCuts];
+  }, [baseCuts, selectedCutFallback]);
   const selectedCut = cuts.find((item) => item.id === cut);
 
   const currentDonenessOptions = getDonenessSelectOptions(animal, lang);
@@ -450,10 +539,35 @@ export default function Home() {
     setVegetableFormat("halved");
   }
 
+  function applyCookingNavContext(cookingContext: CookingNavContext) {
+    const hasContext =
+      cookingContext.animal || cookingContext.cut || cookingContext.doneness || cookingContext.thickness;
+    if (!hasContext) return;
+
+    if (cookingContext.animal) setAnimal(cookingContext.animal);
+    if (cookingContext.cut) setCut(cookingContext.cut);
+    if (cookingContext.doneness) {
+      setDoneness(cookingContext.doneness);
+    } else if (cookingContext.animal) {
+      setDoneness(getInitialDoneness(cookingContext.animal));
+    }
+    if (cookingContext.thickness) {
+      setThickness(cookingContext.thickness);
+      setSizePreset(mapThicknessToSizePreset(cookingContext.thickness));
+    }
+    setAdvancedThicknessEnabled(false);
+    setWeightRange("medium");
+    setVegetableFormat("halved");
+    setBlocks({});
+    setCheckedItems({});
+    resetSaveMenuState();
+  }
+
   function commitNav(
     nextMode: Mode,
     nextCookingStep: CookingWizardStep,
     method: "push" | "replace",
+    cookingContext: CookingNavContext = {},
   ) {
     if (isApplyingPopRef.current && method === "push") return;
 
@@ -465,9 +579,9 @@ export default function Home() {
     setCookingStep(cookingStep);
 
     if (typeof window === "undefined") return;
-    const search = buildSearchFromNav(mode, cookingStep);
+    const search = buildSearchFromNav(mode, cookingStep, cookingContext);
     const url = `${window.location.pathname}${search}${window.location.hash}`;
-    const state = { mode, cookingStep };
+    const state = { mode, cookingStep, cookingContext };
 
     if (method === "replace") {
       window.history.replaceState(state, "", url);
@@ -506,7 +620,8 @@ export default function Home() {
 
     const nav = parseNavFromSearch(window.location.search);
     const raf = window.requestAnimationFrame(() => {
-      commitNav(nav.mode, nav.cookingStep, "replace");
+      applyCookingNavContext(nav.cookingContext);
+      commitNav(nav.mode, nav.cookingStep, "replace", nav.cookingContext);
     });
 
     return () => window.cancelAnimationFrame(raf);
@@ -520,6 +635,7 @@ export default function Home() {
     function onPopState() {
       const nav = parseNavFromSearch(window.location.search);
       isApplyingPopRef.current = true;
+      applyCookingNavContext(nav.cookingContext);
       setMode(nav.mode);
       setCookingStep(nav.cookingStep);
       if (nav.cookingStep !== "result") setLoading(false);
@@ -893,7 +1009,12 @@ export default function Home() {
     setBlocks({});
     setCheckedItems({});
     resetSaveMenuState();
-    commitNav("coccion", "details", "push");
+    commitNav("coccion", "details", "push", {
+      animal,
+      cut: selectedCutId,
+      doneness,
+      thickness,
+    });
     track({ name: "cut_selected", animal, cutId: selectedCutId, lang });
   }
 
