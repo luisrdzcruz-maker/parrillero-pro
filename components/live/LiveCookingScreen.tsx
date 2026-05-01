@@ -9,6 +9,7 @@ import {
 } from "@/hooks/useLiveCooking";
 import { parseLiveParams } from "@/lib/navigation/parseLiveParams";
 import LiveHeader from "./LiveHeader";
+import LiveNextStepPreview from "./LiveNextStepPreview";
 import LiveStepCard from "./LiveStepCard";
 import LiveTimeline from "./LiveTimeline";
 import LiveTimer from "./LiveTimer";
@@ -112,6 +113,7 @@ export default function LiveCookingScreen({
   remaining,
   paused,
   context,
+  lang,
   onBack,
   onReset,
   onPause,
@@ -152,6 +154,7 @@ export default function LiveCookingScreen({
   const {
     allSteps,
     currentStep,
+    nextStep,
     currentStepIndex,
     ctaLabel,
     feedback,
@@ -314,7 +317,7 @@ export default function LiveCookingScreen({
         currentIndex={currentStepIndex}
         currentStep={currentStep}
         dotClass={dotClass}
-        isEs={false}
+        isEs={lang === "es"}
         onBack={onBack ? handleBack : undefined}
         onEnableAlerts={onEnableAlerts}
         overallProgressPct={overallProgressPct}
@@ -340,7 +343,7 @@ export default function LiveCookingScreen({
           >
             <LiveTimeline
               currentIndex={currentStepIndex}
-              isEs={false}
+              isEs={lang === "es"}
               onGoToStep={handleGoToStep}
               phase={phase}
               steps={allSteps}
@@ -357,6 +360,12 @@ export default function LiveCookingScreen({
             urgency={urgency}
           />
         </div>
+
+        {!isComplete && nextStep && (
+          <div className="shrink-0">
+            <LiveNextStepPreview nextStep={nextStep} />
+          </div>
+        )}
 
         {isComplete && (
           <div className="shrink-0 space-y-2">
