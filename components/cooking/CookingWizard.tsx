@@ -1156,12 +1156,17 @@ function CookingResultStep({
     }
 
     saveLiveCookingPayload(payload);
+    const liveThicknessRaw = Number(thickness);
+    const liveThickness =
+      showThickness && Number.isFinite(liveThicknessRaw) && liveThicknessRaw > 0
+        ? liveThicknessRaw
+        : undefined;
     router.push(
       buildLiveUrl({
         animal: animalIdsByLabel[animal],
-        cutId,
+        cutId: cutId ?? cut,
         doneness: toLiveDoneness(doneness),
-        thickness: Number(showThickness ? thickness : "2"),
+        thickness: liveThickness,
       }),
     );
   }

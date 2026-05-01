@@ -1410,13 +1410,18 @@ function HomeContent() {
     });
 
     saveLiveCookingPayload(payload);
-    const thicknessValue = shouldShowThickness(rebuilt.config.cut) ? rebuilt.config.thickness : "2";
+    const showThickness = shouldShowThickness(rebuilt.config.cut);
+    const liveThicknessRaw = Number(rebuilt.config.thickness);
+    const liveThickness =
+      showThickness && Number.isFinite(liveThicknessRaw) && liveThicknessRaw > 0
+        ? liveThicknessRaw
+        : undefined;
     router.push(
       buildLiveUrl({
         animal: animalIdsByLabel[rebuilt.config.animal],
         cutId: rebuilt.config.cut,
         doneness: toLiveDoneness(rebuilt.config.doneness),
-        thickness: Number(thicknessValue),
+        thickness: liveThickness,
       }),
     );
   }
