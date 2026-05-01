@@ -1,10 +1,10 @@
 export function validateMenuBlocks(blocks: Record<string, string>) {
   const requiredGroups = [
     ["MENU"],
-    ["CANTIDADES", "QUANTITIES"],
+    ["CANTIDADES", "QUANTITIES", "quantities"],
     ["TIMING", "TIMELINE"],
-    ["ORDEN", "ORDER"],
-    ["COMPRA", "SHOPPING"],
+    ["ORDEN", "ORDER", "order"],
+    ["COMPRA", "SHOPPING", "shopping"],
   ];
 
   for (const group of requiredGroups) {

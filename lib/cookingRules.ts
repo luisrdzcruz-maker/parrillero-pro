@@ -165,6 +165,19 @@ function getVegetableSeconds(cut: ProductCut) {
   return (cut.cookingMinutes ?? 15) * 60;
 }
 
+function getGeneratedCookSeconds(cut: ProductCut) {
+  return cut.cookingMinutes ? cut.cookingMinutes * 60 : undefined;
+}
+
+function getMainCookSeconds(cut: ProductCut, thickness: number, doneness: DonenessId) {
+  if (cut.style === "vegetable") return getVegetableSeconds(cut);
+
+  const generatedCookSeconds = getGeneratedCookSeconds(cut);
+  if (generatedCookSeconds && !cut.showThickness) return generatedCookSeconds;
+
+  return getIndirectSeconds(thickness, cut.style, doneness);
+}
+
 function getRestSeconds(cut: ProductCut) {
   return cut.restingMinutes * 60;
 }
@@ -258,10 +271,7 @@ function estimateTimes(input: CookingInput, cut: ProductCut, doneness: DonenessI
     ? parseNumber(input.thicknessCm, cut.defaultThicknessCm)
     : cut.defaultThicknessCm;
   const sear = getSearSeconds(thickness, cut.style);
-  const indirect =
-    cut.style === "vegetable"
-      ? getVegetableSeconds(cut)
-      : getIndirectSeconds(thickness, cut.style, doneness);
+  const indirect = getMainCookSeconds(cut, thickness, doneness);
   const rest = getRestSeconds(cut);
 
   if (input.language === "en") {
@@ -354,7 +364,7 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
     : cut.defaultThicknessCm;
   const doneness = getDonenessId(input.doneness, cut.animalId, cut.allowedDoneness);
   const sear = getSearSeconds(thickness, cut.style);
-  const indirect = getIndirectSeconds(thickness, cut.style, doneness);
+  const indirect = getMainCookSeconds(cut, thickness, doneness);
   const rest = getRestSeconds(cut);
   const equipmentProfile = getEquipmentProfile(input.equipment);
   const indoor = equipmentProfile === "indoor";

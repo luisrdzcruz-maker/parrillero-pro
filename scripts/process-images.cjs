@@ -59,10 +59,10 @@ async function run() {
   console.log("📂 OUTPUT_DIR:", OUTPUT_DIR);
 
   const inputExists = await fs.pathExists(INPUT_DIR);
-  console.log("📁 Existe assets/raw/verduras:", inputExists);
+  console.log("📁 assets/raw/verduras exists:", inputExists);
 
   if (!inputExists) {
-    console.log("❌ No existe /assets/raw/verduras");
+    console.log("❌ /assets/raw/verduras does not exist");
     return;
   }
 
@@ -81,17 +81,17 @@ async function run() {
     }
   }
 
-  console.log("📸 Imágenes de verduras encontradas:", files.length);
+  console.log("📸 Vegetable images found:", files.length);
 
   if (missingFiles.length > 0) {
-    console.log("⚠️ Faltan imágenes requeridas:");
+    console.log("⚠️ Missing required images:");
     for (const filename of missingFiles) {
       console.log(`   - ${filename}`);
     }
   }
 
   if (files.length === 0) {
-    console.log("⚠️ No se encontraron imágenes .png en assets/raw/verduras");
+    console.log("⚠️ No .png images found in assets/raw/verduras");
     return;
   }
 
@@ -99,12 +99,12 @@ async function run() {
     try {
       await processImage(filename);
     } catch (error) {
-      console.error(`❌ Error procesando ${filename}`);
+      console.error(`❌ Error processing ${filename}`);
       console.error(error.message);
     }
   }
 
-  console.log("🔥 Proceso terminado.");
+  console.log("🔥 Process finished.");
 }
 
 run();

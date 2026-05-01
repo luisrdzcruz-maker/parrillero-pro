@@ -51,20 +51,33 @@ export type GeneratedCookingStyle =
   | "poultry"
   | "fish"
   | "vegetable";
+export type GeneratedFireZone = "direct" | "indirect" | "mixed";
+export type GeneratedTimeType = "total" | "per_cm" | "hybrid";
+export type GeneratedConfidenceLevel = "high" | "medium" | "low";
 
 export type GeneratedCutProfile = {
   id: string;
   animalId: GeneratedAnimalId;
+  category: string;
   canonicalNameEn: string;
-  inputProfileId: string;
+  inputProfileId?: string;
   defaultThicknessCm: number;
   showThickness: boolean;
   allowedMethods: GeneratedCookingMethod[];
   defaultMethod: GeneratedCookingMethod;
   allowedDoneness: GeneratedDonenessId[];
   style: GeneratedCookingStyle;
+  cookingStyle?: string;
+  fireZone?: string;
+  timeType?: string;
+  defaultDoneness?: string;
+  confidenceLevel?: string;
   restingMinutes: number;
+  estimatedTimeMinPerCm?: number;
+  estimatedTotalTimeMin?: number;
   cookingMinutes?: number;
+  targetTempC?: number;
+  safetyNoteEn?: string;
   errorEn: string;
   aliasesEn: string[];
   notesEn?: string;
@@ -84,5 +97,9 @@ export function getGeneratedCutProfile(id: string): GeneratedCutProfile | undefi
 }
 
 function stripSourceLines(profiles) {
-  return profiles.map(({ sourceLine, ...profile }) => profile);
+  return profiles.map((profile) => {
+    const output = { ...profile };
+    delete output.sourceLine;
+    return output;
+  });
 }

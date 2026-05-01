@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE. DO NOT EDIT MANUALLY.
-// Source: data\cuts\cut-profiles.csv
+// Source: data\cuts\parrillero_pro_input_profiles_en.csv
 
 export type GeneratedAnimalId = "beef" | "pork" | "chicken" | "fish" | "vegetables";
 export type GeneratedCookingMethod =
@@ -33,6 +33,7 @@ export type GeneratedCookingStyle =
 export type GeneratedCutProfile = {
   id: string;
   animalId: GeneratedAnimalId;
+  category: string;
   canonicalNameEn: string;
   inputProfileId: string;
   defaultThicknessCm: number;
@@ -42,7 +43,11 @@ export type GeneratedCutProfile = {
   allowedDoneness: GeneratedDonenessId[];
   style: GeneratedCookingStyle;
   restingMinutes: number;
+  estimatedTimeMinPerCm?: number;
+  estimatedTotalTimeMin?: number;
   cookingMinutes?: number;
+  targetTempC?: number;
+  safetyNoteEn?: string;
   errorEn: string;
   aliasesEn: string[];
   notesEn?: string;
@@ -51,98 +56,158 @@ export type GeneratedCutProfile = {
 
 export const generatedCutProfiles = [
   {
-    "id": "aguja",
+    "id": "ribeye",
     "animalId": "beef",
-    "canonicalNameEn": "Chuck",
-    "inputProfileId": "beef-steak",
-    "defaultThicknessCm": 5,
-    "showThickness": true,
-    "allowedMethods": [
-      "grill_direct",
-      "grill_indirect",
-      "oven_pan"
-    ],
-    "defaultMethod": "grill_indirect",
-    "allowedDoneness": [
-      "blue",
-      "rare",
-      "medium_rare",
-      "medium",
-      "medium_well",
-      "well_done"
-    ],
-    "style": "thick",
-    "restingMinutes": 7,
-    "errorEn": "Treating it like a thin steak: it needs control and a little more time.",
-    "aliasesEn": [
-      "Aguja",
-      "Chuck"
-    ],
-    "tipsEn": []
-  },
-  {
-    "id": "lomo_alto",
-    "animalId": "beef",
-    "canonicalNameEn": "Rib steak",
-    "inputProfileId": "beef-large",
-    "defaultThicknessCm": 5,
-    "showThickness": true,
-    "allowedMethods": [
-      "grill_direct",
-      "grill_indirect",
-      "oven_pan"
-    ],
-    "defaultMethod": "grill_indirect",
-    "allowedDoneness": [
-      "blue",
-      "rare",
-      "medium_rare",
-      "medium",
-      "medium_well",
-      "well_done"
-    ],
-    "style": "thick",
-    "restingMinutes": 7,
-    "errorEn": "Overshooting the temperature: it climbs quickly at the end.",
-    "aliasesEn": [
-      "Lomo alto",
-      "Rib steak"
-    ],
-    "tipsEn": []
-  },
-  {
-    "id": "tomahawk",
-    "animalId": "beef",
-    "canonicalNameEn": "Tomahawk",
-    "inputProfileId": "beef-large",
-    "defaultThicknessCm": 6,
-    "showThickness": true,
-    "allowedMethods": [
-      "reverse_sear",
-      "grill_indirect",
-      "oven_pan"
-    ],
-    "defaultMethod": "reverse_sear",
-    "allowedDoneness": [
-      "blue",
-      "rare",
-      "medium_rare",
-      "medium",
-      "medium_well",
-      "well_done"
-    ],
-    "style": "reverse",
-    "restingMinutes": 10,
-    "errorEn": "Cooking it only over direct heat: it burns outside before the center is ready.",
-    "aliasesEn": [
-      "Tomahawk"
-    ],
-    "tipsEn": []
-  },
-  {
-    "id": "entrecote",
-    "animalId": "beef",
+    "category": "steak",
     "canonicalNameEn": "Ribeye",
+    "inputProfileId": "beef-steak",
+    "defaultThicknessCm": 2,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_direct",
+      "reverse_sear",
+      "oven_pan"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "medium_rare",
+      "medium"
+    ],
+    "style": "fast",
+    "restingMinutes": 5,
+    "estimatedTimeMinPerCm": 4,
+    "targetTempC": 54,
+    "errorEn": "Fatty premium steak.",
+    "aliasesEn": [
+      "ribeye",
+      "rib eye",
+      "cube roll",
+      "ojo de bife",
+      "entrecot"
+    ],
+    "notesEn": "Fatty premium steak.",
+    "tipsEn": [
+      "premium",
+      "quick",
+      "easy",
+      "against the grain"
+    ]
+  },
+  {
+    "id": "striploin",
+    "animalId": "beef",
+    "category": "steak",
+    "canonicalNameEn": "Striploin",
+    "inputProfileId": "beef-steak",
+    "defaultThicknessCm": 2,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_direct",
+      "reverse_sear",
+      "oven_pan"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "medium_rare",
+      "medium"
+    ],
+    "style": "fast",
+    "restingMinutes": 5,
+    "estimatedTimeMinPerCm": 4,
+    "targetTempC": 54,
+    "errorEn": "Classic steakhouse cut.",
+    "aliasesEn": [
+      "striploin",
+      "New York strip",
+      "sirloin steak UK",
+      "bife de chorizo"
+    ],
+    "notesEn": "Classic steakhouse cut.",
+    "tipsEn": [
+      "premium",
+      "quick",
+      "against the grain"
+    ]
+  },
+  {
+    "id": "tenderloin",
+    "animalId": "beef",
+    "category": "steak",
+    "canonicalNameEn": "Tenderloin",
+    "inputProfileId": "beef-steak",
+    "defaultThicknessCm": 2,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_direct",
+      "oven_pan",
+      "reverse_sear"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "rare",
+      "medium_rare"
+    ],
+    "style": "fast",
+    "restingMinutes": 5,
+    "estimatedTimeMinPerCm": 3,
+    "targetTempC": 52,
+    "errorEn": "Very tender and lean.",
+    "aliasesEn": [
+      "tenderloin",
+      "filet",
+      "fillet",
+      "filet mignon",
+      "solomillo"
+    ],
+    "notesEn": "Very tender and lean.",
+    "tipsEn": [
+      "premium",
+      "easy",
+      "against the grain"
+    ]
+  },
+  {
+    "id": "picanha",
+    "animalId": "beef",
+    "category": "steak",
+    "canonicalNameEn": "Picanha",
+    "inputProfileId": "beef-steak",
+    "defaultThicknessCm": 2,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_direct",
+      "grill_indirect",
+      "reverse_sear"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "medium_rare",
+      "medium"
+    ],
+    "style": "fatcap",
+    "restingMinutes": 5,
+    "estimatedTimeMinPerCm": 4,
+    "targetTempC": 54,
+    "errorEn": "Keep fat cap intact.",
+    "aliasesEn": [
+      "picanha",
+      "rump cap",
+      "sirloin cap",
+      "coulotte",
+      "tapa de cuadril"
+    ],
+    "notesEn": "Keep fat cap intact.",
+    "tipsEn": [
+      "premium",
+      "grill",
+      "slice steaks against the grain after cooking"
+    ]
+  },
+  {
+    "id": "bavette",
+    "animalId": "beef",
+    "category": "steak",
+    "canonicalNameEn": "Bavette / Flap Steak",
     "inputProfileId": "beef-steak",
     "defaultThicknessCm": 3,
     "showThickness": true,
@@ -152,195 +217,434 @@ export const generatedCutProfiles = [
     ],
     "defaultMethod": "grill_direct",
     "allowedDoneness": [
-      "blue",
-      "rare",
-      "medium_rare",
-      "medium",
-      "medium_well",
-      "well_done"
+      "medium_rare"
     ],
     "style": "fast",
     "restingMinutes": 5,
-    "errorEn": "Moving it too much and losing the crust.",
+    "estimatedTimeMinPerCm": 3,
+    "targetTempC": 54,
+    "errorEn": "Fibrous and flavorful.",
     "aliasesEn": [
-      "Entrecote",
-      "Ribeye"
+      "bavette",
+      "vacío",
+      "flap steak",
+      "flap meat",
+      "sirloin flap"
     ],
-    "tipsEn": []
+    "notesEn": "Fibrous and flavorful.",
+    "tipsEn": [
+      "argentinian",
+      "quick",
+      "against the grain"
+    ]
   },
   {
-    "id": "picanha",
+    "id": "skirt_steak",
     "animalId": "beef",
-    "canonicalNameEn": "Picanha",
-    "inputProfileId": "beef-large",
-    "defaultThicknessCm": 4,
-    "showThickness": true,
-    "allowedMethods": [
-      "grill_direct",
-      "grill_indirect",
-      "oven_pan"
-    ],
-    "defaultMethod": "grill_indirect",
-    "allowedDoneness": [
-      "blue",
-      "rare",
-      "medium_rare",
-      "medium",
-      "medium_well",
-      "well_done"
-    ],
-    "style": "fatcap",
-    "restingMinutes": 7,
-    "errorEn": "Burning the fat cap before rendering it.",
-    "aliasesEn": [
-      "Picanha"
-    ],
-    "tipsEn": []
-  },
-  {
-    "id": "maminha",
-    "animalId": "beef",
-    "canonicalNameEn": "Tri-tip",
+    "category": "steak",
+    "canonicalNameEn": "Skirt Steak",
     "inputProfileId": "beef-steak",
-    "defaultThicknessCm": 4,
+    "defaultThicknessCm": 3,
     "showThickness": true,
     "allowedMethods": [
-      "grill_direct",
-      "grill_indirect",
-      "oven_pan"
-    ],
-    "defaultMethod": "grill_indirect",
-    "allowedDoneness": [
-      "blue",
-      "rare",
-      "medium_rare",
-      "medium",
-      "medium_well",
-      "well_done"
-    ],
-    "style": "thick",
-    "restingMinutes": 7,
-    "errorEn": "Slicing it in the wrong direction.",
-    "aliasesEn": [
-      "Maminha",
-      "Tri-tip"
-    ],
-    "tipsEn": []
-  },
-  {
-    "id": "bavette",
-    "animalId": "beef",
-    "canonicalNameEn": "Bavette",
-    "inputProfileId": "default",
-    "defaultThicknessCm": 2,
-    "showThickness": false,
-    "allowedMethods": [
-      "grill_direct",
-      "oven_pan"
+      "grill_direct"
     ],
     "defaultMethod": "grill_direct",
     "allowedDoneness": [
-      "blue",
-      "rare",
-      "medium_rare",
-      "medium",
-      "medium_well",
-      "well_done"
+      "medium_rare"
     ],
     "style": "fast",
     "restingMinutes": 5,
-    "errorEn": "Overcooking it: it gets tough quickly.",
+    "estimatedTimeMinPerCm": 3,
+    "targetTempC": 54,
+    "errorEn": "Fast hot sear.",
     "aliasesEn": [
-      "Bavette",
-      "Babette"
+      "entraña",
+      "skirt steak",
+      "outside skirt",
+      "inside skirt",
+      "falda"
     ],
-    "tipsEn": []
+    "notesEn": "Fast hot sear.",
+    "tipsEn": [
+      "argentinian",
+      "quick",
+      "against the grain"
+    ]
   },
   {
-    "id": "entrana",
+    "id": "flank_steak",
     "animalId": "beef",
-    "canonicalNameEn": "Skirt steak",
-    "inputProfileId": "default",
-    "defaultThicknessCm": 2,
-    "showThickness": false,
-    "allowedMethods": [
-      "grill_direct",
-      "oven_pan"
-    ],
-    "defaultMethod": "grill_direct",
-    "allowedDoneness": [
-      "blue",
-      "rare",
-      "medium_rare",
-      "medium",
-      "medium_well",
-      "well_done"
-    ],
-    "style": "fast",
-    "restingMinutes": 5,
-    "errorEn": "Not slicing against the grain.",
-    "aliasesEn": [
-      "Entrana",
-      "Skirt steak"
-    ],
-    "tipsEn": []
-  },
-  {
-    "id": "secreto_iberico",
-    "animalId": "pork",
-    "canonicalNameEn": "Iberian secreto",
-    "inputProfileId": "pork-fast",
-    "defaultThicknessCm": 2,
-    "showThickness": false,
-    "allowedMethods": [
-      "grill_direct",
-      "oven_pan"
-    ],
-    "defaultMethod": "grill_direct",
-    "allowedDoneness": [
-      "juicy_safe",
-      "medium_safe",
-      "well_done"
-    ],
-    "style": "fast",
-    "restingMinutes": 4,
-    "errorEn": "Overcooking it: it loses juice and turns greasy or dry.",
-    "aliasesEn": [
-      "Iberian secreto"
-    ],
-    "tipsEn": []
-  },
-  {
-    "id": "presa_iberica",
-    "animalId": "pork",
-    "canonicalNameEn": "Iberian presa",
-    "inputProfileId": "pork-fast",
-    "defaultThicknessCm": 4,
+    "category": "steak",
+    "canonicalNameEn": "Flank Steak",
+    "inputProfileId": "beef-steak",
+    "defaultThicknessCm": 3,
     "showThickness": true,
     "allowedMethods": [
       "grill_direct",
-      "grill_indirect",
       "oven_pan"
     ],
-    "defaultMethod": "grill_indirect",
+    "defaultMethod": "grill_direct",
     "allowedDoneness": [
-      "juicy_safe",
-      "medium_safe",
-      "well_done"
+      "medium_rare"
     ],
-    "style": "thick",
-    "restingMinutes": 7,
-    "errorEn": "Slicing it immediately: it needs rest to stay juicy.",
+    "style": "fast",
+    "restingMinutes": 5,
+    "estimatedTimeMinPerCm": 4,
+    "targetTempC": 54,
+    "errorEn": "Marinade helps tenderness.",
     "aliasesEn": [
-      "Iberian presa"
+      "flank steak",
+      "falda",
+      "London broil"
     ],
-    "tipsEn": []
+    "notesEn": "Marinade helps tenderness.",
+    "tipsEn": [
+      "quick",
+      "lean",
+      "against the grain"
+    ]
   },
   {
-    "id": "costillas",
-    "animalId": "pork",
-    "canonicalNameEn": "Ribs",
-    "inputProfileId": "default",
+    "id": "flat_iron",
+    "animalId": "beef",
+    "category": "steak",
+    "canonicalNameEn": "Flat Iron",
+    "inputProfileId": "beef-steak",
+    "defaultThicknessCm": 2,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_direct",
+      "oven_pan"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "medium_rare",
+      "medium"
+    ],
+    "style": "fast",
+    "restingMinutes": 5,
+    "estimatedTimeMinPerCm": 4,
+    "targetTempC": 54,
+    "errorEn": "Tender if cleaned well.",
+    "aliasesEn": [
+      "flat iron",
+      "top blade steak",
+      "marucha"
+    ],
+    "notesEn": "Tender if cleaned well.",
+    "tipsEn": [
+      "quick",
+      "value",
+      "against the grain"
+    ]
+  },
+  {
+    "id": "tri_tip",
+    "animalId": "beef",
+    "category": "roast",
+    "canonicalNameEn": "Tri-Tip",
+    "inputProfileId": "beef-large",
+    "defaultThicknessCm": 5,
+    "showThickness": true,
+    "allowedMethods": [
+      "reverse_sear",
+      "grill_direct",
+      "grill_indirect"
+    ],
+    "defaultMethod": "reverse_sear",
+    "allowedDoneness": [
+      "medium_rare",
+      "medium"
+    ],
+    "style": "lowSlow",
+    "restingMinutes": 10,
+    "estimatedTimeMinPerCm": 5,
+    "targetTempC": 56,
+    "errorEn": "Great for indirect grilling.",
+    "aliasesEn": [
+      "tri-tip",
+      "maminha",
+      "colita de cuadril"
+    ],
+    "notesEn": "Great for indirect grilling.",
+    "tipsEn": [
+      "bbq",
+      "value",
+      "grain changes direction",
+      "slice accordingly"
+    ]
+  },
+  {
+    "id": "hanger_steak",
+    "animalId": "beef",
+    "category": "steak",
+    "canonicalNameEn": "Hanger Steak",
+    "inputProfileId": "beef-steak",
+    "defaultThicknessCm": 3,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_direct",
+      "oven_pan"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "medium_rare"
+    ],
+    "style": "fast",
+    "restingMinutes": 5,
+    "estimatedTimeMinPerCm": 3,
+    "targetTempC": 54,
+    "errorEn": "Strong beef flavor.",
+    "aliasesEn": [
+      "hanger steak",
+      "onglet",
+      "butcher's steak"
+    ],
+    "notesEn": "Strong beef flavor.",
+    "tipsEn": [
+      "quick",
+      "bold",
+      "against the grain"
+    ]
+  },
+  {
+    "id": "denver_steak",
+    "animalId": "beef",
+    "category": "steak",
+    "canonicalNameEn": "Denver Steak",
+    "inputProfileId": "beef-steak",
+    "defaultThicknessCm": 2,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_direct",
+      "reverse_sear"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "medium_rare",
+      "medium"
+    ],
+    "style": "fast",
+    "restingMinutes": 5,
+    "estimatedTimeMinPerCm": 4,
+    "targetTempC": 54,
+    "errorEn": "Modern chuck steak.",
+    "aliasesEn": [
+      "Denver steak",
+      "under blade steak"
+    ],
+    "notesEn": "Modern chuck steak.",
+    "tipsEn": [
+      "premium",
+      "value",
+      "against the grain"
+    ]
+  },
+  {
+    "id": "chuck_eye",
+    "animalId": "beef",
+    "category": "steak",
+    "canonicalNameEn": "Chuck Eye",
+    "inputProfileId": "beef-steak",
+    "defaultThicknessCm": 3,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_direct",
+      "reverse_sear"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "medium_rare",
+      "medium"
+    ],
+    "style": "fast",
+    "restingMinutes": 5,
+    "estimatedTimeMinPerCm": 4,
+    "targetTempC": 54,
+    "errorEn": "Ribeye-like but less consistent.",
+    "aliasesEn": [
+      "chuck eye",
+      "poor man's ribeye"
+    ],
+    "notesEn": "Ribeye-like but less consistent.",
+    "tipsEn": [
+      "value",
+      "against the grain"
+    ]
+  },
+  {
+    "id": "top_sirloin",
+    "animalId": "beef",
+    "category": "steak",
+    "canonicalNameEn": "Top Sirloin",
+    "inputProfileId": "beef-steak",
+    "defaultThicknessCm": 3,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_direct",
+      "reverse_sear"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "medium_rare",
+      "medium"
+    ],
+    "style": "fast",
+    "restingMinutes": 5,
+    "estimatedTimeMinPerCm": 5,
+    "targetTempC": 56,
+    "errorEn": "Lean and versatile.",
+    "aliasesEn": [
+      "top sirloin",
+      "cuadril"
+    ],
+    "notesEn": "Lean and versatile.",
+    "tipsEn": [
+      "lean",
+      "value",
+      "against the grain"
+    ]
+  },
+  {
+    "id": "rump_steak",
+    "animalId": "beef",
+    "category": "steak",
+    "canonicalNameEn": "Rump Steak",
+    "inputProfileId": "beef-steak",
+    "defaultThicknessCm": 3,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_direct",
+      "oven_pan"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "medium_rare",
+      "medium"
+    ],
+    "style": "fast",
+    "restingMinutes": 5,
+    "estimatedTimeMinPerCm": 5,
+    "targetTempC": 56,
+    "errorEn": "Do not overcook.",
+    "aliasesEn": [
+      "rump steak",
+      "cuadril",
+      "cadera"
+    ],
+    "notesEn": "Do not overcook.",
+    "tipsEn": [
+      "lean",
+      "value",
+      "against the grain"
+    ]
+  },
+  {
+    "id": "t_bone",
+    "animalId": "beef",
+    "category": "steak",
+    "canonicalNameEn": "T-Bone",
+    "inputProfileId": "beef-steak",
+    "defaultThicknessCm": 3,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_direct",
+      "reverse_sear"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "medium_rare",
+      "medium"
+    ],
+    "style": "reverse",
+    "restingMinutes": 5,
+    "estimatedTimeMinPerCm": 5,
+    "targetTempC": 54,
+    "errorEn": "Bone causes uneven cooking.",
+    "aliasesEn": [
+      "T-bone",
+      "porterhouse"
+    ],
+    "notesEn": "Bone causes uneven cooking.",
+    "tipsEn": [
+      "premium",
+      "separate muscles then slice against grain"
+    ]
+  },
+  {
+    "id": "porterhouse",
+    "animalId": "beef",
+    "category": "steak",
+    "canonicalNameEn": "Porterhouse",
+    "inputProfileId": "beef-steak",
+    "defaultThicknessCm": 3,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_direct",
+      "reverse_sear"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "medium_rare",
+      "medium"
+    ],
+    "style": "reverse",
+    "restingMinutes": 5,
+    "estimatedTimeMinPerCm": 5,
+    "targetTempC": 54,
+    "errorEn": "Large tenderloin side.",
+    "aliasesEn": [
+      "porterhouse",
+      "large T-bone"
+    ],
+    "notesEn": "Large tenderloin side.",
+    "tipsEn": [
+      "premium",
+      "separate muscles then slice against grain"
+    ]
+  },
+  {
+    "id": "tomahawk",
+    "animalId": "beef",
+    "category": "steak",
+    "canonicalNameEn": "Tomahawk",
+    "inputProfileId": "beef-steak",
+    "defaultThicknessCm": 3,
+    "showThickness": true,
+    "allowedMethods": [
+      "reverse_sear",
+      "grill_direct",
+      "grill_indirect"
+    ],
+    "defaultMethod": "reverse_sear",
+    "allowedDoneness": [
+      "medium_rare",
+      "medium"
+    ],
+    "style": "reverse",
+    "restingMinutes": 10,
+    "estimatedTimeMinPerCm": 6,
+    "targetTempC": 54,
+    "errorEn": "Very thick bone-in ribeye.",
+    "aliasesEn": [
+      "tomahawk",
+      "bone-in ribeye",
+      "cowboy steak"
+    ],
+    "notesEn": "Very thick bone-in ribeye.",
+    "tipsEn": [
+      "premium",
+      "wow",
+      "against the grain"
+    ]
+  },
+  {
+    "id": "brisket",
+    "animalId": "beef",
+    "category": "bbq",
+    "canonicalNameEn": "Brisket",
+    "inputProfileId": "beef-large",
     "defaultThicknessCm": 5,
     "showThickness": false,
     "allowedMethods": [
@@ -351,20 +655,64 @@ export const generatedCutProfiles = [
       "well_done"
     ],
     "style": "lowSlow",
-    "restingMinutes": 15,
-    "errorEn": "Cooking them fast over direct heat: they turn tough and burnt.",
+    "restingMinutes": 30,
+    "estimatedTotalTimeMin": 600,
+    "cookingMinutes": 600,
+    "targetTempC": 93,
+    "errorEn": "Cook until tender, not by steak doneness.",
     "aliasesEn": [
-      "Ribs"
+      "brisket",
+      "pecho"
     ],
-    "tipsEn": []
+    "notesEn": "Cook until tender, not by steak doneness.",
+    "tipsEn": [
+      "slow",
+      "bbq",
+      "against the grain"
+    ]
   },
   {
-    "id": "panceta",
-    "animalId": "pork",
-    "canonicalNameEn": "Pork belly",
-    "inputProfileId": "pork-fast",
-    "defaultThicknessCm": 4,
-    "showThickness": true,
+    "id": "short_ribs",
+    "animalId": "beef",
+    "category": "bbq",
+    "canonicalNameEn": "Short Ribs",
+    "inputProfileId": "beef-large",
+    "defaultThicknessCm": 5,
+    "showThickness": false,
+    "allowedMethods": [
+      "grill_indirect",
+      "grill_direct"
+    ],
+    "defaultMethod": "grill_indirect",
+    "allowedDoneness": [
+      "well_done"
+    ],
+    "style": "lowSlow",
+    "restingMinutes": 15,
+    "estimatedTotalTimeMin": 270,
+    "cookingMinutes": 270,
+    "targetTempC": 90,
+    "errorEn": "Collagen-rich.",
+    "aliasesEn": [
+      "short ribs",
+      "asado de tira",
+      "flanken ribs"
+    ],
+    "notesEn": "Collagen-rich.",
+    "tipsEn": [
+      "slow",
+      "argentinian",
+      "between bones or against grain"
+    ]
+  },
+  {
+    "id": "chuck_roast",
+    "animalId": "beef",
+    "category": "bbq",
+    "canonicalNameEn": "Chuck Roast",
+    "inputProfileId": "beef-large",
+    "defaultThicknessCm": 5,
+    "showThickness": false,
     "allowedMethods": [
       "grill_indirect",
       "oven_pan"
@@ -373,20 +721,233 @@ export const generatedCutProfiles = [
     "allowedDoneness": [
       "well_done"
     ],
-    "style": "crispy",
-    "restingMinutes": 8,
-    "errorEn": "Starting at maximum heat: it burns before becoming tender.",
+    "style": "lowSlow",
+    "restingMinutes": 20,
+    "estimatedTotalTimeMin": 330,
+    "cookingMinutes": 330,
+    "targetTempC": 92,
+    "errorEn": "Good pulled beef.",
     "aliasesEn": [
-      "Pork belly"
+      "chuck",
+      "aguja",
+      "shoulder roast"
     ],
-    "tipsEn": []
+    "notesEn": "Good pulled beef.",
+    "tipsEn": [
+      "slow",
+      "value",
+      "against the grain"
+    ]
   },
   {
-    "id": "solomillo",
-    "animalId": "pork",
-    "canonicalNameEn": "Tenderloin",
+    "id": "ground_beef",
+    "animalId": "beef",
+    "category": "ground",
+    "canonicalNameEn": "Ground Beef",
     "inputProfileId": "default",
+    "defaultThicknessCm": 2,
+    "showThickness": false,
+    "allowedMethods": [
+      "oven_pan",
+      "grill_direct"
+    ],
+    "defaultMethod": "oven_pan",
+    "allowedDoneness": [
+      "well_done"
+    ],
+    "style": "fast",
+    "restingMinutes": 2,
+    "estimatedTimeMinPerCm": 3,
+    "targetTempC": 65,
+    "safetyNoteEn": "Ground beef must be cooked to 71°C / 160°F. Medium carries food safety risk.",
+    "errorEn": "Ground beef must be cooked to 71°C / 160°F. Medium carries food safety risk.",
+    "aliasesEn": [
+      "ground beef",
+      "minced beef",
+      "carne molida"
+    ],
+    "notesEn": "Cook fully to 71°C / 160°F for safety. Ground beef must be cooked to 71°C / 160°F. Medium carries food safety risk.",
+    "tipsEn": [
+      "burger",
+      "quick",
+      "not applicable"
+    ]
+  },
+  {
+    "id": "pork_tenderloin",
+    "animalId": "pork",
+    "category": "steak",
+    "canonicalNameEn": "Pork Tenderloin",
+    "inputProfileId": "pork-fast",
+    "defaultThicknessCm": 2,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_direct",
+      "reverse_sear",
+      "oven_pan"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "juicy_safe",
+      "medium_safe"
+    ],
+    "style": "fast",
+    "restingMinutes": 5,
+    "estimatedTimeMinPerCm": 4,
+    "targetTempC": 64,
+    "safetyNoteEn": "Cook to safe pork temperature.",
+    "errorEn": "Cook to safe pork temperature.",
+    "aliasesEn": [
+      "pork tenderloin",
+      "pork fillet"
+    ],
+    "notesEn": "Lean and tender. Cook to safe pork temperature.",
+    "tipsEn": [
+      "quick",
+      "lean",
+      "against the grain"
+    ]
+  },
+  {
+    "id": "pork_loin",
+    "animalId": "pork",
+    "category": "roast",
+    "canonicalNameEn": "Pork Loin",
+    "inputProfileId": "pork-fast",
+    "defaultThicknessCm": 5,
+    "showThickness": true,
+    "allowedMethods": [
+      "oven_pan",
+      "grill_indirect",
+      "grill_direct"
+    ],
+    "defaultMethod": "oven_pan",
+    "allowedDoneness": [
+      "juicy_safe",
+      "medium_safe"
+    ],
+    "style": "lowSlow",
+    "restingMinutes": 5,
+    "estimatedTimeMinPerCm": 5,
+    "targetTempC": 66,
+    "safetyNoteEn": "Cook to safe pork temperature.",
+    "errorEn": "Cook to safe pork temperature.",
+    "aliasesEn": [
+      "pork loin",
+      "boneless loin"
+    ],
+    "notesEn": "Brine recommended. Cook to safe pork temperature.",
+    "tipsEn": [
+      "lean",
+      "against the grain"
+    ]
+  },
+  {
+    "id": "pork_chop",
+    "animalId": "pork",
+    "category": "steak",
+    "canonicalNameEn": "Pork Chop",
+    "inputProfileId": "pork-fast",
     "defaultThicknessCm": 3,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_direct",
+      "reverse_sear"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "juicy_safe",
+      "medium_safe"
+    ],
+    "style": "fast",
+    "restingMinutes": 5,
+    "estimatedTimeMinPerCm": 5,
+    "targetTempC": 66,
+    "safetyNoteEn": "Cook to safe pork temperature.",
+    "errorEn": "Cook to safe pork temperature.",
+    "aliasesEn": [
+      "pork chop",
+      "cutlet"
+    ],
+    "notesEn": "Bone-in is juicier. Cook to safe pork temperature.",
+    "tipsEn": [
+      "quick",
+      "against the grain"
+    ]
+  },
+  {
+    "id": "iberian_secreto",
+    "animalId": "pork",
+    "category": "steak",
+    "canonicalNameEn": "Iberian Secreto",
+    "inputProfileId": "pork-fast",
+    "defaultThicknessCm": 2,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_direct"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "juicy_safe",
+      "medium_safe"
+    ],
+    "style": "fast",
+    "restingMinutes": 5,
+    "estimatedTimeMinPerCm": 4,
+    "targetTempC": 66,
+    "safetyNoteEn": "Cook to safe pork temperature.",
+    "errorEn": "Cook to safe pork temperature.",
+    "aliasesEn": [
+      "secreto",
+      "iberian secreto"
+    ],
+    "notesEn": "Fatty Iberian cut. Cook to safe pork temperature.",
+    "tipsEn": [
+      "premium",
+      "quick",
+      "against the grain"
+    ]
+  },
+  {
+    "id": "iberian_presa",
+    "animalId": "pork",
+    "category": "steak",
+    "canonicalNameEn": "Iberian Presa",
+    "inputProfileId": "pork-fast",
+    "defaultThicknessCm": 2,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_direct",
+      "reverse_sear"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "juicy_safe",
+      "medium_safe"
+    ],
+    "style": "fast",
+    "restingMinutes": 5,
+    "estimatedTimeMinPerCm": 5,
+    "targetTempC": 66,
+    "safetyNoteEn": "Cook to safe pork temperature.",
+    "errorEn": "Cook to safe pork temperature.",
+    "aliasesEn": [
+      "presa",
+      "iberian presa"
+    ],
+    "notesEn": "Premium Iberian shoulder cut. Cook to safe pork temperature.",
+    "tipsEn": [
+      "premium",
+      "against the grain"
+    ]
+  },
+  {
+    "id": "iberian_pluma",
+    "animalId": "pork",
+    "category": "steak",
+    "canonicalNameEn": "Iberian Pluma",
+    "inputProfileId": "pork-fast",
+    "defaultThicknessCm": 2,
     "showThickness": true,
     "allowedMethods": [
       "grill_direct",
@@ -395,49 +956,140 @@ export const generatedCutProfiles = [
     "defaultMethod": "grill_direct",
     "allowedDoneness": [
       "juicy_safe",
-      "medium_safe",
-      "well_done"
+      "medium_safe"
     ],
     "style": "fast",
     "restingMinutes": 5,
-    "errorEn": "Overshooting the temperature: it is lean and dries very fast.",
+    "estimatedTimeMinPerCm": 4,
+    "targetTempC": 66,
+    "safetyNoteEn": "Cook to safe pork temperature.",
+    "errorEn": "Cook to safe pork temperature.",
     "aliasesEn": [
-      "Tenderloin"
+      "pluma",
+      "iberian pluma",
+      "feather cut"
     ],
-    "tipsEn": []
+    "notesEn": "Thin premium Iberian cut. Cook to safe pork temperature.",
+    "tipsEn": [
+      "premium",
+      "quick",
+      "against the grain"
+    ]
   },
   {
-    "id": "pork_chop",
+    "id": "pork_collar",
     "animalId": "pork",
-    "canonicalNameEn": "Pork chop",
-    "inputProfileId": "default",
-    "defaultThicknessCm": 3,
+    "category": "steak",
+    "canonicalNameEn": "Pork Collar",
+    "inputProfileId": "pork-fast",
+    "defaultThicknessCm": 2,
     "showThickness": true,
     "allowedMethods": [
       "grill_direct",
       "grill_indirect",
       "oven_pan"
     ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "well_done"
+    ],
+    "style": "lowSlow",
+    "restingMinutes": 5,
+    "estimatedTimeMinPerCm": 5,
+    "targetTempC": 72,
+    "safetyNoteEn": "Cook to safe pork temperature.",
+    "errorEn": "Cook to safe pork temperature.",
+    "aliasesEn": [
+      "pork collar",
+      "pork neck",
+      "coppa",
+      "bondiola",
+      "kassler"
+    ],
+    "notesEn": "Fatty and forgiving. Cook to safe pork temperature.",
+    "tipsEn": [
+      "easy",
+      "value",
+      "against the grain"
+    ]
+  },
+  {
+    "id": "pork_shoulder",
+    "animalId": "pork",
+    "category": "bbq",
+    "canonicalNameEn": "Pork Shoulder",
+    "inputProfileId": "pork-fast",
+    "defaultThicknessCm": 5,
+    "showThickness": false,
+    "allowedMethods": [
+      "grill_indirect"
+    ],
     "defaultMethod": "grill_indirect",
     "allowedDoneness": [
-      "juicy_safe",
       "medium_safe",
       "well_done"
     ],
-    "style": "thick",
-    "restingMinutes": 5,
-    "errorEn": "Skipping the rest: the chop loses juice when sliced.",
+    "style": "lowSlow",
+    "restingMinutes": 20,
+    "estimatedTotalTimeMin": 480,
+    "cookingMinutes": 480,
+    "targetTempC": 93,
+    "safetyNoteEn": "Cook until tender and safe.",
+    "errorEn": "Cook until tender and safe.",
     "aliasesEn": [
-      "Pork chop"
+      "pork shoulder",
+      "picnic shoulder",
+      "paleta"
     ],
-    "tipsEn": []
+    "notesEn": "Great for pulled pork. Cook until tender and safe.",
+    "tipsEn": [
+      "slow",
+      "bbq",
+      "against the grain"
+    ]
   },
   {
-    "id": "muslos",
-    "animalId": "chicken",
-    "canonicalNameEn": "Thighs",
-    "inputProfileId": "default",
-    "defaultThicknessCm": 4,
+    "id": "pork_butt",
+    "animalId": "pork",
+    "category": "bbq",
+    "canonicalNameEn": "Boston Butt",
+    "inputProfileId": "pork-fast",
+    "defaultThicknessCm": 5,
+    "showThickness": false,
+    "allowedMethods": [
+      "grill_indirect"
+    ],
+    "defaultMethod": "grill_indirect",
+    "allowedDoneness": [
+      "medium_safe",
+      "well_done"
+    ],
+    "style": "lowSlow",
+    "restingMinutes": 20,
+    "estimatedTotalTimeMin": 480,
+    "cookingMinutes": 480,
+    "targetTempC": 93,
+    "safetyNoteEn": "Cook until tender and safe.",
+    "errorEn": "Cook until tender and safe.",
+    "aliasesEn": [
+      "Boston butt",
+      "pork butt",
+      "shoulder butt"
+    ],
+    "notesEn": "US BBQ cut. Cook until tender and safe.",
+    "tipsEn": [
+      "slow",
+      "bbq",
+      "against the grain"
+    ]
+  },
+  {
+    "id": "baby_back_ribs",
+    "animalId": "pork",
+    "category": "ribs",
+    "canonicalNameEn": "Baby Back Ribs",
+    "inputProfileId": "pork-fast",
+    "defaultThicknessCm": 5,
     "showThickness": false,
     "allowedMethods": [
       "grill_indirect",
@@ -446,97 +1098,537 @@ export const generatedCutProfiles = [
     ],
     "defaultMethod": "grill_indirect",
     "allowedDoneness": [
-      "safe",
       "well_done"
     ],
-    "style": "poultry",
-    "restingMinutes": 5,
-    "errorEn": "Browning hard before cooking through: the skin burns while the center stays underdone.",
+    "style": "lowSlow",
+    "restingMinutes": 10,
+    "estimatedTotalTimeMin": 180,
+    "cookingMinutes": 180,
+    "targetTempC": 90,
+    "safetyNoteEn": "Cook until tender and safe.",
+    "errorEn": "Cook until tender and safe.",
     "aliasesEn": [
-      "Thighs"
+      "baby back ribs",
+      "loin ribs"
     ],
-    "tipsEn": []
+    "notesEn": "Tender loin ribs. Cook until tender and safe.",
+    "tipsEn": [
+      "bbq",
+      "between bones"
+    ]
   },
   {
-    "id": "alitas",
-    "animalId": "chicken",
-    "canonicalNameEn": "Wings",
+    "id": "spare_ribs",
+    "animalId": "pork",
+    "category": "ribs",
+    "canonicalNameEn": "Spare Ribs",
+    "inputProfileId": "pork-fast",
+    "defaultThicknessCm": 5,
+    "showThickness": false,
+    "allowedMethods": [
+      "grill_indirect",
+      "grill_direct"
+    ],
+    "defaultMethod": "grill_indirect",
+    "allowedDoneness": [
+      "well_done"
+    ],
+    "style": "lowSlow",
+    "restingMinutes": 10,
+    "estimatedTotalTimeMin": 240,
+    "cookingMinutes": 240,
+    "targetTempC": 90,
+    "safetyNoteEn": "Cook until tender and safe.",
+    "errorEn": "Cook until tender and safe.",
+    "aliasesEn": [
+      "spare ribs",
+      "costillar",
+      "pechito"
+    ],
+    "notesEn": "Fattier ribs. Cook until tender and safe.",
+    "tipsEn": [
+      "bbq",
+      "slow",
+      "between bones"
+    ]
+  },
+  {
+    "id": "pork_belly",
+    "animalId": "pork",
+    "category": "bbq",
+    "canonicalNameEn": "Pork Belly",
+    "inputProfileId": "pork-fast",
+    "defaultThicknessCm": 5,
+    "showThickness": false,
+    "allowedMethods": [
+      "oven_pan",
+      "grill_indirect",
+      "grill_direct"
+    ],
+    "defaultMethod": "oven_pan",
+    "allowedDoneness": [
+      "well_done"
+    ],
+    "style": "lowSlow",
+    "restingMinutes": 10,
+    "estimatedTotalTimeMin": 135,
+    "cookingMinutes": 135,
+    "targetTempC": 85,
+    "safetyNoteEn": "Cook until rendered and safe.",
+    "errorEn": "Cook until rendered and safe.",
+    "aliasesEn": [
+      "pork belly",
+      "panceta",
+      "belly"
+    ],
+    "notesEn": "Very fatty. Cook until rendered and safe.",
+    "tipsEn": [
+      "slow",
+      "crispy",
+      "slice perpendicular"
+    ]
+  },
+  {
+    "id": "pork_belly_slices",
+    "animalId": "pork",
+    "category": "steak",
+    "canonicalNameEn": "Pork Belly Slices",
+    "inputProfileId": "pork-fast",
+    "defaultThicknessCm": 2,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_direct",
+      "grill_indirect"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "well_done"
+    ],
+    "style": "fast",
+    "restingMinutes": 5,
+    "estimatedTimeMinPerCm": 4,
+    "targetTempC": 75,
+    "safetyNoteEn": "Cook to safe pork temperature.",
+    "errorEn": "Cook to safe pork temperature.",
+    "aliasesEn": [
+      "belly slices",
+      "pork belly strips"
+    ],
+    "notesEn": "Good for fast grilling. Cook to safe pork temperature.",
+    "tipsEn": [
+      "quick",
+      "not critical"
+    ]
+  },
+  {
+    "id": "pork_hock",
+    "animalId": "pork",
+    "category": "bbq",
+    "canonicalNameEn": "Pork Hock",
+    "inputProfileId": "pork-fast",
+    "defaultThicknessCm": 5,
+    "showThickness": false,
+    "allowedMethods": [
+      "oven_pan",
+      "grill_indirect"
+    ],
+    "defaultMethod": "oven_pan",
+    "allowedDoneness": [
+      "medium_safe",
+      "well_done"
+    ],
+    "style": "lowSlow",
+    "restingMinutes": 15,
+    "estimatedTotalTimeMin": 270,
+    "cookingMinutes": 270,
+    "targetTempC": 93,
+    "safetyNoteEn": "Cook until tender and safe.",
+    "errorEn": "Cook until tender and safe.",
+    "aliasesEn": [
+      "pork hock",
+      "knuckle",
+      "codillo"
+    ],
+    "notesEn": "Collagen-rich. Cook until tender and safe.",
+    "tipsEn": [
+      "slow",
+      "around bone"
+    ]
+  },
+  {
+    "id": "ground_pork",
+    "animalId": "pork",
+    "category": "ground",
+    "canonicalNameEn": "Ground Pork",
     "inputProfileId": "default",
     "defaultThicknessCm": 2,
     "showThickness": false,
     "allowedMethods": [
+      "oven_pan"
+    ],
+    "defaultMethod": "oven_pan",
+    "allowedDoneness": [
+      "well_done"
+    ],
+    "style": "fast",
+    "restingMinutes": 2,
+    "estimatedTimeMinPerCm": 3,
+    "targetTempC": 71,
+    "safetyNoteEn": "Ground pork must be cooked safely.",
+    "errorEn": "Ground pork must be cooked safely.",
+    "aliasesEn": [
+      "ground pork",
+      "minced pork"
+    ],
+    "notesEn": "For burgers and sausages. Ground pork must be cooked safely.",
+    "tipsEn": [
+      "burger",
+      "quick",
+      "not applicable"
+    ]
+  },
+  {
+    "id": "chicken_breast",
+    "animalId": "chicken",
+    "category": "breast",
+    "canonicalNameEn": "Chicken Breast",
+    "inputProfileId": "chicken-breast",
+    "defaultThicknessCm": 2,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_direct",
+      "oven_pan",
+      "reverse_sear"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "safe"
+    ],
+    "style": "poultry",
+    "restingMinutes": 5,
+    "estimatedTimeMinPerCm": 5,
+    "targetTempC": 73,
+    "safetyNoteEn": "Chicken must be fully cooked.",
+    "errorEn": "Chicken must be fully cooked.",
+    "aliasesEn": [
+      "chicken breast",
+      "breast fillet"
+    ],
+    "notesEn": "Easy to dry out. Chicken must be fully cooked.",
+    "tipsEn": [
+      "quick",
+      "lean",
+      "against the grain"
+    ]
+  },
+  {
+    "id": "chicken_tenderloin",
+    "animalId": "chicken",
+    "category": "breast",
+    "canonicalNameEn": "Chicken Tenderloin",
+    "inputProfileId": "chicken-breast",
+    "defaultThicknessCm": 2,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_direct",
+      "oven_pan"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "safe"
+    ],
+    "style": "poultry",
+    "restingMinutes": 3,
+    "estimatedTimeMinPerCm": 4,
+    "targetTempC": 73,
+    "safetyNoteEn": "Chicken must be fully cooked.",
+    "errorEn": "Chicken must be fully cooked.",
+    "aliasesEn": [
+      "chicken tender",
+      "inner fillet"
+    ],
+    "notesEn": "Very fast. Chicken must be fully cooked.",
+    "tipsEn": [
+      "quick",
+      "easy",
+      "against the grain"
+    ]
+  },
+  {
+    "id": "chicken_thigh",
+    "animalId": "chicken",
+    "category": "thigh",
+    "canonicalNameEn": "Chicken Thigh",
+    "inputProfileId": "poultry-whole",
+    "defaultThicknessCm": 2,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_direct",
+      "grill_indirect",
+      "oven_pan"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "safe"
+    ],
+    "style": "poultry",
+    "restingMinutes": 5,
+    "estimatedTimeMinPerCm": 6,
+    "targetTempC": 78,
+    "safetyNoteEn": "Chicken must be fully cooked.",
+    "errorEn": "Chicken must be fully cooked.",
+    "aliasesEn": [
+      "chicken thigh",
+      "boneless thigh"
+    ],
+    "notesEn": "Forgiving and juicy. Chicken must be fully cooked.",
+    "tipsEn": [
+      "easy",
+      "juicy",
+      "against the grain"
+    ]
+  },
+  {
+    "id": "bone_in_chicken_thigh",
+    "animalId": "chicken",
+    "category": "thigh",
+    "canonicalNameEn": "Bone-in Chicken Thigh",
+    "inputProfileId": "poultry-whole",
+    "defaultThicknessCm": 2,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_indirect",
+      "grill_direct"
+    ],
+    "defaultMethod": "grill_indirect",
+    "allowedDoneness": [
+      "safe"
+    ],
+    "style": "poultry",
+    "restingMinutes": 5,
+    "estimatedTimeMinPerCm": 6,
+    "targetTempC": 80,
+    "safetyNoteEn": "Chicken must be fully cooked.",
+    "errorEn": "Chicken must be fully cooked.",
+    "aliasesEn": [
+      "bone-in chicken thigh"
+    ],
+    "notesEn": "Needs more time near bone. Chicken must be fully cooked.",
+    "tipsEn": [
+      "easy",
+      "juicy",
+      "around bone"
+    ]
+  },
+  {
+    "id": "chicken_drumstick",
+    "animalId": "chicken",
+    "category": "leg",
+    "canonicalNameEn": "Chicken Drumstick",
+    "inputProfileId": "poultry-whole",
+    "defaultThicknessCm": 2,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_indirect",
+      "grill_direct"
+    ],
+    "defaultMethod": "grill_indirect",
+    "allowedDoneness": [
+      "safe"
+    ],
+    "style": "poultry",
+    "restingMinutes": 5,
+    "estimatedTimeMinPerCm": 6,
+    "targetTempC": 80,
+    "safetyNoteEn": "Chicken must be fully cooked.",
+    "errorEn": "Chicken must be fully cooked.",
+    "aliasesEn": [
+      "drumstick",
+      "koipi"
+    ],
+    "notesEn": "Popular BBQ piece. Chicken must be fully cooked.",
+    "tipsEn": [
+      "easy",
+      "around bone"
+    ]
+  },
+  {
+    "id": "chicken_leg_quarter",
+    "animalId": "chicken",
+    "category": "leg",
+    "canonicalNameEn": "Chicken Leg Quarter",
+    "inputProfileId": "poultry-whole",
+    "defaultThicknessCm": 3,
+    "showThickness": false,
+    "allowedMethods": [
       "grill_indirect",
       "grill_direct",
       "oven_pan"
     ],
     "defaultMethod": "grill_indirect",
+    "allowedDoneness": [
+      "safe"
+    ],
+    "style": "poultry",
+    "restingMinutes": 10,
+    "estimatedTotalTimeMin": 45,
+    "cookingMinutes": 45,
+    "targetTempC": 80,
+    "safetyNoteEn": "Chicken must be fully cooked.",
+    "errorEn": "Chicken must be fully cooked.",
+    "aliasesEn": [
+      "leg quarter",
+      "koipireisi"
+    ],
+    "notesEn": "Common Finnish cut. Chicken must be fully cooked.",
+    "tipsEn": [
+      "value",
+      "separate joints"
+    ]
+  },
+  {
+    "id": "chicken_wing",
+    "animalId": "chicken",
+    "category": "wing",
+    "canonicalNameEn": "Chicken Wing",
+    "inputProfileId": "poultry-whole",
+    "defaultThicknessCm": 2,
+    "showThickness": false,
+    "allowedMethods": [
+      "grill_direct",
+      "grill_indirect"
+    ],
+    "defaultMethod": "grill_direct",
     "allowedDoneness": [
       "safe",
       "well_done"
     ],
     "style": "poultry",
     "restingMinutes": 3,
-    "errorEn": "Keeping them over constant flame: they burn before staying juicy.",
+    "estimatedTimeMinPerCm": 5,
+    "targetTempC": 83,
+    "safetyNoteEn": "Chicken must be fully cooked.",
+    "errorEn": "Chicken must be fully cooked.",
     "aliasesEn": [
-      "Wings"
+      "wing",
+      "siipi",
+      "buffalo wing"
     ],
-    "tipsEn": []
+    "notesEn": "Cook higher for crisp skin. Chicken must be fully cooked.",
+    "tipsEn": [
+      "snack",
+      "crispy",
+      "not applicable"
+    ]
   },
   {
-    "id": "pechuga",
+    "id": "whole_chicken",
     "animalId": "chicken",
-    "canonicalNameEn": "Breast",
-    "inputProfileId": "chicken-breast",
-    "defaultThicknessCm": 3,
-    "showThickness": true,
-    "allowedMethods": [
-      "grill_direct",
-      "grill_indirect",
-      "oven_pan"
-    ],
-    "defaultMethod": "grill_indirect",
-    "allowedDoneness": [
-      "safe",
-      "well_done"
-    ],
-    "style": "poultry",
-    "restingMinutes": 5,
-    "errorEn": "Holding it past 74C for too long: it dries quickly.",
-    "aliasesEn": [
-      "Breast"
-    ],
-    "tipsEn": []
-  },
-  {
-    "id": "pollo_entero",
-    "animalId": "chicken",
-    "canonicalNameEn": "Whole chicken",
+    "category": "whole",
+    "canonicalNameEn": "Whole Chicken",
     "inputProfileId": "poultry-whole",
     "defaultThicknessCm": 6,
     "showThickness": false,
     "allowedMethods": [
       "grill_indirect",
+      "grill_direct"
+    ],
+    "defaultMethod": "grill_indirect",
+    "allowedDoneness": [
+      "safe"
+    ],
+    "style": "poultry",
+    "restingMinutes": 10,
+    "estimatedTotalTimeMin": 75,
+    "cookingMinutes": 75,
+    "targetTempC": 78,
+    "safetyNoteEn": "Chicken must be fully cooked.",
+    "errorEn": "Chicken must be fully cooked.",
+    "aliasesEn": [
+      "whole chicken",
+      "broiler"
+    ],
+    "notesEn": "Check breast and thigh. Chicken must be fully cooked.",
+    "tipsEn": [
+      "family",
+      "bbq",
+      "carve by joints"
+    ]
+  },
+  {
+    "id": "spatchcock_chicken",
+    "animalId": "chicken",
+    "category": "whole",
+    "canonicalNameEn": "Spatchcock Chicken",
+    "inputProfileId": "poultry-whole",
+    "defaultThicknessCm": 6,
+    "showThickness": false,
+    "allowedMethods": [
+      "grill_indirect",
+      "grill_direct",
       "oven_pan"
     ],
     "defaultMethod": "grill_indirect",
     "allowedDoneness": [
-      "safe",
-      "well_done"
+      "safe"
     ],
     "style": "poultry",
     "restingMinutes": 10,
-    "errorEn": "Cooking it only direct: it burns outside before the center is ready.",
+    "estimatedTotalTimeMin": 48,
+    "cookingMinutes": 48,
+    "targetTempC": 78,
+    "safetyNoteEn": "Chicken must be fully cooked.",
+    "errorEn": "Chicken must be fully cooked.",
     "aliasesEn": [
-      "Whole chicken"
+      "spatchcock",
+      "butterflied chicken"
     ],
-    "tipsEn": []
+    "notesEn": "Best whole chicken format for grill. Chicken must be fully cooked.",
+    "tipsEn": [
+      "family",
+      "easy",
+      "carve by joints"
+    ]
   },
   {
-    "id": "rodaballo",
+    "id": "ground_chicken",
+    "animalId": "chicken",
+    "category": "ground",
+    "canonicalNameEn": "Ground Chicken",
+    "inputProfileId": "default",
+    "defaultThicknessCm": 2,
+    "showThickness": false,
+    "allowedMethods": [
+      "oven_pan"
+    ],
+    "defaultMethod": "oven_pan",
+    "allowedDoneness": [
+      "safe"
+    ],
+    "style": "poultry",
+    "restingMinutes": 3,
+    "estimatedTimeMinPerCm": 4,
+    "targetTempC": 75,
+    "safetyNoteEn": "Ground chicken must be fully cooked.",
+    "errorEn": "Ground chicken must be fully cooked.",
+    "aliasesEn": [
+      "ground chicken",
+      "minced chicken"
+    ],
+    "notesEn": "Safety-first. Ground chicken must be fully cooked.",
+    "tipsEn": [
+      "burger",
+      "quick",
+      "not applicable"
+    ]
+  },
+  {
+    "id": "salmon_fillet",
     "animalId": "fish",
-    "canonicalNameEn": "Turbot",
-    "inputProfileId": "fish-whole",
-    "defaultThicknessCm": 3,
+    "category": "fillet",
+    "canonicalNameEn": "Salmon Fillet",
+    "inputProfileId": "fish-fillet",
+    "defaultThicknessCm": 2,
     "showThickness": true,
     "allowedMethods": [
       "grill_direct",
@@ -544,22 +1636,200 @@ export const generatedCutProfiles = [
     ],
     "defaultMethod": "grill_direct",
     "allowedDoneness": [
-      "juicy",
-      "medium",
-      "well_done"
+      "medium"
     ],
     "style": "fish",
-    "restingMinutes": 2,
-    "errorEn": "Moving it too much: the skin sticks and tears.",
+    "restingMinutes": 3,
+    "estimatedTimeMinPerCm": 4,
+    "targetTempC": 55,
+    "safetyNoteEn": "Use very fresh fish; cook higher for vulnerable guests.",
+    "errorEn": "Use very fresh fish; cook higher for vulnerable guests.",
     "aliasesEn": [
-      "Turbot"
+      "salmon",
+      "lohi"
     ],
-    "tipsEn": []
+    "notesEn": "Fatty and forgiving. Use very fresh fish; cook higher for vulnerable guests.",
+    "tipsEn": [
+      "quick",
+      "fatty",
+      "with grain portions",
+      "serve in flakes"
+    ]
   },
   {
-    "id": "salmon",
+    "id": "salmon_steak",
     "animalId": "fish",
-    "canonicalNameEn": "Salmon",
+    "category": "steak",
+    "canonicalNameEn": "Salmon Steak",
+    "inputProfileId": "fish-fillet",
+    "defaultThicknessCm": 2,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_direct",
+      "oven_pan"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "medium"
+    ],
+    "style": "fish",
+    "restingMinutes": 3,
+    "estimatedTimeMinPerCm": 4,
+    "targetTempC": 55,
+    "safetyNoteEn": "Use very fresh fish; cook higher for vulnerable guests.",
+    "errorEn": "Use very fresh fish; cook higher for vulnerable guests.",
+    "aliasesEn": [
+      "salmon steak",
+      "lohikiekko"
+    ],
+    "notesEn": "Bone-in cross cut. Use very fresh fish; cook higher for vulnerable guests.",
+    "tipsEn": [
+      "quick",
+      "around bone"
+    ]
+  },
+  {
+    "id": "tuna_steak",
+    "animalId": "fish",
+    "category": "steak",
+    "canonicalNameEn": "Tuna Steak",
+    "inputProfileId": "fish-fillet",
+    "defaultThicknessCm": 3,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_direct"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "rare",
+      "medium_rare"
+    ],
+    "style": "fish",
+    "restingMinutes": 3,
+    "estimatedTimeMinPerCm": 3,
+    "targetTempC": 49,
+    "safetyNoteEn": "Low final temp is only appropriate for sushi-grade fish.",
+    "errorEn": "Low final temp is only appropriate for sushi-grade fish.",
+    "aliasesEn": [
+      "tuna steak",
+      "yellowfin",
+      "bluefin"
+    ],
+    "notesEn": "Best seared outside, red center. Low final temp is only appropriate for sushi-grade fish.",
+    "tipsEn": [
+      "premium",
+      "quick",
+      "against the grain"
+    ]
+  },
+  {
+    "id": "sea_bass_whole",
+    "animalId": "fish",
+    "category": "whole",
+    "canonicalNameEn": "Whole Sea Bass",
+    "inputProfileId": "fish-whole",
+    "defaultThicknessCm": 6,
+    "showThickness": false,
+    "allowedMethods": [
+      "grill_indirect",
+      "grill_direct"
+    ],
+    "defaultMethod": "grill_indirect",
+    "allowedDoneness": [
+      "medium"
+    ],
+    "style": "fish",
+    "restingMinutes": 5,
+    "estimatedTotalTimeMin": 24,
+    "cookingMinutes": 24,
+    "targetTempC": 59,
+    "safetyNoteEn": "Cook until flesh flakes easily.",
+    "errorEn": "Cook until flesh flakes easily.",
+    "aliasesEn": [
+      "sea bass",
+      "branzino",
+      "lubina"
+    ],
+    "notesEn": "Great whole grilled fish. Cook until flesh flakes easily.",
+    "tipsEn": [
+      "whole fish",
+      "lift fillets from bone"
+    ]
+  },
+  {
+    "id": "sea_bream_whole",
+    "animalId": "fish",
+    "category": "whole",
+    "canonicalNameEn": "Whole Sea Bream",
+    "inputProfileId": "fish-whole",
+    "defaultThicknessCm": 6,
+    "showThickness": false,
+    "allowedMethods": [
+      "grill_indirect",
+      "grill_direct"
+    ],
+    "defaultMethod": "grill_indirect",
+    "allowedDoneness": [
+      "medium"
+    ],
+    "style": "fish",
+    "restingMinutes": 5,
+    "estimatedTotalTimeMin": 24,
+    "cookingMinutes": 24,
+    "targetTempC": 59,
+    "safetyNoteEn": "Cook until flesh flakes easily.",
+    "errorEn": "Cook until flesh flakes easily.",
+    "aliasesEn": [
+      "sea bream",
+      "dorada",
+      "gilt-head bream"
+    ],
+    "notesEn": "Mediterranean classic. Cook until flesh flakes easily.",
+    "tipsEn": [
+      "whole fish",
+      "lift fillets from bone"
+    ]
+  },
+  {
+    "id": "turbot_whole",
+    "animalId": "fish",
+    "category": "whole",
+    "canonicalNameEn": "Whole Turbot",
+    "inputProfileId": "fish-whole",
+    "defaultThicknessCm": 6,
+    "showThickness": false,
+    "allowedMethods": [
+      "grill_indirect",
+      "grill_direct"
+    ],
+    "defaultMethod": "grill_indirect",
+    "allowedDoneness": [
+      "medium"
+    ],
+    "style": "fish",
+    "restingMinutes": 5,
+    "estimatedTotalTimeMin": 35,
+    "cookingMinutes": 35,
+    "targetTempC": 58,
+    "safetyNoteEn": "Cook until flesh releases from bone.",
+    "errorEn": "Cook until flesh releases from bone.",
+    "aliasesEn": [
+      "turbot",
+      "rodaballo",
+      "piikkikampela"
+    ],
+    "notesEn": "Premium flatfish. Cook until flesh releases from bone.",
+    "tipsEn": [
+      "premium",
+      "whole fish",
+      "serve along fillet seams"
+    ]
+  },
+  {
+    "id": "monkfish_tail",
+    "animalId": "fish",
+    "category": "tail",
+    "canonicalNameEn": "Monkfish Tail",
     "inputProfileId": "fish-fillet",
     "defaultThicknessCm": 3,
     "showThickness": true,
@@ -569,23 +1839,98 @@ export const generatedCutProfiles = [
     ],
     "defaultMethod": "grill_direct",
     "allowedDoneness": [
-      "juicy",
-      "medium",
-      "well_done"
+      "medium"
     ],
     "style": "fish",
-    "restingMinutes": 2,
-    "errorEn": "Cooking without drying the skin: it loses crust and sticks.",
+    "restingMinutes": 5,
+    "estimatedTimeMinPerCm": 5,
+    "targetTempC": 58,
+    "safetyNoteEn": "Cook until opaque and firm.",
+    "errorEn": "Cook until opaque and firm.",
     "aliasesEn": [
-      "Salmon"
+      "monkfish",
+      "lotte",
+      "rape"
     ],
-    "tipsEn": []
+    "notesEn": "Meaty texture. Cook until opaque and firm.",
+    "tipsEn": [
+      "premium",
+      "firm",
+      "crosswise medallions"
+    ]
   },
   {
-    "id": "lubina",
+    "id": "cod_loin",
     "animalId": "fish",
-    "canonicalNameEn": "Sea bass",
-    "inputProfileId": "fish-whole",
+    "category": "loin",
+    "canonicalNameEn": "Cod Loin",
+    "inputProfileId": "fish-fillet",
+    "defaultThicknessCm": 3,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_indirect",
+      "grill_direct",
+      "oven_pan"
+    ],
+    "defaultMethod": "grill_indirect",
+    "allowedDoneness": [
+      "medium"
+    ],
+    "style": "fish",
+    "restingMinutes": 3,
+    "estimatedTimeMinPerCm": 5,
+    "targetTempC": 55,
+    "safetyNoteEn": "Cook gently; flakes easily.",
+    "errorEn": "Cook gently; flakes easily.",
+    "aliasesEn": [
+      "cod loin",
+      "turska"
+    ],
+    "notesEn": "Delicate lean fish. Cook gently; flakes easily.",
+    "tipsEn": [
+      "lean",
+      "serve in flakes"
+    ]
+  },
+  {
+    "id": "halibut_steak",
+    "animalId": "fish",
+    "category": "steak",
+    "canonicalNameEn": "Halibut Steak",
+    "inputProfileId": "fish-fillet",
+    "defaultThicknessCm": 3,
+    "showThickness": true,
+    "allowedMethods": [
+      "grill_direct",
+      "oven_pan"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "medium"
+    ],
+    "style": "fish",
+    "restingMinutes": 3,
+    "estimatedTimeMinPerCm": 5,
+    "targetTempC": 55,
+    "safetyNoteEn": "Do not overcook lean fish.",
+    "errorEn": "Do not overcook lean fish.",
+    "aliasesEn": [
+      "halibut",
+      "pallas"
+    ],
+    "notesEn": "Lean and firm. Do not overcook lean fish.",
+    "tipsEn": [
+      "premium",
+      "lean",
+      "against grain if portioned"
+    ]
+  },
+  {
+    "id": "swordfish_steak",
+    "animalId": "fish",
+    "category": "steak",
+    "canonicalNameEn": "Swordfish Steak",
+    "inputProfileId": "fish-fillet",
     "defaultThicknessCm": 2,
     "showThickness": true,
     "allowedMethods": [
@@ -594,47 +1939,97 @@ export const generatedCutProfiles = [
     ],
     "defaultMethod": "grill_direct",
     "allowedDoneness": [
-      "juicy",
-      "medium",
-      "well_done"
+      "medium"
     ],
     "style": "fish",
-    "restingMinutes": 2,
-    "errorEn": "Using excessive heat the whole time: it dries before browning well.",
+    "restingMinutes": 3,
+    "estimatedTimeMinPerCm": 4,
+    "targetTempC": 58,
+    "safetyNoteEn": "Cook to firm opaque texture.",
+    "errorEn": "Cook to firm opaque texture.",
     "aliasesEn": [
-      "Sea bass"
+      "swordfish",
+      "emperador"
     ],
-    "tipsEn": []
+    "notesEn": "Meaty fish steak. Cook to firm opaque texture.",
+    "tipsEn": [
+      "firm",
+      "quick",
+      "against the grain"
+    ]
   },
   {
-    "id": "dorada",
+    "id": "kingfish_beryx",
     "animalId": "fish",
-    "canonicalNameEn": "Sea bream",
+    "category": "whole",
+    "canonicalNameEn": "Alfonsino / Beryx",
     "inputProfileId": "fish-whole",
-    "defaultThicknessCm": 2,
-    "showThickness": true,
+    "defaultThicknessCm": 6,
+    "showThickness": false,
     "allowedMethods": [
+      "grill_indirect",
       "grill_direct",
       "oven_pan"
     ],
-    "defaultMethod": "grill_direct",
+    "defaultMethod": "grill_indirect",
     "allowedDoneness": [
-      "juicy",
-      "medium",
-      "well_done"
+      "medium"
     ],
     "style": "fish",
+    "restingMinutes": 5,
+    "estimatedTotalTimeMin": 27,
+    "cookingMinutes": 27,
+    "targetTempC": 58,
+    "safetyNoteEn": "Cook until opaque and flaky; exact market name varies.",
+    "errorEn": "Cook until opaque and flaky; exact market name varies.",
+    "aliasesEn": [
+      "virrey",
+      "Beryx decadactylus",
+      "alfonsino",
+      "red bream"
+    ],
+    "notesEn": "Virrey added as requested; scientific name Beryx decadactylus. Cook until opaque and flaky; exact market name varies.",
+    "tipsEn": [
+      "premium",
+      "whole fish",
+      "lift fillets from bone"
+    ]
+  },
+  {
+    "id": "corn_on_cob",
+    "animalId": "vegetables",
+    "category": "vegetable",
+    "canonicalNameEn": "Corn on the Cob",
+    "inputProfileId": "vegetable-format",
+    "defaultThicknessCm": 2,
+    "showThickness": false,
+    "allowedMethods": [
+      "vegetables_grill"
+    ],
+    "defaultMethod": "vegetables_grill",
+    "allowedDoneness": [],
+    "style": "vegetable",
     "restingMinutes": 2,
-    "errorEn": "Turning it too often: it breaks and loses juices.",
+    "estimatedTotalTimeMin": 14,
+    "cookingMinutes": 14,
+    "errorEn": "Turn often.",
     "aliasesEn": [
-      "Sea bream"
+      "corn",
+      "sweet corn",
+      "choclo"
     ],
-    "tipsEn": []
+    "notesEn": "Turn often.",
+    "tipsEn": [
+      "quick",
+      "easy",
+      "not applicable"
+    ]
   },
   {
-    "id": "maiz",
+    "id": "eggplant_slices",
     "animalId": "vegetables",
-    "canonicalNameEn": "Corn",
+    "category": "vegetable",
+    "canonicalNameEn": "Eggplant Slices",
     "inputProfileId": "vegetable-format",
     "defaultThicknessCm": 2,
     "showThickness": false,
@@ -644,74 +2039,26 @@ export const generatedCutProfiles = [
     "defaultMethod": "vegetables_grill",
     "allowedDoneness": [],
     "style": "vegetable",
-    "restingMinutes": 1,
-    "cookingMinutes": 25,
-    "errorEn": "Burning the outside before the inside softens.",
+    "restingMinutes": 2,
+    "estimatedTotalTimeMin": 11,
+    "cookingMinutes": 11,
+    "errorEn": "Salt beforehand if desired.",
     "aliasesEn": [
-      "Corn"
+      "eggplant",
+      "aubergine",
+      "munakoiso"
     ],
-    "notesEn": "Use oil salt and controlled direct heat. Pull when tender and browned.",
+    "notesEn": "Salt beforehand if desired.",
     "tipsEn": [
-      "Base time: 25 min",
-      "Cut evenly",
-      "Oil before grilling"
+      "vegetarian",
+      "quick",
+      "slice lengthwise or rounds"
     ]
   },
   {
-    "id": "berenjena",
+    "id": "asparagus",
     "animalId": "vegetables",
-    "canonicalNameEn": "Eggplant",
-    "inputProfileId": "vegetable-format",
-    "defaultThicknessCm": 2,
-    "showThickness": false,
-    "allowedMethods": [
-      "vegetables_grill"
-    ],
-    "defaultMethod": "vegetables_grill",
-    "allowedDoneness": [],
-    "style": "vegetable",
-    "restingMinutes": 1,
-    "cookingMinutes": 18,
-    "errorEn": "Burning the outside before the inside softens.",
-    "aliasesEn": [
-      "Eggplant"
-    ],
-    "notesEn": "Use oil salt and controlled direct heat. Pull when tender and browned.",
-    "tipsEn": [
-      "Base time: 18 min",
-      "Cut evenly",
-      "Oil before grilling"
-    ]
-  },
-  {
-    "id": "patata",
-    "animalId": "vegetables",
-    "canonicalNameEn": "Potato",
-    "inputProfileId": "vegetable-format",
-    "defaultThicknessCm": 2,
-    "showThickness": false,
-    "allowedMethods": [
-      "vegetables_grill"
-    ],
-    "defaultMethod": "vegetables_grill",
-    "allowedDoneness": [],
-    "style": "vegetable",
-    "restingMinutes": 1,
-    "cookingMinutes": 45,
-    "errorEn": "Burning the outside before the inside softens.",
-    "aliasesEn": [
-      "Potato"
-    ],
-    "notesEn": "Use oil salt and controlled direct heat. Pull when tender and browned.",
-    "tipsEn": [
-      "Base time: 45 min",
-      "Cut evenly",
-      "Oil before grilling"
-    ]
-  },
-  {
-    "id": "esparragos",
-    "animalId": "vegetables",
+    "category": "vegetable",
     "canonicalNameEn": "Asparagus",
     "inputProfileId": "vegetable-format",
     "defaultThicknessCm": 2,
@@ -723,22 +2070,25 @@ export const generatedCutProfiles = [
     "allowedDoneness": [],
     "style": "vegetable",
     "restingMinutes": 1,
-    "cookingMinutes": 8,
-    "errorEn": "Burning the outside before the inside softens.",
+    "estimatedTotalTimeMin": 7,
+    "cookingMinutes": 7,
+    "errorEn": "Fast cooking.",
     "aliasesEn": [
-      "Asparagus"
+      "asparagus",
+      "parsa"
     ],
-    "notesEn": "Use oil salt and controlled direct heat. Pull when tender and browned.",
+    "notesEn": "Fast cooking.",
     "tipsEn": [
-      "Base time: 8 min",
-      "Cut evenly",
-      "Oil before grilling"
+      "quick",
+      "easy",
+      "not applicable"
     ]
   },
   {
-    "id": "pimientos",
+    "id": "bell_peppers",
     "animalId": "vegetables",
-    "canonicalNameEn": "Peppers",
+    "category": "vegetable",
+    "canonicalNameEn": "Bell Peppers",
     "inputProfileId": "vegetable-format",
     "defaultThicknessCm": 2,
     "showThickness": false,
@@ -748,22 +2098,143 @@ export const generatedCutProfiles = [
     "defaultMethod": "vegetables_grill",
     "allowedDoneness": [],
     "style": "vegetable",
-    "restingMinutes": 1,
-    "cookingMinutes": 14,
-    "errorEn": "Burning the outside before the inside softens.",
+    "restingMinutes": 2,
+    "estimatedTotalTimeMin": 12,
+    "cookingMinutes": 12,
+    "errorEn": "Can peel after charring.",
     "aliasesEn": [
-      "Peppers"
+      "bell pepper",
+      "capsicum",
+      "morrón"
     ],
-    "notesEn": "Use oil salt and controlled direct heat. Pull when tender and browned.",
+    "notesEn": "Can peel after charring.",
     "tipsEn": [
-      "Base time: 14 min",
-      "Cut evenly",
-      "Oil before grilling"
+      "quick",
+      "easy",
+      "slice strips after cooking"
     ]
   },
   {
-    "id": "calabacin",
+    "id": "potato_halves",
     "animalId": "vegetables",
+    "category": "vegetable",
+    "canonicalNameEn": "Potato Halves",
+    "inputProfileId": "vegetable-format",
+    "defaultThicknessCm": 2,
+    "showThickness": false,
+    "allowedMethods": [
+      "vegetables_grill"
+    ],
+    "defaultMethod": "vegetables_grill",
+    "allowedDoneness": [],
+    "style": "vegetable",
+    "restingMinutes": 3,
+    "estimatedTotalTimeMin": 30,
+    "cookingMinutes": 30,
+    "errorEn": "Parboiling improves result.",
+    "aliasesEn": [
+      "potato",
+      "papa",
+      "peruna"
+    ],
+    "notesEn": "Parboiling improves result.",
+    "tipsEn": [
+      "side",
+      "family",
+      "halve or wedges"
+    ]
+  },
+  {
+    "id": "mushrooms",
+    "animalId": "vegetables",
+    "category": "vegetable",
+    "canonicalNameEn": "Mushrooms",
+    "inputProfileId": "vegetable-format",
+    "defaultThicknessCm": 2,
+    "showThickness": false,
+    "allowedMethods": [
+      "vegetables_grill"
+    ],
+    "defaultMethod": "vegetables_grill",
+    "allowedDoneness": [],
+    "style": "vegetable",
+    "restingMinutes": 2,
+    "estimatedTotalTimeMin": 9,
+    "cookingMinutes": 9,
+    "errorEn": "Avoid overcrowding.",
+    "aliasesEn": [
+      "mushrooms",
+      "champignons",
+      "sieni"
+    ],
+    "notesEn": "Avoid overcrowding.",
+    "tipsEn": [
+      "quick",
+      "easy",
+      "not applicable"
+    ]
+  },
+  {
+    "id": "onion_halves",
+    "animalId": "vegetables",
+    "category": "vegetable",
+    "canonicalNameEn": "Onion Halves",
+    "inputProfileId": "vegetable-format",
+    "defaultThicknessCm": 2,
+    "showThickness": false,
+    "allowedMethods": [
+      "vegetables_grill"
+    ],
+    "defaultMethod": "vegetables_grill",
+    "allowedDoneness": [],
+    "style": "vegetable",
+    "restingMinutes": 2,
+    "estimatedTotalTimeMin": 19,
+    "cookingMinutes": 19,
+    "errorEn": "Keep root for structure.",
+    "aliasesEn": [
+      "onion",
+      "sipuli"
+    ],
+    "notesEn": "Keep root for structure.",
+    "tipsEn": [
+      "side",
+      "easy",
+      "halve through root"
+    ]
+  },
+  {
+    "id": "carrots",
+    "animalId": "vegetables",
+    "category": "vegetable",
+    "canonicalNameEn": "Carrots",
+    "inputProfileId": "vegetable-format",
+    "defaultThicknessCm": 2,
+    "showThickness": false,
+    "allowedMethods": [
+      "vegetables_grill"
+    ],
+    "defaultMethod": "vegetables_grill",
+    "allowedDoneness": [],
+    "style": "vegetable",
+    "restingMinutes": 2,
+    "estimatedTotalTimeMin": 15,
+    "cookingMinutes": 15,
+    "errorEn": "Glaze works well.",
+    "aliasesEn": [
+      "carrot",
+      "porkkana"
+    ],
+    "notesEn": "Glaze works well.",
+    "tipsEn": [
+      "side",
+      "lengthwise halves"
+    ]
+  },
+  {
+    "id": "zucchini",
+    "animalId": "vegetables",
+    "category": "vegetable",
     "canonicalNameEn": "Zucchini",
     "inputProfileId": "vegetable-format",
     "defaultThicknessCm": 2,
@@ -775,42 +2246,19 @@ export const generatedCutProfiles = [
     "allowedDoneness": [],
     "style": "vegetable",
     "restingMinutes": 1,
-    "cookingMinutes": 10,
-    "errorEn": "Burning the outside before the inside softens.",
+    "estimatedTotalTimeMin": 8,
+    "cookingMinutes": 8,
+    "errorEn": "Do not overcook.",
     "aliasesEn": [
-      "Zucchini"
+      "zucchini",
+      "courgette",
+      "kesäkurpitsa"
     ],
-    "notesEn": "Use oil salt and controlled direct heat. Pull when tender and browned.",
+    "notesEn": "Do not overcook.",
     "tipsEn": [
-      "Base time: 10 min",
-      "Cut evenly",
-      "Oil before grilling"
-    ]
-  },
-  {
-    "id": "setas",
-    "animalId": "vegetables",
-    "canonicalNameEn": "Mushrooms",
-    "inputProfileId": "vegetable-format",
-    "defaultThicknessCm": 2,
-    "showThickness": false,
-    "allowedMethods": [
-      "vegetables_grill"
-    ],
-    "defaultMethod": "vegetables_grill",
-    "allowedDoneness": [],
-    "style": "vegetable",
-    "restingMinutes": 1,
-    "cookingMinutes": 10,
-    "errorEn": "Burning the outside before the inside softens.",
-    "aliasesEn": [
-      "Mushrooms"
-    ],
-    "notesEn": "Use oil salt and controlled direct heat. Pull when tender and browned.",
-    "tipsEn": [
-      "Base time: 10 min",
-      "Cut evenly",
-      "Oil before grilling"
+      "quick",
+      "easy",
+      "lengthwise slices"
     ]
   }
 ] satisfies GeneratedCutProfile[];
