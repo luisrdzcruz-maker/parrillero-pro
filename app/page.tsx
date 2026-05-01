@@ -883,12 +883,8 @@ function HomeContent() {
     const modeChanged = nextMode !== currentNav.mode;
     const stepChanged = nextCookingStep !== currentNav.cookingStep;
     const contextChanged = !isSameCookingContext(nextCookingContext, currentNav.cookingContext);
-    const isInitializationReplace = requestedMethod === "replace" && !navInitializedRef.current;
     const navChanged = modeChanged || stepChanged || contextChanged;
-    const shouldPush =
-      !isInitializationReplace &&
-      navChanged &&
-      (requestedMethod === "push" || !isApplyingPopRef.current);
+    const shouldPush = requestedMethod === "push" && navChanged && !isApplyingPopRef.current;
     const method: "push" | "replace" = shouldPush ? "push" : "replace";
 
     setMode(nextMode);
