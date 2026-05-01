@@ -1,11 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { Mode } from "@/components/navigation/AppHeader";
-import type { AnimalLabel } from "@/lib/media/animalMedia";
+import { buildCookingDetailsUrl } from "@/lib/navigation/cookingNavigation";
+import type { Animal } from "@/lib/types/domain";
 import type { AppText, Lang } from "@/lib/i18n/texts";
-import { buildLiveUrl } from "@/lib/navigation/buildLiveUrl";
 import { type MouseEvent, type ReactNode, useLayoutEffect, useState } from "react";
 
 // ─── Entrance animation ───────────────────────────────────────────────────────
@@ -39,14 +38,16 @@ function FadeIn({ children, delay = 0 }: { children: ReactNode; delay?: number }
 function HeroSection({
   t,
   onStartCooking,
+  onPlanBbq,
+  onUnknown,
 }: {
   t: AppText;
   onStartCooking: (e: MouseEvent<HTMLButtonElement>) => void;
+  onPlanBbq: () => void;
+  onUnknown: () => void;
 }) {
-  const chips = [t.homeChipDoneness, t.homeChipTiming, t.homeChipNoGuesswork];
-
   return (
-    <section className="relative overflow-hidden rounded-[2rem] border border-orange-300/12 bg-[#050301] px-5 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.72)] sm:px-7 sm:py-7">
+    <section className="relative overflow-hidden rounded-[2rem] border border-orange-300/12 bg-[#050301] px-5 py-6 shadow-[0_24px_80px_rgba(0,0,0,0.72)] sm:px-7 sm:py-8">
       <div
         className="animate-fire-breathe pointer-events-none absolute -left-28 -top-32 h-80 w-80 rounded-full"
         style={{ background: "radial-gradient(circle, rgba(234,88,12,0.28) 0%, transparent 66%)" }}
@@ -84,210 +85,80 @@ function HeroSection({
           {t.homeSubtitle}
         </p>
 
-        <div className="mt-5 flex flex-wrap gap-2">
-          {chips.map((chip) => (
-            <span
-              key={chip}
-              className="rounded-full border border-white/10 bg-white/[0.045] px-3 py-1.5 text-[11px] font-bold text-stone-200/82 backdrop-blur-sm"
+        <div className="mt-6 grid gap-2.5">
+          <div className="relative">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -inset-2 rounded-[24px] bg-orange-500/30 blur-xl"
+            />
+            <button
+              type="button"
+              onClick={onStartCooking}
+              className="relative min-h-[56px] w-full touch-manipulation rounded-2xl bg-orange-500 px-6 py-4 text-sm font-black text-black shadow-[0_10px_40px_rgba(234,88,12,0.45)] transition-all duration-200 hover:bg-orange-400 active:scale-[0.98] sm:text-base"
             >
-              {chip}
-            </span>
-          ))}
-        </div>
+              {t.homePrimaryCta} <span aria-hidden className="ml-1.5">→</span>
+            </button>
+          </div>
 
-        <div className="relative mt-5 inline-flex">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -inset-2 rounded-[22px] bg-orange-500/30 blur-xl"
-          />
-          <button
-            type="button"
-            onClick={onStartCooking}
-            className="relative min-h-[50px] touch-manipulation rounded-2xl bg-orange-500 px-6 py-3 text-sm font-black text-black shadow-[0_10px_40px_rgba(234,88,12,0.45)] transition-all duration-200 hover:bg-orange-400 active:scale-[0.97] sm:text-base"
-          >
-            {t.homePrimaryCta} <span aria-hidden className="ml-1.5">→</span>
-          </button>
+          <div className="grid grid-cols-2 gap-2.5">
+            <button
+              type="button"
+              onClick={onPlanBbq}
+              className="min-h-[48px] touch-manipulation rounded-2xl border border-white/10 bg-white/[0.055] px-4 py-3 text-sm font-black text-white transition-all duration-200 hover:border-orange-300/30 hover:bg-white/[0.08] active:scale-[0.98]"
+            >
+              {t.homeSecondaryCta}
+            </button>
+            <button
+              type="button"
+              onClick={onUnknown}
+              className="min-h-[48px] touch-manipulation rounded-2xl border border-orange-300/18 bg-orange-500/10 px-4 py-3 text-sm font-black text-orange-100 transition-all duration-200 hover:border-orange-300/40 hover:bg-orange-500/14 active:scale-[0.98]"
+            >
+              {t.homeUnknownCta}
+            </button>
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-// ─── Animal quick-pick shelf ───────────────────────────────────────────────────
-// Horizontal scroll row — each card pre-selects protein and jumps to cut step.
+// ─── Popular cuts ─────────────────────────────────────────────────────────────
 
-type HomeAnimal = Exclude<AnimalLabel, "Pescado">;
-
-type AnimalEntry = {
-  animal: HomeAnimal;
-  emoji: string;
-  image: string;
+type PopularCut = {
+  label: string;
+  animal: Animal;
+  cutId: string;
+  doneness?: string;
+  thickness?: string;
 };
 
-const ANIMAL_ENTRIES: AnimalEntry[] = [
-  {
-    animal: "Vacuno",
-    emoji: "🥩",
-    image: "/images/vacuno/ribeye-cooked.webp",
-  },
-  {
-    animal: "Cerdo",
-    emoji: "🐷",
-    image: "/images/cerdo/ribs-bbq.webp",
-  },
-  {
-    animal: "Pollo",
-    emoji: "🍗",
-    image: "/images/pollo/muslos-cooked.webp",
-  },
-  {
-    animal: "Verduras",
-    emoji: "🌿",
-    image: "/images/verduras/pimientos.webp",
-  },
-];
-
-function getAnimalCopy(t: AppText, animal: HomeAnimal) {
-  switch (animal) {
-    case "Vacuno":
-      return { label: t.homeAnimalBeef, hint: t.homeAnimalBeefHint };
-    case "Cerdo":
-      return { label: t.homeAnimalPork, hint: t.homeAnimalPorkHint };
-    case "Pollo":
-      return { label: t.homeAnimalChicken, hint: t.homeAnimalChickenHint };
-    case "Verduras":
-      return { label: t.homeAnimalVegetables, hint: t.homeAnimalVegetablesHint };
-  }
-}
-
-function AnimalQuickCard({
-  entry,
-  t,
-  onClick,
+function PopularCuts({
+  cuts,
+  title,
+  onSelect,
 }: {
-  entry: AnimalEntry;
-  t: AppText;
-  onClick: (e: MouseEvent<HTMLButtonElement>) => void;
+  cuts: PopularCut[];
+  title: string;
+  onSelect: (cut: PopularCut, e: MouseEvent<HTMLButtonElement>) => void;
 }) {
-  const [imgError, setImgError] = useState(false);
-  const copy = getAnimalCopy(t, entry.animal);
-
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="group relative w-[40vw] max-w-[172px] shrink-0 touch-manipulation snap-start overflow-hidden rounded-2xl border border-white/[0.07] bg-zinc-950 text-left transition-all duration-200 hover:border-orange-400/30 hover:shadow-[0_6px_32px_rgba(255,106,0,0.18)] active:scale-[0.95] sm:w-[160px]"
-      style={{ minHeight: "112px" }}
-    >
-      {/* Background image */}
-      {!imgError ? (
-        <Image
-          src={entry.image}
-          alt=""
-          fill
-          sizes="180px"
-          className="object-cover object-center transition-transform duration-500 group-hover:scale-[1.10]"
-          onError={() => setImgError(true)}
-        />
-      ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-950/60 via-zinc-900 to-black" />
-      )}
-
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/55 to-black/08" />
-      {/* Warm tint */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_0%,rgba(255,106,0,0.16),transparent_45%)]" />
-      {/* Hover border glow */}
-      <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-orange-400/0 to-transparent transition-all duration-300 group-hover:via-orange-400/55" />
-
-      {/* Content */}
-      <div className="relative z-10 flex h-full min-h-[112px] flex-col justify-between p-3">
-        {/* Emoji chip */}
-        <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/15 bg-black/55 text-base shadow-sm backdrop-blur-sm">
-          {entry.emoji}
-        </span>
-
-        {/* Label */}
-        <div>
-          <p className="text-[15px] font-black tracking-[-0.02em] text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
-            {copy.label}
-          </p>
-          <p className="mt-0.5 text-[11px] font-medium text-slate-400 drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
-            {copy.hint}
-          </p>
-        </div>
+    <section className="rounded-[1.65rem] border border-white/[0.07] bg-white/[0.03] p-4 backdrop-blur">
+      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/32">
+        {title}
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {cuts.map((cut) => (
+          <button
+            key={cut.cutId}
+            type="button"
+            onClick={(e) => onSelect(cut, e)}
+            className="min-h-10 touch-manipulation rounded-full border border-white/10 bg-black/35 px-4 py-2 text-sm font-black text-stone-100 transition-all duration-200 hover:border-orange-300/40 hover:bg-orange-500/12 active:scale-[0.97]"
+          >
+            {cut.label}
+          </button>
+        ))}
       </div>
-    </button>
-  );
-}
-
-// ─── Quick action card (2 × 2 grid) ──────────────────────────────────────────
-
-function QuickActionCard({
-  icon,
-  image,
-  label,
-  sub,
-  accent = "orange",
-  onClick,
-}: {
-  icon: string;
-  image: string;
-  label: string;
-  sub: string;
-  accent?: "orange" | "red";
-  onClick: (e: MouseEvent<HTMLButtonElement>) => void;
-}) {
-  const [imgError, setImgError] = useState(false);
-  const accentClass =
-    accent === "red"
-      ? "border-red-400/35 bg-red-500/14 text-red-100"
-      : "border-orange-400/35 bg-orange-500/14 text-orange-100";
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="group relative min-h-[118px] touch-manipulation select-none overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-950 text-left transition-all duration-300 hover:border-orange-400/30 hover:shadow-[0_8px_48px_rgba(255,106,0,0.16)] active:scale-[0.96] sm:min-h-[150px]"
-    >
-      {!imgError ? (
-        <Image
-          src={image}
-          alt=""
-          fill
-          sizes="(min-width: 640px) 50vw, 50vw"
-          className="object-cover object-center transition-transform duration-500 group-hover:scale-[1.08]"
-          onError={() => setImgError(true)}
-        />
-      ) : (
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_15%,rgba(255,106,0,0.22),transparent_48%),linear-gradient(145deg,#18181b,#030303)]" />
-      )}
-
-      <div className="absolute inset-0 bg-gradient-to-t from-black/98 via-black/76 to-black/20" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_0%,rgba(255,106,0,0.18),transparent_42%)]" />
-      <div className="pointer-events-none absolute -right-8 -top-8 h-36 w-36 rounded-full bg-orange-500/0 blur-3xl transition-all duration-500 group-hover:bg-orange-500/20" />
-      <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-orange-400/0 to-transparent transition-all duration-300 group-hover:via-orange-400/50" />
-
-      <div className="relative z-10 flex min-h-[118px] flex-col justify-between p-3.5 sm:min-h-[150px] sm:p-5">
-        <div className="flex items-start justify-between gap-2">
-          <span className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-white/18 bg-black/60 text-[20px] shadow-[0_2px_16px_rgba(0,0,0,0.7)] backdrop-blur-md">
-            {icon}
-          </span>
-          <span className={`rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] backdrop-blur-sm ${accentClass}`}>
-            <span aria-hidden>→</span>
-          </span>
-        </div>
-
-        <div>
-          <p className="text-[15px] font-black leading-tight tracking-[-0.025em] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] sm:text-[16px]">
-            {label}
-          </p>
-          <p className="mt-1 line-clamp-2 text-[11px] font-medium leading-[1.35] text-stone-300/70 drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)] sm:text-[12px]">
-            {sub}
-          </p>
-        </div>
-      </div>
-    </button>
+    </section>
   );
 }
 
@@ -335,16 +206,13 @@ type RippleState = { x: number; y: number; id: number } | null;
 export function HomeScreen({
   lang,
   onLangChange,
-  savedMenusCount,
   onModeChange,
-  onStartCookingWith,
   t,
 }: {
   lang: Lang;
   onLangChange: (lang: Lang) => void;
   savedMenusCount: number;
   onModeChange: (mode: Mode) => void;
-  onStartCookingWith?: (animal: AnimalLabel) => void;
   t: AppText;
 }) {
   const router = useRouter();
@@ -358,51 +226,52 @@ export function HomeScreen({
     setTimeout(action, 150);
   }
 
-  const savedSub =
-    savedMenusCount > 0
-      ? `${savedMenusCount} ${savedMenusCount === 1 ? t.homeSavedPlanSingular : t.homeSavedPlanPlural}`
-      : t.homeSavedSubEmpty;
-
-  const quickActions: {
-    icon: string;
-    image: string;
-    label: string;
-    sub: string;
-    accent?: "orange" | "red";
-    onClick: (e: MouseEvent<HTMLButtonElement>) => void;
-  }[] = [
+  const popularCuts: PopularCut[] = [
     {
-      icon: "🥩",
-      image: "/images/vacuno/ribeye-cooked.webp",
-      label: t.homeGuidedCooking,
-      sub: t.homeGuidedCookingSub,
-      onClick: (e) => fireRipple(e.clientX, e.clientY, () => onModeChange("coccion")),
+      label: t.homePopularRibeye,
+      animal: "beef",
+      cutId: "ribeye",
+      doneness: "medium_rare",
+      thickness: "2",
     },
     {
-      icon: "🍖",
-      image: "/images/cerdo/ribs-bbq.webp",
-      label: t.homeParrillada,
-      sub: t.homeParrilladaSub,
-      onClick: () => onModeChange("plan"),
+      label: t.homePopularPicanha,
+      animal: "beef",
+      cutId: "picanha",
+      doneness: "medium_rare",
+      thickness: "2",
     },
     {
-      icon: "🔥",
-      image: "/images/vacuno/tomahawk-cooked.webp",
-      label: t.homeLiveCooking,
-      sub: t.homeLiveCookingSub,
-      accent: "red",
-      onClick: () => {
-        router.push(buildLiveUrl({}));
-      },
+      label: t.homePopularChickenBreast,
+      animal: "chicken",
+      cutId: "chicken_breast",
+      doneness: "safe",
+      thickness: "2",
     },
     {
-      icon: "📚",
-      image: "/images/pollo/muslos-cooked.webp",
-      label: t.homeSaved,
-      sub: savedSub,
-      onClick: () => onModeChange("guardados"),
+      label: t.homePopularSalmon,
+      animal: "fish",
+      cutId: "salmon_fillet",
+      doneness: "medium",
+      thickness: "2",
+    },
+    {
+      label: t.homePopularAsparagus,
+      animal: "vegetables",
+      cutId: "asparagus",
     },
   ];
+
+  function openPopularCut(cut: PopularCut) {
+    router.push(
+      buildCookingDetailsUrl({
+        animal: cut.animal,
+        cutId: cut.cutId,
+        doneness: cut.doneness,
+        thickness: cut.thickness,
+      }),
+    );
+  }
 
   return (
     <>
@@ -451,60 +320,25 @@ export function HomeScreen({
       <FadeIn>
         <HeroSection
           t={t}
-          onStartCooking={(e) => fireRipple(e.clientX, e.clientY, () => onModeChange("coccion"))}
+          onStartCooking={(e) =>
+            fireRipple(e.clientX, e.clientY, () => router.push("/?mode=coccion&step=cut"))
+          }
+          onPlanBbq={() => onModeChange("plan")}
+          onUnknown={() => onModeChange("plan")}
         />
       </FadeIn>
 
-      {/* ── Primary Actions 2×2 ───────────────────────────────────────────── */}
+      {/* ── Popular cuts ───────────────────────────────────────────────────── */}
       <FadeIn delay={60}>
-        <section>
-          <p className="mb-2 text-[10px] font-black uppercase tracking-[0.24em] text-white/28">
-            {t.homeActionsTitle}
-          </p>
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
-            {quickActions.map((action) => (
-              <QuickActionCard
-                key={action.label}
-                icon={action.icon}
-                image={action.image}
-                label={action.label}
-                sub={action.sub}
-                accent={action.accent}
-                onClick={action.onClick}
-              />
-            ))}
-          </div>
-        </section>
-      </FadeIn>
-
-      {/* ── Animal quick-pick shelf ────────────────────────────────────────── */}
-      <FadeIn delay={120}>
-        <section>
-          <p className="mb-2.5 text-[10px] font-black uppercase tracking-[0.24em] text-white/22">
-            {t.homeAnimalTitle}
-          </p>
-          {/* Horizontal scroll — hides scrollbar visually but stays accessible */}
-          <div className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {ANIMAL_ENTRIES.map((entry) => (
-              <AnimalQuickCard
-                key={entry.animal}
-                entry={entry}
-                t={t}
-                onClick={(e) =>
-                  fireRipple(e.clientX, e.clientY, () =>
-                    onStartCookingWith
-                      ? onStartCookingWith(entry.animal)
-                      : onModeChange("coccion"),
-                  )
-                }
-              />
-            ))}
-          </div>
-        </section>
+        <PopularCuts
+          cuts={popularCuts}
+          title={t.homePopularCutsTitle}
+          onSelect={(cut, e) => fireRipple(e.clientX, e.clientY, () => openPopularCut(cut))}
+        />
       </FadeIn>
 
       {/* ── Settings strip ─────────────────────────────────────────────────── */}
-      <FadeIn delay={200}>
+      <FadeIn delay={120}>
         <HomeSettingsStrip t={t} lang={lang} onLangChange={onLangChange} />
       </FadeIn>
     </div>

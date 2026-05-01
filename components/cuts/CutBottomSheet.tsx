@@ -6,12 +6,15 @@ import type { GeneratedCutProfile } from "@/lib/generated/cutProfiles";
 import { getSetupVisual } from "@/lib/setup/getSetupVisual";
 import { SETUP_VISUAL_FALLBACK } from "@/lib/setupVisualMap";
 import {
-  getCuttingInstruction,
+  getCutDescriptor,
   getDisplayName,
+  getDifficultyLabel,
   getEstimatedTimeLabel,
+  getHelpfulAlias,
   getSafetyNote,
-  getShortAlias,
+  getStyleLabel,
   getTemperatureLabel,
+  getWhyChooseLabel,
 } from "./cutProfileSelectors";
 import { animalLabels, methodLabels } from "./cutSelectionTypes";
 
@@ -28,6 +31,9 @@ export function CutBottomSheet({ profile, onClose, onStartCooking }: CutBottomSh
   if (!profile) return null;
 
   const temperature = getTemperatureLabel(profile);
+  const helpfulAlias = getHelpfulAlias(profile);
+  const bestMethod = methodLabels[profile.defaultMethod] ?? getStyleLabel(profile);
+  const methodValue = temperature ? `${bestMethod} · ${temperature}` : bestMethod;
 
   return (
     <aside className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-3xl px-3 pb-3">
@@ -39,21 +45,26 @@ export function CutBottomSheet({ profile, onClose, onStartCooking }: CutBottomSh
               {animalLabels[profile.animalId]}
             </p>
             <h2 className="mt-1 truncate text-2xl font-black tracking-tight text-white">{getDisplayName(profile)}</h2>
-            <p className="mt-1 truncate text-xs font-semibold text-zinc-500">{getShortAlias(profile)}</p>
+            <p className="mt-1 line-clamp-2 text-xs font-semibold leading-5 text-zinc-500">
+              {helpfulAlias ? `Also known as ${helpfulAlias}.` : getCutDescriptor(profile)}
+            </p>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-zinc-300 transition hover:bg-white/10 active:scale-[0.97]"
           >
-            Cerrar
+            Close
           </button>
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          <SheetPanel title="Metodos" value={profile.allowedMethods.map((method) => methodLabels[method]).join(", ")} />
-          <SheetPanel title="Temp" value={temperature ?? "Visual"} />
-          <SheetPanel title="Tiempo" value={`${getEstimatedTimeLabel(profile)} · reposo ${profile.restingMinutes} min`} />
+          <SheetPanel title="Why choose it" value={getWhyChooseLabel(profile)} />
+          <SheetPanel title="Best method" value={methodValue} />
+          <SheetPanel
+            title="Time and difficulty"
+            value={`${getEstimatedTimeLabel(profile)} · ${getDifficultyLabel(profile)} · rest ${profile.restingMinutes} min`}
+          />
         </div>
 
         <div className="mt-3 overflow-hidden rounded-[1.35rem] border border-white/10 bg-slate-950 shadow-lg shadow-black/25 ring-1 ring-inset ring-white/[0.04]">
@@ -82,9 +93,8 @@ export function CutBottomSheet({ profile, onClose, onStartCooking }: CutBottomSh
           </div>
         </div>
 
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <SheetPanel title="Corte" value={getCuttingInstruction(profile)} />
-          <SheetPanel title="Seguridad" value={getSafetyNote(profile)} tone="danger" />
+        <div className="mt-3">
+          <SheetPanel title="Safety note" value={getSafetyNote(profile)} tone="danger" />
         </div>
 
         <button
@@ -114,7 +124,11 @@ function SheetPanel({
         tone === "danger" ? "border-red-400/20 bg-red-500/10" : "border-white/10 bg-white/[0.045]"
       }`}
     >
-      <p className={`text-[10px] font-black uppercase tracking-[0.18em] ${tone === "danger" ? "text-red-200" : "text-zinc-500"}`}>
+      <p
+        className={`text-[10px] font-black uppercase tracking-[0.18em] ${
+          tone === "danger" ? "text-red-200" : "text-zinc-500"
+        }`}
+      >
         {title}
       </p>
       <p className="mt-2 line-clamp-3 text-sm font-semibold leading-5 text-zinc-100">{value}</p>

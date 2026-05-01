@@ -12,12 +12,15 @@ type IntentSelectorProps = {
 
 export function IntentSelector({ selectedIntent, onIntentChange }: IntentSelectorProps) {
   return (
-    <section className="rounded-[1.5rem] border border-white/10 bg-white/[0.045] p-3 shadow-2xl shadow-black/25 backdrop-blur-xl">
+    <section className="min-w-0 max-w-full rounded-[1.5rem] border border-white/10 bg-white/[0.045] p-3 shadow-2xl shadow-black/25 backdrop-blur-xl">
       <div className="mb-3 flex items-center justify-between px-1">
-        <h2 className="text-sm font-black text-white">Intencion</h2>
-        <span className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-300">Filtro</span>
+        <div>
+          <h2 className="text-sm font-black text-white">Cooking goal</h2>
+          <p className="mt-0.5 text-[11px] font-semibold text-zinc-500">Filter by the result you want</p>
+        </div>
+        <span className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-300">Filter</span>
       </div>
-      <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
+      <div className="flex max-w-full min-w-0 gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
         {intents.map((intent) => {
           const isActive = selectedIntent === intent;
           return (
