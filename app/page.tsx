@@ -1918,7 +1918,7 @@ ERROR
 
   function navigateMode(nextMode: Mode) {
     if (nextMode === mode) return;
-    const nextStep: CookingWizardStep = nextMode === "coccion" ? "animal" : cookingStep;
+    const nextStep: CookingWizardStep = nextMode === "coccion" ? "cut" : cookingStep;
     if (nextMode !== "guardados") setSelectedSavedMenu(null);
     // Soft Pro prompt for multi-item planning (non-blocking — navigation still proceeds)
     if ((nextMode === "plan" || nextMode === "parrillada") && !isPro()) {
