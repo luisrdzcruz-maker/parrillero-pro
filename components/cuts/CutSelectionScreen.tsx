@@ -116,8 +116,8 @@ export function CutSelectionScreen({
   };
 
   return (
-    <main className="min-h-full bg-[#030201] text-white">
-      <div className="pointer-events-none fixed inset-0">
+    <main className="relative min-h-full w-full max-w-full overflow-x-hidden bg-[#030201] text-white">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -left-32 -top-36 h-[420px] w-[420px] rounded-full bg-orange-500/20 blur-[110px]" />
         <div className="absolute right-[-180px] top-32 h-[380px] w-[380px] rounded-full bg-red-600/15 blur-[120px]" />
         <div className="absolute bottom-[-220px] left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-amber-500/10 blur-[150px]" />
@@ -147,8 +147,8 @@ export function CutSelectionScreen({
           </div>
         </header>
 
-        <div className="mt-5 grid gap-4 lg:grid-cols-[340px_1fr]">
-          <aside className="space-y-4 lg:sticky lg:top-5 lg:self-start">
+        <div className="mt-5 grid min-w-0 gap-4 lg:grid-cols-[340px_1fr]">
+          <aside className="min-w-0 max-w-full space-y-4 lg:sticky lg:top-5 lg:self-start">
             <IntentSelector selectedIntent={selectedIntent} onIntentChange={handleIntentChange} />
             <QuickPicks
               animal={selectedAnimal}

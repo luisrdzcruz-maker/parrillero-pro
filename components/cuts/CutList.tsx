@@ -40,11 +40,11 @@ export function CutList({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 max-w-full space-y-4">
       {groups.map((group) => (
         <section
           key={group.id}
-          className="rounded-[1.8rem] border border-white/10 bg-white/[0.04] p-3 shadow-2xl shadow-black/20 backdrop-blur-xl"
+          className="min-w-0 max-w-full rounded-[1.8rem] border border-white/10 bg-white/[0.04] p-3 shadow-2xl shadow-black/20 backdrop-blur-xl"
         >
           <div className="mb-3 flex items-end justify-between gap-3 px-1">
             <div>
@@ -55,7 +55,7 @@ export function CutList({
               {group.cuts.length}
             </span>
           </div>
-          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {group.cuts.map((profile) => (
               <CutCard
                 key={profile.id}
