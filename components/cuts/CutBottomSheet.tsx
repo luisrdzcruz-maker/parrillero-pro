@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import type { GeneratedCutProfile } from "@/lib/generated/cutProfiles";
+import type { Lang } from "@/lib/i18n/texts";
 import { getSetupVisual } from "@/lib/setup/getSetupVisual";
 import { SETUP_VISUAL_FALLBACK } from "@/lib/setupVisualMap";
 import {
@@ -20,23 +21,38 @@ import { animalLabels, methodLabels } from "./cutSelectionTypes";
 
 type CutBottomSheetProps = {
   profile: GeneratedCutProfile | null;
+  lang?: Lang;
   onClose: () => void;
   onStartCooking?: (profile: GeneratedCutProfile) => void;
 };
 
-export function CutBottomSheet({ profile, onClose, onStartCooking }: CutBottomSheetProps) {
+function getPrimaryCtaLabel(lang: Lang | undefined, cutName: string) {
+  switch (lang) {
+    case "es":
+      return `Cocinar ${cutName}`;
+    case "fi":
+      return `Kokkaa ${cutName}`;
+    case "en":
+    default:
+      return `Cook ${cutName}`;
+  }
+}
+
+export function CutBottomSheet({ profile, lang, onClose, onStartCooking }: CutBottomSheetProps) {
   const [visualFallbackStep, setVisualFallbackStep] = useState<"none" | "fallback">("none");
   const setupVisualSrc = useMemo(() => (profile ? getSetupVisual(profile.id) : null), [profile]);
   const visualSrc = visualFallbackStep === "fallback" ? SETUP_VISUAL_FALLBACK : setupVisualSrc;
   if (!profile) return null;
 
+  const displayName = getDisplayName(profile);
   const temperature = getTemperatureLabel(profile);
   const helpfulAlias = getHelpfulAlias(profile);
   const bestMethod = methodLabels[profile.defaultMethod] ?? getStyleLabel(profile);
   const methodValue = temperature ? `${bestMethod} · ${temperature}` : bestMethod;
+  const primaryCtaLabel = getPrimaryCtaLabel(lang, displayName);
 
   return (
-    <aside className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-3xl px-3 pb-3">
+    <aside className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-3xl px-3 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-3">
       <div className="rounded-t-[2rem] border border-white/10 bg-[#070503]/95 p-4 shadow-[0_-28px_110px_rgba(0,0,0,0.72)] backdrop-blur-2xl sm:rounded-[2rem] sm:p-5">
         <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-white/20" />
         <div className="flex items-start justify-between gap-4">
@@ -44,7 +60,7 @@ export function CutBottomSheet({ profile, onClose, onStartCooking }: CutBottomSh
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-300">
               {animalLabels[profile.animalId]}
             </p>
-            <h2 className="mt-1 truncate text-2xl font-black tracking-tight text-white">{getDisplayName(profile)}</h2>
+            <h2 className="mt-1 truncate text-2xl font-black tracking-tight text-white">{displayName}</h2>
             <p className="mt-1 line-clamp-2 text-xs font-semibold leading-5 text-zinc-500">
               {helpfulAlias ? `Also known as ${helpfulAlias}.` : getCutDescriptor(profile)}
             </p>
@@ -57,6 +73,14 @@ export function CutBottomSheet({ profile, onClose, onStartCooking }: CutBottomSh
             Close
           </button>
         </div>
+
+        <button
+          type="button"
+          onClick={() => onStartCooking?.(profile)}
+          className="mt-4 w-full rounded-[1.35rem] bg-gradient-to-r from-orange-400 to-red-500 px-5 py-4 text-sm font-black text-black shadow-[0_20px_70px_rgba(249,115,22,0.25)] transition active:scale-[0.98]"
+        >
+          {primaryCtaLabel}
+        </button>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
           <SheetPanel title="Why choose it" value={getWhyChooseLabel(profile)} />
@@ -72,7 +96,7 @@ export function CutBottomSheet({ profile, onClose, onStartCooking }: CutBottomSh
             {visualSrc ? (
               <Image
                 src={visualSrc}
-                alt={`Setup visual for ${getDisplayName(profile)}`}
+                alt={`Setup visual for ${displayName}`}
                 fill
                 loading="lazy"
                 sizes="(min-width: 640px) 560px, 100vw"
@@ -96,14 +120,6 @@ export function CutBottomSheet({ profile, onClose, onStartCooking }: CutBottomSh
         <div className="mt-3">
           <SheetPanel title="Safety note" value={getSafetyNote(profile)} tone="danger" />
         </div>
-
-        <button
-          type="button"
-          onClick={() => onStartCooking?.(profile)}
-          className="mt-4 w-full rounded-[1.35rem] bg-gradient-to-r from-orange-400 to-red-500 px-5 py-4 text-sm font-black text-black shadow-[0_20px_70px_rgba(249,115,22,0.25)] transition active:scale-[0.98]"
-        >
-          Start cooking
-        </button>
       </div>
     </aside>
   );

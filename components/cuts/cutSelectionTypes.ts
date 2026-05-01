@@ -3,6 +3,7 @@ import type {
   GeneratedCookingMethod,
   GeneratedCutProfile,
 } from "@/lib/generated/cutProfiles";
+import type { Lang } from "@/lib/i18n/texts";
 
 export type CutIntent = "quick" | "premium" | "easy" | "slow" | "value" | "argentinian";
 export type CutViewMode = "list" | "map";
@@ -15,6 +16,7 @@ export type CutGroup = {
 
 export type CutSelectionScreenProps = {
   selectedAnimal: GeneratedAnimalId;
+  lang?: Lang;
   intentFilter?: CutIntent | null;
   onStartCooking?: (profile: GeneratedCutProfile) => void;
   onAnimalChange?: (animal: GeneratedAnimalId) => void;

@@ -39,6 +39,7 @@ function buildCookingWizardHref(profile: GeneratedCutProfile) {
 
 export function CutSelectionScreen({
   selectedAnimal,
+  lang,
   intentFilter = null,
   onStartCooking,
   onAnimalChange,
@@ -218,6 +219,7 @@ export function CutSelectionScreen({
 
       <CutBottomSheet
         profile={selectedProfile}
+        lang={lang}
         onClose={() => handleProfileChange(null)}
         onStartCooking={handleStartCooking}
       />
