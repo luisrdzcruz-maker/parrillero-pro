@@ -9,7 +9,6 @@ import { Section } from "@/components/ui/Section";
 import { Shell, ShellContainer } from "@/components/ui/Shell";
 import { cx, ds } from "@/lib/design-system";
 import {
-  type AdminQaCase,
   type AdminQaResult,
   runAdminCookingQA,
 } from "@/lib/qa/cookingDashboardQa";

@@ -1,3 +1,5 @@
+import { normalizeCookingOutput } from "../normalization/normalizeCookingOutput";
+
 export const REQUIRED_MENU_BLOCKS = ["MENU", "CANTIDADES", "TIMING", "ORDEN", "COMPRA", "ERROR"];
 export const REQUIRED_MENU_BLOCKS_EN = ["MENU", "QUANTITIES", "TIMING", "ORDER", "SHOPPING", "ERROR"];
 
@@ -10,13 +12,13 @@ export const REQUIRED_PARRILLADA_BLOCKS_EN = ["TIMELINE", "GRILL_MANAGER", "SHOP
 export type NormalizedBlockType = "cooking_plan" | "generated_menu" | "parrillada_plan";
 
 const aliases: Record<string, string[]> = {
-  CANTIDADES: ["QUANTITIES"],
-  COMPRA: ["SHOPPING", "LISTA_COMPRA", "SHOPPING_LIST"],
+  CANTIDADES: ["QUANTITIES", "quantities"],
+  COMPRA: ["SHOPPING", "LISTA_COMPRA", "SHOPPING_LIST", "shopping"],
   GRILL_MANAGER: ["PARRILLA", "GESTOR_PARRILLA", "GRILL", "ESTRATEGIA"],
-  ORDEN: ["ORDER"],
-  PASOS: ["STEPS"],
-  TEMPERATURA: ["TEMPERATURE"],
-  TIEMPOS: ["TIMES"],
+  ORDEN: ["ORDER", "order"],
+  PASOS: ["STEPS", "steps"],
+  TEMPERATURA: ["TEMPERATURE", "temperature"],
+  TIEMPOS: ["TIMES", "times"],
   TIMELINE: ["TIMING", "CRONOGRAMA"],
   TIMING: ["TIMELINE", "CRONOGRAMA"],
 };
@@ -70,11 +72,13 @@ function resolveRequiredBlocksForSource(
 }
 
 function normalizeInputBlocks(blocks: Record<string, string>) {
-  return Object.fromEntries(
+  const normalized = Object.fromEntries(
     Object.entries(blocks)
       .filter(([key, value]) => key.trim().toUpperCase() !== "ERR" && isValidBlockValue(value))
       .map(([key, value]) => [key.trim().toUpperCase(), value.trim()]),
   );
+
+  return normalizeCookingOutput(normalized);
 }
 
 function getBlockValue(blocks: Record<string, string>, key: string) {

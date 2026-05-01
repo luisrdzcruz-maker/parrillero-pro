@@ -39,7 +39,7 @@ function getVariantLabel(
     case "primary":
       return isEs ? "Pasos de cocción" : "Cooking steps";
     case "tip":
-      return isEs ? "Error a evitar" : "Error to avoid";
+      return isEs ? "Error crítico" : "Critical error";
     case "summary":
       return isEs ? "Tiempos · Temperatura" : "Times · Temperature";
     case "setup":
@@ -72,25 +72,30 @@ function ResultCardHeader({
   variant: NonNullable<ResultCardProps["variant"]>;
 }) {
   const isPrimary = variant === "primary";
+  const isTip = variant === "tip";
+  const labelClassName = isTip ? "text-red-200" : "text-orange-300/90";
+  const iconClassName = isTip
+    ? "border-red-300/25 bg-red-500/15 text-red-100 ring-red-200/[0.05]"
+    : "bg-white/[0.06] text-white ring-white/[0.04]";
 
   return (
-    <div className="flex items-start gap-3">
+    <div className="flex items-start gap-3.5">
       <div
-        className={`${ds.media.iconBox} ${isPrimary ? "h-12 w-12 text-xl" : "h-10 w-10 text-base"} rounded-2xl bg-white/[0.06] ring-1 ring-inset ring-white/[0.04]`}
+        className={`${ds.media.iconBox} ${isPrimary ? "h-12 w-12 text-xl" : "h-10 w-10 text-base"} ${iconClassName} rounded-2xl ring-1 ring-inset`}
       >
         {icon}
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300/90">
+        <p className={`text-[10px] font-black uppercase tracking-[0.22em] ${labelClassName}`}>
           {getVariantLabel(variant, lang)}
         </p>
         <h3
-          className={`${isPrimary ? "text-xl sm:text-2xl" : "text-base"} mt-1 font-black tracking-tight text-white`}
+          className={`${isPrimary ? "text-xl sm:text-2xl" : "text-lg"} mt-1 font-black tracking-tight text-white`}
         >
           {title}
         </h3>
-        <div className={`mt-2 h-0.5 w-10 rounded-full ${accent}`} />
+        <div className={`mt-2 h-0.5 w-12 rounded-full ${isTip ? "bg-red-400/80" : accent}`} />
       </div>
     </div>
   );
@@ -141,14 +146,14 @@ function ResultCardContent({
 
   // Default: single scrollable block
   return (
-    <div className={isTip ? "mt-3" : "mt-5 border-t border-white/5 pt-4"}>
+    <div className={isTip ? "mt-4" : "mt-5 border-t border-white/5 pt-4"}>
       <div
         className={`space-y-2.5 rounded-2xl border border-white/[0.06] bg-black/15 shadow-inner shadow-black/10 ring-1 ring-inset ring-white/[0.03] ${
           isPrimary
             ? "p-4 text-base leading-7 text-slate-100"
             : isTip
-              ? "border-orange-400/15 bg-orange-500/[0.04] p-3 text-sm leading-6 text-orange-100"
-              : "p-3.5 text-sm leading-relaxed text-slate-300"
+              ? "border-red-300/35 bg-[radial-gradient(circle_at_0%_0%,rgba(248,113,113,0.16),transparent_34%),rgba(127,29,29,0.18)] p-4 text-sm font-bold leading-6 text-red-50 ring-red-200/[0.06]"
+              : "p-4 text-sm leading-relaxed text-slate-300"
         }`}
       >
         {lines.map((line, index) => (
@@ -382,7 +387,7 @@ function getCardTone(variant: NonNullable<ResultCardProps["variant"]>) {
   }
 
   if (variant === "tip") {
-    return "border-orange-400/20 bg-gradient-to-br from-slate-900/95 to-orange-950/20";
+    return "border-red-300/40 bg-gradient-to-br from-slate-900/98 via-red-950/28 to-slate-950 shadow-red-950/20";
   }
 
   if (variant === "summary") {

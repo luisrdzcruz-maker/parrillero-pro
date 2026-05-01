@@ -24,6 +24,7 @@ import {
   getDonenessOptions,
   getCutForInput,
 } from "../lib/cookingEngine";
+import { normalizeCookingOutput } from "../lib/normalization/normalizeCookingOutput";
 
 const THICKNESS_CM = { thin: "2", medium: "5", thick: "8" } as const;
 const EQUIPMENT = ["parrilla gas", "parrilla carbón", "kamado", "cocina interior"] as const;
@@ -93,10 +94,11 @@ function pullWithinAnimalRange(animalId: AnimalId, pull: number): boolean {
 
 function scoreSections(plan: CookingPlan | null): number {
   if (!plan) return 0;
-  const keys: (keyof CookingPlan)[] = ["SETUP", "TIEMPOS", "TEMPERATURA", "PASOS"];
+  const normalized = normalizeCookingOutput(plan);
+  const keys: (keyof CookingPlan)[] = ["SETUP", "times", "temperature", "steps"];
   let pts = 0;
   for (const k of keys) {
-    const v = plan[k as string];
+    const v = normalized[k as string];
     if (typeof v === "string" && v.trim().length > 0) pts += 5;
   }
   return pts;
@@ -132,11 +134,12 @@ function scoreContradictions(
   equipment: string,
 ): number {
   if (!plan) return 0;
-  const setup = String(plan.SETUP ?? "");
+  const normalized = normalizeCookingOutput(plan);
+  const setup = String(normalized.SETUP ?? "");
   const combined = [
-    plan.TIEMPOS,
-    plan.TEMPERATURA,
-    plan.PASOS,
+    normalized.times,
+    normalized.temperature,
+    normalized.steps,
     ...(steps ?? []).map((s) => s.description),
   ]
     .filter(Boolean)
@@ -203,7 +206,8 @@ function scoreOrder(steps: CookingStep[] | null): number {
 
 function scoreTemperature(plan: CookingPlan | null, cut: ProductCut, doneness: string): number {
   if (!plan) return 0;
-  const text = String(plan.TEMPERATURA ?? plan.TEMPERATURE ?? "");
+  const normalized = normalizeCookingOutput(plan);
+  const text = String(normalized.temperature ?? normalized.TEMPERATURA ?? normalized.TEMPERATURE ?? "");
   const parsed = parseTemperaturaC(text);
   if (!parsed) {
     if (cut.style === "vegetable" && /textura tierna|bordes dorados/i.test(text))

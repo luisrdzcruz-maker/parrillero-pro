@@ -16,6 +16,7 @@ import {
   getCutsByAnimal,
   getDonenessOptions,
 } from "../lib/cookingEngine";
+import { normalizeCookingOutput } from "../lib/normalization/normalizeCookingOutput";
 
 const THICKNESS_CM = {
   thin: "2",
@@ -44,22 +45,23 @@ type Failure = {
 
 function validatePlan(plan: CookingPlan | null): string | null {
   if (plan == null) return "plan is null";
+  const normalized = normalizeCookingOutput(plan);
 
-  if (!("SETUP" in plan) || !String(plan.SETUP).trim()) {
+  if (!("SETUP" in normalized) || !String(normalized.SETUP).trim()) {
     return "missing or empty SETUP";
   }
 
-  const times = plan.TIEMPOS ?? plan.TIMES;
+  const times = normalized.TIEMPOS ?? normalized.TIMES ?? normalized.times;
   if (!times || !String(times).trim()) {
     return "missing or empty TIEMPOS/TIMES";
   }
 
-  const temp = plan.TEMPERATURA ?? plan.TEMPERATURE;
+  const temp = normalized.TEMPERATURA ?? normalized.TEMPERATURE ?? normalized.temperature;
   if (!temp || !String(temp).trim()) {
     return "missing or empty TEMPERATURA/TEMPERATURE";
   }
 
-  const stepsText = plan.PASOS ?? plan.STEPS;
+  const stepsText = normalized.PASOS ?? normalized.STEPS ?? normalized.steps;
   if (!stepsText || !String(stepsText).trim()) {
     return "missing or empty PASOS/STEPS";
   }

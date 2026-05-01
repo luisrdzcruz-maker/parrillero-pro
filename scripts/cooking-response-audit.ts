@@ -9,6 +9,7 @@ import {
   getDonenessOptions,
   validateCookingEngineOutput,
 } from "../lib/cookingEngine";
+import { normalizeCookingOutput } from "../lib/normalization/normalizeCookingOutput";
 
 type Severity = "error" | "warning";
 
@@ -78,19 +79,19 @@ function normalizeText(value: string): string {
 function getRequiredKeys(language: "es" | "en") {
   if (language === "en") {
     return {
-      setup: "SETUP",
-      times: "TIMES",
-      temperature: "TEMPERATURE",
-      steps: "STEPS",
+      setup: ["SETUP"],
+      times: ["TIMES", "times"],
+      temperature: ["TEMPERATURE", "temperature"],
+      steps: ["STEPS", "steps"],
       oppositeKeys: ["TIEMPOS", "TEMPERATURA", "PASOS"] as const,
     };
   }
 
   return {
-    setup: "SETUP",
-    times: "TIEMPOS",
-    temperature: "TEMPERATURA",
-    steps: "PASOS",
+    setup: ["SETUP"],
+    times: ["TIEMPOS", "times"],
+    temperature: ["TEMPERATURA", "temperature"],
+    steps: ["PASOS", "steps"],
     oppositeKeys: ["TIMES", "TEMPERATURE", "STEPS"] as const,
   };
 }
@@ -100,9 +101,20 @@ function planSection(plan: CookingPlan | null, key: string): string {
   return String(plan[key] ?? "");
 }
 
+function firstPlanSection(plan: CookingPlan | null, keys: readonly string[]): string {
+  if (!plan) return "";
+  for (const key of keys) {
+    if (key in plan) return String(plan[key] ?? "");
+  }
+  return "";
+}
+
 function getPlanStepsText(plan: CookingPlan | null, language: "es" | "en"): string {
   if (!plan) return "";
-  return language === "en" ? String(plan.STEPS ?? "") : String(plan.PASOS ?? "");
+  const normalized = normalizeCookingOutput(plan);
+  return language === "en"
+    ? firstPlanSection(normalized, ["STEPS", "steps"])
+    : firstPlanSection(normalized, ["PASOS", "steps"]);
 }
 
 function extractTimeValuesInMinutes(text: string): number[] {
@@ -177,23 +189,28 @@ function validateCaseOutput(
       issueMessage: "Cooking plan is null.",
     });
   } else {
-    for (const key of [keys.setup, keys.times, keys.temperature, keys.steps]) {
-      if (!(key in plan)) {
+    const normalizedPlan = normalizeCookingOutput(plan);
+    for (const keyGroup of [keys.setup, keys.times, keys.temperature, keys.steps]) {
+      const hasAnyKey = keyGroup.some((key) => key in normalizedPlan);
+      const preferredKey = keyGroup[0];
+      if (!hasAnyKey) {
         issues.push({
           severity: "error",
           issueCode: "missing_required_section",
-          issueMessage: `Missing required plan section "${key}" for language "${input.language}".`,
+          issueMessage: `Missing required plan section "${preferredKey}" for language "${input.language}".`,
         });
-      } else if (!planSection(plan, key).trim()) {
+      } else if (!firstPlanSection(normalizedPlan, keyGroup).trim()) {
         issues.push({
           severity: "error",
           issueCode: "empty_required_section",
-          issueMessage: `Plan section "${key}" is empty.`,
+          issueMessage: `Plan section "${preferredKey}" is empty.`,
         });
       }
     }
 
-    const oppositeKeysPresent = keys.oppositeKeys.filter((key) => key in plan && planSection(plan, key).trim());
+    const oppositeKeysPresent = keys.oppositeKeys.filter(
+      (key) => key in normalizedPlan && planSection(normalizedPlan, key).trim(),
+    );
     if (oppositeKeysPresent.length > 0) {
       const isEnglishMode = input.language === "en";
       issues.push({
@@ -205,7 +222,7 @@ function validateCaseOutput(
       });
     }
 
-    const timesText = planSection(plan, keys.times);
+    const timesText = firstPlanSection(normalizedPlan, keys.times);
     const timeValues = extractTimeValuesInMinutes(timesText);
     if (timeValues.length > 0) {
       for (const timeValue of timeValues) {
@@ -225,7 +242,7 @@ function validateCaseOutput(
       });
     }
 
-    const tempText = planSection(plan, keys.temperature);
+    const tempText = firstPlanSection(normalizedPlan, keys.temperature);
     const tempValues = extractTemperatureValues(tempText);
     const isVegetable = input.animal.toLowerCase().includes("verdur") || input.animal.toLowerCase() === "vegetables";
     if (!isVegetable && tempValues.length === 0) {

@@ -1,3 +1,5 @@
+import { normalizeCookingOutput } from "../normalization/normalizeCookingOutput";
+
 export function parseBlocks(text: string) {
   const sections = [
     "MENU",
@@ -17,6 +19,8 @@ export function parseBlocks(text: string) {
     "TEMPERATURE",
     "PASOS",
     "STEPS",
+    "CONSEJOS",
+    "TIPS",
     "ERROR",
     "KEY ERROR",
   ];
@@ -45,5 +49,5 @@ export function parseBlocks(text: string) {
     result[current] = buffer.join("\n").trim();
   }
 
-  return result;
+  return normalizeCookingOutput(result);
 }

@@ -1,10 +1,10 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState, type TouchEvent } from "react";
+import { ONBOARDING_STORAGE_KEY } from "@/lib/storageKeys";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-export const ONBOARDING_STORAGE_KEY = "parrillero_onboarding_v1";
 const SWIPE_THRESHOLD = 50;
 
 // ─── Slide data ───────────────────────────────────────────────────────────────

@@ -16,6 +16,7 @@ import {
   type ProductCut,
   type TargetTemp,
 } from "./cookingCatalog";
+import { normalizeCookingOutput } from "./normalization/normalizeCookingOutput";
 
 const MAX = {
   sections: 20,
@@ -54,7 +55,7 @@ function pullWithinAnimalRange(animalId: AnimalId, pull: number): boolean {
 
 function scoreSections(plan: CookingPlan | null): number {
   if (!plan) return 0;
-  const keys: (keyof CookingPlan)[] = ["SETUP", "TIEMPOS", "TEMPERATURA", "PASOS"];
+  const keys: (keyof CookingPlan)[] = ["SETUP", "times", "temperature", "steps"];
   let pts = 0;
   for (const k of keys) {
     const v = plan[k as string];
@@ -95,9 +96,9 @@ function scoreContradictions(
   if (!plan) return 0;
   const setup = String(plan.SETUP ?? "");
   const combined = [
-    plan.TIEMPOS,
-    plan.TEMPERATURA,
-    plan.PASOS,
+    plan.times ?? plan.TIMES,
+    plan.temperature ?? plan.TEMPERATURE,
+    plan.steps ?? plan.STEPS,
     ...(steps ?? []).map((s) => s.description),
   ]
     .filter(Boolean)
@@ -163,7 +164,7 @@ function scoreOrder(steps: CookingStep[] | null): number {
 
 function scoreTemperature(plan: CookingPlan | null, cut: ProductCut, doneness: string): number {
   if (!plan) return 0;
-  const text = String(plan.TEMPERATURA ?? plan.TEMPERATURE ?? "");
+  const text = String(plan.temperature ?? plan.TEMPERATURE ?? "");
   const parsed = parseTemperaturaC(text);
   if (!parsed) {
     if (cut.style === "vegetable" && /textura tierna|bordes dorados/i.test(text))
@@ -196,11 +197,13 @@ export function computeCookingQualityScore(
   steps: CookingStep[] | null,
   cut: ProductCut,
 ): number {
-  const sSections = scoreSections(plan);
+  const normalized = plan ? (normalizeCookingOutput(plan) as CookingPlan) : null;
+  // Guardrail: once normalized, consume canonical keys internally.
+  const sSections = scoreSections(normalized);
   const sDur = plausibleDurations(cut, steps);
-  const sCon = scoreContradictions(plan, cut, steps, input.equipment);
+  const sCon = scoreContradictions(normalized, cut, steps, input.equipment);
   const sOrder = scoreOrder(steps);
-  const sTemp = scoreTemperature(plan, cut, input.doneness);
+  const sTemp = scoreTemperature(normalized, cut, input.doneness);
   const sub = {
     sections: sSections,
     durations: sDur,

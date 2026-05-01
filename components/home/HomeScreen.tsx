@@ -3,8 +3,9 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { Mode } from "@/components/navigation/AppHeader";
-import type { Animal } from "@/lib/media/animalMedia";
+import type { AnimalLabel } from "@/lib/media/animalMedia";
 import type { AppText, Lang } from "@/lib/i18n/texts";
+import { buildLiveUrl } from "@/lib/navigation/buildLiveUrl";
 import { type MouseEvent, type ReactNode, useLayoutEffect, useState } from "react";
 
 // ─── Entrance animation ───────────────────────────────────────────────────────
@@ -115,7 +116,7 @@ function HeroSection({
 // ─── Animal quick-pick shelf ───────────────────────────────────────────────────
 // Horizontal scroll row — each card pre-selects protein and jumps to cut step.
 
-type HomeAnimal = Exclude<Animal, "Pescado">;
+type HomeAnimal = Exclude<AnimalLabel, "Pescado">;
 
 type AnimalEntry = {
   animal: HomeAnimal;
@@ -343,7 +344,7 @@ export function HomeScreen({
   onLangChange: (lang: Lang) => void;
   savedMenusCount: number;
   onModeChange: (mode: Mode) => void;
-  onStartCookingWith?: (animal: Animal) => void;
+  onStartCookingWith?: (animal: AnimalLabel) => void;
   t: AppText;
 }) {
   const router = useRouter();
@@ -390,7 +391,9 @@ export function HomeScreen({
       label: t.homeLiveCooking,
       sub: t.homeLiveCookingSub,
       accent: "red",
-      onClick: () => router.push("/coccion-live"),
+      onClick: () => {
+        router.push(buildLiveUrl({}));
+      },
     },
     {
       icon: "📚",

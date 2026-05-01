@@ -18,43 +18,12 @@ import {
   type ProductCut,
   type TargetTemp,
 } from "./cookingCatalog";
-
-const legacyDonenessAliases: Record<string, DonenessId> = {
-  blue: "blue",
-  rare: "rare",
-  "poco hecho": "rare",
-  "medium rare": "medium_rare",
-  medium_rare: "medium_rare",
-  medium: "medium",
-  hecho: "medium_well",
-  medium_well: "medium_well",
-  "medium well": "medium_well",
-  well_done: "well_done",
-  "well done": "well_done",
-  "muy hecho": "well_done",
-  "jugoso seguro": "juicy_safe",
-  juicy_safe: "juicy_safe",
-  "medio seguro": "medium_safe",
-  medium_safe: "medium_safe",
-  safe: "safe",
-  seguro: "safe",
-  juicy: "juicy",
-  jugoso: "juicy",
-};
-
-const animalNameToId = new Map<string, AnimalId>(
-  animalCatalog.flatMap((animal) =>
-    Object.values(animal.names).map((name) => [normalizeKey(name), animal.id] as const),
-  ),
-);
-
-const cutAliasToId = new Map<string, string>();
-
-for (const cut of productCatalog) {
-  cutAliasToId.set(normalizeKey(cut.id), cut.id);
-  Object.values(cut.names).forEach((name) => cutAliasToId.set(normalizeKey(name), cut.id));
-  cut.aliases?.forEach((alias) => cutAliasToId.set(normalizeKey(alias), cut.id));
-}
+import {
+  applyCookingSafetyRules,
+  resolveLegacyAnimalId,
+  resolveLegacyDonenessId,
+} from "./legacyCookingInputAdapter";
+import { resolveCookingProfile, resolveProductCut } from "./resolveCookingProfile";
 
 function normalizeKey(value: string) {
   return value.trim().toLowerCase();
@@ -79,17 +48,15 @@ function isIndoor(equipment: string) {
 }
 
 function getAnimalId(value: string): AnimalId | undefined {
-  return (
-    animalNameToId.get(normalizeKey(value)) ??
-    (animalCatalog.some((animal) => animal.id === value) ? (value as AnimalId) : undefined)
-  );
+  return resolveLegacyAnimalId(value);
 }
 
-function getDonenessId(value: string, animalId: AnimalId): DonenessId {
-  const normalized = normalizeKey(value);
-  const candidate = legacyDonenessAliases[normalized] ?? (normalized as DonenessId);
-  const allowed = animalDoneness[animalId];
-  return allowed.includes(candidate) ? candidate : (allowed[0] ?? "medium");
+function getDonenessId(
+  value: string,
+  animalId: AnimalId,
+  allowedDoneness: readonly DonenessId[] = animalDoneness[animalId],
+): DonenessId {
+  return applyCookingSafetyRules(animalId, resolveLegacyDonenessId(value), allowedDoneness);
 }
 
 function getLocalized(value: Partial<Record<Language, string>> | undefined, language: "es" | "en") {
@@ -198,6 +165,19 @@ function getVegetableSeconds(cut: ProductCut) {
   return (cut.cookingMinutes ?? 15) * 60;
 }
 
+function getGeneratedCookSeconds(cut: ProductCut) {
+  return cut.cookingMinutes ? cut.cookingMinutes * 60 : undefined;
+}
+
+function getMainCookSeconds(cut: ProductCut, thickness: number, doneness: DonenessId) {
+  if (cut.style === "vegetable") return getVegetableSeconds(cut);
+
+  const generatedCookSeconds = getGeneratedCookSeconds(cut);
+  if (generatedCookSeconds && !cut.showThickness) return generatedCookSeconds;
+
+  return getIndirectSeconds(thickness, cut.style, doneness);
+}
+
 function getRestSeconds(cut: ProductCut) {
   return cut.restingMinutes * 60;
 }
@@ -291,10 +271,7 @@ function estimateTimes(input: CookingInput, cut: ProductCut, doneness: DonenessI
     ? parseNumber(input.thicknessCm, cut.defaultThicknessCm)
     : cut.defaultThicknessCm;
   const sear = getSearSeconds(thickness, cut.style);
-  const indirect =
-    cut.style === "vegetable"
-      ? getVegetableSeconds(cut)
-      : getIndirectSeconds(thickness, cut.style, doneness);
+  const indirect = getMainCookSeconds(cut, thickness, doneness);
   const rest = getRestSeconds(cut);
 
   if (input.language === "en") {
@@ -385,9 +362,9 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
   const thickness = cut.showThickness
     ? parseNumber(input.thicknessCm, cut.defaultThicknessCm)
     : cut.defaultThicknessCm;
-  const doneness = getDonenessId(input.doneness, cut.animalId);
+  const doneness = getDonenessId(input.doneness, cut.animalId, cut.allowedDoneness);
   const sear = getSearSeconds(thickness, cut.style);
-  const indirect = getIndirectSeconds(thickness, cut.style, doneness);
+  const indirect = getMainCookSeconds(cut, thickness, doneness);
   const rest = getRestSeconds(cut);
   const equipmentProfile = getEquipmentProfile(input.equipment);
   const indoor = equipmentProfile === "indoor";
@@ -808,8 +785,7 @@ export function getCutsByAnimal(animalId: AnimalId) {
 }
 
 export function getCutById(cutId: string) {
-  const id = cutAliasToId.get(normalizeKey(cutId)) ?? cutId;
-  return productCatalog.find((cut) => cut.id === id);
+  return resolveProductCut(cutId);
 }
 
 export function getDonenessOptions(animalId: AnimalId) {
@@ -826,35 +802,33 @@ export function getAnimalByName(value: string) {
 }
 
 export function getCutForInput(input: CookingInput) {
-  const animalId = getAnimalId(input.animal);
-  const cut = getCutById(input.cut);
-
-  if (!animalId || !cut || cut.animalId !== animalId) return undefined;
-  return cut;
+  return resolveCookingProfile(input)?.cut;
 }
 
 export function generateCookingSteps(input: CookingInput): CookingStep[] | null {
-  const cut = getCutForInput(input);
-  if (!cut) return null;
+  const profile = resolveCookingProfile(input);
+  if (!profile) return null;
 
-  const doneness = getDonenessId(input.doneness, cut.animalId);
-  return makeStandardSteps(input, cut, getTargetTemp(cut, doneness));
+  const doneness = getDonenessId(profile.input.doneness, profile.cut.animalId, profile.cut.allowedDoneness);
+  return makeStandardSteps(profile.input, profile.cut, getTargetTemp(profile.cut, doneness));
 }
 
 export function generateCookingPlan(input: CookingInput): CookingPlan | null {
-  const cut = getCutForInput(input);
-  if (!cut) return null;
+  const profile = resolveCookingProfile(input);
+  if (!profile) return null;
 
-  const doneness = getDonenessId(input.doneness, cut.animalId);
+  const { cut } = profile;
+  const engineInput = profile.input;
+  const doneness = getDonenessId(engineInput.doneness, cut.animalId, cut.allowedDoneness);
   const temp = getTargetTemp(cut, doneness);
-  const times = estimateTimes(input, cut, doneness);
-  const method = getMethodText(getMethod(cut, input.equipment), input.language);
-  const note = getLocalized(cut.notes, input.language);
-  const planSteps = buildPlanStepsText(makeStandardSteps(input, cut, temp), input.language);
+  const times = estimateTimes(engineInput, cut, doneness);
+  const method = getMethodText(getMethod(cut, engineInput.equipment), engineInput.language);
+  const note = getLocalized(cut.notes, engineInput.language);
+  const planSteps = buildPlanStepsText(makeStandardSteps(engineInput, cut, temp), engineInput.language);
 
-  if (input.language === "en") {
+  if (engineInput.language === "en") {
     return {
-      SETUP: `${method}. Use ${input.equipment}.`,
+      SETUP: `${method}. Use ${engineInput.equipment}.`,
       TIMES: times,
       TEMPERATURE: temp
         ? `Pull target: ${temp.pull}°C. Expected final temperature after rest: ${temp.final}°C.`
@@ -866,7 +840,7 @@ export function generateCookingPlan(input: CookingInput): CookingPlan | null {
   }
 
   return {
-    SETUP: `${method}. Equipo: ${input.equipment}.`,
+    SETUP: `${method}. Equipo: ${engineInput.equipment}.`,
     TIEMPOS: times,
     TEMPERATURA: temp
       ? `Temperatura de salida: ${temp.pull}°C. Temperatura final esperada tras reposo: ${temp.final}°C.`

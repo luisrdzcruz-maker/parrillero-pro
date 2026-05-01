@@ -34,6 +34,14 @@ export {
   getDonenessOptions,
   shouldShowThickness,
 } from "./cookingRules";
+export {
+  adaptLegacyCookingInput,
+  applyCookingSafetyRules,
+  resolveLegacyAnimalId,
+  resolveLegacyCutId,
+  resolveLegacyDonenessId,
+} from "./legacyCookingInputAdapter";
+export { resolveCookingProfile, resolveProductCut } from "./resolveCookingProfile";
 export { validateCookingEngineOutput, COOKING_WARNING_CODES } from "./cookingOutputValidation";
 export type {
   CookingOutputWarning,
@@ -41,3 +49,5 @@ export type {
   CookingWarningCode,
   ValidateCookingOutputOptions,
 } from "./cookingOutputValidation";
+export type { AdaptedCookingInput } from "./legacyCookingInputAdapter";
+export type { CookingProfileSource, ResolvedCookingProfile } from "./resolveCookingProfile";

@@ -1,6 +1,6 @@
 "use client";
 
-import ResultGrid from "@/components/ResultGrid";
+import ResultGrid, { buildResultSummary } from "@/components/ResultGrid";
 import ResultHero from "@/components/ResultHero";
 import FoodCard from "@/components/FoodCard";
 import { CookingLoadingScreen } from "@/components/cooking/CookingLoadingScreen";
@@ -9,13 +9,15 @@ import { getCutById } from "@/lib/cookingRules";
 import { Badge, Button, Section } from "@/components/ui";
 import { ds } from "@/lib/design-system";
 import type { AppText, Lang } from "@/lib/i18n/texts";
+import type { Doneness } from "@/lib/types/domain";
 import {
   createLiveCookingPayload,
   readLiveCookingPayload,
   saveLiveCookingPayload,
   type LiveCookingPlanPayload,
 } from "@/lib/liveCookingPlan";
-import { animalOptions, type Animal } from "@/lib/media/animalMedia";
+import { buildLiveUrl } from "@/lib/navigation/buildLiveUrl";
+import { animalIdsByLabel, animalOptions, type AnimalLabel } from "@/lib/media/animalMedia";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useLayoutEffect, useState } from "react";
@@ -41,12 +43,17 @@ export const equipmentOptions = [
 ];
 
 const cookingEquipmentOptions = ["parrilla gas", "parrilla carbón", "kamado", "cocina interior"];
+const LIVE_DONENESS_VALUES: Doneness[] = ["rare", "medium_rare", "medium", "medium_well", "well_done", "safe"];
 
 export type CookingSizePreset = "small" | "medium" | "large";
 export type CookingWeightRange = "light" | "medium" | "large";
 export type VegetableFormat = "whole" | "halved" | "slices";
 
-const foodImages: Record<Animal, string> = {
+function toLiveDoneness(value: string): Doneness | undefined {
+  return LIVE_DONENESS_VALUES.includes(value as Doneness) ? (value as Doneness) : undefined;
+}
+
+const foodImages: Record<AnimalLabel, string> = {
   Vacuno: "/images/vacuno/ribeye-cooked.webp",
   Cerdo: "/images/cerdo/secreto-cooked.webp",
   Pollo: "/images/pollo/muslos-cooked.webp",
@@ -143,7 +150,7 @@ export function CookingWizard({
   weightRange,
 }: {
   advancedThicknessEnabled: boolean;
-  animal: Animal;
+  animal: AnimalLabel;
   blocks: Blocks;
   checkedItems: Record<string, boolean>;
   cookingStep: CookingWizardStep;
@@ -153,8 +160,8 @@ export function CookingWizard({
   doneness: string;
   equipment: string;
   generateCookingPlan: () => Promise<void>;
-  getAnimalPreview: (animal: Animal, lang: Lang) => string;
-  handleAnimalChange: (animal: Animal) => void;
+  getAnimalPreview: (animal: AnimalLabel, lang: Lang) => string;
+  handleAnimalChange: (animal: AnimalLabel) => void;
   handleCutChange: (cut: string) => void;
   lang: Lang;
   loading: boolean;
@@ -178,15 +185,7 @@ export function CookingWizard({
   vegetableFormat: VegetableFormat;
   weightRange: CookingWeightRange;
 }) {
-  const hasCookingResult = Object.keys(blocks).length > 0;
-  const visibleCookingStep =
-    cookingStep === "result" && !hasCookingResult
-      ? selectedCut
-        ? "details"
-        : cut
-          ? "cut"
-          : "animal"
-      : cookingStep;
+  const visibleCookingStep = cookingStep;
 
   // ── Narrated loading experience ─────────────────────────────────────────────
   // Replaces the spinner: full-screen image + cycling status messages + stepped bar
@@ -252,6 +251,7 @@ export function CookingWizard({
             blocks={blocks}
             checkedItems={checkedItems}
             cut={selectedCut?.name ?? cut}
+            cutId={selectedCut?.id}
             doneness={doneness}
             equipment={equipment}
             lang={lang}
@@ -277,10 +277,10 @@ function CookingAnimalStep({
   onSelectAnimal,
   t,
 }: {
-  animal: Animal;
-  getAnimalPreview: (animal: Animal, lang: Lang) => string;
+  animal: AnimalLabel;
+  getAnimalPreview: (animal: AnimalLabel, lang: Lang) => string;
   lang: Lang;
-  onSelectAnimal: (animal: Animal) => void;
+  onSelectAnimal: (animal: AnimalLabel) => void;
   t: AppText;
 }) {
   return (
@@ -651,7 +651,7 @@ function CookingCutStep({
   onSelectCut,
   t,
 }: {
-  animal: Animal;
+  animal: AnimalLabel;
   cut: string;
   cuts: CutItem[];
   lang: Lang;
@@ -738,7 +738,7 @@ function CookingDetailsHero({
   lang,
   selectedCut,
 }: {
-  animal: Animal;
+  animal: AnimalLabel;
   badge: string;
   lang: Lang;
   selectedCut: CutItem;
@@ -897,7 +897,7 @@ function CookingDetailsStep({
   weightRange,
 }: {
   advancedThicknessEnabled: boolean;
-  animal: Animal;
+  animal: AnimalLabel;
   currentDonenessOptions: SelectOption[];
   doneness: string;
   equipment: string;
@@ -1100,6 +1100,7 @@ function CookingResultStep({
   blocks,
   checkedItems,
   cut,
+  cutId,
   doneness,
   equipment,
   lang,
@@ -1112,10 +1113,11 @@ function CookingResultStep({
   t,
   thickness,
 }: {
-  animal: Animal;
+  animal: AnimalLabel;
   blocks: Blocks;
   checkedItems: Record<string, boolean>;
   cut: string;
+  cutId?: string;
   doneness: string;
   equipment: string;
   lang: Lang;
@@ -1154,7 +1156,14 @@ function CookingResultStep({
     }
 
     saveLiveCookingPayload(payload);
-    router.push("/coccion-live");
+    router.push(
+      buildLiveUrl({
+        animal: animalIdsByLabel[animal],
+        cutId,
+        doneness: toLiveDoneness(doneness),
+        thickness: Number(showThickness ? thickness : "2"),
+      }),
+    );
   }
 
   return (
@@ -1162,6 +1171,7 @@ function CookingResultStep({
       <ResultCards
         blocks={blocks}
         context={`${animal} · ${equipment}`}
+        cutId={cutId}
         equipment={equipment}
         lang={lang}
         loading={false}
@@ -1181,6 +1191,7 @@ function CookingResultStep({
 export function ResultCards({
   blocks,
   context,
+  cutId,
   equipment,
   lang = "es",
   loading,
@@ -1195,6 +1206,7 @@ export function ResultCards({
 }: {
   blocks: Blocks;
   context?: string;
+  cutId?: string;
   equipment?: string;
   lang?: Lang;
   loading: boolean;
@@ -1210,6 +1222,7 @@ export function ResultCards({
   const keys = Object.keys(blocks);
   const hasResult = keys.length > 0;
   const canStartCooking = Boolean(blocks.PASOS || blocks.STEPS);
+  const resultSummary = buildResultSummary(blocks, keys);
 
   function copyText() {
     if (typeof window === "undefined" || !navigator.clipboard) return;
@@ -1235,9 +1248,11 @@ export function ResultCards({
           onStartCooking: canStartCooking ? onStartCooking : undefined,
         }}
         context={context}
+        cutId={cutId}
         hasResult={hasResult}
         onEdit={onEdit}
         saveMenuStatus={saveMenuStatus}
+        summary={resultSummary}
         t={{
           copy: t.copy,
           result: t.result,

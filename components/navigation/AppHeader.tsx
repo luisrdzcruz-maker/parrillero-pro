@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui";
 import { ds } from "@/lib/design-system";
 import type { AppText, Lang } from "@/lib/i18n/texts";
+import { buildLiveUrl } from "@/lib/navigation/buildLiveUrl";
 
 export type Mode =
   | "inicio"
@@ -85,7 +86,9 @@ export function DesktopModeTabs({
           active={mode === "cocina"}
           label={t.live}
           emoji="⏱️"
-          onClick={() => router.push("/coccion-live")}
+          onClick={() => {
+            router.push(buildLiveUrl({}));
+          }}
         />
         <DesktopTab
           active={mode === "guardados"}
@@ -162,7 +165,9 @@ export function BottomNavigation({
           active={mode === "cocina"}
           label={t.live}
           emoji="⏱️"
-          onClick={() => router.push("/coccion-live")}
+          onClick={() => {
+            router.push(buildLiveUrl({}));
+          }}
         />
         <Tab
           active={mode === "guardados"}

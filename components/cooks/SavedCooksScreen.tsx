@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { cutImages } from "@/lib/media/cutImages";
 
-// ─── Storage contract (mirrors app/coccion-live/page.tsx) ────────────────────
+// ─── Storage contract (mirrors live mode in app/page.tsx) ─────────────────────
 
 const SAVED_COOKS_KEY = "parrillero_saved_cooks_v1";
 

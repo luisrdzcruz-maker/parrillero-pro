@@ -22,6 +22,8 @@
     "watch:setup": "chokidar \"assets/raw/setup/*.png\" --command \"npm run process:setup-images\"",
     "pipeline:setup": "npm run pipeline:assets -- setup",
     "pipeline:cuts": "npm run pipeline:assets -- cuts",
+    "validate:cuts": "node scripts/validate-cuts.mjs",
+    "generate:cuts": "node scripts/generate-cuts.mjs",
     "pipeline:vegetables": "npm run pipeline:assets -- vegetables",
     "pipeline:icons": "npm run pipeline:assets -- icons",
     "pipeline:steps": "npm run pipeline:assets -- steps",
