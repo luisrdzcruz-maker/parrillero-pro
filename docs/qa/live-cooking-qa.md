@@ -1,4 +1,4 @@
-# Live Cooking QA Report (Re-run)
+# Live Cooking QA Report (Final Re-run)
 
 Date: 2026-05-01
 Branch: `feature/product-core-data-driven-cuts`
@@ -6,42 +6,54 @@ Model/Agent: Codex 5.3
 
 ## PASSED
 
-- Validation gates pass: `npm run lint` and `npm run build` both complete successfully.
-- Direct Live URL works and keeps canonical animal id unchanged: `/?mode=cocina&animal=beef&cutId=ribeye` stays with `animal=beef` (no rewrite to localized labels).
-- Missing/invalid params are fail-safe and non-crashing:
-  - `/?mode=cocina` loads Live safely.
-  - `/?mode=cocina&animal=Vacuno&cutId=unknown` safely falls back without crashing.
-- URL/UI step sync for direct mode checks is correct:
-  - `?mode=coccion&step=details...` renders details controls.
-  - `?mode=coccion&step=result...` renders result view (not details controls).
-- Live timer and progression core behavior works:
-  - `Start cooking` starts countdown (`5:00 -> 4:49` observed) and progress increments (`0% -> 1%`).
-  - CTA advances steps and updates labels dynamically (`Start cooking -> Mark step done -> Flip now -> Rest now` observed).
-  - Completed step state is shown and updates as steps are completed.
-- No crashes observed during tested navigation and flow transitions.
+- Gates pass with no blocking errors:
+  - `npm run lint` passes (1 warning only, no errors).
+  - `npm run build` passes.
+- Result stability improved and validated:
+  - Generating from details now renders a populated result.
+  - Result remains populated after waiting (no collapse to empty state observed).
+  - Live CTA remains visible on result during stability checks.
+- Result -> Live works:
+  - Clicking Start Live Cooking from Result opens Live mode (`mode=cocina`).
+  - Context is preserved in URL for tested flow (`animal=beef`, `cutId=lomo_alto`, `thickness=5`).
+- Canonical URL contract validated:
+  - `animal=beef` remains `animal=beef` (no rewrite to localized labels).
+- Live behavior core works:
+  - Start cooking starts countdown (`10:00 -> 9:52` observed).
+  - CTA advances steps and labels update dynamically (`Start cooking -> Mark step done -> Flip now`).
+  - Completed-step state appears and updates correctly.
+- Fail-safe URLs are non-crashing:
+  - `/?mode=cocina` loads safely.
+  - `/?mode=cocina&animal=Vacuno&cutId=unknown` safely falls back to non-crashing Live state.
 
 ## ISSUES FOUND
 
-- **Result screen state regression after generation**: after generating a plan, the rich result with Live CTA appears briefly and then collapses into an empty result state (`El resultado aparecerá aquí.`), removing the `Start Live Cooking` action. This blocks reliable Result -> Live entry validation in normal user flow.
-- **Back navigation from result not working as expected**: after details -> result transition, browser back did not return to details in-browser (`browser_navigate_back` reported no previous page). This does not satisfy the expected "back from result returns to details when history exists" behavior.
-- **Direct-entry Live back fallback still missing**: on a fresh direct Live URL tab, pressing `Plan` leaves URL unchanged and does not navigate away (no fallback route when history is missing).
-- **Entry animation duration still above target**: `.animate-live-enter` remains `360ms` in `app/globals.css`, outside the requested `150-250ms` range.
+- **Direct Live fallback still missing**:
+  - On direct URL `/?mode=cocina&animal=beef&cutId=ribeye`, pressing `Plan` does not navigate to details fallback and URL remains unchanged.
+  - Expected fallback (`/?mode=coccion&step=details&animal=beef&cutId=ribeye` or equivalent) is not happening.
+- **Back navigation from Result remains inconsistent**:
+  - In details -> result scenarios, browser back did not reliably return to details with same context; history sometimes returned to prior Live state instead.
+  - Forward verification is therefore also inconsistent and not reliably proving details/result history pairing.
+- **Direct URL context leakage from previous session payload**:
+  - Opening `/?mode=cocina&animal=beef&cutId=ribeye` can still render prior-plan content (example observed: Lomo alto/blue in live context text), indicating session payload precedence over URL context for displayed plan content.
+- **Live feedback message not verifiable via snapshot**:
+  - Completed-state updates are visible, but the transient feedback toast/message could not be consistently captured in accessibility snapshots.
 
 ## EDGE CASES
 
-- Urgency threshold verification (`<=15s`, `<=5s`) and timeout auto-advance were not fully runtime-verified due long step durations in tested plans; core logic paths are present but full threshold crossing was not observed in-session.
-- Feedback toast visibility/disappearance could not be reliably captured from accessibility snapshots, although step completion states and transitions updated correctly.
-- Reduced motion behavior is implemented in code/CSS, but explicit browser media emulation was not available in this QA run.
+- Urgency threshold transitions (`<=15s`, `<=5s`) were not fully crossed in runtime due long step durations; timer progression and CTA flow are otherwise healthy.
+- Reduced-motion runtime emulation was not available in-browser in this run; no crash indicators seen in normal motion path.
+- Animation duration remains `360ms` for `animate-live-enter`; this is above the 150-250ms target but treated as polish/non-blocking unless product requires strict threshold.
 
 ## RISKS
 
-- The transient result-state collapse can prevent users from launching Live Cooking from result, degrading conversion into the core live experience.
-- Missing/weak history fallback paths can strand users in Live or break expected backward flow.
-- Navigation regressions around history handling can reintroduce URL/UI trust issues, even with canonical param fixes already in place.
-- Longer-than-target motion timing can still affect perceived responsiveness on mobile.
+- Missing direct-entry fallback can trap users in Live with no reliable route back to planning.
+- Inconsistent history behavior (details/result/live) risks user confusion and regression in multi-step workflows.
+- URL-context vs session-payload mismatch can reduce trust in direct links and shared URLs.
+- Remaining lint warning (`react-hooks/exhaustive-deps`) is not blocking but can hide future state-sync regressions if left unresolved.
 
 ## VERDICT
 
 **NEEDS FIXES**
 
-Core fixes for lint and canonical URL behavior are in place and validated, but production readiness is blocked by result-state instability and unresolved back-navigation/fallback behavior.
+Major blockers from previous run are improved (result stability and Result->Live launch), but production readiness is still blocked by unresolved direct Live fallback and inconsistent back/history behavior.

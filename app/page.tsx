@@ -63,8 +63,10 @@ import {
   buildLiveStepsSignature,
   createLiveCookingPayload,
   hasDistinctLiveSteps,
+  LIVE_COOKING_STORAGE_KEY,
   readLiveCookingPayload,
   saveLiveCookingPayload,
+  type LiveCookingPlanPayload,
 } from "@/lib/liveCookingPlan";
 import { toAnimalId } from "@/lib/navigation/animalParam";
 import { buildLiveUrl } from "@/lib/navigation/buildLiveUrl";
@@ -445,6 +447,19 @@ function parsePositiveNumberParam(value: string | null) {
   return Number.isFinite(parsed) && parsed > 0 ? trimmed : undefined;
 }
 
+function normalizeCookingContextValue(value: string | undefined) {
+  return value?.trim() ?? "";
+}
+
+function isSameCookingContext(a: CookingNavContext, b: CookingNavContext) {
+  return (
+    normalizeCookingContextValue(a.animal) === normalizeCookingContextValue(b.animal) &&
+    normalizeCookingContextValue(a.cut) === normalizeCookingContextValue(b.cut) &&
+    normalizeCookingContextValue(a.doneness) === normalizeCookingContextValue(b.doneness) &&
+    normalizeCookingContextValue(a.thickness) === normalizeCookingContextValue(b.thickness)
+  );
+}
+
 function parseCookingContext(params: URLSearchParams, mode: Mode): CookingNavContext {
   const liveParams = mode === "cocina" ? parseLiveParams(params.toString()) : null;
   const cutParam = mode === "cocina" ? liveParams?.cutId : params.get("cut") ?? params.get("cutId");
@@ -496,6 +511,36 @@ function parseLiveUrlState(lang: Lang) {
   const context = liveCutMeta ? `${liveAnimal} · ${getCutName(liveCutMeta, lang)}` : liveAnimal;
 
   return { animal: liveAnimal, cutId, doneness, thickness, context };
+}
+
+function normalizeLiveContextToken(value: string | undefined) {
+  return value?.trim().toLowerCase() ?? "";
+}
+
+function isMatchingThickness(liveThickness: string, payloadThickness: string) {
+  const liveNumber = Number(liveThickness.replace(",", "."));
+  const payloadNumber = Number(payloadThickness.replace(",", "."));
+  if (Number.isFinite(liveNumber) && Number.isFinite(payloadNumber)) {
+    return Math.abs(liveNumber - payloadNumber) < 0.001;
+  }
+  return normalizeLiveContextToken(liveThickness) === normalizeLiveContextToken(payloadThickness);
+}
+
+function doesPayloadMatchLiveUrlContext(
+  payload: LiveCookingPlanPayload | null,
+  liveFromUrl: ReturnType<typeof parseLiveUrlState>,
+) {
+  if (!payload) return false;
+  if (!liveFromUrl.cutId) return false;
+
+  const sameAnimal =
+    normalizeLiveContextToken(payload.input.animal) === normalizeLiveContextToken(liveFromUrl.animal);
+  const sameCut = normalizeLiveContextToken(payload.input.cut) === normalizeLiveContextToken(liveFromUrl.cutId);
+  const sameDoneness =
+    normalizeLiveContextToken(payload.input.doneness) === normalizeLiveContextToken(liveFromUrl.doneness);
+  const sameThickness = isMatchingThickness(liveFromUrl.thickness, payload.input.thickness);
+
+  return sameAnimal && sameCut && sameDoneness && sameThickness;
 }
 
 function parseNavFromSearch(search: string): ParsedNav {
@@ -651,6 +696,9 @@ function HomeContent() {
   const touchStartRef = useRef<TouchPoint | null>(null);
   const isApplyingPopRef = useRef(false);
   const liveAdvanceRef = useRef(false);
+  const navInitializedRef = useRef(false);
+  const previousModeRef = useRef<Mode>("inicio");
+  const liveHasInAppBackTargetRef = useRef(false);
   const cookingContextRef = useRef({
     animal,
     cut,
@@ -742,10 +790,13 @@ function HomeContent() {
     const nextMode = isAllowedMode(requestedMode) ? requestedMode : "inicio";
     const nextCookingStep =
       nextMode === "coccion" && isAllowedCookingStep(requestedCookingStep) ? requestedCookingStep : "animal";
-    const shouldReplaceDuplicateStep =
-      requestedMethod === "push" && nextMode === mode && nextCookingStep === cookingStep;
-    const method: "push" | "replace" = shouldReplaceDuplicateStep ? "replace" : requestedMethod;
-    if (isApplyingPopRef.current && method === "push") return;
+    const currentNav =
+      typeof window === "undefined" ? { mode, cookingStep } : parseNavFromSearch(window.location.search);
+    const modeChanged = nextMode !== currentNav.mode;
+    const stepChanged = nextCookingStep !== currentNav.cookingStep;
+    const isInitializationReplace = requestedMethod === "replace" && !navInitializedRef.current;
+    const shouldPush = !isInitializationReplace && !isApplyingPopRef.current && (modeChanged || stepChanged);
+    const method: "push" | "replace" = shouldPush ? "push" : "replace";
 
     setMode(nextMode);
     setCookingStep(nextCookingStep);
@@ -808,10 +859,25 @@ function HomeContent() {
     const raf = window.requestAnimationFrame(() => {
       applyCookingNavContext(nav.cookingContext);
       commitNav(nav.mode, nav.cookingStep, "replace", nav.cookingContext);
+      navInitializedRef.current = true;
+      previousModeRef.current = nav.mode;
     });
 
     return () => window.cancelAnimationFrame(raf);
   }, [applyCookingNavContext]);
+
+  useEffect(() => {
+    if (!navInitializedRef.current) {
+      previousModeRef.current = mode;
+      return;
+    }
+
+    const previousMode = previousModeRef.current;
+    if (previousMode !== "cocina" && mode === "cocina") {
+      liveHasInAppBackTargetRef.current = true;
+    }
+    previousModeRef.current = mode;
+  }, [mode]);
 
   // ── Browser history: restore state on popstate (back button / swipe) ───────
   // Registered once. URL query params are the source of truth for mode/step.
@@ -838,7 +904,17 @@ function HomeContent() {
     if (isApplyingPopRef.current) return;
     const query = searchParams.toString();
     const nav = parseNavFromSearch(query ? `?${query}` : "");
-    if (nav.mode === mode && nav.cookingStep === cookingStep) return;
+    const currentCookingContext: CookingNavContext = {
+      animal,
+      ...(cut ? { cut } : {}),
+      ...(doneness ? { doneness } : {}),
+      ...(thickness ? { thickness } : {}),
+    };
+    const shouldCompareCookingContext =
+      nav.mode === "coccion" || nav.mode === "cocina" || mode === "coccion" || mode === "cocina";
+    const matchesCurrentCookingContext =
+      !shouldCompareCookingContext || isSameCookingContext(nav.cookingContext, currentCookingContext);
+    if (nav.mode === mode && nav.cookingStep === cookingStep && matchesCurrentCookingContext) return;
 
     isApplyingPopRef.current = true;
     const frame = window.requestAnimationFrame(() => {
@@ -853,7 +929,7 @@ function HomeContent() {
       window.cancelAnimationFrame(frame);
       isApplyingPopRef.current = false;
     };
-  }, [searchParams, mode, cookingStep, applyCookingNavContext]);
+  }, [searchParams, mode, cookingStep, animal, cut, doneness, thickness, applyCookingNavContext]);
 
   const liveStep = liveSteps[liveCurrentIndex] ?? liveSteps[0];
   const liveIsLast = liveCurrentIndex === liveSteps.length - 1;
@@ -878,20 +954,25 @@ function HomeContent() {
     }
 
     const frame = window.requestAnimationFrame(() => {
-      const payload = readLiveCookingPayload();
-      const built = buildLiveStepsFromPayload(payload, MOCK_LIVE_STEPS);
       const liveFromUrl = parseLiveUrlState(lang);
+      const payload = readLiveCookingPayload();
+      const payloadMatchesUrl = doesPayloadMatchLiveUrlContext(payload, liveFromUrl);
+      const safePayload = payloadMatchesUrl ? payload : null;
+      if (payload && !payloadMatchesUrl) {
+        window.sessionStorage.removeItem(LIVE_COOKING_STORAGE_KEY);
+      }
+      const built = buildLiveStepsFromPayload(safePayload, MOCK_LIVE_STEPS);
 
       if (!built.usedFallback && !hasDistinctLiveSteps(built.steps, MOCK_LIVE_STEPS)) {
         console.warn("[live-cooking] Live steps match mock signature unexpectedly", {
-          payloadSignature: payload?.signature ?? "",
+          payloadSignature: safePayload?.signature ?? "",
           liveSignature: built.signature,
           mockSignature: buildLiveStepsSignature(MOCK_LIVE_STEPS),
         });
       }
 
       setLiveSteps(built.steps);
-      setLiveContext(built.usedFallback ? liveFromUrl.context : built.context ?? liveFromUrl.context);
+      setLiveContext(safePayload ? built.context ?? liveFromUrl.context : liveFromUrl.context);
       setLiveCurrentIndex(0);
       setLiveRemaining((built.steps[0] ?? MOCK_LIVE_STEPS[0]).duration);
       setLivePaused(true);
@@ -899,7 +980,7 @@ function HomeContent() {
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [mode, lang]);
+  }, [mode, lang, searchParams]);
 
   useEffect(() => {
     if (mode !== "cocina" || !liveClientReady || livePaused || !liveHasTimer) return;
@@ -1670,7 +1751,8 @@ ERROR
   function handleLiveBackNavigation() {
     if (typeof window === "undefined") return;
 
-    if (window.history.length > 1) {
+    if (liveHasInAppBackTargetRef.current) {
+      liveHasInAppBackTargetRef.current = false;
       window.history.back();
       return;
     }
