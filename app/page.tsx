@@ -1831,11 +1831,6 @@ ERROR
     navigateMode(nextMode);
   }
 
-  // Tap a protein card on Home → pre-select animal, jump to cut step
-  function handleQuickAnimal(selectedAnimal: AnimalLabel) {
-    handleAnimalChange(selectedAnimal); // sets animal, clears cut, cookingStep → "cut"
-  }
-
   function handleSwipeNavigation(direction: SwipeDirection) {
     if (direction === "back") {
       if (typeof window !== "undefined") {
@@ -1995,7 +1990,6 @@ ERROR
             savedMenusCount={savedMenus.length}
             t={t}
             onModeChange={handleModeChange}
-            onStartCookingWith={handleQuickAnimal}
           />
         )}
 
