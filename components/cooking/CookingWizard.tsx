@@ -1,6 +1,6 @@
 "use client";
 
-import ResultGrid from "@/components/ResultGrid";
+import ResultGrid, { buildResultSummary } from "@/components/ResultGrid";
 import ResultHero from "@/components/ResultHero";
 import FoodCard from "@/components/FoodCard";
 import { CookingLoadingScreen } from "@/components/cooking/CookingLoadingScreen";
@@ -1210,6 +1210,7 @@ export function ResultCards({
   const keys = Object.keys(blocks);
   const hasResult = keys.length > 0;
   const canStartCooking = Boolean(blocks.PASOS || blocks.STEPS);
+  const resultSummary = buildResultSummary(blocks, keys);
 
   function copyText() {
     if (typeof window === "undefined" || !navigator.clipboard) return;
@@ -1238,6 +1239,7 @@ export function ResultCards({
         hasResult={hasResult}
         onEdit={onEdit}
         saveMenuStatus={saveMenuStatus}
+        summary={resultSummary}
         t={{
           copy: t.copy,
           result: t.result,

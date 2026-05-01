@@ -33,6 +33,10 @@ export const OPTIONAL_HEADERS = [
   "default_doneness",
   "input_profile_id",
   "confidence_level",
+  "critical_mistake",
+  "pro_tip",
+  "texture_result",
+  "setup_visual_key",
 ];
 
 export const ANIMAL_IDS = ["beef", "pork", "chicken", "fish", "vegetables"];
@@ -175,6 +179,11 @@ export function normalizeCutProfile(record, line) {
     aliasesEn: parseSemicolonList(record.aliases),
     notesEn: emptyToUndefined(notes),
     tipsEn: tips,
+    criticalMistakeEn: emptyToUndefined(record.critical_mistake ?? ""),
+    cuttingDirectionEn: emptyToUndefined(record.cutting_direction ?? ""),
+    proTipEn: emptyToUndefined(record.pro_tip ?? ""),
+    textureResultEn: emptyToUndefined(record.texture_result ?? ""),
+    setupVisualKeyEn: emptyToUndefined(record.setup_visual_key ?? ""),
     sourceLine: line,
   };
 }

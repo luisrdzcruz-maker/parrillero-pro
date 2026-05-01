@@ -82,6 +82,11 @@ export type GeneratedCutProfile = {
   aliasesEn: string[];
   notesEn?: string;
   tipsEn: string[];
+  criticalMistakeEn?: string;
+  cuttingDirectionEn?: string;
+  proTipEn?: string;
+  textureResultEn?: string;
+  setupVisualKeyEn?: string;
 };
 
 export const generatedCutProfiles = ${JSON.stringify(stripSourceLines(profiles), null, 2)} satisfies GeneratedCutProfile[];

@@ -60,6 +60,11 @@ export type GeneratedCutProfile = {
   aliasesEn: string[];
   notesEn?: string;
   tipsEn: string[];
+  criticalMistakeEn?: string;
+  cuttingDirectionEn?: string;
+  proTipEn?: string;
+  textureResultEn?: string;
+  setupVisualKeyEn?: string;
 };
 
 export const generatedCutProfiles = [
@@ -103,8 +108,13 @@ export const generatedCutProfiles = [
       "premium",
       "quick",
       "easy",
-      "against the grain"
-    ]
+      "slice against the grain in 1 cm strips"
+    ],
+    "criticalMistakeEn": "failing to render the cap fat side first",
+    "cuttingDirectionEn": "slice against the grain in 1 cm strips",
+    "proTipEn": "flip every 45 to 60 seconds for even browning",
+    "textureResultEn": "juicy center with a deep crust and rendered edge",
+    "setupVisualKeyEn": "two zone fire and cast iron grate at high heat"
   },
   {
     "id": "striploin",
@@ -144,8 +154,13 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "premium",
       "quick",
-      "against the grain"
-    ]
+      "slice against the grain on a slight bias"
+    ],
+    "criticalMistakeEn": "overcooking the lean eye before fat renders",
+    "cuttingDirectionEn": "slice against the grain on a slight bias",
+    "proTipEn": "start fat edge down then turn frequently",
+    "textureResultEn": "firm beef bite with pink core and crisp fat rim",
+    "setupVisualKeyEn": "fully preheated direct zone plus warm resting area"
   },
   {
     "id": "tenderloin",
@@ -186,8 +201,13 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "premium",
       "easy",
-      "against the grain"
-    ]
+      "slice medallions against the grain"
+    ],
+    "criticalMistakeEn": "using aggressive heat too long on lean meat",
+    "cuttingDirectionEn": "slice medallions against the grain",
+    "proTipEn": "sear hard then finish gently to target temp",
+    "textureResultEn": "buttery soft bite with thin crust and low chew",
+    "setupVisualKeyEn": "hot sear zone and cooler finishing zone with probe ready"
   },
   {
     "id": "picanha",
@@ -228,8 +248,13 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "premium",
       "grill",
-      "slice steaks against the grain after cooking"
-    ]
+      "slice with grain into steaks then serve against grain"
+    ],
+    "criticalMistakeEn": "scoring too deep and losing fat cap juices",
+    "cuttingDirectionEn": "slice with grain into steaks then serve against grain",
+    "proTipEn": "render fat cap slowly then finish on direct heat",
+    "textureResultEn": "rich slices with rendered cap and springy bite",
+    "setupVisualKeyEn": "mixed setup with indirect rendering side and direct finish side"
   },
   {
     "id": "bavette",
@@ -268,8 +293,13 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "argentinian",
       "quick",
-      "against the grain"
-    ]
+      "slice sharply against the grain on a bias"
+    ],
+    "criticalMistakeEn": "cutting with the grain and making long chewy fibers",
+    "cuttingDirectionEn": "slice sharply against the grain on a bias",
+    "proTipEn": "rest then slice thin angled strips under 1 cm",
+    "textureResultEn": "loose fibrous texture that stays juicy when cut right",
+    "setupVisualKeyEn": "very hot direct zone and short cook only"
   },
   {
     "id": "skirt_steak",
@@ -308,7 +338,8 @@ export const generatedCutProfiles = [
       "argentinian",
       "quick",
       "against the grain"
-    ]
+    ],
+    "cuttingDirectionEn": "against the grain"
   },
   {
     "id": "flank_steak",
@@ -346,7 +377,8 @@ export const generatedCutProfiles = [
       "quick",
       "lean",
       "against the grain"
-    ]
+    ],
+    "cuttingDirectionEn": "against the grain"
   },
   {
     "id": "flat_iron",
@@ -385,7 +417,8 @@ export const generatedCutProfiles = [
       "quick",
       "value",
       "against the grain"
-    ]
+    ],
+    "cuttingDirectionEn": "against the grain"
   },
   {
     "id": "tri_tip",
@@ -426,7 +459,8 @@ export const generatedCutProfiles = [
       "value",
       "grain changes direction",
       "slice accordingly"
-    ]
+    ],
+    "cuttingDirectionEn": "grain changes direction; slice accordingly"
   },
   {
     "id": "hanger_steak",
@@ -464,7 +498,8 @@ export const generatedCutProfiles = [
       "quick",
       "bold",
       "against the grain"
-    ]
+    ],
+    "cuttingDirectionEn": "against the grain"
   },
   {
     "id": "denver_steak",
@@ -502,7 +537,8 @@ export const generatedCutProfiles = [
       "premium",
       "value",
       "against the grain"
-    ]
+    ],
+    "cuttingDirectionEn": "against the grain"
   },
   {
     "id": "chuck_eye",
@@ -539,7 +575,8 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "value",
       "against the grain"
-    ]
+    ],
+    "cuttingDirectionEn": "against the grain"
   },
   {
     "id": "top_sirloin",
@@ -577,7 +614,8 @@ export const generatedCutProfiles = [
       "lean",
       "value",
       "against the grain"
-    ]
+    ],
+    "cuttingDirectionEn": "against the grain"
   },
   {
     "id": "rump_steak",
@@ -616,7 +654,8 @@ export const generatedCutProfiles = [
       "lean",
       "value",
       "against the grain"
-    ]
+    ],
+    "cuttingDirectionEn": "against the grain"
   },
   {
     "id": "t_bone",
@@ -653,7 +692,8 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "premium",
       "separate muscles then slice against grain"
-    ]
+    ],
+    "cuttingDirectionEn": "separate muscles then slice against grain"
   },
   {
     "id": "porterhouse",
@@ -690,7 +730,8 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "premium",
       "separate muscles then slice against grain"
-    ]
+    ],
+    "cuttingDirectionEn": "separate muscles then slice against grain"
   },
   {
     "id": "tomahawk",
@@ -729,8 +770,13 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "premium",
       "wow",
-      "against the grain"
-    ]
+      "separate eye and cap then slice against the grain"
+    ],
+    "criticalMistakeEn": "trying to cook only over direct heat and burning outside",
+    "cuttingDirectionEn": "separate eye and cap then slice against the grain",
+    "proTipEn": "reverse sear to 46 to 48C then finish over intense heat",
+    "textureResultEn": "thick rosy center with pronounced crust contrast",
+    "setupVisualKeyEn": "stable two zone setup with lid for controlled indirect phase"
   },
   {
     "id": "brisket",
@@ -767,7 +813,8 @@ export const generatedCutProfiles = [
       "slow",
       "bbq",
       "against the grain"
-    ]
+    ],
+    "cuttingDirectionEn": "against the grain"
   },
   {
     "id": "short_ribs",
@@ -806,7 +853,8 @@ export const generatedCutProfiles = [
       "slow",
       "argentinian",
       "between bones or against grain"
-    ]
+    ],
+    "cuttingDirectionEn": "between bones or against grain"
   },
   {
     "id": "chuck_roast",
@@ -845,7 +893,8 @@ export const generatedCutProfiles = [
       "slow",
       "value",
       "against the grain"
-    ]
+    ],
+    "cuttingDirectionEn": "against the grain"
   },
   {
     "id": "ground_beef",
@@ -884,7 +933,8 @@ export const generatedCutProfiles = [
       "burger",
       "quick",
       "not applicable"
-    ]
+    ],
+    "cuttingDirectionEn": "not applicable"
   },
   {
     "id": "pork_tenderloin",
@@ -924,7 +974,8 @@ export const generatedCutProfiles = [
       "quick",
       "lean",
       "against the grain"
-    ]
+    ],
+    "cuttingDirectionEn": "against the grain"
   },
   {
     "id": "pork_loin",
@@ -963,7 +1014,8 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "lean",
       "against the grain"
-    ]
+    ],
+    "cuttingDirectionEn": "against the grain"
   },
   {
     "id": "pork_chop",
@@ -1000,8 +1052,13 @@ export const generatedCutProfiles = [
     "notesEn": "Bone-in is juicier. Cook to safe pork temperature.",
     "tipsEn": [
       "quick",
-      "against the grain"
-    ]
+      "slice against the grain and avoid bone curve"
+    ],
+    "criticalMistakeEn": "pulling too late and overshooting safe juicy range",
+    "cuttingDirectionEn": "slice against the grain and avoid bone curve",
+    "proTipEn": "pull at 61 to 62C and rest to finish at safe temp",
+    "textureResultEn": "juicy interior with lightly crisp browned exterior",
+    "setupVisualKeyEn": "two zone grill with direct sear and covered finish"
   },
   {
     "id": "iberian_secreto",
@@ -1038,8 +1095,13 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "premium",
       "quick",
-      "against the grain"
-    ]
+      "slice against the grain into thin strips"
+    ],
+    "criticalMistakeEn": "cooking too cool and leaving fat under rendered",
+    "cuttingDirectionEn": "slice against the grain into thin strips",
+    "proTipEn": "use hard heat and keep turning until edges caramelize",
+    "textureResultEn": "succulent fatty bite with crisp caramelized edges",
+    "setupVisualKeyEn": "intense direct heat surface with short rest tray"
   },
   {
     "id": "iberian_presa",
@@ -1077,7 +1139,8 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "premium",
       "against the grain"
-    ]
+    ],
+    "cuttingDirectionEn": "against the grain"
   },
   {
     "id": "iberian_pluma",
@@ -1117,7 +1180,8 @@ export const generatedCutProfiles = [
       "premium",
       "quick",
       "against the grain"
-    ]
+    ],
+    "cuttingDirectionEn": "against the grain"
   },
   {
     "id": "pork_collar",
@@ -1159,7 +1223,8 @@ export const generatedCutProfiles = [
       "easy",
       "value",
       "against the grain"
-    ]
+    ],
+    "cuttingDirectionEn": "against the grain"
   },
   {
     "id": "pork_shoulder",
@@ -1199,7 +1264,8 @@ export const generatedCutProfiles = [
       "slow",
       "bbq",
       "against the grain"
-    ]
+    ],
+    "cuttingDirectionEn": "against the grain"
   },
   {
     "id": "pork_butt",
@@ -1239,7 +1305,8 @@ export const generatedCutProfiles = [
       "slow",
       "bbq",
       "against the grain"
-    ]
+    ],
+    "cuttingDirectionEn": "against the grain"
   },
   {
     "id": "baby_back_ribs",
@@ -1277,8 +1344,13 @@ export const generatedCutProfiles = [
     "notesEn": "Tender loin ribs. Cook until tender and safe.",
     "tipsEn": [
       "bbq",
-      "between bones"
-    ]
+      "cut between bones after resting"
+    ],
+    "criticalMistakeEn": "cooking by time only and skipping tenderness checks",
+    "cuttingDirectionEn": "cut between bones after resting",
+    "proTipEn": "glaze only at the end and confirm bend test",
+    "textureResultEn": "tender bite with slight pull from bone",
+    "setupVisualKeyEn": "indirect setup with drip pan and stable lid temperature"
   },
   {
     "id": "spare_ribs",
@@ -1318,7 +1390,8 @@ export const generatedCutProfiles = [
       "bbq",
       "slow",
       "between bones"
-    ]
+    ],
+    "cuttingDirectionEn": "between bones"
   },
   {
     "id": "pork_belly",
@@ -1359,7 +1432,8 @@ export const generatedCutProfiles = [
       "slow",
       "crispy",
       "slice perpendicular"
-    ]
+    ],
+    "cuttingDirectionEn": "slice perpendicular"
   },
   {
     "id": "pork_belly_slices",
@@ -1396,7 +1470,8 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "quick",
       "not critical"
-    ]
+    ],
+    "cuttingDirectionEn": "not critical"
   },
   {
     "id": "pork_hock",
@@ -1436,7 +1511,8 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "slow",
       "around bone"
-    ]
+    ],
+    "cuttingDirectionEn": "around bone"
   },
   {
     "id": "ground_pork",
@@ -1473,7 +1549,8 @@ export const generatedCutProfiles = [
       "burger",
       "quick",
       "not applicable"
-    ]
+    ],
+    "cuttingDirectionEn": "not applicable"
   },
   {
     "id": "chicken_breast",
@@ -1511,8 +1588,13 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "quick",
       "lean",
-      "against the grain"
-    ]
+      "slice across the grain into even strips"
+    ],
+    "criticalMistakeEn": "pulling late and drying the lean center",
+    "cuttingDirectionEn": "slice across the grain into even strips",
+    "proTipEn": "dry brine then pull at 70 to 71C for carryover",
+    "textureResultEn": "moist white meat with light spring and clean fibers",
+    "setupVisualKeyEn": "medium direct zone with optional cooler finishing side"
   },
   {
     "id": "chicken_tenderloin",
@@ -1550,7 +1632,8 @@ export const generatedCutProfiles = [
       "quick",
       "easy",
       "against the grain"
-    ]
+    ],
+    "cuttingDirectionEn": "against the grain"
   },
   {
     "id": "chicken_thigh",
@@ -1589,7 +1672,8 @@ export const generatedCutProfiles = [
       "easy",
       "juicy",
       "against the grain"
-    ]
+    ],
+    "cuttingDirectionEn": "against the grain"
   },
   {
     "id": "bone_in_chicken_thigh",
@@ -1626,7 +1710,8 @@ export const generatedCutProfiles = [
       "easy",
       "juicy",
       "around bone"
-    ]
+    ],
+    "cuttingDirectionEn": "around bone"
   },
   {
     "id": "chicken_drumstick",
@@ -1663,7 +1748,8 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "easy",
       "around bone"
-    ]
+    ],
+    "cuttingDirectionEn": "around bone"
   },
   {
     "id": "chicken_leg_quarter",
@@ -1702,7 +1788,8 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "value",
       "separate joints"
-    ]
+    ],
+    "cuttingDirectionEn": "separate joints"
   },
   {
     "id": "chicken_wing",
@@ -1742,7 +1829,8 @@ export const generatedCutProfiles = [
       "snack",
       "crispy",
       "not applicable"
-    ]
+    ],
+    "cuttingDirectionEn": "not applicable"
   },
   {
     "id": "whole_chicken",
@@ -1780,8 +1868,13 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "family",
       "bbq",
-      "carve by joints"
-    ]
+      "carve joints first then slice breast against grain"
+    ],
+    "criticalMistakeEn": "ignoring thigh temp while chasing breast doneness",
+    "cuttingDirectionEn": "carve joints first then slice breast against grain",
+    "proTipEn": "target 75C breast and 78 to 82C thigh for balance",
+    "textureResultEn": "crisp skin with juicy breast and tender dark meat",
+    "setupVisualKeyEn": "indirect roasting zone around 180 to 200C with optional crisp finish"
   },
   {
     "id": "spatchcock_chicken",
@@ -1821,7 +1914,8 @@ export const generatedCutProfiles = [
       "family",
       "easy",
       "carve by joints"
-    ]
+    ],
+    "cuttingDirectionEn": "carve by joints"
   },
   {
     "id": "ground_chicken",
@@ -1858,7 +1952,8 @@ export const generatedCutProfiles = [
       "burger",
       "quick",
       "not applicable"
-    ]
+    ],
+    "cuttingDirectionEn": "not applicable"
   },
   {
     "id": "salmon_fillet",
@@ -1895,9 +1990,13 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "quick",
       "fatty",
-      "with grain portions",
-      "serve in flakes"
-    ]
+      "portion with grain and separate flakes for service"
+    ],
+    "criticalMistakeEn": "overcooking until albumin leaks heavily and flesh chalks",
+    "cuttingDirectionEn": "portion with grain and separate flakes for service",
+    "proTipEn": "cook skin side first and pull at 48 to 50C",
+    "textureResultEn": "silky flakes with moist translucent center",
+    "setupVisualKeyEn": "clean oiled grate and medium direct heat"
   },
   {
     "id": "salmon_steak",
@@ -1934,7 +2033,8 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "quick",
       "around bone"
-    ]
+    ],
+    "cuttingDirectionEn": "around bone"
   },
   {
     "id": "tuna_steak",
@@ -1972,8 +2072,13 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "premium",
       "quick",
-      "against the grain"
-    ]
+      "slice against the grain into 1 cm pieces"
+    ],
+    "criticalMistakeEn": "leaving too long and turning center dry gray",
+    "cuttingDirectionEn": "slice against the grain into 1 cm pieces",
+    "proTipEn": "pat dry and sear 30 to 45 seconds per side",
+    "textureResultEn": "thin seared crust with cool ruby center",
+    "setupVisualKeyEn": "extremely hot direct zone and no indirect stage"
   },
   {
     "id": "sea_bass_whole",
@@ -2012,7 +2117,8 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "whole fish",
       "lift fillets from bone"
-    ]
+    ],
+    "cuttingDirectionEn": "lift fillets from bone"
   },
   {
     "id": "sea_bream_whole",
@@ -2051,7 +2157,8 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "whole fish",
       "lift fillets from bone"
-    ]
+    ],
+    "cuttingDirectionEn": "lift fillets from bone"
   },
   {
     "id": "turbot_whole",
@@ -2091,7 +2198,8 @@ export const generatedCutProfiles = [
       "premium",
       "whole fish",
       "serve along fillet seams"
-    ]
+    ],
+    "cuttingDirectionEn": "serve along fillet seams"
   },
   {
     "id": "monkfish_tail",
@@ -2130,7 +2238,8 @@ export const generatedCutProfiles = [
       "premium",
       "firm",
       "crosswise medallions"
-    ]
+    ],
+    "cuttingDirectionEn": "crosswise medallions"
   },
   {
     "id": "cod_loin",
@@ -2168,7 +2277,8 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "lean",
       "serve in flakes"
-    ]
+    ],
+    "cuttingDirectionEn": "serve in flakes"
   },
   {
     "id": "halibut_steak",
@@ -2206,7 +2316,8 @@ export const generatedCutProfiles = [
       "premium",
       "lean",
       "against grain if portioned"
-    ]
+    ],
+    "cuttingDirectionEn": "against grain if portioned"
   },
   {
     "id": "swordfish_steak",
@@ -2244,7 +2355,8 @@ export const generatedCutProfiles = [
       "firm",
       "quick",
       "against the grain"
-    ]
+    ],
+    "cuttingDirectionEn": "against the grain"
   },
   {
     "id": "kingfish_beryx",
@@ -2285,8 +2397,13 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "premium",
       "whole fish",
-      "lift fillets from bone"
-    ]
+      "lift fillets then portion across grain lines"
+    ],
+    "criticalMistakeEn": "treating it like lean fish and overcooking the loin",
+    "cuttingDirectionEn": "lift fillets then portion across grain lines",
+    "proTipEn": "pull when opaque edges move halfway inward",
+    "textureResultEn": "delicate flaky flesh with juicy center near spine",
+    "setupVisualKeyEn": "whole fish basket or plancha over moderate heat"
   },
   {
     "id": "corn_on_cob",
@@ -2320,7 +2437,8 @@ export const generatedCutProfiles = [
       "quick",
       "easy",
       "not applicable"
-    ]
+    ],
+    "cuttingDirectionEn": "not applicable"
   },
   {
     "id": "eggplant_slices",
@@ -2354,7 +2472,8 @@ export const generatedCutProfiles = [
       "vegetarian",
       "quick",
       "slice lengthwise or rounds"
-    ]
+    ],
+    "cuttingDirectionEn": "slice lengthwise or rounds"
   },
   {
     "id": "asparagus",
@@ -2386,8 +2505,13 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "quick",
       "easy",
-      "not applicable"
-    ]
+      "no slicing needed trim woody ends"
+    ],
+    "criticalMistakeEn": "skipping oil and salt then drying before browning",
+    "cuttingDirectionEn": "no slicing needed trim woody ends",
+    "proTipEn": "light oil coat and roll every 20 to 30 seconds",
+    "textureResultEn": "tender crisp stalks with charred tips",
+    "setupVisualKeyEn": "hot direct zone with fine grate or perforated tray"
   },
   {
     "id": "bell_peppers",
@@ -2421,7 +2545,8 @@ export const generatedCutProfiles = [
       "quick",
       "easy",
       "slice strips after cooking"
-    ]
+    ],
+    "cuttingDirectionEn": "slice strips after cooking"
   },
   {
     "id": "potato_halves",
@@ -2454,8 +2579,13 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "side",
       "family",
-      "halve or wedges"
-    ]
+      "halve lengthwise before parboil"
+    ],
+    "criticalMistakeEn": "grilling raw halves and leaving centers undercooked",
+    "cuttingDirectionEn": "halve lengthwise before parboil",
+    "proTipEn": "parboil then steam dry before cut side sear",
+    "textureResultEn": "crisp crust with fluffy interior",
+    "setupVisualKeyEn": "indirect preheat zone and direct browning zone"
   },
   {
     "id": "mushrooms",
@@ -2489,7 +2619,8 @@ export const generatedCutProfiles = [
       "quick",
       "easy",
       "not applicable"
-    ]
+    ],
+    "cuttingDirectionEn": "not applicable"
   },
   {
     "id": "onion_halves",
@@ -2522,7 +2653,8 @@ export const generatedCutProfiles = [
       "side",
       "easy",
       "halve through root"
-    ]
+    ],
+    "cuttingDirectionEn": "halve through root"
   },
   {
     "id": "carrots",
@@ -2554,7 +2686,8 @@ export const generatedCutProfiles = [
     "tipsEn": [
       "side",
       "lengthwise halves"
-    ]
+    ],
+    "cuttingDirectionEn": "lengthwise halves"
   },
   {
     "id": "zucchini",
@@ -2588,7 +2721,8 @@ export const generatedCutProfiles = [
       "quick",
       "easy",
       "lengthwise slices"
-    ]
+    ],
+    "cuttingDirectionEn": "lengthwise slices"
   }
 ] satisfies GeneratedCutProfile[];
 
