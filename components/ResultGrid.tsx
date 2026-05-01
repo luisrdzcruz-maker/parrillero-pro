@@ -34,22 +34,6 @@ const fullWidthPanel = `${ds.panel.result} transition-all duration-200 col-span-
 const inlineFallbackImage =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='700' viewBox='0 0 1200 700'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='30%25' r='70%25'%3E%3Cstop offset='0%25' stop-color='%23f97316' stop-opacity='.45'/%3E%3Cstop offset='60%25' stop-color='%230f172a'/%3E%3Cstop offset='100%25' stop-color='%23020617'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='1200' height='700' fill='url(%23g)'/%3E%3Cpath d='M280 470h640' stroke='%23fb923c' stroke-width='18' stroke-linecap='round' opacity='.55'/%3E%3Cpath d='M340 405h520' stroke='%23fed7aa' stroke-width='10' stroke-linecap='round' opacity='.38'/%3E%3Ccircle cx='600' cy='300' r='105' fill='%23f97316' opacity='.18'/%3E%3C/svg%3E";
 
-type SummaryLabels = {
-  badge: string;
-  title: string;
-  subtitle: string;
-  method: string;
-  time: string;
-  temperature: string;
-  doneness: string;
-  rest: string;
-  cutting: string;
-  safety: string;
-  criticalError: string;
-  cookFacts: string;
-  finishWell: string;
-};
-
 export type ResultSummary = {
   method: string;
   time: string;
@@ -60,60 +44,6 @@ export type ResultSummary = {
   safety: string;
   criticalError: string;
 };
-
-function getSummaryLabels(lang: "es" | "en" | "fi"): SummaryLabels {
-  if (lang === "en") {
-    return {
-      badge: "Result ready",
-      title: "Premium cook summary",
-      subtitle: "The key plan details, ready to follow at the grill.",
-      method: "Method",
-      time: "Time",
-      temperature: "Temperature",
-      doneness: "Doneness",
-      rest: "Rest",
-      cutting: "Cut",
-      safety: "Safety",
-      criticalError: "Critical error",
-      cookFacts: "Cook facts",
-      finishWell: "Finish well",
-    };
-  }
-
-  if (lang === "fi") {
-    return {
-      badge: "Tulos valmis",
-      title: "Premium-yhteenveto",
-      subtitle: "Tärkeimmät tiedot selkeästi ennen grilliä.",
-      method: "Menetelmä",
-      time: "Aika",
-      temperature: "Lämpötila",
-      doneness: "Kypsyys",
-      rest: "Lepo",
-      cutting: "Leikkaus",
-      safety: "Turva",
-      criticalError: "Kriittinen virhe",
-      cookFacts: "Kypsennyksen tiedot",
-      finishWell: "Viimeistely",
-    };
-  }
-
-  return {
-    badge: "Resultado listo",
-    title: "Resumen premium de cocción",
-    subtitle: "Lo esencial del plan, claro y listo para la parrilla.",
-    method: "Método",
-    time: "Tiempo",
-    temperature: "Temperatura",
-    doneness: "Punto",
-    rest: "Reposo",
-    cutting: "Corte",
-    safety: "Seguridad",
-    criticalError: "Error crítico",
-    cookFacts: "Datos de cocción",
-    finishWell: "Final correcto",
-  };
-}
 
 function getFirstUsefulLine(value = "") {
   return (
@@ -333,36 +263,6 @@ function extractDonenessValue(blocks: Blocks, keys: string[]) {
   return compactSummaryValue(value || line);
 }
 
-function SummaryMetric({
-  label,
-  value,
-  featured = false,
-  tone = "default",
-}: {
-  label: string;
-  value: string;
-  featured?: boolean;
-  tone?: "default" | "finish" | "temperature";
-}) {
-  const toneClass =
-    tone === "temperature"
-      ? "border-red-300/25 bg-red-500/[0.08] ring-red-200/[0.04]"
-      : tone === "finish"
-        ? "border-sky-300/20 bg-sky-500/[0.07] ring-sky-200/[0.04]"
-        : featured
-          ? "border-orange-300/25 bg-orange-500/[0.09] ring-orange-200/[0.05]"
-          : "border-white/10 bg-white/[0.045] ring-white/[0.03]";
-
-  return (
-    <div className={`rounded-2xl border p-3.5 shadow-lg shadow-black/10 ring-1 ring-inset ${toneClass}`}>
-      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300/90">
-        {label}
-      </p>
-      <p className="mt-2 line-clamp-2 text-sm font-black leading-snug text-white">{value}</p>
-    </div>
-  );
-}
-
 export function buildResultSummary(blocks: Blocks, keys: string[]): ResultSummary {
   const setupKey = findBlockKey(keys, ["SETUP", "CONFIGURACION", "CONFIGURACIÓN"]);
   const timeKey = findBlockKey(keys, ["TIEMPOS", "TIMES"]);
@@ -387,60 +287,6 @@ export function buildResultSummary(blocks: Blocks, keys: string[]): ResultSummar
     ]),
     criticalError: errorKey ? compactDetailValue(blocks[errorKey]) : "",
   };
-}
-
-function PremiumResultSummaryCard({
-  blocks,
-  keys,
-  lang,
-}: {
-  blocks: Blocks;
-  keys: string[];
-  lang: "es" | "en" | "fi";
-}) {
-  const labels = getSummaryLabels(lang);
-  const summary = buildResultSummary(blocks, keys);
-  const { method, doneness, cutting, safety } = summary;
-
-  if (!method && !doneness && !cutting && !safety) {
-    return null;
-  }
-
-  return (
-    <section className="col-span-full overflow-hidden rounded-[2rem] border border-orange-300/25 bg-[radial-gradient(circle_at_12%_0%,rgba(251,146,60,0.26),transparent_30%),linear-gradient(135deg,rgba(15,23,42,0.98),rgba(2,6,23,0.96)_58%,rgba(67,20,7,0.72))] shadow-2xl shadow-orange-950/25 ring-1 ring-inset ring-white/[0.05]">
-      <div className="relative p-4 sm:p-5">
-        <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-orange-400/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 left-1/4 h-28 w-28 rounded-full bg-amber-300/10 blur-3xl" />
-
-        <div className="relative z-10">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="inline-flex rounded-full border border-orange-300/25 bg-orange-500/15 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-orange-200">
-                {labels.badge}
-              </p>
-              <h2 className="mt-3 text-2xl font-black tracking-tight text-white sm:text-3xl">
-                {labels.title}
-              </h2>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">{labels.subtitle}</p>
-            </div>
-            <div className="hidden shrink-0 rounded-3xl border border-orange-300/20 bg-orange-500/15 px-4 py-3 text-right shadow-xl shadow-orange-950/30 sm:block">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-200">
-                {labels.cookFacts}
-              </p>
-              <p className="mt-1 text-xs font-semibold text-orange-50/80">3 sec scan</p>
-            </div>
-          </div>
-
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {method && <SummaryMetric featured label={labels.method} value={method} />}
-            {doneness && <SummaryMetric label={labels.doneness} value={doneness} />}
-            {cutting && <SummaryMetric label={labels.cutting} tone="finish" value={cutting} />}
-            {safety && <SummaryMetric label={labels.safety} tone="temperature" value={safety} />}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
 }
 
 function ShoppingListCard({
@@ -681,7 +527,6 @@ export default function ResultGrid({
 
   return (
     <Grid className="mx-auto max-w-5xl gap-4 md:gap-5" variant="cards">
-      <PremiumResultSummaryCard blocks={blocks} keys={keys} lang={lang} />
       <SetupVisualAnchor
         content={setupKey ? blocks[setupKey] : undefined}
         equipment={equipment}

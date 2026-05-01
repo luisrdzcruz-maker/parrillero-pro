@@ -1174,9 +1174,11 @@ function CookingResultStep({
   return (
     <div className="space-y-4">
       <ResultCards
+        animal={animal}
         blocks={blocks}
         context={`${animal} · ${equipment}`}
-        cutId={cutId}
+        cut={cut}
+        doneness={doneness}
         equipment={equipment}
         lang={lang}
         loading={false}
@@ -1194,9 +1196,11 @@ function CookingResultStep({
 }
 
 export function ResultCards({
+  animal,
   blocks,
   context,
-  cutId,
+  cut,
+  doneness,
   equipment,
   lang = "es",
   loading,
@@ -1209,9 +1213,11 @@ export function ResultCards({
   saveMenuMessage = "",
   t,
 }: {
+  animal?: string;
   blocks: Blocks;
   context?: string;
-  cutId?: string;
+  cut?: string;
+  doneness?: string;
   equipment?: string;
   lang?: Lang;
   loading: boolean;
@@ -1252,15 +1258,17 @@ export function ResultCards({
           onShare: shareWhatsApp,
           onStartCooking: canStartCooking ? onStartCooking : undefined,
         }}
+        animal={animal}
         context={context}
-        cutId={cutId}
+        cut={cut}
+        doneness={doneness}
         hasResult={hasResult}
+        lang={lang}
         onEdit={onEdit}
         saveMenuStatus={saveMenuStatus}
         summary={resultSummary}
         t={{
           copy: t.copy,
-          result: t.result,
           save: lang === "es" ? "Guardar" : "Save",
           saving: lang === "es" ? "Guardando..." : "Saving...",
           share: lang === "es" ? "Compartir" : "Share",
