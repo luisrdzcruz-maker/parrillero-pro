@@ -100,7 +100,8 @@ export function CutSelectionScreen({
   }, [selectedAnimal, selectedIntent, selectedZone]);
 
   const groupedProfiles = useMemo(() => getCategoryGroups(visibleProfiles), [visibleProfiles]);
-  const activeFilterLabel = selectedIntent ? intentLabels[selectedIntent] : "Todos";
+  const activeFilterLabel = selectedIntent ? intentLabels[selectedIntent] : "All goals";
+  const hasActiveFilters = Boolean(selectedIntent || selectedZone);
   const handleStartCooking = (profile: GeneratedCutProfile) => {
     if (onStartCooking) {
       onStartCooking(profile);
@@ -109,16 +110,20 @@ export function CutSelectionScreen({
 
     router.push(buildCookingWizardHref(profile));
   };
+  const handleResetFilters = () => {
+    handleIntentChange(null);
+    handleZoneChange(null);
+  };
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#030201] text-white">
+    <main className="min-h-full bg-[#030201] text-white">
       <div className="pointer-events-none fixed inset-0">
         <div className="absolute -left-32 -top-36 h-[420px] w-[420px] rounded-full bg-orange-500/20 blur-[110px]" />
         <div className="absolute right-[-180px] top-32 h-[380px] w-[380px] rounded-full bg-red-600/15 blur-[120px]" />
         <div className="absolute bottom-[-220px] left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-amber-500/10 blur-[150px]" />
       </div>
 
-      <section className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 pb-36 pt-5 sm:px-6 lg:px-8">
+      <section className="relative mx-auto flex min-h-full w-full max-w-6xl flex-col px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 lg:px-8 lg:pb-36">
         <header className="rounded-[2rem] border border-orange-300/15 bg-white/[0.045] p-5 shadow-[0_30px_120px_rgba(0,0,0,0.55)] backdrop-blur-xl">
           <div className="inline-flex rounded-full border border-orange-400/20 bg-orange-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-orange-200">
             Cut selection
@@ -126,17 +131,17 @@ export function CutSelectionScreen({
           <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_300px] lg:items-end">
             <div>
               <h1 className="text-[clamp(2.25rem,12vw,5.5rem)] font-black leading-[0.9] tracking-[-0.06em]">
-                Elige corte primero.
+                Choose your cut first.
               </h1>
               <p className="mt-4 max-w-2xl text-sm leading-6 text-zinc-300 sm:text-base">
-                Seleccion rapida por intencion, categoria y zona. Disenado para decidir en segundos.
+                Pick a cut, see why it fits, then review details before live cooking starts.
               </p>
             </div>
             <div className="rounded-[1.5rem] border border-white/10 bg-black/35 p-4">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">Animal</p>
               <p className="mt-2 text-2xl font-black text-orange-300">{animalLabels[selectedAnimal]}</p>
               <p className="mt-1 text-xs leading-5 text-zinc-500">
-                {visibleProfiles.length} cortes · {activeFilterLabel}
+                {visibleProfiles.length} cuts · {activeFilterLabel}
               </p>
             </div>
           </div>
@@ -158,7 +163,7 @@ export function CutSelectionScreen({
                 onClick={() => handleZoneChange(null)}
                 className="w-full rounded-2xl border border-orange-400/25 bg-orange-500/10 px-4 py-3 text-xs font-black text-orange-200 transition active:scale-[0.98]"
               >
-                Limpiar zona: {selectedZone}
+                Clear zone: {selectedZone}
               </button>
             )}
           </aside>
@@ -167,7 +172,13 @@ export function CutSelectionScreen({
             {viewMode === "map" && (
               <CutMap animal={selectedAnimal} selectedZone={selectedZone} onZoneChange={handleZoneChange} />
             )}
-            <CutList groups={groupedProfiles} selectedCutId={selectedProfile?.id} onSelect={handleProfileChange} />
+            <CutList
+              groups={groupedProfiles}
+              selectedCutId={selectedProfile?.id}
+              hasActiveFilters={hasActiveFilters}
+              onResetFilters={handleResetFilters}
+              onSelect={handleProfileChange}
+            />
           </div>
         </div>
       </section>
