@@ -618,9 +618,16 @@ function mapWeightRangeToKg(weightRange: CookingWeightRange, wholeChicken: boole
 function mapThicknessToSizePreset(thicknessValue: string): CookingSizePreset {
   const parsed = Number(thicknessValue.replace(",", "."));
   if (!Number.isFinite(parsed)) return "medium";
-  if (parsed <= 2.75) return "small";
-  if (parsed >= 4.5) return "large";
+  const preset = thicknessCmToPreset(parsed);
+  if (preset === "thin") return "small";
+  if (preset === "thick") return "large";
   return "medium";
+}
+
+function thicknessCmToPreset(thicknessCm: number): "thin" | "normal" | "thick" {
+  if (thicknessCm < 2) return "thin";
+  if (thicknessCm <= 3.5) return "normal";
+  return "thick";
 }
 
 function mapBeefLargeWeightPresetToKg(weightRange: CookingWeightRange): string {
@@ -866,11 +873,31 @@ function HomeContent() {
     };
   }
 
-  function pushCookingResultHistoryWithContext() {
+  function resolveDonenessForResultNavigation(
+    sourceAnimal: AnimalLabel,
+    sourceDoneness: string | undefined,
+    fallbackDoneness: string | undefined,
+  ) {
+    const validDonenessIds = getDonenessOptions(animalIdsByLabel[sourceAnimal]).map((option) => option.id);
+    const normalizedSource = sourceDoneness?.trim();
+    if (normalizedSource && validDonenessIds.includes(normalizedSource as Doneness)) {
+      return { value: normalizedSource, source: "state" as const };
+    }
+    const normalizedFallback = fallbackDoneness?.trim();
+    if (normalizedFallback && validDonenessIds.includes(normalizedFallback as Doneness)) {
+      return { value: normalizedFallback, source: "generated_context" as const };
+    }
+    return { value: getInitialDoneness(sourceAnimal), source: "animal_default" as const };
+  }
+
+  function pushCookingResultHistoryWithContext(fallbackContext?: { doneness?: string; thickness?: string }) {
     if (typeof window === "undefined") return;
 
+    const currentUrlBeforePush = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     const contextParams = getCurrentCookingNavigationParams();
-    if (!contextParams.animal || !contextParams.cutId) {
+    const sourceAnimal = contextParams.animal;
+    const sourceCutId = contextParams.cutId;
+    if (!sourceAnimal || !sourceCutId) {
       const homeUrl = buildHomeUrl();
       window.history.replaceState({ mode: "inicio", cookingStep: "animal", cookingContext: {} }, "", homeUrl);
       setMode("inicio");
@@ -881,29 +908,58 @@ function HomeContent() {
       return;
     }
 
+    const resolvedDoneness = resolveDonenessForResultNavigation(
+      sourceAnimal,
+      contextParams.doneness,
+      fallbackContext?.doneness,
+    );
+    const fallbackThickness = fallbackContext?.thickness
+      ? parsePositiveNumberParam(fallbackContext.thickness)
+      : undefined;
+    const resolvedThickness = contextParams.thickness ?? fallbackThickness ?? (shouldShowThickness(sourceCutId) ? "2" : undefined);
     const navContext: CookingNavContext = {
-      animal: contextParams.animal,
-      cut: contextParams.cutId,
-      ...(contextParams.doneness ? { doneness: contextParams.doneness } : {}),
-      ...(contextParams.thickness ? { thickness: contextParams.thickness } : {}),
+      animal: sourceAnimal,
+      cut: sourceCutId,
+      ...(resolvedDoneness.value ? { doneness: resolvedDoneness.value } : {}),
+      ...(resolvedThickness ? { thickness: resolvedThickness } : {}),
     };
-    const detailsUrl = buildCookingDetailsUrl(contextParams);
-    const resultUrl = buildCookingResultUrl(contextParams);
+    const resultParams = {
+      animal: sourceAnimal,
+      cutId: sourceCutId,
+      doneness: resolvedDoneness.value,
+      ...(resolvedThickness ? { thickness: resolvedThickness } : {}),
+    };
+    const detailsUrl = buildCookingDetailsUrl(resultParams);
+    const resultUrl = buildCookingResultUrl(resultParams);
     const currentNav = parseNavFromSearch(window.location.search);
-    const isDetailsWithSameContext =
+    const isResultWithSameContext =
       currentNav.mode === "coccion" &&
-      currentNav.cookingStep === "details" &&
+      currentNav.cookingStep === "result" &&
       isSameCookingContext(currentNav.cookingContext, navContext);
 
-    if (!isDetailsWithSameContext) {
-      window.history.replaceState({ mode: "coccion", cookingStep: "details", cookingContext: navContext }, "", detailsUrl);
+    if (isResultWithSameContext) {
+      setMode("coccion");
+      setCookingStep("result");
+      if (process.env.NODE_ENV !== "production") {
+        console.debug("[nav] details->result skip duplicate push", {
+          currentUrlBeforePush,
+          resultUrl,
+          donenessSource: resolvedDoneness.source,
+        });
+      }
+      return;
     }
 
-    window.history.pushState({ mode: "coccion", cookingStep: "result", cookingContext: navContext }, "", resultUrl);
-    setMode("coccion");
-    setCookingStep("result");
+    commitNav("coccion", "details", "replace", navContext);
+    commitNav("coccion", "result", "push", navContext);
     if (process.env.NODE_ENV !== "production") {
-      console.debug("[nav] details->result push", { detailsUrl, resultUrl });
+      console.debug("[nav] details->result push", {
+        currentUrlBeforePush,
+        detailsUrl,
+        resultUrl,
+        urlAfterPush: `${window.location.pathname}${window.location.search}${window.location.hash}`,
+        donenessSource: resolvedDoneness.source,
+      });
     }
   }
 
@@ -1600,7 +1656,10 @@ function HomeContent() {
       setBlocks(normalizedPlan);
       setCheckedItems({});
       resetSaveMenuState();
-      pushCookingResultHistoryWithContext();
+      pushCookingResultHistoryWithContext({
+        doneness: input.doneness,
+        thickness: resolvedThicknessCm,
+      });
       return;
     }
 
@@ -1628,7 +1687,10 @@ ERROR
     if (ok) {
       track({ name: "cooking_plan_result", path: "ai" });
     }
-    pushCookingResultHistoryWithContext();
+    pushCookingResultHistoryWithContext({
+      doneness: input.doneness,
+      thickness: resolvedThicknessCm,
+    });
   }
 
   async function generateMenuPlan() {

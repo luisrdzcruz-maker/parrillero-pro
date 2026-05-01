@@ -1,4 +1,4 @@
-# Live Cooking QA Report (Final Validation)
+# Live Cooking QA Report (Final Validation After Navigation Contract)
 
 Date: 2026-05-01
 Branch: `feature/product-core-data-driven-cuts`
@@ -7,55 +7,57 @@ Model/Agent: Codex 5.3
 ## PASSED
 
 - Gate checks:
-  - `npm run lint` passes (non-blocking warning only).
+  - `npm run lint` passes with one existing warning only (`react-hooks/exhaustive-deps` in `app/page.tsx`).
   - `npm run build` passes.
-- Details -> Result URL carries full context:
-  - Generated result URL observed as `/?mode=coccion&step=result&animal=beef&cutId=ribeye&doneness=blue&thickness=5`.
-  - Contains all expected keys: `mode`, `step`, `animal`, `cutId`, `doneness`, `thickness`.
+- Direct Live fallback now works with canonical context:
+  - Opened `/?mode=cocina&animal=beef&cutId=ribeye`.
+  - Pressed `Plan`.
+  - After short async delay, URL transitioned to `/?mode=coccion&step=details&animal=beef&cutId=ribeye`.
 - Result stability is healthy:
-  - Result content remains populated after wait.
+  - Result remains populated after wait.
   - Live CTA remains visible.
   - No collapse to empty state observed.
-- Result -> Live transition works:
-  - Live opens in `mode=cocina`.
-  - Context remains canonical in URL (`animal=beef`, `cutId=ribeye`).
-  - No localized `animal` label leaked into URL.
-- Live behavior works:
-  - Start cooking starts countdown (`5:00 -> 4:54` observed).
+- Result -> Live works and preserves canonical context:
+  - From result, clicking `Start Live Cooking` opens `mode=cocina`.
+  - Observed URL: `/?mode=cocina&animal=beef&cutId=ribeye&thickness=2`.
+  - `animal` remained canonical (`beef`), never localized in URL.
+- Live runtime core behavior works:
+  - Start cooking starts countdown (`5:00 -> 4:53` observed).
   - CTA updates dynamically (`Start cooking` -> `Mark step done` -> `Flip now`).
   - Completed-step state appears (`Completed` marker shown).
-  - No dead clicks or crashes observed in the tested flow.
+  - No dead clicks observed in runtime step actions.
 - Fail-safe behavior works:
   - `/?mode=cocina` loads without crash.
-  - `/?mode=cocina&animal=Vacuno&cutId=unknown` safely normalizes to a safe URL (`/?mode=cocina`) and does not crash.
+  - `/?mode=cocina&animal=Vacuno&cutId=unknown` safely normalizes to `/?mode=cocina` without crash.
 
 ## ISSUES FOUND
 
-- Direct Live fallback is still failing:
-  - Starting from direct URL `/?mode=cocina&animal=beef&cutId=ribeye`, pressing `Plan` does not route to details fallback.
-  - URL stays in Live mode instead of expected details fallback (or equivalent context-preserving fallback).
-- Browser Back/Forward contract from Result is failing in-app:
-  - After details -> result generation, browser back could not reliably return to details in the same flow.
-  - Browser back was reported as unavailable in one run (`no previous page`) and did not satisfy expected details return behavior.
-  - Forward validation is blocked by this failed back-state contract.
+- Details -> Result browser history contract is still broken (critical):
+  - Started from details URL with ribeye context and generated result.
+  - Expected browser back target: details.
+  - Actual behavior in clean tab: `browser_navigate_back` reports no previous history entry.
+  - This means the expected `details <-> result` back/forward pair is not present in history.
+- Result URL is missing one expected context key:
+  - Observed result URL after generation: `/?mode=coccion&step=result&animal=beef&cutId=ribeye&thickness=2`.
+  - `doneness` was not preserved in URL in this run.
 
 ## EDGE CASES
 
-- URL source-of-truth sequence was executed exactly:
+- URL source-of-truth switching executed:
   - `/?mode=cocina&animal=beef&cutId=ribeye`
   - `/?mode=cocina&animal=beef&cutId=picanha`
   - `/?mode=cocina&animal=beef&cutId=ribeye`
-- URLs updated correctly each time; however, direct Live UI is mostly generic, so cut-specific visual differentiation is limited in this surface.
-- Because direct Live UI does not expose strong cut-specific labels, stale session text could not be fully disproven visually beyond URL/state transitions.
+- URL updates were correct and canonical in all switches.
+- Direct Live surface remains mostly generic across cuts, so visual differentiation is limited even when URL context changes correctly.
 
 ## RISKS
 
-- Users entering Live directly can get trapped without deterministic fallback to details/planning context.
-- Broken back-stack behavior on result/live transitions can reduce trust and make recovery flows brittle.
-- Limited cut-specific visibility on direct Live screens makes context correctness harder to verify manually without additional debug/state surface.
+- Missing browser history pairing between details/result breaks expected user recovery and navigation trust.
+- Forward validation is blocked by absent back entry (this is app behavior, not an automation limitation in this run).
+- Missing `doneness` in result URL can weaken strict context reproducibility/shareability.
 
 ## VERDICT
 
 **NEEDS FIXES**
 
-Core generation, URL context on Result, Live runtime behavior, and fail-safe handling are stable, but release should remain blocked until direct Live `Plan/back` fallback and Back/Forward contract are fixed.
+Navigation fallback, Live runtime, fail-safe handling, and Result -> Live transition are stable. Release should remain blocked until the Details -> Result history contract is fixed (back/forward parity) and result URL context preservation includes all required keys (notably `doneness`).
