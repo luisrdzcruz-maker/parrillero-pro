@@ -23,7 +23,7 @@ function buildCookingWizardHref(profile: GeneratedCutProfile) {
     mode: "coccion",
     step: "details",
     animal: profile.animalId,
-    cut: profile.id,
+    cutId: profile.id,
   });
 
   if (profile.defaultDoneness) {

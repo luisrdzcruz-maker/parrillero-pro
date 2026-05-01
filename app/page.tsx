@@ -75,7 +75,10 @@ import {
   buildCookingResultUrl,
   buildHomeUrl,
 } from "@/lib/navigation/cookingNavigation";
+import { canonicalizeCutId } from "@/lib/navigation/canonicalCutId";
 import { parseLiveParams } from "@/lib/navigation/parseLiveParams";
+import { CutSelectionScreen } from "@/components/cuts/CutSelectionScreen";
+import type { GeneratedAnimalId, GeneratedCutProfile } from "@/lib/generated/cutProfiles";
 import type { Doneness } from "@/lib/types/domain";
 import { animalIdsByLabel, type AnimalLabel } from "@/lib/media/animalMedia";
 import { cutImages } from "@/lib/media/cutImages";
@@ -455,30 +458,61 @@ function normalizeCookingContextValue(value: string | undefined) {
   return value?.trim() ?? "";
 }
 
+function isVegetableContextAnimal(animal: AnimalLabel | undefined) {
+  return animal === "Verduras";
+}
+
 function isSameCookingContext(a: CookingNavContext, b: CookingNavContext) {
-  return (
-    normalizeCookingContextValue(a.animal) === normalizeCookingContextValue(b.animal) &&
-    normalizeCookingContextValue(a.cut) === normalizeCookingContextValue(b.cut) &&
-    normalizeCookingContextValue(a.doneness) === normalizeCookingContextValue(b.doneness) &&
-    normalizeCookingContextValue(a.thickness) === normalizeCookingContextValue(b.thickness)
-  );
+  const animalA = normalizeCookingContextValue(a.animal);
+  const animalB = normalizeCookingContextValue(b.animal);
+  if (animalA !== animalB) return false;
+
+  const cutA = normalizeCookingContextValue(a.cut);
+  const cutB = normalizeCookingContextValue(b.cut);
+  if (cutA !== cutB) return false;
+
+  if (isVegetableContextAnimal(a.animal) || isVegetableContextAnimal(b.animal)) {
+    return true;
+  }
+
+  const donenessA = normalizeCookingContextValue(a.doneness);
+  const donenessB = normalizeCookingContextValue(b.doneness);
+  if (donenessA !== donenessB) return false;
+
+  const referenceCut = cutA || cutB;
+  if (!referenceCut) {
+    return normalizeCookingContextValue(a.thickness) === normalizeCookingContextValue(b.thickness);
+  }
+  if (!shouldShowThickness(referenceCut)) return true;
+
+  return normalizeCookingContextValue(a.thickness) === normalizeCookingContextValue(b.thickness);
 }
 
 function parseCookingContext(params: URLSearchParams, mode: Mode): CookingNavContext {
   const liveParams = mode === "cocina" ? parseLiveParams(params.toString()) : null;
-  const cutParam = mode === "cocina" ? liveParams?.cutId : params.get("cut") ?? params.get("cutId");
-  const cutMeta = cutParam ? getCutById(cutParam) : undefined;
   const animalSource = mode === "cocina" ? liveParams?.animal ?? null : params.get("animal");
-  const animal = parseCookingAnimal(animalSource) ?? (cutMeta ? animalLabelsById[cutMeta.animalId] : undefined);
-  const cut = cutMeta?.id;
+  const animalFromParam = parseCookingAnimal(animalSource);
+  const canonicalCutParam = canonicalizeCutId(
+    mode === "cocina" ? liveParams?.cutId : params.get("cut") ?? params.get("cutId"),
+    animalFromParam ? animalIdsByLabel[animalFromParam] : undefined,
+  );
+  const cutMeta = canonicalCutParam ? getCutById(canonicalCutParam) : undefined;
+  const animal = animalFromParam ?? (cutMeta ? animalLabelsById[cutMeta.animalId] : undefined);
+  const cut =
+    canonicalizeCutId(cutMeta?.id, animal ? animalIdsByLabel[animal] : undefined) ?? cutMeta?.id;
   const donenessParam = mode === "cocina" ? liveParams?.doneness?.trim() : params.get("doneness")?.trim();
+  const shouldUseDoneness = animal ? !isVegetableContextAnimal(animal) : true;
   const doneness =
-    animal && donenessParam && getDonenessOptions(animalIdsByLabel[animal]).some((option) => option.id === donenessParam)
+    shouldUseDoneness &&
+    animal &&
+    donenessParam &&
+    getDonenessOptions(animalIdsByLabel[animal]).some((option) => option.id === donenessParam)
       ? donenessParam
       : undefined;
-  const thickness = parsePositiveNumberParam(
+  const rawThickness = parsePositiveNumberParam(
     mode === "cocina" ? (liveParams?.thickness != null ? String(liveParams.thickness) : null) : params.get("thickness"),
   );
+  const thickness = cut && shouldShowThickness(cut) ? rawThickness : undefined;
 
   return {
     ...(animal ? { animal } : {}),
@@ -540,14 +574,22 @@ function doesPayloadMatchLiveUrlContext(
 ) {
   if (!payload) return false;
   if (!liveFromUrl.cutId) return false;
-  if (!liveFromUrl.donenessFromUrl || !liveFromUrl.thicknessFromUrl) return false;
 
   const sameAnimal =
     normalizeLiveContextToken(payload.input.animal) === normalizeLiveContextToken(liveFromUrl.animal);
   const sameCut = normalizeLiveContextToken(payload.input.cut) === normalizeLiveContextToken(liveFromUrl.cutId);
+  const payloadDoneness = normalizeLiveContextToken(payload.input.doneness);
   const sameDoneness =
-    normalizeLiveContextToken(payload.input.doneness) === normalizeLiveContextToken(liveFromUrl.donenessFromUrl);
-  const sameThickness = isMatchingThickness(liveFromUrl.thicknessFromUrl, payload.input.thickness);
+    payloadDoneness.length === 0 ||
+    normalizeLiveContextToken(liveFromUrl.donenessFromUrl) === payloadDoneness;
+  const payloadRequiresThickness = shouldShowThickness(payload.input.cut);
+  const payloadThickness = normalizeLiveContextToken(payload.input.thickness);
+  const sameThickness =
+    !payloadRequiresThickness ||
+    payloadThickness.length === 0 ||
+    (liveFromUrl.thicknessFromUrl
+      ? isMatchingThickness(liveFromUrl.thicknessFromUrl, payload.input.thickness)
+      : false);
 
   return sameAnimal && sameCut && sameDoneness && sameThickness;
 }
@@ -583,15 +625,32 @@ function buildSearchFromNav(
   if (mode === "coccion") {
     params.set("step", cookingStep);
     if (cookingContext.animal) params.set("animal", animalIdsByLabel[cookingContext.animal]);
-    if (cookingContext.cut) params.set("cutId", cookingContext.cut);
-    if (cookingContext.doneness) params.set("doneness", cookingContext.doneness);
-    if (cookingContext.thickness) params.set("thickness", cookingContext.thickness);
+    if (cookingContext.cut) {
+      const canonicalCut = canonicalizeCutId(
+        cookingContext.cut,
+        cookingContext.animal ? animalIdsByLabel[cookingContext.animal] : undefined,
+      );
+      if (canonicalCut) params.set("cutId", canonicalCut);
+    }
+    if (cookingContext.doneness && !isVegetableContextAnimal(cookingContext.animal)) {
+      params.set("doneness", cookingContext.doneness);
+    }
+    if (cookingContext.cut && cookingContext.thickness && shouldShowThickness(cookingContext.cut)) {
+      params.set("thickness", cookingContext.thickness);
+    }
   } else if (mode === "cocina") {
     const animalId = toAnimalId(cookingContext.animal);
     if (animalId) params.set("animal", animalId);
-    if (cookingContext.cut) params.set("cutId", cookingContext.cut);
-    if (cookingContext.doneness) params.set("doneness", cookingContext.doneness);
-    if (cookingContext.thickness) params.set("thickness", cookingContext.thickness);
+    if (cookingContext.cut) {
+      const canonicalCut = canonicalizeCutId(cookingContext.cut, animalId);
+      if (canonicalCut) params.set("cutId", canonicalCut);
+    }
+    if (cookingContext.doneness && !isVegetableContextAnimal(cookingContext.animal)) {
+      params.set("doneness", cookingContext.doneness);
+    }
+    if (cookingContext.cut && cookingContext.thickness && shouldShowThickness(cookingContext.cut)) {
+      params.set("thickness", cookingContext.thickness);
+    }
   }
   const query = params.toString();
   return query ? `?${query}` : "";
@@ -763,12 +822,7 @@ function HomeContent() {
     if (!hasContext) return;
 
     const currentContext = cookingContextRef.current;
-    const contextChanged = Boolean(
-      (cookingContext.animal && cookingContext.animal !== currentContext.animal) ||
-        (cookingContext.cut && cookingContext.cut !== currentContext.cut) ||
-        (cookingContext.doneness && cookingContext.doneness !== currentContext.doneness) ||
-        (cookingContext.thickness && cookingContext.thickness !== currentContext.thickness),
-    );
+    const contextChanged = !isSameCookingContext(cookingContext, currentContext);
 
     if (cookingContext.animal) setAnimal(cookingContext.animal);
     if (cookingContext.cut) setCut(cookingContext.cut);
@@ -808,11 +862,13 @@ function HomeContent() {
     const nextCookingContext = nextMode === "coccion" || nextMode === "cocina" ? cookingContext : {};
     if (nextMode === "coccion" && (requestedStep === "details" || requestedStep === "result")) {
       const hasBaseContext = Boolean(nextCookingContext.animal && nextCookingContext.cut);
+      const requiresDoneness = nextCookingContext.animal !== "Verduras";
+      const requiresThickness = nextCookingContext.cut ? shouldShowThickness(nextCookingContext.cut) : false;
       const hasFullResultContext = Boolean(
         nextCookingContext.animal &&
           nextCookingContext.cut &&
-          nextCookingContext.doneness &&
-          nextCookingContext.thickness,
+          (!requiresDoneness || nextCookingContext.doneness) &&
+          (!requiresThickness || nextCookingContext.thickness),
       );
       if (!hasBaseContext) {
         nextCookingStep = nextCookingContext.animal ? "cut" : "animal";
@@ -851,11 +907,13 @@ function HomeContent() {
   }
 
   function getCurrentCookingNavContext(): CookingNavContext {
+    const includeDoneness = !isVegetableContextAnimal(animal);
+    const includeThickness = cut ? shouldShowThickness(cut) : false;
     return {
       animal,
       ...(cut ? { cut } : {}),
-      ...(doneness ? { doneness } : {}),
-      ...(thickness ? { thickness } : {}),
+      ...(includeDoneness && doneness ? { doneness } : {}),
+      ...(includeThickness && thickness ? { thickness } : {}),
     };
   }
 
@@ -865,11 +923,14 @@ function HomeContent() {
   }
 
   function getCurrentCookingNavigationParams() {
+    const cutId = cut.trim() || undefined;
+    const includeDoneness = !isVegetableContextAnimal(animal);
+    const includeThickness = cutId ? shouldShowThickness(cutId) : false;
     return {
       animal,
-      cutId: cut.trim() || undefined,
-      doneness: doneness.trim() || undefined,
-      thickness: parsePositiveNumberParam(thickness),
+      cutId,
+      doneness: includeDoneness ? doneness.trim() || undefined : undefined,
+      thickness: includeThickness ? parsePositiveNumberParam(thickness) : undefined,
     };
   }
 
@@ -878,6 +939,9 @@ function HomeContent() {
     sourceDoneness: string | undefined,
     fallbackDoneness: string | undefined,
   ) {
+    if (isVegetableContextAnimal(sourceAnimal)) {
+      return { value: "", source: "not_required" as const };
+    }
     const validDonenessIds = getDonenessOptions(animalIdsByLabel[sourceAnimal]).map((option) => option.id);
     const normalizedSource = sourceDoneness?.trim();
     if (normalizedSource && validDonenessIds.includes(normalizedSource as Doneness)) {
@@ -926,7 +990,7 @@ function HomeContent() {
     const resultParams = {
       animal: sourceAnimal,
       cutId: sourceCutId,
-      doneness: resolvedDoneness.value,
+      ...(resolvedDoneness.value ? { doneness: resolvedDoneness.value } : {}),
       ...(resolvedThickness ? { thickness: resolvedThickness } : {}),
     };
     const detailsUrl = buildCookingDetailsUrl(resultParams);
@@ -1554,6 +1618,31 @@ function HomeContent() {
     track({ name: "cut_selected", animal, cutId: selectedCutId, lang });
   }
 
+  function handleCutSelectionStartCooking(profile: GeneratedCutProfile) {
+    const selectedAnimal = animalLabelsById[profile.animalId] ?? animal;
+    const selectedDoneness = profile.defaultDoneness ?? getInitialDoneness(selectedAnimal);
+    const selectedThickness =
+      profile.showThickness && Number.isFinite(profile.defaultThicknessCm)
+        ? `${profile.defaultThicknessCm}`
+        : "2";
+
+    setAnimal(selectedAnimal);
+    setCut(profile.id);
+    resetAdaptiveDetailInputs();
+    setDoneness(selectedDoneness);
+    setThickness(selectedThickness);
+    setBlocks({});
+    setCheckedItems({});
+    resetSaveMenuState();
+    commitNav("coccion", "details", "push", {
+      animal: selectedAnimal,
+      cut: profile.id,
+      doneness: selectedDoneness,
+      ...(profile.showThickness ? { thickness: selectedThickness } : {}),
+    });
+    track({ name: "cut_selected", animal: selectedAnimal, cutId: profile.id, lang });
+  }
+
   async function callAI(
     message: string,
     createCookSteps = false,
@@ -2033,66 +2122,73 @@ ERROR
         )}
 
         {mode === "coccion" && (
-          <CookingWizard
-            advancedThicknessEnabled={advancedThicknessEnabled}
-            animal={animal}
-            cookingStep={cookingStep}
-            currentDonenessOptions={currentDonenessOptions}
-            cut={cut}
-            cuts={cuts}
-            equipment={equipment}
-            generateCookingPlan={generateCookingPlan}
-            getAnimalPreview={getAnimalPreview}
-            handleAnimalChange={handleAnimalChange}
-            handleCutChange={handleCutChange}
-            lang={lang}
-            loading={loading}
-            selectedCut={selectedCut}
-            saveMenuMessage={saveMenuMessage}
-            saveMenuStatus={saveMenuStatus}
-            setCookingStep={navigateCookingStep}
-            setAdvancedThicknessEnabled={(value) => {
-              setAdvancedThicknessEnabled(value);
-              resetSaveMenuState();
-            }}
-            setDoneness={(value) => {
-              setDoneness(value);
-              resetSaveMenuState();
-            }}
-            setEquipment={(value) => {
-              setEquipment(value);
-              resetSaveMenuState();
-            }}
-            setSizePreset={(value) => {
-              setSizePreset(value);
-              resetSaveMenuState();
-            }}
-            setThickness={(value) => {
-              setThickness(value);
-              resetSaveMenuState();
-            }}
-            setVegetableFormat={(value) => {
-              setVegetableFormat(value);
-              resetSaveMenuState();
-            }}
-            setWeightRange={(value) => {
-              setWeightRange(value);
-              resetSaveMenuState();
-            }}
-            sizePreset={sizePreset}
-            showThickness={showThickness}
-            onSaveMenu={async () => {
-              await saveCurrentMenu();
-            }}
-            t={t}
-            thickness={thickness}
-            vegetableFormat={vegetableFormat}
-            weightRange={weightRange}
-            doneness={doneness}
-            blocks={blocks}
-            checkedItems={checkedItems}
-            setCheckedItems={setCheckedItems}
-          />
+          cookingStep === "cut" ? (
+            <CutSelectionScreen
+              selectedAnimal={animalIdsByLabel[animal] as GeneratedAnimalId}
+              onStartCooking={handleCutSelectionStartCooking}
+            />
+          ) : (
+            <CookingWizard
+              advancedThicknessEnabled={advancedThicknessEnabled}
+              animal={animal}
+              cookingStep={cookingStep}
+              currentDonenessOptions={currentDonenessOptions}
+              cut={cut}
+              cuts={cuts}
+              equipment={equipment}
+              generateCookingPlan={generateCookingPlan}
+              getAnimalPreview={getAnimalPreview}
+              handleAnimalChange={handleAnimalChange}
+              handleCutChange={handleCutChange}
+              lang={lang}
+              loading={loading}
+              selectedCut={selectedCut}
+              saveMenuMessage={saveMenuMessage}
+              saveMenuStatus={saveMenuStatus}
+              setCookingStep={navigateCookingStep}
+              setAdvancedThicknessEnabled={(value) => {
+                setAdvancedThicknessEnabled(value);
+                resetSaveMenuState();
+              }}
+              setDoneness={(value) => {
+                setDoneness(value);
+                resetSaveMenuState();
+              }}
+              setEquipment={(value) => {
+                setEquipment(value);
+                resetSaveMenuState();
+              }}
+              setSizePreset={(value) => {
+                setSizePreset(value);
+                resetSaveMenuState();
+              }}
+              setThickness={(value) => {
+                setThickness(value);
+                resetSaveMenuState();
+              }}
+              setVegetableFormat={(value) => {
+                setVegetableFormat(value);
+                resetSaveMenuState();
+              }}
+              setWeightRange={(value) => {
+                setWeightRange(value);
+                resetSaveMenuState();
+              }}
+              sizePreset={sizePreset}
+              showThickness={showThickness}
+              onSaveMenu={async () => {
+                await saveCurrentMenu();
+              }}
+              t={t}
+              thickness={thickness}
+              vegetableFormat={vegetableFormat}
+              weightRange={weightRange}
+              doneness={doneness}
+              blocks={blocks}
+              checkedItems={checkedItems}
+              setCheckedItems={setCheckedItems}
+            />
+          )
         )}
 
         {mode === "menu" && (

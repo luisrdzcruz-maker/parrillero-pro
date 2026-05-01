@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import type { Mode } from "@/components/navigation/AppHeader";
-import type { AnimalLabel } from "@/lib/media/animalMedia";
+import { buildCookingDetailsUrl } from "@/lib/navigation/cookingNavigation";
+import type { Animal } from "@/lib/types/domain";
 import type { AppText, Lang } from "@/lib/i18n/texts";
 import { type MouseEvent, type ReactNode, useLayoutEffect, useState } from "react";
 
@@ -125,8 +126,10 @@ function HeroSection({
 
 type PopularCut = {
   label: string;
-  animal: AnimalLabel;
+  animal: Animal;
   cutId: string;
+  doneness?: string;
+  thickness?: string;
 };
 
 function PopularCuts({
@@ -224,22 +227,50 @@ export function HomeScreen({
   }
 
   const popularCuts: PopularCut[] = [
-    { label: t.homePopularRibeye, animal: "Vacuno", cutId: "entrecote" },
-    { label: t.homePopularPicanha, animal: "Vacuno", cutId: "picanha" },
-    { label: t.homePopularChickenBreast, animal: "Pollo", cutId: "pechuga" },
-    { label: t.homePopularSalmon, animal: "Pescado", cutId: "salmon" },
-    { label: t.homePopularAsparagus, animal: "Verduras", cutId: "esparragos" },
+    {
+      label: t.homePopularRibeye,
+      animal: "beef",
+      cutId: "ribeye",
+      doneness: "medium_rare",
+      thickness: "2",
+    },
+    {
+      label: t.homePopularPicanha,
+      animal: "beef",
+      cutId: "picanha",
+      doneness: "medium_rare",
+      thickness: "2",
+    },
+    {
+      label: t.homePopularChickenBreast,
+      animal: "chicken",
+      cutId: "chicken_breast",
+      doneness: "safe",
+      thickness: "2",
+    },
+    {
+      label: t.homePopularSalmon,
+      animal: "fish",
+      cutId: "salmon_fillet",
+      doneness: "medium",
+      thickness: "2",
+    },
+    {
+      label: t.homePopularAsparagus,
+      animal: "vegetables",
+      cutId: "asparagus",
+    },
   ];
 
   function openPopularCut(cut: PopularCut) {
-    const params = new URLSearchParams({
-      mode: "coccion",
-      step: "details",
-      animal: cut.animal,
-      cutId: cut.cutId,
-    });
-
-    router.push(`/?${params.toString()}`);
+    router.push(
+      buildCookingDetailsUrl({
+        animal: cut.animal,
+        cutId: cut.cutId,
+        doneness: cut.doneness,
+        thickness: cut.thickness,
+      }),
+    );
   }
 
   return (
@@ -289,7 +320,9 @@ export function HomeScreen({
       <FadeIn>
         <HeroSection
           t={t}
-          onStartCooking={(e) => fireRipple(e.clientX, e.clientY, () => onModeChange("coccion"))}
+          onStartCooking={(e) =>
+            fireRipple(e.clientX, e.clientY, () => router.push("/?mode=coccion&step=cut&animal=beef"))
+          }
           onPlanBbq={() => onModeChange("plan")}
           onUnknown={() => onModeChange("plan")}
         />

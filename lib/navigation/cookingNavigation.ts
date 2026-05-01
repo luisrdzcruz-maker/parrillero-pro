@@ -1,5 +1,6 @@
 import type { Doneness } from "@/lib/types/domain";
 import { toAnimalId } from "@/lib/navigation/animalParam";
+import { canonicalizeCutId } from "@/lib/navigation/canonicalCutId";
 
 type CookingNavigationParams = {
   animal?: string;
@@ -18,8 +19,7 @@ const VALID_DONENESS: ReadonlySet<Doneness> = new Set([
 ]);
 
 function normalizeCutId(value: string | undefined) {
-  const trimmed = value?.trim();
-  return trimmed ? trimmed : undefined;
+  return canonicalizeCutId(value);
 }
 
 function normalizeDoneness(value: string | undefined) {
@@ -41,7 +41,7 @@ function buildCookingUrl(step: "details" | "result", params: CookingNavigationPa
   search.set("step", step);
 
   const animal = toAnimalId(params.animal);
-  const cutId = normalizeCutId(params.cutId);
+  const cutId = canonicalizeCutId(normalizeCutId(params.cutId), animal);
   const doneness = normalizeDoneness(params.doneness);
   const thickness = normalizeThickness(params.thickness);
 
