@@ -3,9 +3,11 @@
 import { useRouter } from "next/navigation";
 import type { Mode } from "@/components/navigation/AppHeader";
 import { buildCookingDetailsUrl } from "@/lib/navigation/cookingNavigation";
+import { buildLiveUrl } from "@/lib/navigation/buildLiveUrl";
+import { readLiveCookingPayload } from "@/lib/liveCookingPlan";
 import type { Animal } from "@/lib/types/domain";
 import type { AppText, Lang } from "@/lib/i18n/texts";
-import { type MouseEvent, type ReactNode, useLayoutEffect, useState } from "react";
+import { type MouseEvent, type ReactNode, useEffect, useLayoutEffect, useMemo, useState } from "react";
 
 // ─── Entrance animation ───────────────────────────────────────────────────────
 
@@ -39,83 +41,51 @@ function HeroSection({
   t,
   onStartCooking,
   onPlanBbq,
-  onUnknown,
 }: {
   t: AppText;
   onStartCooking: (e: MouseEvent<HTMLButtonElement>) => void;
   onPlanBbq: () => void;
-  onUnknown: () => void;
 }) {
   return (
-    <section className="relative overflow-hidden rounded-[2rem] border border-orange-300/12 bg-[#050301] px-5 py-6 shadow-[0_24px_80px_rgba(0,0,0,0.72)] sm:px-7 sm:py-8">
-      <div
-        className="animate-fire-breathe pointer-events-none absolute -left-28 -top-32 h-80 w-80 rounded-full"
-        style={{ background: "radial-gradient(circle, rgba(234,88,12,0.28) 0%, transparent 66%)" }}
-      />
-      <div
-        className="animate-fire-drift pointer-events-none absolute -bottom-28 right-[-5rem] h-72 w-72 rounded-full"
-        style={{
-          background: "radial-gradient(circle, rgba(251,146,60,0.18) 0%, transparent 62%)",
-          animationDelay: "1.8s",
-        }}
-      />
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.08]"
-        style={{
-          background:
-            "linear-gradient(135deg, rgba(255,255,255,0.16) 0%, transparent 32%, transparent 68%, rgba(251,146,60,0.18) 100%)",
-        }}
-      />
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400/60 to-transparent" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/70 to-transparent" />
+    <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#090909] px-5 py-6 shadow-[0_20px_56px_rgba(0,0,0,0.55)] sm:px-7 sm:py-8">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-300/60 to-transparent" />
 
       <div className="relative z-10 max-w-xl">
-        <div className="inline-flex items-center gap-2 rounded-full border border-orange-300/20 bg-orange-500/12 px-3 py-1.5 backdrop-blur-sm">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-orange-400 shadow-[0_0_6px_rgba(251,146,60,0.9)]" />
+        <div className="inline-flex items-center gap-2 rounded-full border border-orange-300/20 bg-orange-500/10 px-3 py-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-orange-400 shadow-[0_0_8px_rgba(251,146,60,0.8)]" />
           <span className="text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">
             {t.homeEyebrow}
           </span>
         </div>
 
-        <h1 className="mt-4 text-[clamp(2.15rem,9.2vw,4rem)] font-black leading-[0.95] tracking-[-0.055em] text-white">
+        <h1 className="mt-4 text-[clamp(2rem,8.2vw,3.3rem)] font-black leading-[0.96] tracking-[-0.04em] text-white">
           {t.homeTitle}
         </h1>
 
-        <p className="mt-3 max-w-[34rem] text-[14px] font-medium leading-[1.55] text-stone-300/78 sm:text-base">
+        <p className="mt-3 max-w-[34rem] text-[14px] font-medium leading-[1.52] text-stone-300/82 sm:text-base">
           {t.homeSubtitle}
         </p>
 
-        <div className="mt-6 grid gap-2.5">
-          <div className="relative">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -inset-2 rounded-[24px] bg-orange-500/30 blur-xl"
-            />
-            <button
-              type="button"
-              onClick={onStartCooking}
-              className="relative min-h-[56px] w-full touch-manipulation rounded-2xl bg-orange-500 px-6 py-4 text-sm font-black text-black shadow-[0_10px_40px_rgba(234,88,12,0.45)] transition-all duration-200 hover:bg-orange-400 active:scale-[0.98] sm:text-base"
-            >
-              {t.homePrimaryCta} <span aria-hidden className="ml-1.5">→</span>
-            </button>
-          </div>
+        <p className="mt-3 text-xs font-semibold uppercase tracking-[0.11em] text-slate-400">
+          {t.homeHowItWorks}
+        </p>
+        <p className="mt-1 text-sm leading-relaxed text-slate-300">{t.homeHowItWorksFlow}</p>
 
-          <div className="grid grid-cols-2 gap-2.5">
-            <button
-              type="button"
-              onClick={onPlanBbq}
-              className="min-h-[48px] touch-manipulation rounded-2xl border border-white/10 bg-white/[0.055] px-4 py-3 text-sm font-black text-white transition-all duration-200 hover:border-orange-300/30 hover:bg-white/[0.08] active:scale-[0.98]"
-            >
-              {t.homeSecondaryCta}
-            </button>
-            <button
-              type="button"
-              onClick={onUnknown}
-              className="min-h-[48px] touch-manipulation rounded-2xl border border-orange-300/18 bg-orange-500/10 px-4 py-3 text-sm font-black text-orange-100 transition-all duration-200 hover:border-orange-300/40 hover:bg-orange-500/14 active:scale-[0.98]"
-            >
-              {t.homeUnknownCta}
-            </button>
-          </div>
+        <div className="mt-6 flex flex-col gap-2.5 sm:flex-row">
+          <button
+            type="button"
+            onClick={onStartCooking}
+            className="min-h-[56px] flex-1 touch-manipulation rounded-2xl bg-orange-500 px-6 py-4 text-sm font-black text-black shadow-[0_10px_36px_rgba(234,88,12,0.42)] transition-all duration-200 hover:bg-orange-400 active:scale-[0.98] sm:text-base"
+          >
+            {t.homePrimaryCta} <span aria-hidden className="ml-1.5">→</span>
+          </button>
+          <button
+            type="button"
+            onClick={onPlanBbq}
+            className="min-h-[56px] touch-manipulation rounded-2xl border border-white/12 bg-white/[0.05] px-4 py-4 text-sm font-black text-white transition-all duration-200 hover:border-orange-300/35 hover:bg-white/[0.08] active:scale-[0.98]"
+          >
+            {t.homeSecondaryCta}
+          </button>
         </div>
       </div>
     </section>
@@ -162,6 +132,95 @@ function PopularCuts({
   );
 }
 
+type QuickAction = {
+  id: string;
+  icon: string;
+  title: string;
+  description: string;
+  emphasized?: boolean;
+  onClick: () => void;
+};
+
+function HomeQuickActions({
+  title,
+  actions,
+}: {
+  title: string;
+  actions: QuickAction[];
+}) {
+  return (
+    <section className="rounded-[1.65rem] border border-white/[0.07] bg-white/[0.03] p-4 backdrop-blur">
+      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/32">{title}</p>
+      <div className="mt-3 grid gap-2.5">
+        {actions.map((action) => (
+          <button
+            key={action.id}
+            type="button"
+            onClick={action.onClick}
+            className={`w-full touch-manipulation rounded-2xl border px-3.5 py-3 text-left transition-all duration-200 active:scale-[0.98] ${
+              action.emphasized
+                ? "border-orange-300/30 bg-orange-500/8 hover:border-orange-300/45 hover:bg-orange-500/12"
+                : "border-white/10 bg-black/25 hover:border-white/20 hover:bg-white/[0.05]"
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              <span className="pt-0.5 text-lg" aria-hidden>{action.icon}</span>
+              <div className="min-w-0">
+                <p className="text-sm font-black text-white">{action.title}</p>
+                <p className="mt-0.5 text-xs leading-relaxed text-slate-300/90">{action.description}</p>
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function HomeValueCards({ t }: { t: AppText }) {
+  const cards = [
+    { icon: "⏱️", title: t.homeChipTiming, description: t.homeValueTimingSub },
+    { icon: "🔥", title: t.homeValueZonesTitle, description: t.homeValueZonesSub },
+    { icon: "🛡️", title: t.homeValueMistakesTitle, description: t.homeValueMistakesSub },
+    { icon: "📋", title: t.homeLiveCooking, description: t.homeValueLiveSub },
+  ];
+
+  return (
+    <section className="rounded-[1.65rem] border border-white/[0.07] bg-white/[0.025] p-4">
+      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/35">{t.homeValueTitle}</p>
+      <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+        {cards.map((card) => (
+          <div key={card.title} className="rounded-2xl border border-white/10 bg-black/25 px-3.5 py-3">
+            <p className="text-[11px] font-black uppercase tracking-[0.14em] text-orange-200/90">
+              <span aria-hidden>{card.icon}</span> {card.title}
+            </p>
+            <p className="mt-1.5 text-xs leading-relaxed text-slate-300/90">{card.description}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function HomeTrustStrip({ t }: { t: AppText }) {
+  const claims = [t.homeTrustClaimLocal, t.homeTrustClaimLive, t.homeTrustClaimNoGuesswork];
+
+  return (
+    <section className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+      <div className="flex flex-wrap gap-2">
+        {claims.map((claim) => (
+          <span
+            key={claim}
+            className="rounded-full border border-white/12 bg-black/30 px-3 py-1 text-[11px] font-semibold text-slate-300"
+          >
+            {claim}
+          </span>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 // ─── Settings strip ───────────────────────────────────────────────────────────
 
 function HomeSettingsStrip({
@@ -174,12 +233,12 @@ function HomeSettingsStrip({
   onLangChange: (lang: Lang) => void;
 }) {
   return (
-    <section className="mb-24 flex items-center justify-between gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.025] px-4 py-3.5 backdrop-blur sm:px-5 lg:mb-0">
+    <section className="mb-24 flex items-center justify-between gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 sm:px-5 lg:mb-0">
       <div className="min-w-0">
-        <p className="truncate text-[11px] font-black uppercase tracking-[0.18em] text-white/65">
+        <p className="truncate text-[10px] font-black uppercase tracking-[0.18em] text-white/62">
           {t.homeSettingsKicker}
         </p>
-        <p className="mt-0.5 truncate text-xs font-medium text-slate-500">
+        <p className="mt-0.5 truncate text-[11px] font-medium text-slate-500">
           {t.homeSettingsSub}
         </p>
       </div>
@@ -206,6 +265,7 @@ type RippleState = { x: number; y: number; id: number } | null;
 export function HomeScreen({
   lang,
   onLangChange,
+  savedMenusCount,
   onModeChange,
   t,
 }: {
@@ -219,12 +279,17 @@ export function HomeScreen({
 
   // Radial ripple that plays on tap then resolves into the cooking screen
   const [ripple, setRipple] = useState<RippleState>(null);
+  const [hasActiveLivePlan, setHasActiveLivePlan] = useState(false);
 
   function fireRipple(x: number, y: number, action: () => void) {
     setRipple({ x, y, id: Date.now() });
     // Fire the action mid-animation (feels instant to the user)
     setTimeout(action, 150);
   }
+
+  useEffect(() => {
+    setHasActiveLivePlan(Boolean(readLiveCookingPayload()));
+  }, []);
 
   const popularCuts: PopularCut[] = [
     {
@@ -272,6 +337,66 @@ export function HomeScreen({
       }),
     );
   }
+
+  const savedPlansLabel = useMemo(() => {
+    if (savedMenusCount === 1) return `1 ${t.homeSavedPlanSingular}`;
+    return `${savedMenusCount} ${t.homeSavedPlanPlural}`;
+  }, [savedMenusCount, t.homeSavedPlanPlural, t.homeSavedPlanSingular]);
+
+  const quickActions = useMemo<QuickAction[]>(() => {
+    const actions: QuickAction[] = [
+      {
+        id: "start-cooking",
+        icon: "🥩",
+        title: t.homeGuidedCooking,
+        description: t.homeGuidedCookingSub,
+        emphasized: true,
+        onClick: () => router.push("/?mode=coccion&step=cut"),
+      },
+      {
+        id: "plan-bbq",
+        icon: "🧭",
+        title: t.homeParrillada,
+        description: t.homeParrilladaSub,
+        onClick: () => onModeChange("plan"),
+      },
+    ];
+
+    if (savedMenusCount > 0) {
+      actions.push({
+        id: "saved-plans",
+        icon: "⭐",
+        title: t.homeSaved,
+        description: savedPlansLabel,
+        onClick: () => onModeChange("guardados"),
+      });
+    }
+
+    if (hasActiveLivePlan) {
+      actions.push({
+        id: "continue-live",
+        icon: "⏱️",
+        title: t.homeLiveCooking,
+        description: t.homeLiveCookingSub,
+        onClick: () => router.push(buildLiveUrl({})),
+      });
+    }
+
+    return actions;
+  }, [
+    hasActiveLivePlan,
+    onModeChange,
+    router,
+    savedMenusCount,
+    savedPlansLabel,
+    t.homeGuidedCooking,
+    t.homeGuidedCookingSub,
+    t.homeLiveCooking,
+    t.homeLiveCookingSub,
+    t.homeParrillada,
+    t.homeParrilladaSub,
+    t.homeSaved,
+  ]);
 
   return (
     <>
@@ -324,12 +449,15 @@ export function HomeScreen({
             fireRipple(e.clientX, e.clientY, () => router.push("/?mode=coccion&step=cut"))
           }
           onPlanBbq={() => onModeChange("plan")}
-          onUnknown={() => onModeChange("plan")}
         />
       </FadeIn>
 
+      <FadeIn delay={40}>
+        <HomeQuickActions title={t.homeActionsTitle} actions={quickActions} />
+      </FadeIn>
+
       {/* ── Popular cuts ───────────────────────────────────────────────────── */}
-      <FadeIn delay={60}>
+      <FadeIn delay={80}>
         <PopularCuts
           cuts={popularCuts}
           title={t.homePopularCutsTitle}
@@ -337,8 +465,16 @@ export function HomeScreen({
         />
       </FadeIn>
 
+      <FadeIn delay={110}>
+        <HomeValueCards t={t} />
+      </FadeIn>
+
+      <FadeIn delay={140}>
+        <HomeTrustStrip t={t} />
+      </FadeIn>
+
       {/* ── Settings strip ─────────────────────────────────────────────────── */}
-      <FadeIn delay={120}>
+      <FadeIn delay={170}>
         <HomeSettingsStrip t={t} lang={lang} onLangChange={onLangChange} />
       </FadeIn>
     </div>
