@@ -66,6 +66,7 @@ import {
   readLiveCookingPayload,
   saveLiveCookingPayload,
 } from "@/lib/liveCookingPlan";
+import { toAnimalId } from "@/lib/navigation/animalParam";
 import { buildLiveUrl } from "@/lib/navigation/buildLiveUrl";
 import { parseLiveParams } from "@/lib/navigation/parseLiveParams";
 import type { Doneness } from "@/lib/types/domain";
@@ -505,8 +506,15 @@ function parseNavFromSearch(search: string): ParsedNav {
   const mode: Mode = isAllowedMode(modeParam) ? modeParam : "inicio";
   const cookingContext = mode === "coccion" || mode === "cocina" ? parseCookingContext(params, mode) : {};
   const inferredStep: CookingWizardStep = cookingContext.cut ? "details" : cookingContext.animal ? "cut" : "animal";
+  const invalidStepFallback: CookingWizardStep = cookingContext.cut ? "details" : "animal";
   const cookingStep: CookingWizardStep =
-    mode === "coccion" && isAllowedCookingStep(stepParam) ? stepParam : inferredStep;
+    mode === "coccion"
+      ? stepParam == null
+        ? inferredStep
+        : isAllowedCookingStep(stepParam)
+          ? stepParam
+          : invalidStepFallback
+      : inferredStep;
 
   return { mode, cookingStep, cookingContext };
 }
@@ -525,7 +533,8 @@ function buildSearchFromNav(
     if (cookingContext.doneness) params.set("doneness", cookingContext.doneness);
     if (cookingContext.thickness) params.set("thickness", cookingContext.thickness);
   } else if (mode === "cocina") {
-    if (cookingContext.animal) params.set("animal", cookingContext.animal);
+    const animalId = toAnimalId(cookingContext.animal);
+    if (animalId) params.set("animal", animalId);
     if (cookingContext.cut) params.set("cutId", cookingContext.cut);
     if (cookingContext.doneness) params.set("doneness", cookingContext.doneness);
     if (cookingContext.thickness) params.set("thickness", cookingContext.thickness);
@@ -733,6 +742,20 @@ function HomeContent() {
     } else {
       window.history.pushState(state, "", url);
     }
+  }
+
+  function getCurrentCookingNavContext(): CookingNavContext {
+    return {
+      animal,
+      ...(cut ? { cut } : {}),
+      ...(doneness ? { doneness } : {}),
+      ...(thickness ? { thickness } : {}),
+    };
+  }
+
+  function navigateCookingStep(nextStep: CookingWizardStep, method: "push" | "replace" = "push") {
+    const normalizedStep = isAllowedCookingStep(nextStep) ? nextStep : cut ? "details" : "animal";
+    commitNav("coccion", normalizedStep, method, getCurrentCookingNavContext());
   }
 
   useEffect(() => {
@@ -1108,7 +1131,12 @@ function HomeContent() {
     setCheckedItems({});
     resetSaveMenuState();
     setSelectedSavedMenu(null);
-    commitNav("coccion", "result", "push");
+    commitNav("coccion", "result", "push", {
+      animal: rebuilt.config.animal,
+      cut: rebuilt.config.cut,
+      doneness: rebuilt.config.doneness,
+      thickness: rebuilt.config.thickness,
+    });
   }
 
   function startSavedCookLive(menu: SavedMenu) {
@@ -1377,7 +1405,7 @@ function HomeContent() {
       setBlocks(normalizedPlan);
       setCheckedItems({});
       resetSaveMenuState();
-      commitNav("coccion", "result", "push");
+      commitNav("coccion", "result", "push", getCurrentCookingNavContext());
       return;
     }
 
@@ -1405,7 +1433,7 @@ ERROR
     if (ok) {
       track({ name: "cooking_plan_result", path: "ai" });
     }
-    commitNav("coccion", "result", "push");
+    commitNav("coccion", "result", "push", getCurrentCookingNavContext());
   }
 
   async function generateMenuPlan() {
@@ -1748,7 +1776,7 @@ ERROR
             selectedCut={selectedCut}
             saveMenuMessage={saveMenuMessage}
             saveMenuStatus={saveMenuStatus}
-            setCookingStep={setCookingStep}
+            setCookingStep={navigateCookingStep}
             setAdvancedThicknessEnabled={(value) => {
               setAdvancedThicknessEnabled(value);
               resetSaveMenuState();

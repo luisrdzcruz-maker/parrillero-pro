@@ -97,14 +97,16 @@ function getBgStyle(phase: LivePhase, zone?: LiveZone | null): CSSProperties {
 }
 
 function usePrefersReducedMotion() {
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return false;
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  });
 
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return;
 
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     const syncPreference = () => setReduceMotion(mediaQuery.matches);
-    syncPreference();
     mediaQuery.addEventListener("change", syncPreference);
 
     return () => mediaQuery.removeEventListener("change", syncPreference);
@@ -208,33 +210,47 @@ export default function LiveCookingScreen({
   useEffect(() => {
     if (!currentStep) return;
 
+    let frameId: number | undefined;
+    let exitTimer: number | undefined;
+    let enterTimer: number | undefined;
+
     const displayed = displayedStepIdRef.current;
     if (displayed === null) {
       displayedStepIdRef.current = currentStep.id;
-      setDisplayedStepId(currentStep.id);
-      return;
+      frameId = window.requestAnimationFrame(() => {
+        setDisplayedStepId(currentStep.id);
+      });
+      return () => {
+        if (frameId !== undefined) window.cancelAnimationFrame(frameId);
+      };
     }
 
     if (displayed === currentStep.id) return;
 
     if (reduceMotion) {
       displayedStepIdRef.current = currentStep.id;
-      setDisplayedStepId(currentStep.id);
-      setStepTransition("idle");
-      return;
+      frameId = window.requestAnimationFrame(() => {
+        setDisplayedStepId(currentStep.id);
+        setStepTransition("idle");
+      });
+      return () => {
+        if (frameId !== undefined) window.cancelAnimationFrame(frameId);
+      };
     }
 
-    let enterTimer: number | undefined;
-    setStepTransition("exit");
-    const exitTimer = window.setTimeout(() => {
-      displayedStepIdRef.current = currentStep.id;
-      setDisplayedStepId(currentStep.id);
-      setStepTransition("enter");
-      enterTimer = window.setTimeout(() => setStepTransition("idle"), 25);
-    }, 100);
+    frameId = window.requestAnimationFrame(() => {
+      setStepTransition("exit");
+      exitTimer = window.setTimeout(() => {
+        displayedStepIdRef.current = currentStep.id;
+        setDisplayedStepId(currentStep.id);
+        setStepTransition("enter");
+        enterTimer = window.setTimeout(() => setStepTransition("idle"), 25);
+      }, 100);
+    });
 
     return () => {
-      window.clearTimeout(exitTimer);
+      if (frameId !== undefined) window.cancelAnimationFrame(frameId);
+      if (exitTimer !== undefined) window.clearTimeout(exitTimer);
       if (enterTimer !== undefined) window.clearTimeout(enterTimer);
     };
   }, [currentStep, reduceMotion]);

@@ -185,15 +185,7 @@ export function CookingWizard({
   vegetableFormat: VegetableFormat;
   weightRange: CookingWeightRange;
 }) {
-  const hasCookingResult = Object.keys(blocks).length > 0;
-  const visibleCookingStep =
-    cookingStep === "result" && !hasCookingResult
-      ? selectedCut
-        ? "details"
-        : cut
-          ? "cut"
-          : "animal"
-      : cookingStep;
+  const visibleCookingStep = cookingStep;
 
   // ── Narrated loading experience ─────────────────────────────────────────────
   // Replaces the spinner: full-screen image + cycling status messages + stepped bar
