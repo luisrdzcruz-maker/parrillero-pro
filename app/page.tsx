@@ -70,6 +70,11 @@ import {
 } from "@/lib/liveCookingPlan";
 import { toAnimalId } from "@/lib/navigation/animalParam";
 import { buildLiveUrl } from "@/lib/navigation/buildLiveUrl";
+import {
+  buildCookingDetailsUrl,
+  buildCookingResultUrl,
+  buildHomeUrl,
+} from "@/lib/navigation/cookingNavigation";
 import { parseLiveParams } from "@/lib/navigation/parseLiveParams";
 import type { Doneness } from "@/lib/types/domain";
 import { animalIdsByLabel, type AnimalLabel } from "@/lib/media/animalMedia";
@@ -378,8 +383,6 @@ const MOCK_LIVE_STEPS: LiveStep[] = [
 ];
 
 const SAVED_COOKS_KEY = "parrillero_saved_cooks_v1";
-const LIVE_IN_APP_BACK_MARKER = "__pp_live_in_app_back_target_v1";
-
 type SavedCookEntry = {
   id: string;
   savedAt: string;
@@ -594,30 +597,6 @@ function buildSearchFromNav(
   return query ? `?${query}` : "";
 }
 
-function buildCookingDetailsUrl({
-  animal,
-  cutId,
-  doneness,
-  thickness,
-}: {
-  animal?: AnimalLabel;
-  cutId?: string;
-  doneness?: string;
-  thickness?: string;
-}) {
-  if (!animal || !cutId) return "/?mode=inicio";
-
-  const params = new URLSearchParams();
-  params.set("mode", "coccion");
-  params.set("step", "details");
-  params.set("animal", animalIdsByLabel[animal]);
-  params.set("cutId", cutId);
-  if (doneness) params.set("doneness", doneness);
-  if (thickness) params.set("thickness", thickness);
-
-  return `/?${params.toString()}`;
-}
-
 function mapSizePresetToThickness(sizePreset: CookingSizePreset): string {
   if (sizePreset === "small") return "2.5";
   if (sizePreset === "large") return "5";
@@ -727,10 +706,6 @@ function HomeContent() {
   const isApplyingPopRef = useRef(false);
   const liveAdvanceRef = useRef(false);
   const navInitializedRef = useRef(false);
-  const previousModeRef = useRef<Mode>("inicio");
-  const previousCookingStepRef = useRef<CookingWizardStep>("animal");
-  const liveHasInAppBackTargetRef = useRef(false);
-  const liveEnteredFromResultRef = useRef(false);
   const cookingContextRef = useRef({
     animal,
     cut,
@@ -882,6 +857,56 @@ function HomeContent() {
     commitNav("coccion", normalizedStep, method, getCurrentCookingNavContext());
   }
 
+  function getCurrentCookingNavigationParams() {
+    return {
+      animal,
+      cutId: cut.trim() || undefined,
+      doneness: doneness.trim() || undefined,
+      thickness: parsePositiveNumberParam(thickness),
+    };
+  }
+
+  function pushCookingResultHistoryWithContext() {
+    if (typeof window === "undefined") return;
+
+    const contextParams = getCurrentCookingNavigationParams();
+    if (!contextParams.animal || !contextParams.cutId) {
+      const homeUrl = buildHomeUrl();
+      window.history.replaceState({ mode: "inicio", cookingStep: "animal", cookingContext: {} }, "", homeUrl);
+      setMode("inicio");
+      setCookingStep("animal");
+      if (process.env.NODE_ENV !== "production") {
+        console.debug("[nav] details->result missing context", { homeUrl });
+      }
+      return;
+    }
+
+    const navContext: CookingNavContext = {
+      animal: contextParams.animal,
+      cut: contextParams.cutId,
+      ...(contextParams.doneness ? { doneness: contextParams.doneness } : {}),
+      ...(contextParams.thickness ? { thickness: contextParams.thickness } : {}),
+    };
+    const detailsUrl = buildCookingDetailsUrl(contextParams);
+    const resultUrl = buildCookingResultUrl(contextParams);
+    const currentNav = parseNavFromSearch(window.location.search);
+    const isDetailsWithSameContext =
+      currentNav.mode === "coccion" &&
+      currentNav.cookingStep === "details" &&
+      isSameCookingContext(currentNav.cookingContext, navContext);
+
+    if (!isDetailsWithSameContext) {
+      window.history.replaceState({ mode: "coccion", cookingStep: "details", cookingContext: navContext }, "", detailsUrl);
+    }
+
+    window.history.pushState({ mode: "coccion", cookingStep: "result", cookingContext: navContext }, "", resultUrl);
+    setMode("coccion");
+    setCookingStep("result");
+    if (process.env.NODE_ENV !== "production") {
+      console.debug("[nav] details->result push", { detailsUrl, resultUrl });
+    }
+  }
+
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -915,40 +940,10 @@ function HomeContent() {
       applyCookingNavContext(nav.cookingContext);
       commitNav(nav.mode, nav.cookingStep, "replace", nav.cookingContext);
       navInitializedRef.current = true;
-      previousModeRef.current = nav.mode;
     });
 
     return () => window.cancelAnimationFrame(raf);
   }, [applyCookingNavContext]);
-
-  useEffect(() => {
-    if (!navInitializedRef.current) {
-      previousModeRef.current = mode;
-      previousCookingStepRef.current = cookingStep;
-      return;
-    }
-
-    const previousMode = previousModeRef.current;
-    const previousStep = previousCookingStepRef.current;
-    if (mode === "cocina") {
-      const enteredFromResult = previousMode === "coccion" && previousStep === "result";
-      liveEnteredFromResultRef.current = enteredFromResult;
-      liveHasInAppBackTargetRef.current = enteredFromResult;
-      if (enteredFromResult && typeof window !== "undefined") {
-        const currentState = asRecord(window.history.state) ?? {};
-        window.history.replaceState(
-          { ...currentState, [LIVE_IN_APP_BACK_MARKER]: true },
-          "",
-          window.location.href,
-        );
-      }
-    } else {
-      liveEnteredFromResultRef.current = false;
-      liveHasInAppBackTargetRef.current = false;
-    }
-    previousModeRef.current = mode;
-    previousCookingStepRef.current = cookingStep;
-  }, [mode, cookingStep]);
 
   // ── Browser history: restore state on popstate (back button / swipe) ───────
   // Registered once. URL query params are the source of truth for mode/step.
@@ -957,6 +952,9 @@ function HomeContent() {
   useEffect(() => {
     function onPopState() {
       const nav = parseNavFromSearch(window.location.search);
+      if (process.env.NODE_ENV !== "production") {
+        console.debug("[nav] popstate apply", { search: window.location.search, mode: nav.mode, step: nav.cookingStep });
+      }
       isApplyingPopRef.current = true;
       applyCookingNavContext(nav.cookingContext);
       setMode(nav.mode);
@@ -1602,7 +1600,7 @@ function HomeContent() {
       setBlocks(normalizedPlan);
       setCheckedItems({});
       resetSaveMenuState();
-      commitNav("coccion", "result", "push", getCurrentCookingNavContext());
+      pushCookingResultHistoryWithContext();
       return;
     }
 
@@ -1630,7 +1628,7 @@ ERROR
     if (ok) {
       track({ name: "cooking_plan_result", path: "ai" });
     }
-    commitNav("coccion", "result", "push", getCurrentCookingNavContext());
+    pushCookingResultHistoryWithContext();
   }
 
   async function generateMenuPlan() {
@@ -1836,40 +1834,22 @@ ERROR
     setLivePaused(false);
   }
 
-  function handleLiveBackNavigation() {
+  function handleLivePlanNavigation() {
     if (typeof window === "undefined") return;
-
-    const historyState = asRecord(window.history.state);
-    const hasInAppMarker = historyState?.[LIVE_IN_APP_BACK_MARKER] === true;
-    if (liveEnteredFromResultRef.current && liveHasInAppBackTargetRef.current && hasInAppMarker) {
-      liveEnteredFromResultRef.current = false;
-      liveHasInAppBackTargetRef.current = false;
-      window.history.back();
-      return;
+    const { animal, cutId, doneness, thickness } = parseLiveParams(window.location.search);
+    const targetUrl =
+      animal && cutId
+        ? buildCookingDetailsUrl({
+            animal,
+            cutId,
+            doneness,
+            thickness: thickness !== undefined ? String(thickness) : undefined,
+          })
+        : buildHomeUrl();
+    if (process.env.NODE_ENV !== "production") {
+      console.debug("[live-plan] navigating to", targetUrl);
     }
-
-    const liveParams = parseLiveParams(window.location.search);
-    const liveCutMeta = liveParams.cutId ? getCutById(liveParams.cutId) : undefined;
-    const liveAnimal =
-      parseCookingAnimal(liveParams.animal ?? null) ?? (liveCutMeta ? animalLabelsById[liveCutMeta.animalId] : undefined);
-    const donenessParam = liveParams.doneness?.trim();
-    const liveDoneness =
-      liveAnimal &&
-      donenessParam &&
-      getDonenessOptions(animalIdsByLabel[liveAnimal]).some((option) => option.id === donenessParam)
-        ? donenessParam
-        : undefined;
-    const liveThickness = parsePositiveNumberParam(
-      liveParams.thickness != null ? String(liveParams.thickness) : null,
-    );
-    router.replace(
-      buildCookingDetailsUrl({
-        animal: liveAnimal,
-        cutId: liveCutMeta?.id,
-        doneness: liveDoneness,
-        thickness: liveThickness,
-      }),
-    );
+    router.push(targetUrl);
   }
 
   // ── Onboarding gate ─────────────────────────────────────────────────────────
@@ -1911,7 +1891,7 @@ ERROR
                 paused={livePaused}
                 context={liveContext}
                 lang={lang}
-                onBack={handleLiveBackNavigation}
+                onBack={handleLivePlanNavigation}
                 onPause={() => setLivePaused((value) => !value)}
                 onCompleteStep={handleCompleteLiveStep}
                 onGoToStep={handleGoToLiveStep}
