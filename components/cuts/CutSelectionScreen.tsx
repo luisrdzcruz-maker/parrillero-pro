@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { GeneratedCutProfile } from "@/lib/generated/cutProfiles";
 import { CutBottomSheet } from "./CutBottomSheet";
 import { CutList } from "./CutList";
@@ -30,11 +30,27 @@ export function CutSelectionScreen({
     selectedIntent: intentFilter,
   });
   const [viewMode, setViewMode] = useState<CutViewMode>("list");
-  const [selectedZone, setSelectedZone] = useState<string | null>(null);
-  const [selectedProfile, setSelectedProfile] = useState<GeneratedCutProfile | null>(null);
+  const [zoneState, setZoneState] = useState<{
+    sourceAnimal: CutSelectionScreenProps["selectedAnimal"];
+    selectedZone: string | null;
+  }>({
+    sourceAnimal: selectedAnimal,
+    selectedZone: null,
+  });
+  const [profileState, setProfileState] = useState<{
+    sourceAnimal: CutSelectionScreenProps["selectedAnimal"];
+    selectedProfile: GeneratedCutProfile | null;
+  }>({
+    sourceAnimal: selectedAnimal,
+    selectedProfile: null,
+  });
 
   const selectedIntent =
     intentState.sourceFilter === intentFilter ? intentState.selectedIntent : intentFilter;
+  const selectedZone =
+    zoneState.sourceAnimal === selectedAnimal ? zoneState.selectedZone : null;
+  const selectedProfile =
+    profileState.sourceAnimal === selectedAnimal ? profileState.selectedProfile : null;
 
   const handleIntentChange = (nextIntent: CutIntent | null) => {
     setIntentState({
@@ -42,11 +58,18 @@ export function CutSelectionScreen({
       selectedIntent: nextIntent,
     });
   };
-
-  useEffect(() => {
-    setSelectedZone(null);
-    setSelectedProfile(null);
-  }, [selectedAnimal]);
+  const handleZoneChange = (nextZone: string | null) => {
+    setZoneState({
+      sourceAnimal: selectedAnimal,
+      selectedZone: nextZone,
+    });
+  };
+  const handleProfileChange = (nextProfile: GeneratedCutProfile | null) => {
+    setProfileState({
+      sourceAnimal: selectedAnimal,
+      selectedProfile: nextProfile,
+    });
+  };
 
   const visibleProfiles = useMemo(() => {
     const animalCuts = selectedZone
@@ -97,13 +120,13 @@ export function CutSelectionScreen({
               animal={selectedAnimal}
               intent={selectedIntent}
               selectedCutId={selectedProfile?.id}
-              onSelect={setSelectedProfile}
+              onSelect={handleProfileChange}
             />
             <CutViewToggle value={viewMode} onChange={setViewMode} />
             {selectedZone && (
               <button
                 type="button"
-                onClick={() => setSelectedZone(null)}
+                onClick={() => handleZoneChange(null)}
                 className="w-full rounded-2xl border border-orange-400/25 bg-orange-500/10 px-4 py-3 text-xs font-black text-orange-200 transition active:scale-[0.98]"
               >
                 Limpiar zona: {selectedZone}
@@ -113,16 +136,16 @@ export function CutSelectionScreen({
 
           <div className="min-w-0 space-y-4">
             {viewMode === "map" && (
-              <CutMap animal={selectedAnimal} selectedZone={selectedZone} onZoneChange={setSelectedZone} />
+              <CutMap animal={selectedAnimal} selectedZone={selectedZone} onZoneChange={handleZoneChange} />
             )}
-            <CutList groups={groupedProfiles} selectedCutId={selectedProfile?.id} onSelect={setSelectedProfile} />
+            <CutList groups={groupedProfiles} selectedCutId={selectedProfile?.id} onSelect={handleProfileChange} />
           </div>
         </div>
       </section>
 
       <CutBottomSheet
         profile={selectedProfile}
-        onClose={() => setSelectedProfile(null)}
+        onClose={() => handleProfileChange(null)}
         onStartCooking={onStartCooking}
       />
     </main>
