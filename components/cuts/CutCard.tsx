@@ -1,6 +1,7 @@
 "use client";
 
 import type { GeneratedCutProfile } from "@/lib/generated/cutProfiles";
+import type { Lang } from "@/lib/i18n/texts";
 import {
   getCutDescriptor,
   getDifficultyLabel,
@@ -12,16 +13,25 @@ import {
 
 type CutCardProps = {
   profile: GeneratedCutProfile;
+  lang: Lang;
   selected?: boolean;
   onSelect: (profile: GeneratedCutProfile) => void;
 };
 
-export function CutCard({ profile, selected = false, onSelect }: CutCardProps) {
+export function CutCard({ profile, lang, selected = false, onSelect }: CutCardProps) {
   const temperature = getTemperatureLabel(profile);
   const meta = [
-    { label: "Time", value: getEstimatedTimeLabel(profile) },
-    { label: "Method", value: getStyleLabel(profile) },
-    ...(temperature ? [{ label: "Target", value: temperature }] : []),
+    {
+      label: lang === "es" ? "Tiempo" : lang === "fi" ? "Aika" : "Time",
+      value: getEstimatedTimeLabel(profile, lang),
+    },
+    {
+      label: lang === "es" ? "Método" : lang === "fi" ? "Menetelmä" : "Method",
+      value: getStyleLabel(profile, lang),
+    },
+    ...(temperature
+      ? [{ label: lang === "es" ? "Objetivo" : lang === "fi" ? "Tavoite" : "Target", value: temperature }]
+      : []),
   ];
 
   return (
@@ -38,13 +48,13 @@ export function CutCard({ profile, selected = false, onSelect }: CutCardProps) {
         <div>
           <div className="flex min-w-0 items-start justify-between gap-3">
             <div className="min-w-0">
-              <h3 className="truncate text-base font-black tracking-tight text-white">{getDisplayName(profile)}</h3>
+              <h3 className="truncate text-base font-black tracking-tight text-white">{getDisplayName(profile, lang)}</h3>
               <p className="mt-1 line-clamp-2 text-xs font-semibold leading-5 text-zinc-400">
-                {getCutDescriptor(profile)}
+                {getCutDescriptor(profile, lang)}
               </p>
             </div>
             <span className="shrink-0 rounded-full border border-orange-400/20 bg-orange-500/10 px-2.5 py-1 text-[10px] font-black text-orange-300">
-              {getDifficultyLabel(profile)}
+              {getDifficultyLabel(profile, lang)}
             </span>
           </div>
         </div>

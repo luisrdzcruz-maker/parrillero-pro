@@ -7,7 +7,7 @@ import { buildLiveUrl } from "@/lib/navigation/buildLiveUrl";
 import { readLiveCookingPayload } from "@/lib/liveCookingPlan";
 import type { Animal } from "@/lib/types/domain";
 import type { AppText, Lang } from "@/lib/i18n/texts";
-import { type MouseEvent, type ReactNode, useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { type MouseEvent, type ReactNode, useLayoutEffect, useMemo, useState } from "react";
 
 // ─── Entrance animation ───────────────────────────────────────────────────────
 
@@ -279,17 +279,13 @@ export function HomeScreen({
 
   // Radial ripple that plays on tap then resolves into the cooking screen
   const [ripple, setRipple] = useState<RippleState>(null);
-  const [hasActiveLivePlan, setHasActiveLivePlan] = useState(false);
+  const [hasActiveLivePlan] = useState(() => Boolean(readLiveCookingPayload()));
 
   function fireRipple(x: number, y: number, action: () => void) {
     setRipple({ x, y, id: Date.now() });
     // Fire the action mid-animation (feels instant to the user)
     setTimeout(action, 150);
   }
-
-  useEffect(() => {
-    setHasActiveLivePlan(Boolean(readLiveCookingPayload()));
-  }, []);
 
   const popularCuts: PopularCut[] = [
     {

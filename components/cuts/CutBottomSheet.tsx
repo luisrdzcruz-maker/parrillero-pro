@@ -17,7 +17,7 @@ import {
   getTemperatureLabel,
   getWhyChooseLabel,
 } from "./cutProfileSelectors";
-import { animalLabels, methodLabels } from "./cutSelectionTypes";
+import { getAnimalLabel, getMethodLabel } from "./cutSelectionTypes";
 
 type CutBottomSheetProps = {
   profile: GeneratedCutProfile | null;
@@ -40,37 +40,44 @@ function getPrimaryCtaLabel(lang: Lang | undefined, cutName: string) {
 
 export function CutBottomSheet({ profile, lang, onClose, onStartCooking }: CutBottomSheetProps) {
   const [visualFallbackStep, setVisualFallbackStep] = useState<"none" | "fallback">("none");
+  const effectiveLang = lang ?? "en";
   const setupVisualSrc = useMemo(() => (profile ? getSetupVisual(profile.id) : null), [profile]);
   const visualSrc = visualFallbackStep === "fallback" ? SETUP_VISUAL_FALLBACK : setupVisualSrc;
   if (!profile) return null;
 
-  const displayName = getDisplayName(profile);
+  const displayName = getDisplayName(profile, effectiveLang);
   const temperature = getTemperatureLabel(profile);
-  const helpfulAlias = getHelpfulAlias(profile);
-  const bestMethod = methodLabels[profile.defaultMethod] ?? getStyleLabel(profile);
+  const helpfulAlias = getHelpfulAlias(profile, effectiveLang);
+  const bestMethod = getMethodLabel(profile.defaultMethod, effectiveLang) ?? getStyleLabel(profile, effectiveLang);
   const methodValue = temperature ? `${bestMethod} · ${temperature}` : bestMethod;
-  const primaryCtaLabel = getPrimaryCtaLabel(lang, displayName);
+  const primaryCtaLabel = getPrimaryCtaLabel(effectiveLang, displayName);
 
   return (
-    <aside className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-3xl px-3 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-3">
-      <div className="rounded-t-[2rem] border border-white/10 bg-[#070503]/95 p-4 shadow-[0_-28px_110px_rgba(0,0,0,0.72)] backdrop-blur-2xl sm:rounded-[2rem] sm:p-5">
+    <aside className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-3xl px-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-3 sm:pt-4 lg:pb-3">
+      <div className="max-h-[calc(100vh-2.5rem-env(safe-area-inset-top))] overflow-y-auto rounded-t-[2rem] border border-white/10 bg-[#070503]/95 p-4 shadow-[0_-28px_110px_rgba(0,0,0,0.72)] backdrop-blur-2xl sm:max-h-[calc(100vh-3.5rem-env(safe-area-inset-top))] sm:rounded-[2rem] sm:p-5">
         <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-white/20" />
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-300">
-              {animalLabels[profile.animalId]}
+              {getAnimalLabel(profile.animalId, effectiveLang)}
             </p>
             <h2 className="mt-1 truncate text-2xl font-black tracking-tight text-white">{displayName}</h2>
             <p className="mt-1 line-clamp-2 text-xs font-semibold leading-5 text-zinc-500">
-              {helpfulAlias ? `Also known as ${helpfulAlias}.` : getCutDescriptor(profile)}
+              {helpfulAlias
+                ? effectiveLang === "es"
+                  ? `También conocido como ${helpfulAlias}.`
+                  : effectiveLang === "fi"
+                    ? `Tunnetaan myös nimellä ${helpfulAlias}.`
+                    : `Also known as ${helpfulAlias}.`
+                : getCutDescriptor(profile, effectiveLang)}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-zinc-300 transition hover:bg-white/10 active:scale-[0.97]"
+            className="sticky top-0 inline-flex h-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-full border border-white/10 bg-white/[0.08] px-3 text-xs font-black text-zinc-200 shadow-lg transition hover:bg-white/12 active:scale-[0.97]"
           >
-            Close
+            {effectiveLang === "es" ? "Cerrar" : effectiveLang === "fi" ? "Sulje" : "Close"}
           </button>
         </div>
 
@@ -83,11 +90,16 @@ export function CutBottomSheet({ profile, lang, onClose, onStartCooking }: CutBo
         </button>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          <SheetPanel title="Why choose it" value={getWhyChooseLabel(profile)} />
-          <SheetPanel title="Best method" value={methodValue} />
           <SheetPanel
-            title="Time and difficulty"
-            value={`${getEstimatedTimeLabel(profile)} · ${getDifficultyLabel(profile)} · rest ${profile.restingMinutes} min`}
+            title={effectiveLang === "es" ? "Por qué elegirlo" : effectiveLang === "fi" ? "Miksi valita tämä" : "Why choose it"}
+            value={getWhyChooseLabel(profile, effectiveLang)}
+          />
+          <SheetPanel title={effectiveLang === "es" ? "Mejor método" : effectiveLang === "fi" ? "Paras menetelmä" : "Best method"} value={methodValue} />
+          <SheetPanel
+            title={effectiveLang === "es" ? "Tiempo y dificultad" : effectiveLang === "fi" ? "Aika ja vaikeus" : "Time and difficulty"}
+            value={`${getEstimatedTimeLabel(profile, effectiveLang)} · ${getDifficultyLabel(profile, effectiveLang)} · ${
+              effectiveLang === "es" ? "reposo" : effectiveLang === "fi" ? "lepo" : "rest"
+            } ${profile.restingMinutes} min`}
           />
         </div>
 
@@ -96,7 +108,13 @@ export function CutBottomSheet({ profile, lang, onClose, onStartCooking }: CutBo
             {visualSrc ? (
               <Image
                 src={visualSrc}
-                alt={`Setup visual for ${displayName}`}
+                alt={
+                  effectiveLang === "es"
+                    ? `Visual de setup para ${displayName}`
+                    : effectiveLang === "fi"
+                      ? `Valmistelukuva: ${displayName}`
+                      : `Setup visual for ${displayName}`
+                }
                 fill
                 loading="lazy"
                 sizes="(min-width: 640px) 560px, 100vw"
@@ -112,13 +130,17 @@ export function CutBottomSheet({ profile, lang, onClose, onStartCooking }: CutBo
             )}
             <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent_56%,rgba(2,6,23,0.78)_100%)]" />
             <p className="absolute bottom-3 left-3 rounded-full border border-white/15 bg-black/45 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-orange-200 backdrop-blur-md">
-              Setup visual
+              {effectiveLang === "es" ? "Visual de setup" : effectiveLang === "fi" ? "Valmistelukuva" : "Setup visual"}
             </p>
           </div>
         </div>
 
         <div className="mt-3">
-          <SheetPanel title="Safety note" value={getSafetyNote(profile)} tone="danger" />
+          <SheetPanel
+            title={effectiveLang === "es" ? "Nota de seguridad" : effectiveLang === "fi" ? "Turvallisuushuomio" : "Safety note"}
+            value={getSafetyNote(profile, effectiveLang)}
+            tone="danger"
+          />
         </div>
       </div>
     </aside>

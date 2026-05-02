@@ -1,6 +1,7 @@
 "use client";
 
 import type { GeneratedAnimalId, GeneratedCutProfile } from "@/lib/generated/cutProfiles";
+import type { Lang } from "@/lib/i18n/texts";
 import {
   getCutDescriptor,
   getDisplayName,
@@ -12,11 +13,12 @@ import type { CutIntent } from "./cutSelectionTypes";
 type QuickPicksProps = {
   animal: GeneratedAnimalId;
   intent: CutIntent | null;
+  lang: Lang;
   selectedCutId?: string;
   onSelect: (profile: GeneratedCutProfile) => void;
 };
 
-export function QuickPicks({ animal, intent, selectedCutId, onSelect }: QuickPicksProps) {
+export function QuickPicks({ animal, intent, lang, selectedCutId, onSelect }: QuickPicksProps) {
   const picks = getQuickPicksByAnimal(animal, intent);
 
   if (picks.length === 0) return null;
@@ -25,8 +27,16 @@ export function QuickPicks({ animal, intent, selectedCutId, onSelect }: QuickPic
     <section className="min-w-0 max-w-full rounded-[1.5rem] border border-white/10 bg-white/[0.035] p-3 backdrop-blur-xl">
       <div className="mb-3 flex items-center justify-between px-1">
         <div>
-          <h2 className="text-sm font-black text-white">Quick picks</h2>
-          <p className="mt-0.5 text-[11px] font-semibold text-zinc-500">Fast choices for this filter</p>
+          <h2 className="text-sm font-black text-white">
+            {lang === "es" ? "Selecciones rápidas" : lang === "fi" ? "Pikavalinnat" : "Quick picks"}
+          </h2>
+          <p className="mt-0.5 text-[11px] font-semibold text-zinc-500">
+            {lang === "es"
+              ? "Opciones rápidas para este filtro"
+              : lang === "fi"
+                ? "Nopeat valinnat tälle suodattimelle"
+                : "Fast choices for this filter"}
+          </p>
         </div>
         <span className="text-xs font-bold text-zinc-500">{picks.length}</span>
       </div>
@@ -44,10 +54,10 @@ export function QuickPicks({ animal, intent, selectedCutId, onSelect }: QuickPic
                   : "border-white/10 bg-black/25 hover:border-orange-400/45 hover:bg-white/[0.07]"
               }`}
             >
-              <span className="block truncate text-sm font-black text-white">{getDisplayName(profile)}</span>
-              <span className="mt-1 block truncate text-[11px] text-zinc-500">{getCutDescriptor(profile)}</span>
+              <span className="block truncate text-sm font-black text-white">{getDisplayName(profile, lang)}</span>
+              <span className="mt-1 block truncate text-[11px] text-zinc-500">{getCutDescriptor(profile, lang)}</span>
               <span className="mt-2 inline-flex rounded-full bg-orange-500/10 px-2 py-1 text-[10px] font-black text-orange-300">
-                {getEstimatedTimeLabel(profile)}
+                {getEstimatedTimeLabel(profile, lang)}
               </span>
             </button>
           );

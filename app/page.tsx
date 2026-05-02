@@ -870,12 +870,12 @@ function HomeContent() {
     }
   }, []);
 
-  function commitNav(
+  const commitNav = useCallback((
     requestedMode: Mode,
     requestedCookingStep: CookingWizardStep,
     requestedMethod: "push" | "replace",
     cookingContext: CookingNavContext = {},
-  ) {
+  ) => {
     const nextMode = isAllowedMode(requestedMode) ? requestedMode : "inicio";
     const requestedStep =
       nextMode === "coccion" && isAllowedCookingStep(requestedCookingStep) ? requestedCookingStep : "animal";
@@ -899,7 +899,7 @@ function HomeContent() {
     }
     const currentNav =
       typeof window === "undefined"
-        ? { mode, cookingStep, cookingContext: {} as CookingNavContext }
+        ? { mode: "inicio" as Mode, cookingStep: "animal" as CookingWizardStep, cookingContext: {} as CookingNavContext }
         : parseNavFromSearch(window.location.search);
     const modeChanged = nextMode !== currentNav.mode;
     const stepChanged = nextCookingStep !== currentNav.cookingStep;
@@ -950,7 +950,7 @@ function HomeContent() {
     } else {
       window.history.pushState(state, "", url);
     }
-  }
+  }, []);
 
   function getCurrentCookingNavContext(): CookingNavContext {
     const includeDoneness = !isVegetableContextAnimal(animal);
@@ -1109,7 +1109,7 @@ function HomeContent() {
     });
 
     return () => window.cancelAnimationFrame(raf);
-  }, [applyCookingNavContext]);
+  }, [applyCookingNavContext, commitNav]);
 
   // ── Browser history: restore state on popstate (back button / swipe) ───────
   // Registered once. URL query params are the source of truth for mode/step.
@@ -1689,6 +1689,25 @@ function HomeContent() {
     track({ name: "cut_selected", animal, cutId: selectedCutId, lang });
   }
 
+  function handleCutSelectionPreviewChange(nextCutId: string | null) {
+    if (nextCutId) {
+      setCut(nextCutId);
+      const currentNav = typeof window === "undefined" ? null : parseNavFromSearch(window.location.search);
+      const hasPreviewEntry =
+        currentNav?.mode === "coccion" &&
+        currentNav.cookingStep === "cut" &&
+        Boolean(currentNav.cookingContext.cut);
+      commitNav("coccion", "cut", hasPreviewEntry ? "replace" : "push", {
+        animal,
+        cut: nextCutId,
+      });
+      return;
+    }
+
+    setCut("");
+    commitNav("coccion", "cut", "replace", { animal });
+  }
+
   function handleCutSelectionStartCooking(profile: GeneratedCutProfile) {
     const selectedAnimal = animalLabelsById[profile.animalId] ?? animal;
     const selectedDoneness = profile.defaultDoneness ?? getInitialDoneness(selectedAnimal);
@@ -2196,9 +2215,11 @@ ERROR
           cookingStep === "cut" ? (
             <CutSelectionScreen
               selectedAnimal={animalIdsByLabel[animal] as GeneratedAnimalId}
+              selectedCutId={cut || undefined}
               lang={lang}
               isAnimalPreselected={Boolean(parseCookingAnimal(searchParams.get("animal")))}
               onAnimalChange={handleCutSelectionAnimalChange}
+              onPreviewCutChange={handleCutSelectionPreviewChange}
               onStartCooking={handleCutSelectionStartCooking}
             />
           ) : (

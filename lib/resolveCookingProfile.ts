@@ -100,6 +100,7 @@ function resolveLegacyCut(input: CookingInput) {
 
 function buildProductCutFromGenerated(profile: GeneratedCutProfile, legacyCut?: ProductCut): ProductCut {
   const allowedDoneness = safeAllowedDoneness(profile, legacyCut);
+  const criticalError = profile.criticalMistakeEn ?? profile.errorEn;
 
   return {
     ...(legacyCut ?? {
@@ -118,8 +119,8 @@ function buildProductCutFromGenerated(profile: GeneratedCutProfile, legacyCut?: 
       style: profile.style as CookingStyle,
       defaultMethod: profile.defaultMethod as CookingMethod,
       error: {
-        es: profile.errorEn,
-        en: profile.errorEn,
+        es: criticalError,
+        en: criticalError,
       },
     }),
     id: legacyCut?.id ?? profile.id,
@@ -152,10 +153,10 @@ function buildProductCutFromGenerated(profile: GeneratedCutProfile, legacyCut?: 
     },
     error: {
       ...(legacyCut?.error ?? {
-        es: profile.errorEn,
-        en: profile.errorEn,
+        es: criticalError,
+        en: criticalError,
       }),
-      en: profile.errorEn,
+      en: criticalError,
     },
     aliases: uniqueValues([
       ...(legacyCut?.aliases ?? []),

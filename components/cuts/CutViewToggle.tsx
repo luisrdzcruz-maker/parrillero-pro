@@ -1,13 +1,15 @@
 "use client";
 
 import type { CutViewMode } from "./cutSelectionTypes";
+import type { Lang } from "@/lib/i18n/texts";
 
 type CutViewToggleProps = {
+  lang: Lang;
   value: CutViewMode;
   onChange: (value: CutViewMode) => void;
 };
 
-export function CutViewToggle({ value, onChange }: CutViewToggleProps) {
+export function CutViewToggle({ lang, value, onChange }: CutViewToggleProps) {
   return (
     <div className="w-full max-w-full rounded-[1.35rem] border border-white/10 bg-black/30 p-1.5 backdrop-blur-xl">
       <div className="grid w-full min-w-0 grid-cols-2 gap-1.5">
@@ -21,7 +23,17 @@ export function CutViewToggle({ value, onChange }: CutViewToggleProps) {
             }`}
             aria-pressed={value === mode}
           >
-            {mode === "list" ? "List" : "Map"}
+            {mode === "list"
+              ? lang === "es"
+                ? "Lista"
+                : lang === "fi"
+                  ? "Lista"
+                  : "List"
+              : lang === "es"
+                ? "Mapa"
+                : lang === "fi"
+                  ? "Kartta"
+                  : "Map"}
           </button>
         ))}
       </div>
