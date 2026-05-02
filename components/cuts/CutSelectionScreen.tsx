@@ -117,6 +117,36 @@ export function CutSelectionScreen({
         : effectiveLang === "fi"
           ? "Kaikki tavoitteet"
           : "All goals";
+  const sectionTitle =
+    effectiveLang === "es" ? "Selección de cortes" : effectiveLang === "fi" ? "Leikkausvalinta" : "Cut selection";
+  const selectionOptimizedLabel =
+    effectiveLang === "es"
+      ? `Sugerencias optimizadas para ${getAnimalLabel(selectedAnimal, effectiveLang)}`
+      : effectiveLang === "fi"
+        ? `Suositukset optimoitu: ${getAnimalLabel(selectedAnimal, effectiveLang)}`
+        : `Suggestions optimized for ${getAnimalLabel(selectedAnimal, effectiveLang)}`;
+  const compactHeading = isAnimalPreselected
+    ? effectiveLang === "es"
+      ? "Elige tu corte"
+      : effectiveLang === "fi"
+        ? "Valitse leikkaus"
+        : "Choose your cut"
+    : effectiveLang === "es"
+      ? "Elige qué vas a cocinar"
+      : effectiveLang === "fi"
+        ? "Valitse mitä kokkaat"
+        : "Choose what you are cooking";
+  const compactHelper = isAnimalPreselected
+    ? effectiveLang === "es"
+      ? "Filtra rápido y toca un corte para ver detalles."
+      : effectiveLang === "fi"
+        ? "Suodata nopeasti ja avaa tiedot napauttamalla leikkausta."
+        : "Filter quickly, then tap a cut to preview details."
+    : effectiveLang === "es"
+      ? "Empieza con animal y objetivo, luego selecciona un corte."
+      : effectiveLang === "fi"
+        ? "Aloita eläimestä ja tavoitteesta, valitse sitten leikkaus."
+        : "Start with animal and goal, then choose a cut.";
   const hasActiveFilters = Boolean(selectedIntent || selectedZone);
   const handleStartCooking = (profile: GeneratedCutProfile) => {
     if (onStartCooking) {
@@ -138,102 +168,67 @@ export function CutSelectionScreen({
   return (
     <main className="relative min-h-full w-full max-w-full overflow-x-hidden bg-[#030201] text-white">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-32 -top-36 h-[420px] w-[420px] rounded-full bg-orange-500/20 blur-[110px]" />
-        <div className="absolute right-[-180px] top-32 h-[380px] w-[380px] rounded-full bg-red-600/15 blur-[120px]" />
-        <div className="absolute bottom-[-220px] left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-amber-500/10 blur-[150px]" />
+        <div className="absolute -left-40 -top-40 h-[320px] w-[320px] rounded-full bg-orange-500/14 blur-[110px]" />
+        <div className="absolute right-[-180px] top-16 h-[280px] w-[280px] rounded-full bg-red-600/10 blur-[120px]" />
       </div>
 
-      <section className="relative mx-auto flex min-h-full w-full max-w-6xl flex-col px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 lg:px-8 lg:pb-36">
-        <header className="rounded-[2rem] border border-orange-300/15 bg-white/[0.045] p-5 shadow-[0_30px_120px_rgba(0,0,0,0.55)] backdrop-blur-xl">
-          <div className="inline-flex rounded-full border border-orange-400/20 bg-orange-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-orange-200">
-            {effectiveLang === "es" ? "Selección de cortes" : effectiveLang === "fi" ? "Leikkausvalinta" : "Cut selection"}
-          </div>
-          <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_300px] lg:items-end">
-            <div>
-              <h1 className="text-[clamp(2.25rem,12vw,5.5rem)] font-black leading-[0.9] tracking-[-0.06em]">
-                {isAnimalPreselected
-                  ? effectiveLang === "es"
-                    ? "Elige primero tu corte."
-                    : effectiveLang === "fi"
-                      ? "Valitse ensin leikkaus."
-                      : "Choose your cut first."
-                  : effectiveLang === "es"
-                    ? "Elige qué vas a cocinar."
-                    : effectiveLang === "fi"
-                      ? "Valitse mitä kokkaat."
-                      : "Choose what you are cooking."}
-              </h1>
-              <p className="mt-4 max-w-2xl text-sm leading-6 text-zinc-300 sm:text-base">
-                {isAnimalPreselected
-                  ? effectiveLang === "es"
-                    ? "Elige un corte, revisa por qué encaja y después confirma detalles antes de iniciar la cocción en vivo."
-                    : effectiveLang === "fi"
-                      ? "Valitse leikkaus, tarkista miksi se sopii, ja käy yksityiskohdat läpi ennen live-kokkausta."
-                      : "Pick a cut, see why it fits, then review details before live cooking starts."
-                  : effectiveLang === "es"
-                    ? "Empieza eligiendo animal o categoría, luego selecciona un corte y continúa a los detalles."
-                    : effectiveLang === "fi"
-                      ? "Aloita valitsemalla eläin tai kategoria, valitse sitten leikkaus ja jatka yksityiskohtiin."
-                      : "Start by choosing an animal or category, then pick a cut and continue to details."}
-              </p>
-            </div>
-            <div className="rounded-[1.5rem] border border-white/10 bg-black/35 p-4">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">
-                {effectiveLang === "es" ? "Animal" : effectiveLang === "fi" ? "Eläin" : "Animal"}
-              </p>
-              <p className="mt-2 text-2xl font-black text-orange-300">{getAnimalLabel(selectedAnimal, effectiveLang)}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {animalOptions.map(([animalId, label]) => {
-                  const selected = animalId === selectedAnimal;
-                  return (
-                    <button
-                      key={animalId}
-                      type="button"
-                      onClick={() => handleAnimalSelect(animalId)}
-                      className={`rounded-full border px-3 py-1.5 text-xs font-black transition active:scale-[0.98] ${
-                        selected
-                          ? "border-orange-400/60 bg-orange-500/20 text-orange-200"
-                          : "border-white/15 bg-white/5 text-zinc-200 hover:border-orange-300/40 hover:bg-orange-500/10"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
+      <section className="relative mx-auto flex min-h-full w-full max-w-5xl flex-col px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-3 sm:px-6 lg:pb-36">
+        <header className="rounded-[1.4rem] border border-orange-300/15 bg-white/[0.045] p-3 shadow-[0_20px_72px_rgba(0,0,0,0.42)] backdrop-blur-xl sm:p-3.5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="inline-flex rounded-full border border-orange-400/20 bg-orange-500/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-orange-200">
+                {sectionTitle}
               </div>
-              <p className="mt-1 text-xs leading-5 text-zinc-500">
-                {visibleProfiles.length}{" "}
-                {effectiveLang === "es" ? "cortes" : effectiveLang === "fi" ? "leikkausta" : "cuts"} · {activeFilterLabel}
-              </p>
-              {!isAnimalPreselected && (
-                <p className="mt-2 text-xs font-semibold text-orange-200">
-                  {effectiveLang === "es"
-                    ? "Elige qué vas a cocinar para desbloquear los mejores cortes."
-                    : effectiveLang === "fi"
-                      ? "Valitse mitä kokkaat, niin saat parhaat leikkausvaihtoehdot."
-                      : "Choose what you are cooking to unlock the best cuts."}
-                </p>
-              )}
+              <h1 className="mt-2 text-2xl font-black tracking-tight text-white sm:text-[2rem]">{compactHeading}</h1>
+              <p className="mt-1 text-xs font-semibold leading-5 text-zinc-400 sm:text-sm">{compactHelper}</p>
             </div>
+            <div className="rounded-full border border-white/10 bg-black/35 px-3 py-1.5 text-xs font-black text-zinc-300">
+              <span className="text-zinc-500">{effectiveLang === "es" ? "Animal:" : effectiveLang === "fi" ? "Eläin:" : "Animal:"}</span>{" "}
+              <span className="text-orange-300">{getAnimalLabel(selectedAnimal, effectiveLang)}</span>
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {animalOptions.map(([animalId, label]) => {
+              const selected = animalId === selectedAnimal;
+              return (
+                <button
+                  key={animalId}
+                  type="button"
+                  onClick={() => handleAnimalSelect(animalId)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-black transition active:scale-[0.98] ${
+                    selected
+                      ? "border-orange-400/65 bg-orange-500/20 text-orange-200"
+                      : "border-white/15 bg-white/5 text-zinc-200 hover:border-orange-300/40 hover:bg-orange-500/10"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-2.5 flex flex-wrap items-center gap-2 text-[11px] font-semibold text-zinc-400">
+            <span className="rounded-full border border-white/10 bg-black/30 px-2.5 py-1">
+              {visibleProfiles.length} {effectiveLang === "es" ? "cortes" : effectiveLang === "fi" ? "leikkausta" : "cuts"}
+            </span>
+            <span className="rounded-full border border-white/10 bg-black/30 px-2.5 py-1">{activeFilterLabel}</span>
+            {selectedZone && (
+              <span className="rounded-full border border-orange-400/30 bg-orange-500/10 px-2.5 py-1 text-orange-200">
+                {getCategoryLabel(selectedZone, effectiveLang)}
+              </span>
+            )}
+            <span className="text-orange-200">{selectionOptimizedLabel}</span>
           </div>
         </header>
 
-        <div className="mt-5 grid min-w-0 gap-4 lg:grid-cols-[340px_1fr]">
-          <aside className="min-w-0 max-w-full space-y-4 lg:sticky lg:top-5 lg:self-start">
-            <IntentSelector lang={effectiveLang} selectedIntent={selectedIntent} onIntentChange={handleIntentChange} />
-            <QuickPicks
-              animal={selectedAnimal}
-              intent={selectedIntent}
-              lang={effectiveLang}
-              selectedCutId={selectedProfile?.id}
-              onSelect={handleProfileChange}
-            />
+        <div className="mt-3 space-y-3">
+          <IntentSelector lang={effectiveLang} selectedIntent={selectedIntent} onIntentChange={handleIntentChange} />
+          <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
             <CutViewToggle lang={effectiveLang} value={viewMode} onChange={setViewMode} />
             {selectedZone && (
               <button
                 type="button"
                 onClick={() => handleZoneChange(null)}
-                className="w-full rounded-2xl border border-orange-400/25 bg-orange-500/10 px-4 py-3 text-xs font-black text-orange-200 transition active:scale-[0.98]"
+                className="w-full rounded-2xl border border-orange-400/25 bg-orange-500/10 px-4 py-3 text-xs font-black text-orange-200 transition active:scale-[0.98] sm:w-auto"
               >
                 {effectiveLang === "es"
                   ? `Limpiar zona: ${getCategoryLabel(selectedZone, effectiveLang)}`
@@ -242,9 +237,19 @@ export function CutSelectionScreen({
                     : `Clear zone: ${getCategoryLabel(selectedZone, effectiveLang)}`}
               </button>
             )}
-          </aside>
+          </div>
+        </div>
 
+        <div className="mt-3 grid min-w-0 gap-4 lg:grid-cols-[1fr_300px]">
           <div className="min-w-0 space-y-4">
+            <QuickPicks
+              animal={selectedAnimal}
+              intent={selectedIntent}
+              lang={effectiveLang}
+              selectedCutId={selectedProfile?.id}
+              onSelect={handleProfileChange}
+            />
+
             {viewMode === "map" && (
               <CutMap
                 animal={selectedAnimal}
@@ -262,6 +267,18 @@ export function CutSelectionScreen({
               onSelect={handleProfileChange}
             />
           </div>
+          <aside className="hidden min-w-0 max-w-full lg:sticky lg:top-4 lg:block lg:self-start">
+            <div className="rounded-[1.3rem] border border-white/10 bg-white/[0.035] p-3 backdrop-blur-xl">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">
+                {effectiveLang === "es" ? "Selección activa" : effectiveLang === "fi" ? "Aktiivinen valinta" : "Current selection"}
+              </p>
+              <p className="mt-2 text-sm font-black text-white">{getAnimalLabel(selectedAnimal, effectiveLang)}</p>
+              <p className="mt-1 text-xs font-semibold text-zinc-500">
+                {activeFilterLabel} · {visibleProfiles.length}{" "}
+                {effectiveLang === "es" ? "cortes" : effectiveLang === "fi" ? "leikkausta" : "cuts"}
+              </p>
+            </div>
+          </aside>
         </div>
       </section>
 

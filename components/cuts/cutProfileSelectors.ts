@@ -270,20 +270,17 @@ export function getCutDescription(profile: GeneratedCutProfile, lang: Lang = "en
   const requested = getFirstNonEmpty([
     override?.descriptions?.[lang],
     catalogCut?.notes?.[lang],
-    catalogCut?.error?.[lang === "es" ? "es" : "en"],
   ]);
   if (requested) return toDisplaySentence(requested);
 
   const english = getFirstNonEmpty([
     override?.descriptions?.en,
     catalogCut?.notes?.en,
-    catalogCut?.error?.en,
     profile.notesEn,
-    profile.errorEn,
   ]);
   if (english) return toDisplaySentence(english);
 
-  return toDisplaySentence(fallbackNameFromId(profile));
+  return toDisplaySentence(getNeutralDescriptorFallback(profile, lang));
 }
 
 export function getCutAliases(profile: GeneratedCutProfile, lang: Lang = "en") {
@@ -311,4 +308,18 @@ function toDisplaySentence(value: string) {
   const cleaned = value.trim();
   if (!cleaned) return cleaned;
   return cleaned.endsWith(".") ? cleaned : `${cleaned}.`;
+}
+
+function getNeutralDescriptorFallback(profile: GeneratedCutProfile, lang: Lang) {
+  const timeLabel = getEstimatedTimeLabel(profile, lang);
+  const styleLabel = getStyleLabel(profile, lang);
+  const categoryLabel = getCategoryLabel(profile.category || "other", lang);
+
+  if (lang === "es") {
+    return `${categoryLabel} · ${styleLabel} · ${timeLabel}`;
+  }
+  if (lang === "fi") {
+    return `${categoryLabel} · ${styleLabel} · ${timeLabel}`;
+  }
+  return `${categoryLabel} · ${styleLabel} · ${timeLabel}`;
 }

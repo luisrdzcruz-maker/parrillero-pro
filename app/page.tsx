@@ -916,11 +916,15 @@ function HomeContent() {
     const isAnimalOnlyCutSelectionFilterChange =
       isCutSelectionContextOnlyChange &&
       isCutSelectionFilterContextChangeOnly(currentNav.cookingContext, nextCookingContext);
+    const isCutSelectionPreviewOpenFromBase =
+      isCutSelectionContextOnlyChange &&
+      !currentNav.cookingContext.cut &&
+      Boolean(nextCookingContext.cut);
     const shouldPush =
       requestedMethod === "push" &&
       navChanged &&
       !isApplyingPopRef.current &&
-      !isCutSelectionContextOnlyChange &&
+      (!isCutSelectionContextOnlyChange || isCutSelectionPreviewOpenFromBase) &&
       !isAnimalOnlyCutSelectionFilterChange;
     const method: "push" | "replace" = shouldPush ? "push" : "replace";
 
@@ -951,6 +955,15 @@ function HomeContent() {
       window.history.pushState(state, "", url);
     }
   }, []);
+
+  function syncCutSelectionPreviewFromNav(nav: ParsedNav) {
+    if (nav.mode !== "coccion" || nav.cookingStep !== "cut") return;
+    if (nav.cookingContext.cut) {
+      setCut(nav.cookingContext.cut);
+      return;
+    }
+    setCut("");
+  }
 
   function getCurrentCookingNavContext(): CookingNavContext {
     const includeDoneness = !isVegetableContextAnimal(animal);
@@ -1123,6 +1136,7 @@ function HomeContent() {
       }
       isApplyingPopRef.current = true;
       applyCookingNavContext(nav.cookingContext);
+      syncCutSelectionPreviewFromNav(nav);
       setMode(nav.mode);
       setCookingStep(nav.cookingStep);
       if (nav.cookingStep !== "result") setLoading(false);
@@ -1154,6 +1168,7 @@ function HomeContent() {
     isApplyingPopRef.current = true;
     const frame = window.requestAnimationFrame(() => {
       applyCookingNavContext(nav.cookingContext);
+      syncCutSelectionPreviewFromNav(nav);
       setMode(nav.mode);
       setCookingStep(nav.cookingStep);
       if (nav.cookingStep !== "result") setLoading(false);
