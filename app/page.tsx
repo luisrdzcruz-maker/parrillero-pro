@@ -870,12 +870,12 @@ function HomeContent() {
     }
   }, []);
 
-  function commitNav(
+  const commitNav = useCallback((
     requestedMode: Mode,
     requestedCookingStep: CookingWizardStep,
     requestedMethod: "push" | "replace",
     cookingContext: CookingNavContext = {},
-  ) {
+  ) => {
     const nextMode = isAllowedMode(requestedMode) ? requestedMode : "inicio";
     const requestedStep =
       nextMode === "coccion" && isAllowedCookingStep(requestedCookingStep) ? requestedCookingStep : "animal";
@@ -899,7 +899,7 @@ function HomeContent() {
     }
     const currentNav =
       typeof window === "undefined"
-        ? { mode, cookingStep, cookingContext: {} as CookingNavContext }
+        ? { mode: "inicio" as Mode, cookingStep: "animal" as CookingWizardStep, cookingContext: {} as CookingNavContext }
         : parseNavFromSearch(window.location.search);
     const modeChanged = nextMode !== currentNav.mode;
     const stepChanged = nextCookingStep !== currentNav.cookingStep;
@@ -950,7 +950,7 @@ function HomeContent() {
     } else {
       window.history.pushState(state, "", url);
     }
-  }
+  }, []);
 
   function getCurrentCookingNavContext(): CookingNavContext {
     const includeDoneness = !isVegetableContextAnimal(animal);
@@ -1109,7 +1109,7 @@ function HomeContent() {
     });
 
     return () => window.cancelAnimationFrame(raf);
-  }, [applyCookingNavContext]);
+  }, [applyCookingNavContext, commitNav]);
 
   // ── Browser history: restore state on popstate (back button / swipe) ───────
   // Registered once. URL query params are the source of truth for mode/step.

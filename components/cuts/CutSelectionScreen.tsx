@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { GeneratedAnimalId, GeneratedCutProfile } from "@/lib/generated/cutProfiles";
 import { CutBottomSheet } from "./CutBottomSheet";
 import { CutList } from "./CutList";
@@ -64,20 +64,20 @@ export function CutSelectionScreen({
     sourceAnimal: selectedAnimal,
     selectedZone: null,
   });
-  const [profileState, setProfileState] = useState<{
-    sourceAnimal: CutSelectionScreenProps["selectedAnimal"];
-    selectedProfile: GeneratedCutProfile | null;
-  }>({
-    sourceAnimal: selectedAnimal,
-    selectedProfile: null,
-  });
+  const [localSelectedCutId, setLocalSelectedCutId] = useState<string | null>(null);
 
   const selectedIntent =
     intentState.sourceFilter === intentFilter ? intentState.selectedIntent : intentFilter;
   const selectedZone =
     zoneState.sourceAnimal === selectedAnimal ? zoneState.selectedZone : null;
-  const selectedProfile =
-    profileState.sourceAnimal === selectedAnimal ? profileState.selectedProfile : null;
+  const effectiveSelectedCutId = selectedCutId ?? localSelectedCutId;
+  const selectedProfile = useMemo(
+    () =>
+      effectiveSelectedCutId
+        ? getCutsByAnimal(selectedAnimal).find((profile) => profile.id === effectiveSelectedCutId) ?? null
+        : null,
+    [effectiveSelectedCutId, selectedAnimal],
+  );
   const effectiveLang = lang ?? "en";
   const animalOptions = Object.entries(getAnimalLabels(effectiveLang)) as [GeneratedAnimalId, string][];
 
@@ -94,28 +94,9 @@ export function CutSelectionScreen({
     });
   };
   const handleProfileChange = (nextProfile: GeneratedCutProfile | null) => {
-    setProfileState({
-      sourceAnimal: selectedAnimal,
-      selectedProfile: nextProfile,
-    });
+    setLocalSelectedCutId(nextProfile?.id ?? null);
     onPreviewCutChange?.(nextProfile?.id ?? null);
   };
-
-  useEffect(() => {
-    if (!selectedCutId) {
-      setProfileState({
-        sourceAnimal: selectedAnimal,
-        selectedProfile: null,
-      });
-      return;
-    }
-
-    const matchingProfile = getCutsByAnimal(selectedAnimal).find((profile) => profile.id === selectedCutId) ?? null;
-    setProfileState({
-      sourceAnimal: selectedAnimal,
-      selectedProfile: matchingProfile,
-    });
-  }, [selectedAnimal, selectedCutId]);
 
   const visibleProfiles = useMemo(() => {
     const animalCuts = selectedZone
