@@ -1689,6 +1689,25 @@ function HomeContent() {
     track({ name: "cut_selected", animal, cutId: selectedCutId, lang });
   }
 
+  function handleCutSelectionPreviewChange(nextCutId: string | null) {
+    if (nextCutId) {
+      setCut(nextCutId);
+      const currentNav = typeof window === "undefined" ? null : parseNavFromSearch(window.location.search);
+      const hasPreviewEntry =
+        currentNav?.mode === "coccion" &&
+        currentNav.cookingStep === "cut" &&
+        Boolean(currentNav.cookingContext.cut);
+      commitNav("coccion", "cut", hasPreviewEntry ? "replace" : "push", {
+        animal,
+        cut: nextCutId,
+      });
+      return;
+    }
+
+    setCut("");
+    commitNav("coccion", "cut", "replace", { animal });
+  }
+
   function handleCutSelectionStartCooking(profile: GeneratedCutProfile) {
     const selectedAnimal = animalLabelsById[profile.animalId] ?? animal;
     const selectedDoneness = profile.defaultDoneness ?? getInitialDoneness(selectedAnimal);
@@ -2196,9 +2215,11 @@ ERROR
           cookingStep === "cut" ? (
             <CutSelectionScreen
               selectedAnimal={animalIdsByLabel[animal] as GeneratedAnimalId}
+              selectedCutId={cut || undefined}
               lang={lang}
               isAnimalPreselected={Boolean(parseCookingAnimal(searchParams.get("animal")))}
               onAnimalChange={handleCutSelectionAnimalChange}
+              onPreviewCutChange={handleCutSelectionPreviewChange}
               onStartCooking={handleCutSelectionStartCooking}
             />
           ) : (

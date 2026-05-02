@@ -1,25 +1,35 @@
 "use client";
 
 import type { GeneratedAnimalId } from "@/lib/generated/cutProfiles";
+import type { Lang } from "@/lib/i18n/texts";
 import { getAvailableCategories, getCategoryLabel } from "./cutProfileSelectors";
 
 type CutMapProps = {
   animal: GeneratedAnimalId;
+  lang: Lang;
   selectedZone: string | null;
   onZoneChange: (zone: string | null) => void;
 };
 
-export function CutMap({ animal, selectedZone, onZoneChange }: CutMapProps) {
+export function CutMap({ animal, lang, selectedZone, onZoneChange }: CutMapProps) {
   const zones = getAvailableCategories(animal);
 
   return (
     <section className="overflow-hidden rounded-[1.8rem] border border-white/10 bg-white/[0.04] p-4 shadow-2xl shadow-black/20 backdrop-blur-xl">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300">Zone filter</p>
-          <h2 className="mt-1 text-2xl font-black tracking-tight text-white">Filter by area</h2>
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300">
+            {lang === "es" ? "Filtro por zona" : lang === "fi" ? "Aluesuodatin" : "Zone filter"}
+          </p>
+          <h2 className="mt-1 text-2xl font-black tracking-tight text-white">
+            {lang === "es" ? "Filtrar por zona" : lang === "fi" ? "Suodata alueen mukaan" : "Filter by area"}
+          </h2>
           <p className="mt-2 max-w-md text-sm leading-6 text-zinc-500">
-            Choose a cut category to narrow the list without changing your cooking path.
+            {lang === "es"
+              ? "Elige una categoría de corte para acotar la lista sin cambiar tu ruta de cocción."
+              : lang === "fi"
+                ? "Valitse leikkauskategoria rajataksesi listaa muuttamatta kypsennyspolkua."
+                : "Choose a cut category to narrow the list without changing your cooking path."}
           </p>
         </div>
         {selectedZone && (
@@ -28,7 +38,7 @@ export function CutMap({ animal, selectedZone, onZoneChange }: CutMapProps) {
             onClick={() => onZoneChange(null)}
             className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-zinc-200 transition active:scale-[0.97]"
           >
-            Clear
+            {lang === "es" ? "Limpiar" : lang === "fi" ? "Tyhjennä" : "Clear"}
           </button>
         )}
       </div>
@@ -47,9 +57,9 @@ export function CutMap({ animal, selectedZone, onZoneChange }: CutMapProps) {
                   : "border-white/10 bg-black/25 text-zinc-200 hover:border-orange-400/45 hover:bg-white/[0.07]"
               }`}
             >
-              <span className="block text-sm font-black">{getCategoryLabel(zone)}</span>
+              <span className="block text-sm font-black">{getCategoryLabel(zone, lang)}</span>
               <span className={`mt-1 block text-[11px] ${isActive ? "text-black/60" : "text-zinc-500"}`}>
-                Tap to filter
+                {lang === "es" ? "Toca para filtrar" : lang === "fi" ? "Napauta suodattaaksesi" : "Tap to filter"}
               </span>
             </button>
           );
