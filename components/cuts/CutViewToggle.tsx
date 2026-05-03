@@ -2,6 +2,7 @@
 
 import type { CutViewMode } from "./cutSelectionTypes";
 import type { Lang } from "@/lib/i18n/texts";
+import { getViewModeLabel } from "./cutSelectionTypes";
 
 type CutViewToggleProps = {
   lang: Lang;
@@ -23,17 +24,7 @@ export function CutViewToggle({ lang, value, onChange }: CutViewToggleProps) {
             }`}
             aria-pressed={value === mode}
           >
-            {mode === "list"
-              ? lang === "es"
-                ? "Lista"
-                : lang === "fi"
-                  ? "Lista"
-                  : "List"
-              : lang === "es"
-                ? "Mapa"
-                : lang === "fi"
-                  ? "Kartta"
-                  : "Map"}
+            {getViewModeLabel(mode, lang)}
           </button>
         ))}
       </div>
