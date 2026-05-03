@@ -11,11 +11,9 @@ body {
   background: #020617;
 }
 
-@supports (overflow: clip) {
-  html,
-  body {
-    overflow-x: clip;
-  }
+body > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* ── Fire ambient animations ── */

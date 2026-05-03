@@ -2134,11 +2134,11 @@ ERROR
       />
     )}
     <main
-      className={`${ds.shell.page} mx-auto min-w-0 w-full max-w-[1520px] overflow-x-clip px-3 pt-2 !pb-[max(120px,env(safe-area-inset-bottom))] sm:px-4 sm:pt-5 lg:px-8 lg:pt-6 lg:!pb-12 xl:px-10`}
+      className={`${ds.shell.page} relative mx-auto min-w-0 w-full max-w-[1280px] overflow-x-hidden px-3 pt-2 !pb-[max(120px,env(safe-area-inset-bottom))] sm:px-4 sm:pt-5 lg:px-8 lg:pt-6 lg:!pb-12`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <div className={`${ds.shell.container} mx-auto min-w-0 w-full lg:max-w-[1180px] xl:max-w-[1360px] 2xl:max-w-[1520px]`}>
+      <div className={`${ds.shell.container} mx-auto min-w-0 w-full max-w-[1180px]`}>
         <DesktopModeTabs mode={mode} onModeChange={handleModeChange} t={t} />
 
         {mode === "inicio" && (
