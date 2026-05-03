@@ -30,7 +30,7 @@ import {
   getViewAllLabel,
 } from "./cutSelectionTypes";
 
-function buildCookingWizardHref(profile: GeneratedCutProfile) {
+function buildCookingWizardHref(profile: GeneratedCutProfile, lang?: "es" | "en" | "fi") {
   const params = new URLSearchParams({
     mode: "coccion",
     step: "details",
@@ -44,6 +44,9 @@ function buildCookingWizardHref(profile: GeneratedCutProfile) {
 
   if (profile.showThickness && Number.isFinite(profile.defaultThicknessCm)) {
     params.set("thickness", `${profile.defaultThicknessCm}`);
+  }
+  if (lang) {
+    params.set("lang", lang);
   }
 
   return `/?${params.toString()}`;
@@ -142,7 +145,7 @@ export function CutSelectionScreen({
       return;
     }
 
-    router.push(buildCookingWizardHref(profile));
+    router.push(buildCookingWizardHref(profile, effectiveLang));
   };
   const handleResetFilters = () => {
     handleIntentChange(null);

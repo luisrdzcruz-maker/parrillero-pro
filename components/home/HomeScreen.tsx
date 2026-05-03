@@ -332,6 +332,7 @@ export function HomeScreen({
         cutId: cut.cutId,
         doneness: cut.doneness,
         thickness: cut.thickness,
+        lang,
       }),
     );
   }
@@ -376,13 +377,14 @@ export function HomeScreen({
         icon: "⏱️",
         title: t.homeLiveCooking,
         description: t.homeLiveCookingSub,
-        onClick: () => router.push(buildLiveUrl({})),
+        onClick: () => router.push(buildLiveUrl({ lang })),
       });
     }
 
     return actions;
   }, [
     hasActiveLivePlan,
+    lang,
     onModeChange,
     router,
     savedMenusCount,

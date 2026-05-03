@@ -19,6 +19,13 @@ const MESSAGES_EN = [
   "Building your timeline…",
 ];
 
+const MESSAGES_FI = [
+  "Analysoidaan leikkaus…",
+  "Valmistellaan lampovyohykkeet…",
+  "Lasketaan lepuutusaika…",
+  "Rakennetaan aikajanaa…",
+];
+
 // Progress bar checkpoints — feel like real computation stages, not fake %
 // Each value is the width% the bar reaches after reaching that message index.
 const PROGRESS_STEPS = [8, 28, 52, 74, 90];
@@ -32,7 +39,7 @@ type Props = {
 };
 
 export function CookingLoadingScreen({ cutImage, cutName, lang = "es" }: Props) {
-  const messages = lang === "es" ? MESSAGES_ES : MESSAGES_EN;
+  const messages = lang === "es" ? MESSAGES_ES : lang === "fi" ? MESSAGES_FI : MESSAGES_EN;
   const [step, setStep] = useState(0);
   const [imgError, setImgError] = useState(false);
 

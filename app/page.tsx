@@ -112,6 +112,7 @@ type SavedMenuActionMenu = {
 };
 
 const LIVE_DONENESS_VALUES: Doneness[] = ["rare", "medium_rare", "medium", "medium_well", "well_done", "safe"];
+const LANG_STORAGE_KEY = "parrillero_lang";
 
 type SaveGeneratedMenuResponse =
   | { ok: true; menu: SavedMenuActionMenu }
@@ -174,6 +175,11 @@ function parseSavedLang(value: unknown): Lang {
   const text = asText(value);
   if (text === "en" || text === "fi" || text === "es") return text;
   return "es";
+}
+
+function parseLangParam(value: string | null | undefined): Lang | null {
+  if (value === "en" || value === "fi" || value === "es") return value;
+  return null;
 }
 
 function parseSavedAnimal(value: unknown, fallback: AnimalLabel): AnimalLabel {
@@ -529,10 +535,11 @@ function parseLiveUrlState(lang: Lang) {
       donenessFromUrl: undefined as string | undefined,
       thicknessFromUrl: undefined as string | undefined,
       context: undefined as string | undefined,
+      lang,
     };
   }
 
-  const { animal, cutId: rawCutId, doneness: rawDoneness, thickness: rawThickness } = parseLiveParams(
+  const { animal, cutId: rawCutId, doneness: rawDoneness, thickness: rawThickness, lang: rawLang } = parseLiveParams(
     window.location.search,
   );
   const liveAnimal = parseCookingAnimal(animal ?? null) ?? "Vacuno";
@@ -548,8 +555,9 @@ function parseLiveUrlState(lang: Lang) {
   const thicknessFromUrl = parsePositiveNumberParam(rawThickness != null ? String(rawThickness) : null);
   const thickness = thicknessFromUrl ?? "2";
   const context = liveCutMeta ? `${liveAnimal} · ${getCutName(liveCutMeta, lang)}` : liveAnimal;
+  const resolvedLang = rawLang ?? lang;
 
-  return { animal: liveAnimal, cutId, doneness, thickness, donenessFromUrl, thicknessFromUrl, context };
+  return { animal: liveAnimal, cutId, doneness, thickness, donenessFromUrl, thicknessFromUrl, context, lang: resolvedLang };
 }
 
 function normalizeLiveContextToken(value: string | undefined) {
@@ -579,6 +587,7 @@ function doesPayloadMatchLiveUrlContext(
   const sameDoneness =
     payloadDoneness.length === 0 ||
     normalizeLiveContextToken(liveFromUrl.donenessFromUrl) === payloadDoneness;
+  const sameLang = payload.input.lang === liveFromUrl.lang;
   const payloadRequiresThickness = shouldShowThickness(payload.input.cut);
   const payloadThickness = normalizeLiveContextToken(payload.input.thickness);
   const sameThickness =
@@ -588,7 +597,7 @@ function doesPayloadMatchLiveUrlContext(
       ? isMatchingThickness(liveFromUrl.thicknessFromUrl, payload.input.thickness)
       : false);
 
-  return sameAnimal && sameCut && sameDoneness && sameThickness;
+  return sameAnimal && sameCut && sameDoneness && sameThickness && sameLang;
 }
 
 function parseNavFromSearch(search: string): ParsedNav {
@@ -637,9 +646,12 @@ function buildSearchFromNav(
   mode: Mode,
   cookingStep: CookingWizardStep,
   cookingContext: CookingNavContext = {},
+  lang?: Lang,
 ): string {
   const params = new URLSearchParams();
   params.set("mode", mode);
+  const safeLang = parseLangParam(lang);
+  if (safeLang) params.set("lang", safeLang);
   if (mode === "coccion") {
     params.set("step", cookingStep);
     if (cookingContext.animal && (cookingStep !== "cut" || Boolean(cookingContext.cut))) {
@@ -718,16 +730,14 @@ function mapBeefLargeWeightPresetToKg(weightRange: CookingWeightRange): string {
 function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const urlLang = parseLangParam(searchParams.get("lang"));
 
   // ── Onboarding gate ─────────────────────────────────────────────────────────
   // null  = not yet resolved (server render + first paint — avoids hydration mismatch)
   // true  = show onboarding
   // false = go straight to the app
   //
-  // IMPORTANT: localStorage must only be read inside useEffect (after hydration).
-  // Reading it during render (even via lazy initializer) causes a server/client
-  // mismatch because the server has no localStorage → useState returns false →
-  // client may return true → React throws a hydration error.
+  // IMPORTANT: localStorage reads must be guarded because server render has no window.
   const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
   const [showProModal, setShowProModal] = useState<false | "planning">(false);
   const [showCookCompleteProModal, setShowCookCompleteProModal] = useState(false);
@@ -741,7 +751,14 @@ function HomeContent() {
     return () => window.cancelAnimationFrame(raf);
   }, []);
 
-  const [lang, setLang] = useState<Lang>("es");
+  const [lang, setLang] = useState<Lang>(() => {
+    if (urlLang) return urlLang;
+    if (typeof window !== "undefined") {
+      const storedLang = parseLangParam(window.localStorage.getItem(LANG_STORAGE_KEY));
+      if (storedLang) return storedLang;
+    }
+    return "es";
+  });
   const t = texts[lang];
 
   const [mode, setMode] = useState<Mode>("inicio");
@@ -799,6 +816,11 @@ function HomeContent() {
     doneness,
     thickness,
   });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(LANG_STORAGE_KEY, lang);
+  }, [lang]);
 
   const baseCuts = useMemo(() => getCutItems(animal, lang), [animal, lang]);
   const selectedCutMeta = useMemo(() => (cut ? getCutById(cut) : undefined), [cut]);
@@ -941,7 +963,7 @@ function HomeContent() {
     setCookingStep(nextCookingStep);
 
     if (typeof window === "undefined") return;
-    const search = buildSearchFromNav(nextMode, nextCookingStep, nextCookingContext);
+    const search = buildSearchFromNav(nextMode, nextCookingStep, nextCookingContext, lang);
     const url = `${window.location.pathname}${search}${window.location.hash}`;
     const beforeSnapshot = {
       historyLength: window.history.length,
@@ -971,7 +993,7 @@ function HomeContent() {
     } else {
       hasCutSelectionPreviewHistoryRef.current = false;
     }
-  }, [router]);
+  }, [router, lang]);
 
   function syncCutSelectionPreviewFromNav(nav: ParsedNav) {
     if (nav.mode !== "coccion" || nav.cookingStep !== "cut") return;
@@ -1039,7 +1061,7 @@ function HomeContent() {
     const sourceAnimal = contextParams.animal;
     const sourceCutId = contextParams.cutId;
     if (!sourceAnimal || !sourceCutId) {
-      const homeUrl = buildHomeUrl();
+      const homeUrl = buildHomeUrl(lang);
       window.history.replaceState({ mode: "inicio", cookingStep: "animal", cookingContext: {} }, "", homeUrl);
       setMode("inicio");
       setCookingStep("animal");
@@ -1535,6 +1557,7 @@ function HomeContent() {
         cutId: rebuilt.config.cut,
         doneness: toLiveDoneness(rebuilt.config.doneness),
         thickness: liveThickness,
+        lang: rebuilt.config.lang,
       }),
     );
   }
@@ -1967,6 +1990,12 @@ ERROR
 
   function handleLanguageChange(nextLang: Lang) {
     setLang(nextLang);
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      params.set("lang", nextLang);
+      const query = params.toString();
+      router.replace(`${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`);
+    }
     setBlocks({});
     setCheckedItems({});
     setPlanGenerated(false);
@@ -2068,8 +2097,9 @@ ERROR
             cutId,
             doneness,
             thickness: thickness !== undefined ? String(thickness) : undefined,
+            lang,
           })
-        : buildHomeUrl();
+        : buildHomeUrl(lang);
     router.push(targetUrl);
   }
 
@@ -2140,7 +2170,7 @@ ERROR
       onTouchEnd={handleTouchEnd}
     >
       <div className={`${ds.shell.container} mx-auto min-w-0 w-full max-w-[1180px] flex-1`}>
-        <DesktopModeTabs mode={mode} onModeChange={handleModeChange} t={t} />
+        <DesktopModeTabs lang={lang} mode={mode} onModeChange={handleModeChange} t={t} />
 
         {mode === "inicio" && (
           <HomeScreen
@@ -2481,7 +2511,13 @@ ERROR
         )}
       </div>
 
-      <AppBottomNav mode={mode} onModeChange={handleModeChange} disabled={isCutSelectionSheetOpen} t={t} />
+      <AppBottomNav
+        lang={lang}
+        mode={mode}
+        onModeChange={handleModeChange}
+        disabled={isCutSelectionSheetOpen}
+        t={t}
+      />
     </main>
     </>
   );

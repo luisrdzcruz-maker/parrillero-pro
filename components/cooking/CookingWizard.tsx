@@ -669,7 +669,7 @@ function CookingCutStep({
 
       <div className="max-w-3xl pl-11 md:pl-0">
         <p className="text-[11px] font-black uppercase tracking-[0.22em] text-orange-300/75">
-          {lang === "es" ? "Categoría" : "Category"}
+          {lang === "es" ? "Categoría" : lang === "fi" ? "Kategoria" : "Category"}
         </p>
         <h1 className="mt-2 text-4xl font-black tracking-tight text-white sm:text-5xl">
           {t.chooseCut}
@@ -677,7 +677,9 @@ function CookingCutStep({
         <p className="mt-2 text-sm font-medium leading-6 text-slate-400 sm:text-base">
           {lang === "es"
             ? "Selecciona el corte para ajustar fuego y tiempos."
-            : "Select the cut to tune heat and timings."}
+            : lang === "fi"
+              ? "Valitse leikkaus, jotta lampo ja ajat saadaan kohdalleen."
+              : "Select the cut to tune heat and timings."}
         </p>
       </div>
 
@@ -695,7 +697,7 @@ function CookingCutStep({
       {gridCuts.length > 0 && (
         <div className="space-y-3 sm:space-y-4">
           <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/25">
-            {lang === "es" ? "Todos los cortes" : "All cuts"}
+            {lang === "es" ? "Todos los cortes" : lang === "fi" ? "Kaikki leikkaukset" : "All cuts"}
           </p>
           <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {gridCuts.map((item) => (
@@ -1171,6 +1173,7 @@ function CookingResultStep({
         cutId: cutId ?? cut,
         doneness: toLiveDoneness(doneness),
         thickness: liveThickness,
+        lang,
       }),
     );
   }

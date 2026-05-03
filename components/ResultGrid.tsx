@@ -240,7 +240,7 @@ function SetupVisualAnchor({
   const setupImage = getSetupVisual(setupEquipment, detectedSetup);
   const overlayChips = getSetupOverlayChips(detectedSetup, lang);
   const setupLine = sanitizeSetupSummaryCopy(compactSummaryValue(content), lang, equipment);
-  const setupVisualLabel = lang === "es" ? "Visual de setup" : lang === "fi" ? "Setup-kuva" : "Setup visual";
+  const setupVisualLabel = lang === "es" ? "Visual de configuración" : lang === "fi" ? "Asetuskuva" : "Setup visual";
 
   return (
     <section className="relative col-span-full overflow-hidden rounded-[2rem] border border-orange-300/20 bg-slate-950 shadow-2xl shadow-black/30 ring-1 ring-inset ring-white/[0.04]">
@@ -459,7 +459,7 @@ function findBlockKey(keys: string[], candidates: string[]) {
 function getLocalizedBlockTitle(key: string, lang: "es" | "en" | "fi") {
   const upperKey = key.toUpperCase();
   if (upperKey === "SETUP" || upperKey === "CONFIGURACION" || upperKey === "CONFIGURACIÓN") {
-    return lang === "es" ? "🔥 Setup" : lang === "fi" ? "🔥 Asetus" : "🔥 Setup";
+    return lang === "es" ? "🔥 Configuración" : lang === "fi" ? "🔥 Asetus" : "🔥 Setup";
   }
   if (upperKey === "TIMES" || upperKey === "TIEMPOS") {
     return lang === "es" ? "⏱️ Tiempos" : lang === "fi" ? "⏱️ Ajat" : "⏱️ Times";
@@ -477,9 +477,6 @@ function getLocalizedBlockTitle(key: string, lang: "es" | "en" | "fi") {
 }
 
 function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en" | "fi"): ResultItem[] {
-  const hasEnglishCookingBlocks = Boolean(blocks.TIMES || blocks.TEMPERATURE || blocks.STEPS);
-  const hasEnglishMenuBlocks = Boolean(blocks.ORDER || blocks.SHOPPING || blocks.QUANTITIES);
-  const useEnglish = hasEnglishCookingBlocks || hasEnglishMenuBlocks;
   const setupKey = findBlockKey(keys, ["SETUP", "CONFIGURACION", "CONFIGURACIÓN"]);
   const timeKey = findBlockKey(keys, ["TIEMPOS", "TIMES"]);
   const tempKey = findBlockKey(keys, ["TEMPERATURA", "TEMPERATURE"]);
@@ -508,7 +505,7 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en"
           : "Error that ruins this cut";
     items.push({
       key: errorKey,
-      title: useEnglish && lang === "en" ? "Error that ruins this cut" : errorTitle,
+      title: errorTitle,
       content: localizeResultSurfaceCopy(
         sanitizeCriticalErrorCopy(sanitizeUserFacingGuidance(blocks[errorKey], lang), lang),
         lang,
@@ -532,9 +529,11 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en"
     if (usedKeys.has(key)) return;
 
     if (key === "TIMELINE") {
+      const timelineTitle =
+        lang === "es" ? "⏱️ Timeline Parrillada" : lang === "fi" ? "⏱️ BBQ-aikajana" : "⏱️ BBQ Timeline";
       items.push({
         key,
-        title: useEnglish ? "⏱️ BBQ Timeline" : "⏱️ Timeline Parrillada",
+        title: timelineTitle,
         content: blocks[key],
         type: "timeline",
       });
@@ -542,9 +541,11 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en"
     }
 
     if (key === "GRILL_MANAGER") {
+      const grillManagerTitle =
+        lang === "es" ? "🔥 Grill Manager Pro" : lang === "fi" ? "🔥 Grill Manager Pro" : "🔥 Grill Manager Pro";
       items.push({
         key,
-        title: useEnglish ? "🔥 Grill Manager Pro" : "🔥 Grill Manager Pro",
+        title: grillManagerTitle,
         content: blocks[key],
         type: "grill",
       });
@@ -552,7 +553,7 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en"
     }
 
     if (key === "COMPRA" || key === "SHOPPING") {
-      items.push({ key, title: formatTitle(key), content: blocks[key], type: "shopping" });
+      items.push({ key, title: getLocalizedBlockTitle(key, lang), content: blocks[key], type: "shopping" });
       return;
     }
 

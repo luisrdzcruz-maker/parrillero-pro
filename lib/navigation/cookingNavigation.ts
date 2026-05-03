@@ -1,12 +1,14 @@
 import type { Doneness } from "@/lib/types/domain";
 import { toAnimalId } from "@/lib/navigation/animalParam";
 import { canonicalizeCutId } from "@/lib/navigation/canonicalCutId";
+import type { Lang } from "@/lib/i18n/texts";
 
 type CookingNavigationParams = {
   animal?: string;
   cutId?: string;
   doneness?: string;
   thickness?: string;
+  lang?: Lang;
 };
 
 const VALID_DONENESS: ReadonlySet<Doneness> = new Set([
@@ -35,6 +37,11 @@ function normalizeThickness(value: string | undefined) {
   return Number.isFinite(numeric) && numeric > 0 ? trimmed : undefined;
 }
 
+function normalizeLang(value: string | undefined) {
+  if (value === "es" || value === "en" || value === "fi") return value;
+  return undefined;
+}
+
 function buildCookingUrl(step: "details" | "result", params: CookingNavigationParams = {}) {
   const search = new URLSearchParams();
   search.set("mode", "coccion");
@@ -44,11 +51,13 @@ function buildCookingUrl(step: "details" | "result", params: CookingNavigationPa
   const cutId = canonicalizeCutId(normalizeCutId(params.cutId), animal);
   const doneness = normalizeDoneness(params.doneness);
   const thickness = normalizeThickness(params.thickness);
+  const lang = normalizeLang(params.lang);
 
   if (animal) search.set("animal", animal);
   if (cutId) search.set("cutId", cutId);
   if (doneness) search.set("doneness", doneness);
   if (thickness) search.set("thickness", thickness);
+  if (lang) search.set("lang", lang);
 
   return `/?${search.toString()}`;
 }
@@ -61,6 +70,9 @@ export function buildCookingResultUrl(params: CookingNavigationParams = {}) {
   return buildCookingUrl("result", params);
 }
 
-export function buildHomeUrl() {
-  return "/?mode=inicio";
+export function buildHomeUrl(lang?: Lang) {
+  const search = new URLSearchParams({ mode: "inicio" });
+  const normalizedLang = normalizeLang(lang);
+  if (normalizedLang) search.set("lang", normalizedLang);
+  return `/?${search.toString()}`;
 }

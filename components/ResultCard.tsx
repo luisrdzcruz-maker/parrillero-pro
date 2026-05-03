@@ -44,7 +44,7 @@ function getVariantLabel(
     case "summary":
       return isEs ? "Tiempos · Temperatura" : isFi ? "Ajat · Lampotila" : "Times · Temperature";
     case "setup":
-      return isEs ? "Setup del fuego" : isFi ? "Tuliasetus" : "Fire setup";
+      return isEs ? "Configuración del fuego" : isFi ? "Tuliasetus" : "Fire setup";
     default:
       return isFi ? "Suunnitelma" : "Plan";
   }
@@ -317,7 +317,7 @@ function SetupVisualToggle({
   const setupEquipment = resolveSetupEquipment(equipment) ?? resolveSetupEquipment(content);
   const detectedSetup = setup ?? detectSetupFromText(content);
   const setupImage = getSetupVisual(setupEquipment, detectedSetup);
-  const setupTitle = lang === "es" ? "Visual de setup" : lang === "fi" ? "Setup-kuva" : "Setup visual";
+  const setupTitle = lang === "es" ? "Visual de configuración" : lang === "fi" ? "Asetuskuva" : "Setup visual";
   const setupSubtitle =
     lang === "es"
       ? "Zonas de calor y flujo recomendado"

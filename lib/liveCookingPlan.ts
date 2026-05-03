@@ -1,5 +1,9 @@
 import type { LiveStep } from "@/components/live/LiveCookingScreen";
-import { localizeLiveStepEntry, sanitizeSetupSummaryCopy } from "@/lib/i18n/surfaceFallbacks";
+import {
+  localizeLiveStepEntry,
+  localizeResultSurfaceCopy,
+  sanitizeSetupSummaryCopy,
+} from "@/lib/i18n/surfaceFallbacks";
 
 export const LIVE_COOKING_STORAGE_KEY = "parrillero_live_cooking_plan_v1";
 
@@ -242,7 +246,8 @@ export function buildLiveStepsFromPayload(
   const entries = parsePlanSteps(stepsText).map((entry) => localizeLiveStepEntry(entry, payload.input.lang));
   const targets = parseTempTargets(tempText);
   const setupSummary = sanitizeSetupSummaryCopy(setupText, payload.input.lang, payload.input.equipment);
-  const sharedNotes = buildStepNotes(payload.input, setupSummary, timelineText);
+  const localizedTimeline = localizeResultSurfaceCopy(timelineText, payload.input.lang);
+  const sharedNotes = buildStepNotes(payload.input, setupSummary, localizedTimeline);
 
   if (entries.length === 0) {
     return {

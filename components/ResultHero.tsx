@@ -44,6 +44,7 @@ export default function ResultHero({
 }) {
   const isEs = lang === "es";
   const isFi = lang === "fi";
+  const liveLabel = isEs ? "En vivo" : isFi ? "Live" : "Live";
   const eyebrow = animal || context || (isEs ? "Plan de coccion" : isFi ? "Kypsennyssuunnitelma" : "Cooking plan");
   const title = cut || (isEs ? "Resultado listo" : isFi ? "Tulos valmis" : "Result ready");
   const method = summary?.method || "";
@@ -161,7 +162,7 @@ export default function ResultHero({
               <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-orange-400/25 bg-orange-500/[0.12] px-2.5 py-1 shadow-sm shadow-orange-500/10">
                 <span className="h-1.5 w-1.5 rounded-full bg-orange-400" />
                 <span className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-300">
-                  Live
+                  {liveLabel}
                 </span>
               </div>
             </button>

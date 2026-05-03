@@ -51,10 +51,12 @@ export function AppHeader({
 }
 
 export function DesktopModeTabs({
+  lang,
   mode,
   onModeChange,
   t,
 }: {
+  lang: Lang;
   mode: Mode;
   onModeChange: (mode: Mode) => void;
   t: AppText;
@@ -87,7 +89,7 @@ export function DesktopModeTabs({
           label={t.live}
           emoji="⏱️"
           onClick={() => {
-            router.push(buildLiveUrl({}));
+            router.push(buildLiveUrl({ lang }));
           }}
         />
         <DesktopTab
@@ -128,11 +130,13 @@ function DesktopTab({
 }
 
 export function BottomNavigation({
+  lang,
   mode,
   onModeChange,
   disabled = false,
   t,
 }: {
+  lang: Lang;
   mode: Mode;
   onModeChange: (mode: Mode) => void;
   disabled?: boolean;
@@ -171,7 +175,7 @@ export function BottomNavigation({
           label={t.live}
           emoji="⏱️"
           onClick={() => {
-            router.push(buildLiveUrl({}));
+            router.push(buildLiveUrl({ lang }));
           }}
         />
         <Tab
