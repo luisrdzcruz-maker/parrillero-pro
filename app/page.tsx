@@ -72,7 +72,6 @@ import { toAnimalId } from "@/lib/navigation/animalParam";
 import { buildLiveUrl } from "@/lib/navigation/buildLiveUrl";
 import {
   buildCookingDetailsUrl,
-  buildCookingResultUrl,
   buildHomeUrl,
 } from "@/lib/navigation/cookingNavigation";
 import { canonicalizeCutId } from "@/lib/navigation/canonicalCutId";
@@ -287,11 +286,6 @@ function parseResponse(text: string): Blocks {
 function parseMenuReply(reply: string): Blocks {
   const parsed = parseBlocks(reply);
   const normalized = normalizeBlocks(parsed, REQUIRED_MENU_BLOCKS, "generated_menu");
-
-  if (process.env.NODE_ENV === "development") {
-    console.log("[blocks] parsed", parsed);
-    console.log("[blocks] normalized", normalized);
-  }
 
   return normalized;
 }
@@ -916,11 +910,15 @@ function HomeContent() {
     const isAnimalOnlyCutSelectionFilterChange =
       isCutSelectionContextOnlyChange &&
       isCutSelectionFilterContextChangeOnly(currentNav.cookingContext, nextCookingContext);
+    const isCutSelectionPreviewOpenFromBase =
+      isCutSelectionContextOnlyChange &&
+      !currentNav.cookingContext.cut &&
+      Boolean(nextCookingContext.cut);
     const shouldPush =
       requestedMethod === "push" &&
       navChanged &&
       !isApplyingPopRef.current &&
-      !isCutSelectionContextOnlyChange &&
+      (!isCutSelectionContextOnlyChange || isCutSelectionPreviewOpenFromBase) &&
       !isAnimalOnlyCutSelectionFilterChange;
     const method: "push" | "replace" = shouldPush ? "push" : "replace";
 
@@ -931,26 +929,21 @@ function HomeContent() {
     const search = buildSearchFromNav(nextMode, nextCookingStep, nextCookingContext);
     const url = `${window.location.pathname}${search}${window.location.hash}`;
     const state = { mode: nextMode, cookingStep: nextCookingStep, cookingContext: nextCookingContext };
-    if (
-      process.env.NODE_ENV !== "production" &&
-      nextMode === "coccion" &&
-      nextCookingStep === "cut" &&
-      contextChanged
-    ) {
-      console.debug("[cut-selection-animal] commitNav", {
-        requestedMethod,
-        resolvedMethod: method,
-        from: window.location.search,
-        to: search,
-      });
-    }
-
     if (method === "replace") {
       window.history.replaceState(state, "", url);
     } else {
       window.history.pushState(state, "", url);
     }
   }, []);
+
+  function syncCutSelectionPreviewFromNav(nav: ParsedNav) {
+    if (nav.mode !== "coccion" || nav.cookingStep !== "cut") return;
+    if (nav.cookingContext.cut) {
+      setCut(nav.cookingContext.cut);
+      return;
+    }
+    setCut("");
+  }
 
   function getCurrentCookingNavContext(): CookingNavContext {
     const includeDoneness = !isVegetableContextAnimal(animal);
@@ -1003,7 +996,6 @@ function HomeContent() {
   function pushCookingResultHistoryWithContext(fallbackContext?: { doneness?: string; thickness?: string }) {
     if (typeof window === "undefined") return;
 
-    const currentUrlBeforePush = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     const contextParams = getCurrentCookingNavigationParams();
     const sourceAnimal = contextParams.animal;
     const sourceCutId = contextParams.cutId;
@@ -1012,9 +1004,6 @@ function HomeContent() {
       window.history.replaceState({ mode: "inicio", cookingStep: "animal", cookingContext: {} }, "", homeUrl);
       setMode("inicio");
       setCookingStep("animal");
-      if (process.env.NODE_ENV !== "production") {
-        console.debug("[nav] details->result missing context", { homeUrl });
-      }
       return;
     }
 
@@ -1033,14 +1022,6 @@ function HomeContent() {
       ...(resolvedDoneness.value ? { doneness: resolvedDoneness.value } : {}),
       ...(resolvedThickness ? { thickness: resolvedThickness } : {}),
     };
-    const resultParams = {
-      animal: sourceAnimal,
-      cutId: sourceCutId,
-      ...(resolvedDoneness.value ? { doneness: resolvedDoneness.value } : {}),
-      ...(resolvedThickness ? { thickness: resolvedThickness } : {}),
-    };
-    const detailsUrl = buildCookingDetailsUrl(resultParams);
-    const resultUrl = buildCookingResultUrl(resultParams);
     const currentNav = parseNavFromSearch(window.location.search);
     const isResultWithSameContext =
       currentNav.mode === "coccion" &&
@@ -1050,27 +1031,11 @@ function HomeContent() {
     if (isResultWithSameContext) {
       setMode("coccion");
       setCookingStep("result");
-      if (process.env.NODE_ENV !== "production") {
-        console.debug("[nav] details->result skip duplicate push", {
-          currentUrlBeforePush,
-          resultUrl,
-          donenessSource: resolvedDoneness.source,
-        });
-      }
       return;
     }
 
     commitNav("coccion", "details", "replace", navContext);
     commitNav("coccion", "result", "push", navContext);
-    if (process.env.NODE_ENV !== "production") {
-      console.debug("[nav] details->result push", {
-        currentUrlBeforePush,
-        detailsUrl,
-        resultUrl,
-        urlAfterPush: `${window.location.pathname}${window.location.search}${window.location.hash}`,
-        donenessSource: resolvedDoneness.source,
-      });
-    }
   }
 
   useEffect(() => {
@@ -1118,11 +1083,9 @@ function HomeContent() {
   useEffect(() => {
     function onPopState() {
       const nav = parseNavFromSearch(window.location.search);
-      if (process.env.NODE_ENV !== "production") {
-        console.debug("[nav] popstate apply", { search: window.location.search, mode: nav.mode, step: nav.cookingStep });
-      }
       isApplyingPopRef.current = true;
       applyCookingNavContext(nav.cookingContext);
+      syncCutSelectionPreviewFromNav(nav);
       setMode(nav.mode);
       setCookingStep(nav.cookingStep);
       if (nav.cookingStep !== "result") setLoading(false);
@@ -1137,8 +1100,8 @@ function HomeContent() {
 
   useEffect(() => {
     if (isApplyingPopRef.current) return;
-    const query = searchParams.toString();
-    const nav = parseNavFromSearch(query ? `?${query}` : "");
+    if (typeof window === "undefined") return;
+    const nav = parseNavFromSearch(window.location.search);
     const currentCookingContext: CookingNavContext = {
       animal,
       ...(cut ? { cut } : {}),
@@ -1154,6 +1117,7 @@ function HomeContent() {
     isApplyingPopRef.current = true;
     const frame = window.requestAnimationFrame(() => {
       applyCookingNavContext(nav.cookingContext);
+      syncCutSelectionPreviewFromNav(nav);
       setMode(nav.mode);
       setCookingStep(nav.cookingStep);
       if (nav.cookingStep !== "result") setLoading(false);
@@ -1543,10 +1507,6 @@ function HomeContent() {
   }
 
   async function publishMenu(menu: SavedMenu) {
-    if (process.env.NODE_ENV === "development") {
-      console.log("[share] selected item", menu);
-    }
-
     if (isLocalSavedMenu(menu)) {
       setShareStatus("error");
       setShareMessage("Este plan solo está guardado en este dispositivo. Guárdalo en la nube para compartir.");
@@ -1561,10 +1521,6 @@ function HomeContent() {
 
     try {
       const result = (await publishGeneratedMenu(menu.id)) as PublishSavedMenuResponse;
-      if (process.env.NODE_ENV === "development") {
-        console.log("[share] publish result", result);
-      }
-
       if (!result.ok) {
         setShareStatus("error");
         setShareMessage(result.error || "No se pudo publicar el plan");
@@ -1591,10 +1547,7 @@ function HomeContent() {
           setShareMessage("Plan publicado. Link listo para compartir.");
         }
       }
-    } catch (error) {
-      if (process.env.NODE_ENV === "development") {
-        console.log("[share] publish result", error);
-      }
+    } catch {
       setShareStatus("error");
       setShareMessage("No se pudo publicar el plan");
     } finally {
@@ -1653,10 +1606,6 @@ function HomeContent() {
 
   function replaceCutSelectionAnimal(nextAnimal: AnimalLabel) {
     commitNav("coccion", "cut", "replace", { animal: nextAnimal });
-    if (process.env.NODE_ENV !== "production") {
-      const canonicalAnimal = animalIdsByLabel[nextAnimal];
-      console.debug("[cut-selection-animal] replace", canonicalAnimal);
-    }
   }
 
   function handleCutSelectionAnimalChange(selectedAnimalId: GeneratedAnimalId) {
@@ -1764,11 +1713,6 @@ function HomeContent() {
       const normalized = parseAsMenu
         ? parsed
         : normalizeBlocks(parsed, REQUIRED_COOKING_BLOCKS, "cooking_plan");
-
-      if (!parseAsMenu && process.env.NODE_ENV === "development") {
-        console.log("[blocks] parsed", parsed);
-        console.log("[blocks] normalized", normalized);
-      }
 
       setBlocks(normalized);
     } catch (e) {
@@ -2087,9 +2031,6 @@ ERROR
             thickness: thickness !== undefined ? String(thickness) : undefined,
           })
         : buildHomeUrl();
-    if (process.env.NODE_ENV !== "production") {
-      console.debug("[live-plan] navigating to", targetUrl);
-    }
     router.push(targetUrl);
   }
 
@@ -2215,7 +2156,7 @@ ERROR
           cookingStep === "cut" ? (
             <CutSelectionScreen
               selectedAnimal={animalIdsByLabel[animal] as GeneratedAnimalId}
-              selectedCutId={cut || undefined}
+              selectedCutId={cut || null}
               lang={lang}
               isAnimalPreselected={Boolean(parseCookingAnimal(searchParams.get("animal")))}
               onAnimalChange={handleCutSelectionAnimalChange}
