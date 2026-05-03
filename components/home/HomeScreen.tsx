@@ -233,7 +233,7 @@ function HomeSettingsStrip({
   onLangChange: (lang: Lang) => void;
 }) {
   return (
-    <section className="mb-24 flex items-center justify-between gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 sm:px-5 lg:mb-0">
+    <section className="flex items-center justify-between gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 sm:px-5">
       <div className="min-w-0">
         <p className="truncate text-[10px] font-black uppercase tracking-[0.18em] text-white/62">
           {t.homeSettingsKicker}
@@ -438,7 +438,7 @@ export function HomeScreen({
         </div>
       )}
 
-    <div className="mx-auto min-w-0 w-full max-w-2xl space-y-3 overflow-x-hidden pb-[calc(7.25rem+env(safe-area-inset-bottom))] sm:space-y-4 sm:pb-8 lg:max-w-3xl lg:pb-6">
+    <div className="mx-auto min-w-0 w-full max-w-2xl space-y-3 overflow-x-hidden pb-4 sm:space-y-4 sm:pb-6 lg:max-w-3xl lg:pb-6">
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <FadeIn>
         <HeroSection

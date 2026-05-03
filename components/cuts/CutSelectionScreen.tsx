@@ -158,8 +158,8 @@ export function CutSelectionScreen({
   const viewAllLabel = getViewAllLabel(totalCutsByAnimal, selectedAnimal, effectiveLang);
   const hideAllLabel = getHideAllLabel(effectiveLang);
   const sectionBottomPaddingClass = catalogExpanded
-    ? "pb-[calc(8rem+env(safe-area-inset-bottom))] sm:pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-8"
-    : "pb-[calc(7.25rem+env(safe-area-inset-bottom))] sm:pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-6";
+    ? "pb-6 sm:pb-8 lg:pb-8"
+    : "pb-4 sm:pb-6 lg:pb-6";
 
   return (
     <main className="relative w-full max-w-full overflow-x-clip overflow-y-visible bg-[#030201] text-white">

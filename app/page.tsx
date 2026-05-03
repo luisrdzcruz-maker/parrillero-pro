@@ -823,6 +823,7 @@ function HomeContent() {
 
   const currentDonenessOptions = getDonenessSelectOptions(animal, lang);
   const showThickness = cut ? shouldShowThickness(cut) : true;
+  const isCutSelectionSheetOpen = mode === "coccion" && cookingStep === "cut" && Boolean(cut);
   const [liveClientReady, setLiveClientReady] = useState(false);
   const [liveSteps, setLiveSteps] = useState<LiveStep[]>(MOCK_LIVE_STEPS);
   const [liveContext, setLiveContext] = useState<string | undefined>(undefined);
@@ -2134,11 +2135,11 @@ ERROR
       />
     )}
     <main
-      className={`${ds.shell.page} relative mx-auto min-w-0 w-full max-w-[1280px] overflow-x-hidden px-3 pt-2 !pb-[max(136px,env(safe-area-inset-bottom))] scroll-pb-[calc(9rem+env(safe-area-inset-bottom))] sm:px-4 sm:pt-5 lg:px-8 lg:pt-6 lg:!pb-12 lg:scroll-pb-16`}
+      className={`${ds.shell.page} relative mx-auto flex min-h-screen min-w-0 w-full max-w-[1280px] flex-col overflow-x-hidden px-3 pt-2 sm:px-4 sm:pt-5 lg:px-8 lg:pt-6`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <div className={`${ds.shell.container} mx-auto min-w-0 w-full max-w-[1180px]`}>
+      <div className={`${ds.shell.container} mx-auto min-w-0 w-full max-w-[1180px] flex-1`}>
         <DesktopModeTabs mode={mode} onModeChange={handleModeChange} t={t} />
 
         {mode === "inicio" && (
@@ -2480,7 +2481,7 @@ ERROR
         )}
       </div>
 
-      <AppBottomNav mode={mode} onModeChange={handleModeChange} t={t} />
+      <AppBottomNav mode={mode} onModeChange={handleModeChange} disabled={isCutSelectionSheetOpen} t={t} />
     </main>
     </>
   );
