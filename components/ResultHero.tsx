@@ -9,6 +9,11 @@ import { texts } from "@/lib/i18n/texts";
 type SaveMenuStatus = "idle" | "saving" | "success" | "error";
 type Lang = "es" | "en" | "fi";
 type MetricTone = "orange" | "red" | "sky";
+type ResultHeroMetricItem = {
+  label: string;
+  value: string | null | undefined;
+  tone: MetricTone;
+};
 
 const restPattern = /\b(reposo|reposa|reposar|descanso|rest|resting|lepuutus|lepuuta|lepaa|levata)\b/i;
 
@@ -187,11 +192,13 @@ export default function ResultHero({
   const target = compactTemperatureMetric(summary?.temperature, summary?.doneness || doneness, lang);
   const usedMetricValues = new Set<string>();
 
-  const heroMetrics = [
+  const rawMetrics: ResultHeroMetricItem[] = [
     { label: copy.resultHeroMetricTime, value: compactTimeMetric(summary?.time, restMetric), tone: "orange" },
     { label: copy.resultHeroMetricTarget, value: target, tone: "red" },
     { label: copy.resultHeroMetricRest, value: restMetric, tone: "sky" },
-  ].filter((item): item is { label: string; value: string; tone: MetricTone } => {
+  ];
+
+  const heroMetrics = rawMetrics.filter((item): item is ResultHeroMetricItem & { value: string } => {
     if (!item.value) return false;
     const normalized = item.value.toLowerCase();
     if (usedMetricValues.has(normalized)) return false;
