@@ -147,6 +147,13 @@ type SavedCookConfig = {
   lang: Lang;
 };
 
+type HomePopularCutSelection = {
+  animal: string;
+  cutId: string;
+  doneness?: string;
+  thickness?: string;
+};
+
 type CookingNavContext = {
   animal?: AnimalLabel;
   cut?: string;
@@ -1130,7 +1137,36 @@ function HomeContent() {
     const nav = parseNavFromSearch(window.location.search);
     const raf = window.requestAnimationFrame(() => {
       applyCookingNavContext(nav.cookingContext);
-      commitNav(nav.mode, nav.cookingStep, "replace", nav.cookingContext);
+      const shouldBootstrapCutSelectionBaseEntry =
+        nav.mode === "coccion" &&
+        nav.cookingStep === "cut" &&
+        Boolean(nav.cookingContext.cut);
+
+      if (shouldBootstrapCutSelectionBaseEntry) {
+        const baseContext: CookingNavContext = nav.cookingContext.animal
+          ? { animal: nav.cookingContext.animal }
+          : {};
+        const baseSearch = buildSearchFromNav("coccion", "cut", baseContext, lang);
+        const detailSearch = buildSearchFromNav(
+          "coccion",
+          "cut",
+          {
+            ...baseContext,
+            cut: nav.cookingContext.cut,
+          },
+          lang,
+        );
+        const baseUrl = `${window.location.pathname}${baseSearch}${window.location.hash}`;
+        const detailUrl = `${window.location.pathname}${detailSearch}${window.location.hash}`;
+
+        setMode("coccion");
+        setCookingStep("cut");
+        window.history.replaceState(window.history.state, "", baseUrl);
+        router.push(detailUrl);
+        hasCutSelectionPreviewHistoryRef.current = true;
+      } else {
+        commitNav(nav.mode, nav.cookingStep, "replace", nav.cookingContext);
+      }
       navInitializedRef.current = true;
     });
 
@@ -1739,6 +1775,51 @@ function HomeContent() {
     track({ name: "cut_selected", animal: selectedAnimal, cutId: profile.id, lang });
   }
 
+  function handleHomePopularCutSelect(selection: HomePopularCutSelection) {
+    const selectedAnimal = animalLabelsById[selection.animal] ?? animal;
+    const selectedCutId = selection.cutId.trim();
+    if (!selectedCutId) return;
+
+    setAnimal(selectedAnimal);
+    setCut(selectedCutId);
+    if (selection.doneness && !isVegetableContextAnimal(selectedAnimal)) {
+      setDoneness(selection.doneness);
+    }
+    if (selection.thickness && shouldShowThickness(selectedCutId)) {
+      setThickness(selection.thickness);
+    }
+    resetAdaptiveDetailInputs();
+    setBlocks({});
+    setCheckedItems({});
+    resetSaveMenuState();
+
+    if (typeof window === "undefined") {
+      commitNav("coccion", "cut", "push", {
+        animal: selectedAnimal,
+      });
+      commitNav("coccion", "cut", "push", {
+        animal: selectedAnimal,
+        cut: selectedCutId,
+      });
+      track({ name: "cut_selected", animal: selectedAnimal, cutId: selectedCutId, lang });
+      return;
+    }
+
+    const baseContext: CookingNavContext = { animal: selectedAnimal };
+    const detailContext: CookingNavContext = { animal: selectedAnimal, cut: selectedCutId };
+    const baseSearch = buildSearchFromNav("coccion", "cut", baseContext, lang);
+    const detailSearch = buildSearchFromNav("coccion", "cut", detailContext, lang);
+    const baseUrl = `${window.location.pathname}${baseSearch}${window.location.hash}`;
+    const detailUrl = `${window.location.pathname}${detailSearch}${window.location.hash}`;
+
+    setMode("coccion");
+    setCookingStep("cut");
+    window.history.pushState(window.history.state, "", baseUrl);
+    router.push(detailUrl);
+    hasCutSelectionPreviewHistoryRef.current = true;
+    track({ name: "cut_selected", animal: selectedAnimal, cutId: selectedCutId, lang });
+  }
+
   async function callAI(
     message: string,
     createCookSteps = false,
@@ -2176,6 +2257,7 @@ ERROR
           <HomeScreen
             lang={lang}
             onLangChange={handleLanguageChange}
+            onPopularCutSelect={handleHomePopularCutSelect}
             savedMenusCount={savedMenus.length}
             t={t}
             onModeChange={handleModeChange}

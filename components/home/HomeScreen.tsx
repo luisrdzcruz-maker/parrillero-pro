@@ -268,6 +268,7 @@ export function HomeScreen({
   savedMenusCount,
   onModeChange,
   onPrimaryCtaClick,
+  onPopularCutSelect,
   t,
 }: {
   lang: Lang;
@@ -275,6 +276,12 @@ export function HomeScreen({
   savedMenusCount: number;
   onModeChange: (mode: Mode) => void;
   onPrimaryCtaClick?: () => void;
+  onPopularCutSelect?: (cut: {
+    animal: Animal;
+    cutId: string;
+    doneness?: string;
+    thickness?: string;
+  }) => void;
   t: AppText;
 }) {
   const router = useRouter();
@@ -326,6 +333,16 @@ export function HomeScreen({
   ];
 
   function openPopularCut(cut: PopularCut) {
+    if (onPopularCutSelect) {
+      onPopularCutSelect({
+        animal: cut.animal,
+        cutId: cut.cutId,
+        doneness: cut.doneness,
+        thickness: cut.thickness,
+      });
+      return;
+    }
+
     router.push(
       buildCookingDetailsUrl({
         animal: cut.animal,
@@ -396,6 +413,7 @@ export function HomeScreen({
     t.homeParrillada,
     t.homeParrilladaSub,
     t.homeSaved,
+    onPopularCutSelect,
   ]);
 
   return (
