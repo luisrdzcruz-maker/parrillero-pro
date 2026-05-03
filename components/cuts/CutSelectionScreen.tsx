@@ -64,12 +64,13 @@ export function CutSelectionScreen({
   const [localSelectedCutId, setLocalSelectedCutId] = useState<string | null>(null);
   const [catalogExpanded, setCatalogExpanded] = useState(false);
   const [viewMode, setViewMode] = useState<CutViewMode>("list");
+  const isSelectedCutControlled = selectedCutId !== undefined;
 
   const selectedIntent =
     intentState.sourceFilter === intentFilter ? intentState.selectedIntent : intentFilter;
   const selectedZone =
     zoneState.sourceAnimal === selectedAnimal ? zoneState.selectedZone : null;
-  const effectiveSelectedCutId = selectedCutId ?? localSelectedCutId;
+  const effectiveSelectedCutId = isSelectedCutControlled ? selectedCutId : localSelectedCutId;
   const selectedProfile = useMemo(
     () =>
       effectiveSelectedCutId
@@ -93,7 +94,9 @@ export function CutSelectionScreen({
     });
   };
   const handleProfileChange = (nextProfile: GeneratedCutProfile | null) => {
-    setLocalSelectedCutId(nextProfile?.id ?? null);
+    if (!isSelectedCutControlled) {
+      setLocalSelectedCutId(nextProfile?.id ?? null);
+    }
     onPreviewCutChange?.(nextProfile?.id ?? null);
   };
 

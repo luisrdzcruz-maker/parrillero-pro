@@ -257,7 +257,7 @@ export function getCategoryLabel(category: string, lang: Lang = "en") {
 }
 
 export function getSafetyNote(profile: GeneratedCutProfile, lang: Lang = "en") {
-  if (profile.safetyNoteEn || profile.errorEn) return profile.safetyNoteEn || profile.errorEn;
+  if (profile.safetyNoteEn?.trim()) return toDisplaySentence(profile.safetyNoteEn);
   if (lang === "es") return "Usa señales visuales y manipulación segura.";
   if (lang === "fi") return "Käytä visuaalista kypsyysarviota ja turvallista käsittelyä.";
   return "Use visual doneness and safe handling.";

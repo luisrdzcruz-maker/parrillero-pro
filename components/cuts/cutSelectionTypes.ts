@@ -18,7 +18,7 @@ export type CutSelectionScreenProps = {
   selectedAnimal: GeneratedAnimalId;
   lang?: Lang;
   intentFilter?: CutIntent | null;
-  selectedCutId?: string;
+  selectedCutId?: string | null;
   onStartCooking?: (profile: GeneratedCutProfile) => void;
   onPreviewCutChange?: (cutId: string | null) => void;
   onAnimalChange?: (animal: GeneratedAnimalId) => void;
