@@ -1,5 +1,6 @@
 import type { LiveCookingStepState, LiveZone, UrgencyLevel } from "@/hooks/useLiveCooking";
 import { getLiveText, type SurfaceLang } from "@/lib/i18n/surfaceFallbacks";
+import { texts } from "@/lib/i18n/texts";
 
 const URGENCY_STYLES: Record<UrgencyLevel, string> = {
   normal: "border-white/[0.08] bg-white/[0.035]",
@@ -41,37 +42,13 @@ function getMistakeHint(
   zone: LiveZone,
   lang: SurfaceLang = "en",
 ): string | null {
+  const copy = texts[lang];
   const labels = {
-    waitCrust:
-      lang === "es"
-        ? "No muevas la carne hasta que se forme la costra"
-        : lang === "fi"
-          ? "Anna pinnan muodostua ennen kuin liikutat lihaa"
-          : "Do not move the meat until a crust forms",
-    flipOnce:
-      lang === "es"
-        ? "Da la vuelta una sola vez y no presiones"
-        : lang === "fi"
-          ? "Kaanna vain kerran, ala paina lihaa"
-          : "Flip once — do not press down",
-    rest:
-      lang === "es"
-        ? "No cortes todavia: deja que los jugos se redistribuyan"
-        : lang === "fi"
-          ? "Ala leikkaa viela, anna nesteiden tasaantua"
-          : "Do not cut yet — let the juices redistribute",
-    lidClosed:
-      lang === "es"
-        ? "Mantén la tapa cerrada para sostener la temperatura"
-        : lang === "fi"
-          ? "Pida kansi kiinni, jotta lampo pysyy tasaisena"
-          : "Keep the lid closed to hold temperature",
-    noPress:
-      lang === "es"
-        ? "No presiones la carne: pierde jugos y se seca"
-        : lang === "fi"
-          ? "Ala paina lihaa, jotta nesteet eivat karkaa"
-          : "Do not press the meat — it squeezes out the juices",
+    waitCrust: copy.liveStepMistakeWaitCrust,
+    flipOnce: copy.liveStepMistakeFlipOnce,
+    rest: copy.liveStepMistakeRest,
+    lidClosed: copy.liveStepMistakeLidClosed,
+    noPress: copy.liveStepMistakeNoPress,
   } as const;
 
   const text = normalize(`${name} ${instructions}`);
