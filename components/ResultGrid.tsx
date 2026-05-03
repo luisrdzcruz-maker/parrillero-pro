@@ -483,18 +483,8 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en"
   const stepsKey = findBlockKey(keys, ["PASOS", "STEPS"]);
   const errorKey = findBlockKey(keys, ["ERROR", "ERROR CLAVE", "KEY ERROR"]);
   const usedKeys = new Set([setupKey, timeKey, tempKey, stepsKey, errorKey].filter(Boolean));
-  const items: ResultItem[] = [];
-
-  if (setupKey) {
-    items.push({
-      key: setupKey,
-      title: getLocalizedBlockTitle(setupKey, lang),
-      content: localizeResultSurfaceCopy(sanitizeSetupSummaryCopy(blocks[setupKey], lang), lang),
-      setup: detectSetupFromText(blocks[setupKey]),
-      type: "card",
-      variant: "setup",
-    });
-  }
+  const coreItems: ResultItem[] = [];
+  const secondaryItems: ResultItem[] = [];
 
   if (errorKey) {
     const errorTitle =
@@ -503,7 +493,7 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en"
         : lang === "fi"
           ? "Virhe joka pilaa taman leikkauksen"
           : "Error that ruins this cut";
-    items.push({
+    coreItems.push({
       key: errorKey,
       title: errorTitle,
       content: localizeResultSurfaceCopy(
@@ -516,7 +506,7 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en"
   }
 
   if (stepsKey) {
-    items.push({
+    coreItems.push({
       key: stepsKey,
       title: getLocalizedBlockTitle(stepsKey, lang),
       content: localizeResultSurfaceCopy(blocks[stepsKey], lang),
@@ -531,7 +521,7 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en"
     if (key === "TIMELINE") {
       const timelineTitle =
         lang === "es" ? "⏱️ Timeline Parrillada" : lang === "fi" ? "⏱️ BBQ-aikajana" : "⏱️ BBQ Timeline";
-      items.push({
+      secondaryItems.push({
         key,
         title: timelineTitle,
         content: blocks[key],
@@ -543,7 +533,7 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en"
     if (key === "GRILL_MANAGER") {
       const grillManagerTitle =
         lang === "es" ? "🔥 Grill Manager Pro" : lang === "fi" ? "🔥 Grill Manager Pro" : "🔥 Grill Manager Pro";
-      items.push({
+      secondaryItems.push({
         key,
         title: grillManagerTitle,
         content: blocks[key],
@@ -553,11 +543,16 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en"
     }
 
     if (key === "COMPRA" || key === "SHOPPING") {
-      items.push({ key, title: getLocalizedBlockTitle(key, lang), content: blocks[key], type: "shopping" });
+      secondaryItems.push({
+        key,
+        title: getLocalizedBlockTitle(key, lang),
+        content: blocks[key],
+        type: "shopping",
+      });
       return;
     }
 
-    items.push({
+    secondaryItems.push({
       key,
       title: getLocalizedBlockTitle(key, lang),
       content: localizeResultSurfaceCopy(blocks[key], lang),
@@ -565,7 +560,7 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en"
     });
   });
 
-  return items;
+  return [...coreItems, ...secondaryItems];
 }
 
 export default function ResultGrid({
