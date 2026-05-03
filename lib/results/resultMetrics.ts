@@ -8,6 +8,11 @@ export type ResultHeroMetricItem = {
   value: string;
   tone: MetricTone;
 };
+type ResultHeroRawMetricItem = {
+  label: string;
+  value: string | null | undefined;
+  tone: MetricTone;
+};
 
 const restPattern = /\b(reposo|reposa|reposar|descanso|rest|resting|lepuutus|lepuuta|lepaa|levata)\b/i;
 
@@ -161,11 +166,11 @@ export function buildResultHeroMetrics({
   const target = compactTemperatureMetric(summary?.temperature, summary?.doneness || doneness, lang);
   const usedMetricValues = new Set<string>();
 
-  const rawMetrics = [
+  const rawMetrics: ResultHeroRawMetricItem[] = [
     { label: copy.resultHeroMetricTime, value: compactTimeMetric(summary?.time, restMetric), tone: "orange" },
     { label: copy.resultHeroMetricTarget, value: target, tone: "red" },
     { label: copy.resultHeroMetricRest, value: restMetric, tone: "sky" },
-  ] as const;
+  ];
 
   return rawMetrics.filter((item): item is ResultHeroMetricItem => {
     if (!item.value) return false;
