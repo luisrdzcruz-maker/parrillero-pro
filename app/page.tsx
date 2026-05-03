@@ -787,6 +787,7 @@ function HomeContent() {
   const isApplyingPopRef = useRef(false);
   const liveAdvanceRef = useRef(false);
   const navInitializedRef = useRef(false);
+  const hasCutSelectionPreviewHistoryRef = useRef(false);
   const cookingContextRef = useRef({
     animal,
     cut,
@@ -914,11 +915,17 @@ function HomeContent() {
       isCutSelectionContextOnlyChange &&
       !currentNav.cookingContext.cut &&
       Boolean(nextCookingContext.cut);
+    const isCutSelectionPreviewOpenFromHistoryBase =
+      isCutSelectionContextOnlyChange &&
+      Boolean(nextCookingContext.cut) &&
+      !hasCutSelectionPreviewHistoryRef.current;
     const shouldPush =
       requestedMethod === "push" &&
       navChanged &&
       !isApplyingPopRef.current &&
-      (!isCutSelectionContextOnlyChange || isCutSelectionPreviewOpenFromBase) &&
+      (!isCutSelectionContextOnlyChange ||
+        isCutSelectionPreviewOpenFromBase ||
+        isCutSelectionPreviewOpenFromHistoryBase) &&
       !isAnimalOnlyCutSelectionFilterChange;
     const method: "push" | "replace" = shouldPush ? "push" : "replace";
 
@@ -934,15 +941,28 @@ function HomeContent() {
     } else {
       window.history.pushState(state, "", url);
     }
+
+    if (nextMode === "coccion" && nextCookingStep === "cut") {
+      if (nextCookingContext.cut) {
+        hasCutSelectionPreviewHistoryRef.current =
+          method === "push" || hasCutSelectionPreviewHistoryRef.current;
+      } else {
+        hasCutSelectionPreviewHistoryRef.current = false;
+      }
+    } else {
+      hasCutSelectionPreviewHistoryRef.current = false;
+    }
   }, []);
 
   function syncCutSelectionPreviewFromNav(nav: ParsedNav) {
     if (nav.mode !== "coccion" || nav.cookingStep !== "cut") return;
     if (nav.cookingContext.cut) {
       setCut(nav.cookingContext.cut);
+      hasCutSelectionPreviewHistoryRef.current = true;
       return;
     }
     setCut("");
+    hasCutSelectionPreviewHistoryRef.current = false;
   }
 
   function getCurrentCookingNavContext(): CookingNavContext {
@@ -2059,7 +2079,7 @@ ERROR
             onDismiss={() => setShowCookCompleteProModal(false)}
           />
         )}
-        <div className="bg-[#0a0a0a] md:flex md:min-h-screen md:items-start md:justify-center md:py-8">
+        <div className="bg-[#0a0a0a] md:flex md:min-h-screen md:items-center md:justify-center md:py-8">
           <div className="flex h-screen w-full flex-col overflow-hidden md:h-[844px] md:w-[390px] md:rounded-[3rem] md:border md:border-white/10 md:shadow-[0_32px_80px_rgba(0,0,0,0.8)]">
             {!liveClientReady ? (
               <div className="flex flex-1 flex-col items-center justify-center bg-[#020202]">

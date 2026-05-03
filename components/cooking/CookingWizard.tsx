@@ -1233,7 +1233,7 @@ export function ResultCards({
   const keys = Object.keys(blocks);
   const hasResult = keys.length > 0;
   const canStartCooking = Boolean(blocks.PASOS || blocks.STEPS);
-  const resultSummary = buildResultSummary(blocks, keys);
+  const resultSummary = buildResultSummary(blocks, keys, lang ?? "es");
 
   function copyText() {
     if (typeof window === "undefined" || !navigator.clipboard) return;

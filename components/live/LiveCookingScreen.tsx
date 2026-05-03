@@ -355,6 +355,7 @@ export default function LiveCookingScreen({
           <LiveStepCard
             currentStep={visualStep}
             feedback={feedback}
+            lang={lang}
             reduceMotion={reduceMotion}
             transitionState={stepTransition}
             urgency={urgency}

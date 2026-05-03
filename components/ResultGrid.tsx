@@ -64,6 +64,24 @@ function compactDetailValue(value: string) {
   return clean.length > 96 ? `${clean.slice(0, 93).trim()}...` : clean;
 }
 
+function getLocalizedInternalCopyFallback(lang: "es" | "en" | "fi") {
+  if (lang === "es") return "Evita sobrecocinar el centro magro antes de terminar el dorado.";
+  if (lang === "fi") return "Valta ylikypsentamasta vähärasvaista osaa ennen pinnan viimeistelya.";
+  return "Avoid overcooking the lean center before the crust finishes.";
+}
+
+function looksLikeInternalDescriptorCopy(value: string) {
+  return /\b(overcook(?:ing)?|lean eye|fat renders|pink core|fat rim|thin crust|low chew|firm beef bite|buttery soft bite)\b/i.test(
+    value,
+  );
+}
+
+function sanitizeUserFacingGuidance(value: string, lang: "es" | "en" | "fi") {
+  if (lang === "en") return value;
+  if (!looksLikeInternalDescriptorCopy(value)) return value;
+  return getLocalizedInternalCopyFallback(lang);
+}
+
 function getSearchableLines(blocks: Blocks, keys: string[]) {
   return keys
     .flatMap((key) => blocks[key]?.split("\n") ?? [])
@@ -263,7 +281,7 @@ function extractDonenessValue(blocks: Blocks, keys: string[]) {
   return compactSummaryValue(value || line);
 }
 
-export function buildResultSummary(blocks: Blocks, keys: string[]): ResultSummary {
+export function buildResultSummary(blocks: Blocks, keys: string[], lang: "es" | "en" | "fi" = "es"): ResultSummary {
   const setupKey = findBlockKey(keys, ["SETUP", "CONFIGURACION", "CONFIGURACIÓN"]);
   const timeKey = findBlockKey(keys, ["TIEMPOS", "TIMES"]);
   const tempKey = findBlockKey(keys, ["TEMPERATURA", "TEMPERATURE"]);
@@ -285,7 +303,7 @@ export function buildResultSummary(blocks: Blocks, keys: string[]): ResultSummar
       /\b(seguridad|seguro|inocuo|safety|safe)\b/i,
       /\b(term[oó]metro|thermometer|no\s+servir|do\s+not\s+serve)\b/i,
     ]),
-    criticalError: errorKey ? compactDetailValue(blocks[errorKey]) : "",
+    criticalError: errorKey ? sanitizeUserFacingGuidance(compactDetailValue(blocks[errorKey]), lang) : "",
   };
 }
 
@@ -423,7 +441,7 @@ function findBlockKey(keys: string[], candidates: string[]) {
   return keys.find((key) => candidates.includes(key.toUpperCase()));
 }
 
-function getOrderedResultItems(blocks: Blocks, keys: string[]): ResultItem[] {
+function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en" | "fi"): ResultItem[] {
   const hasEnglishCookingBlocks = Boolean(blocks.TIMES || blocks.TEMPERATURE || blocks.STEPS);
   const hasEnglishMenuBlocks = Boolean(blocks.ORDER || blocks.SHOPPING || blocks.QUANTITIES);
   const useEnglish = hasEnglishCookingBlocks || hasEnglishMenuBlocks;
@@ -450,7 +468,7 @@ function getOrderedResultItems(blocks: Blocks, keys: string[]): ResultItem[] {
     items.push({
       key: errorKey,
       title: useEnglish ? "Error that ruins this cut" : "Error que arruina este corte",
-      content: blocks[errorKey],
+      content: sanitizeUserFacingGuidance(blocks[errorKey], lang),
       type: "card",
       variant: "tip",
     });
@@ -522,7 +540,7 @@ export default function ResultGrid({
     noResult: string;
   };
 }) {
-  const items = getOrderedResultItems(blocks, keys);
+  const items = getOrderedResultItems(blocks, keys, lang);
   const setupKey = findBlockKey(keys, ["SETUP", "CONFIGURACION", "CONFIGURACIÓN"]);
 
   return (

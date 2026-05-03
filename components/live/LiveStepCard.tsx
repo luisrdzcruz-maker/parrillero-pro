@@ -35,23 +35,57 @@ function getMistakeHint(
   name: string,
   instructions: string,
   zone: LiveZone,
+  lang: "es" | "en" | "fi" = "en",
 ): string | null {
+  const labels = {
+    waitCrust:
+      lang === "es"
+        ? "No muevas la carne hasta que se forme la costra"
+        : lang === "fi"
+          ? "Anna pinnan muodostua ennen kuin liikutat lihaa"
+          : "Do not move the meat until a crust forms",
+    flipOnce:
+      lang === "es"
+        ? "Da la vuelta una sola vez y no presiones"
+        : lang === "fi"
+          ? "Kaanna vain kerran, ala paina lihaa"
+          : "Flip once — do not press down",
+    rest:
+      lang === "es"
+        ? "No cortes todavia: deja que los jugos se redistribuyan"
+        : lang === "fi"
+          ? "Ala leikkaa viela, anna nesteiden tasaantua"
+          : "Do not cut yet — let the juices redistribute",
+    lidClosed:
+      lang === "es"
+        ? "Mantén la tapa cerrada para sostener la temperatura"
+        : lang === "fi"
+          ? "Pida kansi kiinni, jotta lampo pysyy tasaisena"
+          : "Keep the lid closed to hold temperature",
+    noPress:
+      lang === "es"
+        ? "No presiones la carne: pierde jugos y se seca"
+        : lang === "fi"
+          ? "Ala paina lihaa, jotta nesteet eivat karkaa"
+          : "Do not press the meat — it squeezes out the juices",
+  } as const;
+
   const text = normalize(`${name} ${instructions}`);
 
   if (text.includes("sear") || text.includes("crust") || text.includes("brown") || text.includes("mark")) {
-    return "Do not move the meat until a crust forms";
+    return labels.waitCrust;
   }
   if (text.includes("flip") || text.includes("turn") || text.includes("side 2") || text.includes("lado 2")) {
-    return "Flip once — do not press down";
+    return labels.flipOnce;
   }
   if (zone === "rest") {
-    return "Do not cut yet — let the juices redistribute";
+    return labels.rest;
   }
   if (zone === "indirect" || text.includes("indirect")) {
-    return "Keep the lid closed to hold temperature";
+    return labels.lidClosed;
   }
   if (zone === "direct") {
-    return "Do not press the meat — it squeezes out the juices";
+    return labels.noPress;
   }
   return null;
 }
@@ -59,6 +93,7 @@ function getMistakeHint(
 type Props = {
   currentStep: LiveCookingStepState;
   feedback: string | null;
+  lang?: "es" | "en" | "fi";
   reduceMotion?: boolean;
   transitionState?: "idle" | "exit" | "enter";
   urgency: UrgencyLevel;
@@ -67,6 +102,7 @@ type Props = {
 export default function LiveStepCard({
   currentStep,
   feedback,
+  lang = "en",
   reduceMotion = false,
   transitionState = "idle",
   urgency,
@@ -83,6 +119,7 @@ export default function LiveStepCard({
     currentStep.name,
     currentStep.instructions,
     currentStep.zone,
+    lang,
   );
 
   return (
