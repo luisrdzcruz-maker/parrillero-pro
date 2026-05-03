@@ -25,6 +25,7 @@ function isLikelyInternalDescriptor(value: string) {
   const normalized = normalizeText(value);
   return (
     /\bfailing to render the cap fat side first\b/.test(normalized) ||
+    /\busing aggressive heat too long on lean meat\b/.test(normalized) ||
     /\b(overcook(?:ing)?|lean eye|fat renders|pink core|fat rim|thin crust|low chew|firm beef bite|buttery soft bite)\b/.test(
       normalized,
     )

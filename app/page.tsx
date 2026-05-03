@@ -252,7 +252,7 @@ function getCutName(cut: ProductCut, lang: Lang) {
 
 function getCutDescription(cut: ProductCut, lang: Lang) {
   const localizedNote = cut.notes?.[catalogLang(lang)];
-  if (localizedNote) return localizedNote;
+  if (localizedNote) return sanitizeCriticalErrorCopy(localizedNote, lang);
   return sanitizeCriticalErrorCopy(cut.error[engineLang(lang)] ?? "", lang);
 }
 
@@ -2095,7 +2095,6 @@ ERROR
   }
 
   function handleHomePrimaryCtaClick() {
-    if (mode !== "inicio") return;
     commitNav("coccion", "cut", "push");
   }
 
