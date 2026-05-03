@@ -251,6 +251,13 @@ export function CutSelectionScreen({
                 />
               </div>
             )}
+
+            <CutBottomSheet
+              profile={selectedProfile}
+              lang={effectiveLang}
+              onClose={() => handleProfileChange(null)}
+              onStartCooking={handleStartCooking}
+            />
           </div>
           <aside className="hidden min-w-0 max-w-full lg:sticky lg:top-4 lg:block lg:self-start">
             <div className="rounded-[1.3rem] border border-white/10 bg-white/[0.035] p-3 backdrop-blur-xl">
@@ -267,12 +274,6 @@ export function CutSelectionScreen({
         </div>
       </section>
 
-      <CutBottomSheet
-        profile={selectedProfile}
-        lang={effectiveLang}
-        onClose={() => handleProfileChange(null)}
-        onStartCooking={handleStartCooking}
-      />
     </main>
   );
 }
