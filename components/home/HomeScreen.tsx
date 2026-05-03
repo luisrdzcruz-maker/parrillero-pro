@@ -438,7 +438,7 @@ export function HomeScreen({
         </div>
       )}
 
-    <div className="mx-auto min-w-0 w-full max-w-2xl space-y-3 overflow-x-hidden sm:space-y-4 lg:max-w-3xl">
+    <div className="mx-auto min-w-0 w-full max-w-2xl space-y-3 overflow-x-hidden pb-[calc(7.25rem+env(safe-area-inset-bottom))] sm:space-y-4 sm:pb-8 lg:max-w-3xl lg:pb-6">
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <FadeIn>
         <HeroSection

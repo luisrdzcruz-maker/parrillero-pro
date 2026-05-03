@@ -975,7 +975,7 @@ function CookingDetailsStep({
   const detailsSetupText = getDetailsSetupLabels(lang);
 
   return (
-    <section className="relative mx-auto max-w-4xl animate-[fadeIn_220ms_ease-out] space-y-2.5 pt-1 sm:space-y-4">
+    <section className="relative mx-auto max-w-4xl animate-[fadeIn_220ms_ease-out] space-y-2.5 pb-[calc(7.25rem+env(safe-area-inset-bottom))] pt-1 sm:space-y-4 sm:pb-8 lg:pb-6">
       <DetailsBackButton label={selectedCut.name} onBack={onBack} />
 
       <CookingDetailsHero

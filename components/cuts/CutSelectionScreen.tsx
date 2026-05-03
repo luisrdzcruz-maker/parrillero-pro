@@ -159,7 +159,7 @@ export function CutSelectionScreen({
   const hideAllLabel = getHideAllLabel(effectiveLang);
   const sectionBottomPaddingClass = catalogExpanded
     ? "pb-[calc(8rem+env(safe-area-inset-bottom))] sm:pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-8"
-    : "pb-4 sm:pb-5 lg:pb-4";
+    : "pb-[calc(7.25rem+env(safe-area-inset-bottom))] sm:pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-6";
 
   return (
     <main className="relative w-full max-w-full overflow-x-clip overflow-y-visible bg-[#030201] text-white">
