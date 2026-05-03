@@ -91,7 +91,7 @@ export default function LiveTimer({
         />
       </div>
       <div className="mt-1.5 flex items-center justify-between text-[9px] font-bold text-white/30">
-        <span>{formatTime(duration)}</span>
+        <span>{`${liveText.stepDuration}: ${formatTime(duration)}`}</span>
         <span>{Math.round(Math.max(0, Math.min(1, progress)) * 100)}%</span>
       </div>
       {children && <div className="mt-2.5">{children}</div>}

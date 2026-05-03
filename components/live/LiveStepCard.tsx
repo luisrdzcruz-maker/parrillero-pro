@@ -127,6 +127,10 @@ export default function LiveStepCard({
     currentStep.zone,
     lang,
   );
+  const checkCopy =
+    currentStep.tempTarget !== null
+      ? `${text.targetTemp}: ${currentStep.tempTarget}°C`
+      : mistakeHint;
 
   return (
     <div className="space-y-2">
@@ -183,12 +187,17 @@ export default function LiveStepCard({
           {currentStep.instructions}
         </p>
 
-        {mistakeHint && (
+        {checkCopy && (
           <div className="mt-3 flex items-start gap-2 rounded-xl border border-yellow-300/[0.14] bg-yellow-400/[0.05] px-3 py-2">
             <span className="mt-px shrink-0 text-[11px] leading-none text-yellow-300/70">⚠</span>
-            <p className="text-[11px] font-semibold leading-snug text-yellow-200/65">
-              {mistakeHint}
-            </p>
+            <div className="min-w-0">
+              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-yellow-200/45">
+                {text.checkBeforeNext}
+              </p>
+              <p className="mt-0.5 text-[11px] font-semibold leading-snug text-yellow-200/70">
+                {checkCopy}
+              </p>
+            </div>
           </div>
         )}
       </section>
