@@ -312,13 +312,6 @@ export function CutSelectionScreen({
                     <p className="mx-auto mt-2 max-w-sm text-sm font-semibold leading-6 text-zinc-500">
                       {getCutSearchNoResultsMessage(effectiveLang)}
                     </p>
-                    <button
-                      type="button"
-                      onClick={clearSearch}
-                      className="mt-5 rounded-full border border-orange-400/30 bg-orange-500/10 px-5 py-3 text-xs font-black text-orange-200 transition hover:bg-orange-500/15 active:scale-[0.97]"
-                    >
-                      {getCutSearchClearLabel(effectiveLang)}
-                    </button>
                   </div>
                 ) : (
                   <CutList
