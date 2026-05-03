@@ -165,7 +165,7 @@ export function CutSelectionScreen({
         <div className="absolute -right-16 top-16 h-[280px] w-[280px] rounded-full bg-red-600/10 blur-[120px]" />
       </div>
 
-      <section className="relative mx-auto flex min-h-full w-full max-w-5xl flex-col px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-2 sm:px-6 lg:pb-36">
+      <section className="relative mx-auto flex min-h-full w-full max-w-[1000px] flex-col px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-2 sm:px-6 lg:pb-36">
         <header className="rounded-[1.2rem] border border-orange-300/15 bg-white/[0.04] px-2.5 py-2 shadow-[0_14px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:px-3 sm:py-2.5">
           <div className="grid grid-cols-2 gap-1.5 touch-pan-y sm:grid-cols-3">
             {animalOptions.map(([animalId]) => {
