@@ -639,7 +639,9 @@ function buildSearchFromNav(
   params.set("mode", mode);
   if (mode === "coccion") {
     params.set("step", cookingStep);
-    if (cookingContext.animal) params.set("animal", animalIdsByLabel[cookingContext.animal]);
+    if (cookingContext.animal && (cookingStep !== "cut" || Boolean(cookingContext.cut))) {
+      params.set("animal", animalIdsByLabel[cookingContext.animal]);
+    }
     if (cookingContext.cut) {
       const canonicalCut = canonicalizeCutId(
         cookingContext.cut,
@@ -935,11 +937,10 @@ function HomeContent() {
     if (typeof window === "undefined") return;
     const search = buildSearchFromNav(nextMode, nextCookingStep, nextCookingContext);
     const url = `${window.location.pathname}${search}${window.location.hash}`;
-    const state = { mode: nextMode, cookingStep: nextCookingStep, cookingContext: nextCookingContext };
     if (method === "replace") {
-      window.history.replaceState(state, "", url);
+      router.replace(url);
     } else {
-      window.history.pushState(state, "", url);
+      router.push(url);
     }
 
     if (nextMode === "coccion" && nextCookingStep === "cut") {
@@ -952,7 +953,7 @@ function HomeContent() {
     } else {
       hasCutSelectionPreviewHistoryRef.current = false;
     }
-  }, []);
+  }, [router]);
 
   function syncCutSelectionPreviewFromNav(nav: ParsedNav) {
     if (nav.mode !== "coccion" || nav.cookingStep !== "cut") return;
@@ -1674,7 +1675,7 @@ function HomeContent() {
     }
 
     setCut("");
-    commitNav("coccion", "cut", "replace", { animal });
+    commitNav("coccion", "cut", "replace", {});
   }
 
   function handleCutSelectionStartCooking(profile: GeneratedCutProfile) {
