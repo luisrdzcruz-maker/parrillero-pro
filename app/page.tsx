@@ -1171,7 +1171,7 @@ function HomeContent() {
     });
 
     return () => window.cancelAnimationFrame(raf);
-  }, [applyCookingNavContext, commitNav]);
+  }, [applyCookingNavContext, commitNav, lang]);
 
   // ── Browser history: restore state on popstate (back button / swipe) ───────
   // Registered once. URL query params are the source of truth for mode/step.

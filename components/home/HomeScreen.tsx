@@ -413,7 +413,6 @@ export function HomeScreen({
     t.homeParrillada,
     t.homeParrilladaSub,
     t.homeSaved,
-    onPopularCutSelect,
   ]);
 
   return (
