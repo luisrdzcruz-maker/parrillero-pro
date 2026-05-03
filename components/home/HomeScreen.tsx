@@ -347,7 +347,7 @@ export function HomeScreen({
         title: t.homeGuidedCooking,
         description: t.homeGuidedCookingSub,
         emphasized: true,
-        onClick: () => router.push("/?mode=coccion&step=cut"),
+        onClick: () => onModeChange("coccion"),
       },
       {
         id: "plan-bbq",
@@ -442,7 +442,7 @@ export function HomeScreen({
         <HeroSection
           t={t}
           onStartCooking={(e) =>
-            fireRipple(e.clientX, e.clientY, () => router.push("/?mode=coccion&step=cut"))
+            fireRipple(e.clientX, e.clientY, () => onModeChange("coccion"))
           }
           onPlanBbq={() => onModeChange("plan")}
         />

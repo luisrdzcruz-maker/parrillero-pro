@@ -924,10 +924,12 @@ function HomeContent() {
       isCutSelectionContextOnlyChange &&
       Boolean(nextCookingContext.cut) &&
       !hasCutSelectionPreviewHistoryRef.current;
+    const allowCutSelectionPreviewPushWhileApplyingPop =
+      isCutSelectionPreviewOpenFromBase || isCutSelectionPreviewOpenFromHistoryBase;
     const shouldPush =
       requestedMethod === "push" &&
       navChanged &&
-      !isApplyingPopRef.current &&
+      (!isApplyingPopRef.current || allowCutSelectionPreviewPushWhileApplyingPop) &&
       (!isCutSelectionContextOnlyChange ||
         isCutSelectionPreviewOpenFromBase ||
         isCutSelectionPreviewOpenFromHistoryBase) &&
@@ -1665,12 +1667,7 @@ function HomeContent() {
   function handleCutSelectionPreviewChange(nextCutId: string | null) {
     if (nextCutId) {
       setCut(nextCutId);
-      const currentNav = typeof window === "undefined" ? null : parseNavFromSearch(window.location.search);
-      const hasPreviewEntry =
-        currentNav?.mode === "coccion" &&
-        currentNav.cookingStep === "cut" &&
-        Boolean(currentNav.cookingContext.cut);
-      commitNav("coccion", "cut", hasPreviewEntry ? "replace" : "push", {
+      commitNav("coccion", "cut", "push", {
         animal,
         cut: nextCutId,
       });
