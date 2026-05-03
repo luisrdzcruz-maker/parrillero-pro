@@ -1,4 +1,5 @@
 import type { LiveCookingStepState, LiveZone, UrgencyLevel } from "@/hooks/useLiveCooking";
+import { getLiveText, type SurfaceLang } from "@/lib/i18n/surfaceFallbacks";
 
 const URGENCY_STYLES: Record<UrgencyLevel, string> = {
   normal: "border-white/[0.08] bg-white/[0.035]",
@@ -6,11 +7,14 @@ const URGENCY_STYLES: Record<UrgencyLevel, string> = {
   critical: "border-yellow-300/60 bg-yellow-400/[0.08] shadow-[0_0_46px_rgba(250,204,21,0.22)]",
 };
 
-const ZONE_RAIL_ITEMS: { key: LiveZone; label: string }[] = [
-  { key: "direct", label: "Direct" },
-  { key: "indirect", label: "Indirect" },
-  { key: "rest", label: "Rest" },
-];
+function getZoneRailItems(lang: SurfaceLang): { key: LiveZone; label: string }[] {
+  const text = getLiveText(lang);
+  return [
+    { key: "direct", label: text.zoneDirect },
+    { key: "indirect", label: text.zoneIndirect },
+    { key: "rest", label: text.zoneRest },
+  ];
+}
 
 const ZONE_RAIL_ACTIVE: Record<LiveZone, string> = {
   direct: "border-red-300/60 bg-red-500/20 text-red-100 shadow-[0_0_18px_rgba(248,113,113,0.18)]",
@@ -35,23 +39,57 @@ function getMistakeHint(
   name: string,
   instructions: string,
   zone: LiveZone,
+  lang: SurfaceLang = "en",
 ): string | null {
+  const labels = {
+    waitCrust:
+      lang === "es"
+        ? "No muevas la carne hasta que se forme la costra"
+        : lang === "fi"
+          ? "Anna pinnan muodostua ennen kuin liikutat lihaa"
+          : "Do not move the meat until a crust forms",
+    flipOnce:
+      lang === "es"
+        ? "Da la vuelta una sola vez y no presiones"
+        : lang === "fi"
+          ? "Kaanna vain kerran, ala paina lihaa"
+          : "Flip once — do not press down",
+    rest:
+      lang === "es"
+        ? "No cortes todavia: deja que los jugos se redistribuyan"
+        : lang === "fi"
+          ? "Ala leikkaa viela, anna nesteiden tasaantua"
+          : "Do not cut yet — let the juices redistribute",
+    lidClosed:
+      lang === "es"
+        ? "Mantén la tapa cerrada para sostener la temperatura"
+        : lang === "fi"
+          ? "Pida kansi kiinni, jotta lampo pysyy tasaisena"
+          : "Keep the lid closed to hold temperature",
+    noPress:
+      lang === "es"
+        ? "No presiones la carne: pierde jugos y se seca"
+        : lang === "fi"
+          ? "Ala paina lihaa, jotta nesteet eivat karkaa"
+          : "Do not press the meat — it squeezes out the juices",
+  } as const;
+
   const text = normalize(`${name} ${instructions}`);
 
   if (text.includes("sear") || text.includes("crust") || text.includes("brown") || text.includes("mark")) {
-    return "Do not move the meat until a crust forms";
+    return labels.waitCrust;
   }
   if (text.includes("flip") || text.includes("turn") || text.includes("side 2") || text.includes("lado 2")) {
-    return "Flip once — do not press down";
+    return labels.flipOnce;
   }
   if (zone === "rest") {
-    return "Do not cut yet — let the juices redistribute";
+    return labels.rest;
   }
   if (zone === "indirect" || text.includes("indirect")) {
-    return "Keep the lid closed to hold temperature";
+    return labels.lidClosed;
   }
   if (zone === "direct") {
-    return "Do not press the meat — it squeezes out the juices";
+    return labels.noPress;
   }
   return null;
 }
@@ -59,6 +97,7 @@ function getMistakeHint(
 type Props = {
   currentStep: LiveCookingStepState;
   feedback: string | null;
+  lang?: SurfaceLang;
   reduceMotion?: boolean;
   transitionState?: "idle" | "exit" | "enter";
   urgency: UrgencyLevel;
@@ -67,6 +106,7 @@ type Props = {
 export default function LiveStepCard({
   currentStep,
   feedback,
+  lang = "en",
   reduceMotion = false,
   transitionState = "idle",
   urgency,
@@ -79,10 +119,13 @@ export default function LiveStepCard({
         ? "opacity-0 -translate-y-2"
         : "opacity-100 translate-y-0";
 
+  const text = getLiveText(lang);
+  const zoneRailItems = getZoneRailItems(lang);
   const mistakeHint = getMistakeHint(
     currentStep.name,
     currentStep.instructions,
     currentStep.zone,
+    lang,
   );
 
   return (
@@ -100,7 +143,7 @@ export default function LiveStepCard({
       >
         {/* Zone rail — 3 heat zones, current highlighted */}
         <div className="flex items-center gap-1.5">
-          {ZONE_RAIL_ITEMS.map(({ key, label }) => {
+          {zoneRailItems.map(({ key, label }) => {
             const isActive = currentStep.zone === key;
             return (
               <span
@@ -131,7 +174,7 @@ export default function LiveStepCard({
         </div>
 
         <p className="mt-3 text-[10px] font-black uppercase tracking-[0.22em] text-white/32">
-          Current step
+          {text.currentStep}
         </p>
         <h1 className="mt-1.5 overflow-hidden text-[clamp(1.75rem,8vw,2.85rem)] font-black leading-[0.98] tracking-[-0.055em] text-white [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">
           {currentStep.name}

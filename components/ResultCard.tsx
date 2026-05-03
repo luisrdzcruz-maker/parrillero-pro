@@ -35,17 +35,18 @@ function getVariantLabel(
   lang: "es" | "en" | "fi",
 ): string {
   const isEs = lang === "es";
+  const isFi = lang === "fi";
   switch (variant) {
     case "primary":
-      return isEs ? "Pasos de cocción" : "Cooking steps";
+      return isEs ? "Pasos de coccion" : isFi ? "Kypsennysvaiheet" : "Cooking steps";
     case "tip":
-      return isEs ? "Error crítico" : "Critical error";
+      return isEs ? "Error critico" : isFi ? "Kriittinen virhe" : "Critical error";
     case "summary":
-      return isEs ? "Tiempos · Temperatura" : "Times · Temperature";
+      return isEs ? "Tiempos · Temperatura" : isFi ? "Ajat · Lampotila" : "Times · Temperature";
     case "setup":
-      return isEs ? "Setup del fuego" : "Fire setup";
+      return isEs ? "Configuración del fuego" : isFi ? "Tuliasetus" : "Fire setup";
     default:
-      return "Plan";
+      return isFi ? "Suunnitelma" : "Plan";
   }
 }
 
@@ -211,41 +212,49 @@ type SetupOverlayChip = {
   tone: "direct" | "indirect" | "neutral";
 };
 
-function getSetupOverlayChips(setup?: SetupType): SetupOverlayChip[] {
+function getSetupOverlayChips(setup: SetupType | undefined, lang: "es" | "en" | "fi"): SetupOverlayChip[] {
   const normalizedSetup = normalizeSetupText(setup).replace(/[_\s]+/g, "-");
+  const labels = {
+    indirect: lang === "es" ? "❄️ Indirecto" : lang === "fi" ? "❄️ Epasuora" : "❄️ Indirect",
+    finalSear: lang === "es" ? "Sellado final" : lang === "fi" ? "Lopullinen ruskistus" : "Final sear",
+    lowHeat: lang === "es" ? "Baja temperatura" : lang === "fi" ? "Matala lampo" : "Low heat",
+    twoZones: lang === "es" ? "2 zonas" : lang === "fi" ? "2 vyohyketta" : "2 zones",
+    mixZone: lang === "es" ? "🔥 Directo + ❄️ Indirecto" : lang === "fi" ? "🔥 Suora + ❄️ Epasuora" : "🔥 Direct + ❄️ Indirect",
+    direct: lang === "es" ? "🔥 Directo" : lang === "fi" ? "🔥 Suora" : "🔥 Direct",
+  };
 
   if (normalizedSetup === "reverse-sear") {
     return [
-      { label: "❄️ Indirecto", tone: "indirect" },
-      { label: "Sellado final", tone: "direct" },
+      { label: labels.indirect, tone: "indirect" },
+      { label: labels.finalSear, tone: "direct" },
     ];
   }
 
   if (normalizedSetup === "low-slow" || normalizedSetup === "low-and-slow") {
     return [
-      { label: "❄️ Indirecto", tone: "indirect" },
-      { label: "Baja temperatura", tone: "neutral" },
+      { label: labels.indirect, tone: "indirect" },
+      { label: labels.lowHeat, tone: "neutral" },
     ];
   }
 
   if (normalizedSetup === "two-zone") {
     return [
-      { label: "🔥 Directo + ❄️ Indirecto", tone: "neutral" },
-      { label: "2 zonas", tone: "neutral" },
+      { label: labels.mixZone, tone: "neutral" },
+      { label: labels.twoZones, tone: "neutral" },
     ];
   }
 
   if (normalizedSetup === "indirect" || normalizedSetup === "indirecto") {
-    return [{ label: "❄️ Indirecto", tone: "indirect" }];
+    return [{ label: labels.indirect, tone: "indirect" }];
   }
 
   if (normalizedSetup === "direct" || normalizedSetup === "direct-heat" || normalizedSetup === "directo") {
-    return [{ label: "🔥 Directo", tone: "direct" }];
+    return [{ label: labels.direct, tone: "direct" }];
   }
 
   return [
-    { label: "🔥 Directo + ❄️ Indirecto", tone: "neutral" },
-    { label: "2 zonas", tone: "neutral" },
+    { label: labels.mixZone, tone: "neutral" },
+    { label: labels.twoZones, tone: "neutral" },
   ];
 }
 
@@ -308,8 +317,16 @@ function SetupVisualToggle({
   const setupEquipment = resolveSetupEquipment(equipment) ?? resolveSetupEquipment(content);
   const detectedSetup = setup ?? detectSetupFromText(content);
   const setupImage = getSetupVisual(setupEquipment, detectedSetup);
-  const isEs = lang === "es";
-  const overlayChips = getSetupOverlayChips(detectedSetup);
+  const setupTitle = lang === "es" ? "Visual de configuración" : lang === "fi" ? "Asetuskuva" : "Setup visual";
+  const setupSubtitle =
+    lang === "es"
+      ? "Zonas de calor y flujo recomendado"
+      : lang === "fi"
+        ? "Lampoalueet ja suositeltu jarjestys"
+        : "Heat zones and suggested flow";
+  const hideLabel = lang === "es" ? "Ocultar" : lang === "fi" ? "Piilota" : "Hide";
+  const viewLabel = lang === "es" ? "Ver →" : lang === "fi" ? "Nayta →" : "View →";
+  const overlayChips = getSetupOverlayChips(detectedSetup, lang);
 
   if (!isSetupCard(title)) return null;
 
@@ -327,16 +344,16 @@ function SetupVisualToggle({
           </span>
           <div className="min-w-0">
             <p className="text-[11px] font-black uppercase tracking-[0.2em] text-orange-300">
-              Setup visual
+              {setupTitle}
             </p>
             <p className="mt-0.5 line-clamp-1 text-[11px] text-slate-400">
-              {isEs ? "Zonas de calor y flujo recomendado" : "Heat zones and suggested flow"}
+              {setupSubtitle}
             </p>
           </div>
         </div>
 
         <span className="shrink-0 rounded-full border border-orange-400/30 bg-orange-500/15 px-3 py-1.5 text-xs font-black text-orange-200 shadow-lg shadow-orange-950/10 transition-colors hover:bg-orange-500/25 active:scale-[0.97]">
-          {open ? (isEs ? "Ocultar" : "Hide") : isEs ? "Ver →" : "View →"}
+          {open ? hideLabel : viewLabel}
         </span>
       </button>
 

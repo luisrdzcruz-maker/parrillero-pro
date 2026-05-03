@@ -1,4 +1,12 @@
 import type { LiveStep } from "@/components/live/LiveCookingScreen";
+import {
+  getAnimalSurfaceLabel,
+  getDonenessSurfaceLabel,
+  getEquipmentSurfaceLabel,
+  localizeLiveStepEntry,
+  localizeResultSurfaceCopy,
+  sanitizeSetupSummaryCopy,
+} from "@/lib/i18n/surfaceFallbacks";
 
 export const LIVE_COOKING_STORAGE_KEY = "parrillero_live_cooking_plan_v1";
 
@@ -52,18 +60,18 @@ function block(blocks: LiveCookingBlocks, ...keys: string[]) {
 
 function inferZone(text: string) {
   const line = text.toLowerCase();
-  if (/rest|reposo/.test(line)) return "Reposo";
-  if (/serve|servir|finish|terminar|listo/.test(line)) return "Servir";
-  if (/indirect|indirecto|oven|horno|core|centro/.test(line)) return "Indirecto";
-  if (/preheat|precalent|stabilize|estabiliza|setup|zona/.test(line)) return "Directo";
-  if (/sear|sellad|dorar|browning|crisp/.test(line)) return "Directo";
-  return "Directo";
+  if (/rest|reposo/.test(line)) return "Rest";
+  if (/serve|servir|finish|terminar|listo/.test(line)) return "Serve";
+  if (/indirect|indirecto|oven|horno|core|centro/.test(line)) return "Indirect";
+  if (/preheat|precalent|stabilize|estabiliza|setup|zona/.test(line)) return "Direct";
+  if (/sear|sellad|dorar|browning|crisp/.test(line)) return "Direct";
+  return "Direct";
 }
 
 function defaultDurationByZone(zone: string) {
-  if (zone === "Reposo") return 360;
-  if (zone === "Servir") return 0;
-  if (zone === "Indirecto") return 420;
+  if (zone === "Rest") return 360;
+  if (zone === "Serve") return 0;
+  if (zone === "Indirect") return 420;
   return 240;
 }
 
@@ -142,15 +150,22 @@ function pickLabel(entry: string) {
   return base.length > 72 ? `${base.slice(0, 69)}...` : base;
 }
 
-function buildStepNotes(input: LiveCookingInputSnapshot, setupText: string, timelineText: string) {
+function buildStepNotes(
+  input: LiveCookingInputSnapshot,
+  setupText: string,
+  timelineText: string,
+  surfaceLang: "es" | "en" | "fi",
+) {
   const details = [
-    `${input.animal} · ${input.cut}`,
-    input.equipment,
-    `${input.doneness} · ${input.thickness} cm`,
+    `${getAnimalSurfaceLabel(input.animal, surfaceLang)} · ${input.cut}`,
+    getEquipmentSurfaceLabel(input.equipment, surfaceLang),
+    `${getDonenessSurfaceLabel(input.doneness, surfaceLang)} · ${input.thickness} cm`,
   ].join(" | ");
 
-  const setup = setupText ? `Setup: ${setupText}` : "";
-  const timeline = timelineText ? `Timeline: ${timelineText}` : "";
+  const setupLabel = input.lang === "es" ? "Configuracion" : input.lang === "fi" ? "Asetus" : "Setup";
+  const timelineLabel = input.lang === "es" ? "Cronograma" : input.lang === "fi" ? "Aikajana" : "Timeline";
+  const setup = setupText ? `${setupLabel}: ${setupText}` : "";
+  const timeline = timelineText ? `${timelineLabel}: ${timelineText}` : "";
 
   return [details, setup, timeline].filter(Boolean).join(" | ");
 }
@@ -222,6 +237,7 @@ export function readLiveCookingPayload(): LiveCookingPlanPayload | null {
 export function buildLiveStepsFromPayload(
   payload: LiveCookingPlanPayload | null,
   fallbackSteps: LiveStep[],
+  surfaceLang: "es" | "en" | "fi" = "en",
 ): BuildLiveStepsResult {
   if (!payload) {
     return {
@@ -236,14 +252,16 @@ export function buildLiveStepsFromPayload(
   const tempText = block(payload.blocks, "TEMPERATURA", "TEMPERATURE");
   const stepsText = block(payload.blocks, "PASOS", "STEPS");
   const timelineText = block(payload.blocks, "TIMELINE", "TIMING");
-  const entries = parsePlanSteps(stepsText);
+  const entries = parsePlanSteps(stepsText).map((entry) => localizeLiveStepEntry(entry, surfaceLang));
   const targets = parseTempTargets(tempText);
-  const sharedNotes = buildStepNotes(payload.input, setupText, timelineText);
+  const setupSummary = sanitizeSetupSummaryCopy(setupText, surfaceLang, payload.input.equipment);
+  const localizedTimeline = localizeResultSurfaceCopy(timelineText, surfaceLang);
+  const sharedNotes = buildStepNotes(payload.input, setupSummary, localizedTimeline, surfaceLang);
 
   if (entries.length === 0) {
     return {
       steps: fallbackSteps,
-      context: `${payload.input.animal} · ${payload.input.cut} · ${payload.input.equipment}`,
+      context: `${getAnimalSurfaceLabel(payload.input.animal, surfaceLang)} · ${payload.input.cut} · ${getEquipmentSurfaceLabel(payload.input.equipment, surfaceLang)}`,
       usedFallback: true,
       signature: buildLiveStepsSignature(fallbackSteps),
     };
@@ -257,7 +275,7 @@ export function buildLiveStepsFromPayload(
     const explicitTemp = parseTempTargets(entry).pull;
     const tempTarget =
       explicitTemp ??
-      (zone === "Reposo" || zone === "Servir" ? targets.final : targets.pull ?? null);
+      (zone === "Rest" ? targets.final : targets.pull ?? null);
 
     return {
       id: `plan-step-${index + 1}`,
@@ -273,7 +291,7 @@ export function buildLiveStepsFromPayload(
 
   return {
     steps,
-    context: `${payload.input.animal} · ${payload.input.cut} · ${payload.input.equipment}`,
+    context: `${getAnimalSurfaceLabel(payload.input.animal, surfaceLang)} · ${payload.input.cut} · ${getEquipmentSurfaceLabel(payload.input.equipment, surfaceLang)}`,
     usedFallback: false,
     signature,
   };

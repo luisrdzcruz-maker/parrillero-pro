@@ -2,6 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { LivePhase } from "@/components/live/TimerDial";
+import {
+  getLiveText,
+  localizeLiveStepName,
+  localizeLiveZoneLabel,
+  sanitizeLiveInstructionCopy,
+  type SurfaceLang,
+} from "@/lib/i18n/surfaceFallbacks";
 
 export type LiveZone = "direct" | "indirect" | "rest";
 export type UrgencyLevel = "normal" | "attention" | "critical";
@@ -36,6 +43,7 @@ type UseLiveCookingParams = {
   remaining: number;
   paused: boolean;
   started: boolean;
+  lang: SurfaceLang;
 };
 
 type CtaParams = {
@@ -43,6 +51,7 @@ type CtaParams = {
   nextStep: LiveCookingStepState | null;
   started: boolean;
   isComplete: boolean;
+  lang: SurfaceLang;
 };
 
 const FEEDBACK_HIDE_MS = 1800;
@@ -63,12 +72,21 @@ export function normalizeLiveZone(zone?: string | null): LiveZone {
   return "direct";
 }
 
-function pickStepName(step: LiveStep) {
-  return step.label.trim() || "Cooking step";
+function pickStepName(step: LiveStep, lang: SurfaceLang) {
+  const text = getLiveText(lang);
+  return localizeLiveStepName(step.label.trim() || text.nextStep, lang);
 }
 
-function pickInstructions(step: LiveStep) {
-  return step.notes?.trim() || step.label.trim() || "Keep heat stable and move when this step is done.";
+function pickInstructions(step: LiveStep, lang: SurfaceLang) {
+  const rawValue =
+    step.notes?.trim() ||
+    step.label.trim() ||
+    (lang === "es"
+      ? "Manten calor estable y avanza al terminar este paso."
+      : lang === "fi"
+        ? "Pidä lämpö tasaisena ja jatka, kun vaihe on valmis."
+        : "Keep heat stable and move when this step is done.");
+  return sanitizeLiveInstructionCopy(rawValue, lang);
 }
 
 function safeDuration(value: number) {
@@ -90,6 +108,7 @@ function buildLiveStepStates(
   steps: LiveStep[],
   currentIndex: number,
   remainingTime: number,
+  lang: SurfaceLang,
 ): LiveCookingStepState[] {
   const safeCurrentIndex = clampIndex(currentIndex, steps.length);
 
@@ -107,11 +126,11 @@ function buildLiveStepStates(
 
     return {
       id: step.id || `live-step-${index + 1}`,
-      name: pickStepName(step),
+      name: pickStepName(step, lang),
       duration,
       zone: normalizeLiveZone(step.zone),
-      displayZone: step.zone?.trim() || "",
-      instructions: pickInstructions(step),
+      displayZone: localizeLiveZoneLabel(step.zone?.trim() || "", lang),
+      instructions: pickInstructions(step, lang),
       tempTarget: step.tempTarget ?? null,
       isActive,
       isCompleted,
@@ -178,45 +197,49 @@ export function getCurrentCTA({
   nextStep,
   started,
   isComplete,
+  lang,
 }: CtaParams) {
-  if (!started) return "Start cooking";
-  if (isComplete) return "Cooking complete";
-  if (!currentStep) return "Next step";
+  const text = getLiveText(lang);
+  if (!started) return text.startCooking;
+  if (isComplete) return text.cookingCompleteCta;
+  if (!currentStep) return text.nextStep;
 
   const combinedText = `${currentStep.name} ${currentStep.instructions} ${nextStep?.name ?? ""} ${nextStep?.instructions ?? ""}`;
 
   if (includesAny(combinedText, ["flip", "turn", "side 2", "lado 2", "voltea", "dar vuelta"])) {
-    return "Flip now";
+    return text.flipNow;
   }
 
   if (includesAny(combinedText, ["remove", "pull", "off heat", "retira", "saca"])) {
-    return nextStep?.zone === "rest" ? "Rest now" : "Mark step done";
+    return nextStep?.zone === "rest" ? text.restNow : text.markDone;
   }
 
   if (nextStep?.zone === "indirect" && currentStep.zone !== "indirect") {
-    return "Move to indirect";
+    return text.moveIndirect;
   }
 
   if (nextStep?.zone === "direct" && currentStep.zone !== "direct") {
-    return "Move to direct";
+    return text.moveDirect;
   }
 
-  if (nextStep?.zone === "rest") return "Rest now";
-  return "Mark step done";
+  if (nextStep?.zone === "rest") return text.restNow;
+  return text.markDone;
 }
 
 function getCompletionFeedback(
   step: LiveCookingStepState | null,
   nextStep: LiveCookingStepState | null,
+  lang: SurfaceLang,
 ) {
+  const textCopy = getLiveText(lang);
   if (!step) return null;
   const text = `${step.name} ${step.instructions}`;
 
-  if (nextStep?.zone === "rest") return "Rest phase started.";
-  if (step.zone === "rest") return "Good timing.";
-  if (includesAny(text, ["sear", "sellad", "dorar", "crust", "browning"])) return "Perfect sear.";
-  if (includesAny(text, ["flip", "turn", "side 2", "lado 2", "voltea"])) return "Now keep the heat steady.";
-  return "Good timing.";
+  if (nextStep?.zone === "rest") return textCopy.feedbackRestStarted;
+  if (step.zone === "rest") return textCopy.feedbackGoodTiming;
+  if (includesAny(text, ["sear", "sellad", "dorar", "crust", "browning"])) return textCopy.feedbackPerfectSear;
+  if (includesAny(text, ["flip", "turn", "side 2", "lado 2", "voltea"])) return textCopy.feedbackKeepHeat;
+  return textCopy.feedbackGoodTiming;
 }
 
 export function useLiveCooking({
@@ -225,6 +248,7 @@ export function useLiveCooking({
   remaining,
   paused,
   started,
+  lang,
 }: UseLiveCookingParams) {
   const safeSteps = useMemo(
     () =>
@@ -239,8 +263,8 @@ export function useLiveCooking({
   );
   const currentStepIndex = clampIndex(currentIndex, safeSteps.length);
   const liveSteps = useMemo(
-    () => buildLiveStepStates(safeSteps, currentStepIndex, remaining),
-    [safeSteps, currentStepIndex, remaining],
+    () => buildLiveStepStates(safeSteps, currentStepIndex, remaining, lang),
+    [safeSteps, currentStepIndex, remaining, lang],
   );
   const currentStep = liveSteps[currentStepIndex] ?? null;
   const nextStep = liveSteps[currentStepIndex + 1] ?? null;
@@ -253,7 +277,7 @@ export function useLiveCooking({
   );
   const urgency = getUrgency(currentStep, nextStep);
   const phase = getPhase({ currentStep, isComplete, paused, started, urgency });
-  const ctaLabel = getCurrentCTA({ currentStep, nextStep, started, isComplete });
+  const ctaLabel = getCurrentCTA({ currentStep, nextStep, started, isComplete, lang });
   const [feedback, setFeedback] = useState<string | null>(null);
   const previousIndexRef = useRef(currentStepIndex);
 
@@ -263,13 +287,13 @@ export function useLiveCooking({
     if (currentStepIndex <= previousIndex) return;
 
     const completedStep = liveSteps[previousIndex] ?? null;
-    const message = getCompletionFeedback(completedStep, liveSteps[currentStepIndex] ?? null);
+    const message = getCompletionFeedback(completedStep, liveSteps[currentStepIndex] ?? null, lang);
     if (!message) return;
 
     setFeedback(message);
     const id = window.setTimeout(() => setFeedback(null), FEEDBACK_HIDE_MS);
     return () => window.clearTimeout(id);
-  }, [currentStepIndex, liveSteps]);
+  }, [currentStepIndex, liveSteps, lang]);
 
   return {
     currentStep,

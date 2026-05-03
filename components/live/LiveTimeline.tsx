@@ -1,5 +1,6 @@
 import type { LivePhase } from "./TimerDial";
 import type { LiveCookingStepState } from "./LiveCookingScreen";
+import { getLiveText, type SurfaceLang } from "@/lib/i18n/surfaceFallbacks";
 
 const CURRENT_SEGMENT: Record<LivePhase, string> = {
   idle: "bg-zinc-400",
@@ -11,7 +12,7 @@ const CURRENT_SEGMENT: Record<LivePhase, string> = {
 
 type Props = {
   currentIndex: number;
-  isEs: boolean;
+  lang: SurfaceLang;
   onGoToStep?: (index: number) => void;
   phase: LivePhase;
   steps: LiveCookingStepState[];
@@ -19,18 +20,19 @@ type Props = {
 
 export default function LiveTimeline({
   currentIndex,
-  isEs,
+  lang,
   onGoToStep,
   phase,
   steps,
 }: Props) {
+  const text = getLiveText(lang);
   const progressPct = Math.round(
     (currentIndex / Math.max(steps.length - 1, 1)) * 100,
   );
 
   return (
     <div>
-      <div className="flex items-center gap-[3px]" aria-label={isEs ? "Progreso de pasos" : "Step progress"}>
+      <div className="flex items-center gap-[3px]" aria-label={text.progressAria}>
         {steps.map((step, index) => {
           const barClass = step.isCompleted
             ? "bg-white/18"
@@ -49,7 +51,7 @@ export default function LiveTimeline({
               className={`group flex min-h-5 flex-1 items-center py-1 ${
                 step.isCompleted ? "opacity-45" : ""
               }`}
-              aria-label={isEs ? `Ir al paso ${index + 1}` : `Go to step ${index + 1}`}
+              aria-label={`${text.goToStep} ${index + 1}`}
               title={step.name}
             >
               <div className={`h-[5px] w-full overflow-hidden rounded-full ${barClass}`}>
@@ -67,7 +69,7 @@ export default function LiveTimeline({
 
       <div className="mt-0.5 flex items-center justify-between px-0.5">
         <span className="text-[9px] font-semibold text-white/20">
-          {isEs ? `Paso ${currentIndex + 1} de ${steps.length}` : `Step ${currentIndex + 1} of ${steps.length}`}
+          {`${text.step} ${currentIndex + 1} ${text.of} ${steps.length}`}
         </span>
         <span className="text-[9px] font-semibold text-white/20">{progressPct}%</span>
       </div>

@@ -57,6 +57,7 @@ import {
   shouldShowThickness,
 } from "@/lib/cookingRules";
 import { ds } from "@/lib/design-system";
+import { getAnimalSurfaceLabel, getDonenessSurfaceLabel, sanitizeCriticalErrorCopy } from "@/lib/i18n/surfaceFallbacks";
 import { texts, type Lang } from "@/lib/i18n/texts";
 import {
   buildLiveStepsFromPayload,
@@ -111,6 +112,7 @@ type SavedMenuActionMenu = {
 };
 
 const LIVE_DONENESS_VALUES: Doneness[] = ["rare", "medium_rare", "medium", "medium_well", "well_done", "safe"];
+const LANG_STORAGE_KEY = "parrillero_lang";
 
 type SaveGeneratedMenuResponse =
   | { ok: true; menu: SavedMenuActionMenu }
@@ -145,6 +147,13 @@ type SavedCookConfig = {
   lang: Lang;
 };
 
+type HomePopularCutSelection = {
+  animal: string;
+  cutId: string;
+  doneness?: string;
+  thickness?: string;
+};
+
 type CookingNavContext = {
   animal?: AnimalLabel;
   cut?: string;
@@ -173,6 +182,11 @@ function parseSavedLang(value: unknown): Lang {
   const text = asText(value);
   if (text === "en" || text === "fi" || text === "es") return text;
   return "es";
+}
+
+function parseLangParam(value: string | null | undefined): Lang | null {
+  if (value === "en" || value === "fi" || value === "es") return value;
+  return null;
 }
 
 function parseSavedAnimal(value: unknown, fallback: AnimalLabel): AnimalLabel {
@@ -222,11 +236,9 @@ function getInitialDoneness(animal: AnimalLabel) {
 }
 
 function getDonenessSelectOptions(animal: AnimalLabel, lang: Lang): SelectOption[] {
-  const labelLang = lang === "fi" ? "en" : lang;
-
   return getDonenessOptions(animalIdsByLabel[animal]).map((option) => ({
     value: option.id,
-    label: option.names[labelLang],
+    label: lang === "fi" ? getDonenessSurfaceLabel(option.id, "fi") : option.names[lang],
   }));
 }
 
@@ -239,7 +251,9 @@ function getCutName(cut: ProductCut, lang: Lang) {
 }
 
 function getCutDescription(cut: ProductCut, lang: Lang) {
-  return cut.notes?.[catalogLang(lang)] ?? cut.error[engineLang(lang)] ?? "";
+  const localizedNote = cut.notes?.[catalogLang(lang)];
+  if (localizedNote) return sanitizeCriticalErrorCopy(localizedNote, lang);
+  return sanitizeCriticalErrorCopy(cut.error[engineLang(lang)] ?? "", lang);
 }
 
 function getCutItems(animal: AnimalLabel, lang: Lang): CutItem[] {
@@ -518,18 +532,20 @@ function parseCookingContext(params: URLSearchParams, mode: Mode): CookingNavCon
 
 function parseLiveUrlState(lang: Lang) {
   if (typeof window === "undefined") {
+    const defaultAnimal = "Vacuno" as AnimalLabel;
     return {
-      animal: "Vacuno" as AnimalLabel,
+      animal: defaultAnimal,
       cutId: null as string | null,
-      doneness: getInitialDoneness("Vacuno"),
+      doneness: getInitialDoneness(defaultAnimal),
       thickness: "2",
       donenessFromUrl: undefined as string | undefined,
       thicknessFromUrl: undefined as string | undefined,
-      context: undefined as string | undefined,
+      context: getAnimalSurfaceLabel(defaultAnimal, lang),
+      lang,
     };
   }
 
-  const { animal, cutId: rawCutId, doneness: rawDoneness, thickness: rawThickness } = parseLiveParams(
+  const { animal, cutId: rawCutId, doneness: rawDoneness, thickness: rawThickness, lang: rawLang } = parseLiveParams(
     window.location.search,
   );
   const liveAnimal = parseCookingAnimal(animal ?? null) ?? "Vacuno";
@@ -544,9 +560,11 @@ function parseLiveUrlState(lang: Lang) {
   const doneness = donenessFromUrl ?? getInitialDoneness(liveAnimal);
   const thicknessFromUrl = parsePositiveNumberParam(rawThickness != null ? String(rawThickness) : null);
   const thickness = thicknessFromUrl ?? "2";
-  const context = liveCutMeta ? `${liveAnimal} · ${getCutName(liveCutMeta, lang)}` : liveAnimal;
+  const localizedAnimal = getAnimalSurfaceLabel(liveAnimal, lang);
+  const context = liveCutMeta ? `${localizedAnimal} · ${getCutName(liveCutMeta, lang)}` : localizedAnimal;
+  const resolvedLang = rawLang ?? lang;
 
-  return { animal: liveAnimal, cutId, doneness, thickness, donenessFromUrl, thicknessFromUrl, context };
+  return { animal: liveAnimal, cutId, doneness, thickness, donenessFromUrl, thicknessFromUrl, context, lang: resolvedLang };
 }
 
 function normalizeLiveContextToken(value: string | undefined) {
@@ -576,6 +594,7 @@ function doesPayloadMatchLiveUrlContext(
   const sameDoneness =
     payloadDoneness.length === 0 ||
     normalizeLiveContextToken(liveFromUrl.donenessFromUrl) === payloadDoneness;
+  const sameLang = payload.input.lang === liveFromUrl.lang;
   const payloadRequiresThickness = shouldShowThickness(payload.input.cut);
   const payloadThickness = normalizeLiveContextToken(payload.input.thickness);
   const sameThickness =
@@ -585,7 +604,7 @@ function doesPayloadMatchLiveUrlContext(
       ? isMatchingThickness(liveFromUrl.thicknessFromUrl, payload.input.thickness)
       : false);
 
-  return sameAnimal && sameCut && sameDoneness && sameThickness;
+  return sameAnimal && sameCut && sameDoneness && sameThickness && sameLang;
 }
 
 function parseNavFromSearch(search: string): ParsedNav {
@@ -634,12 +653,17 @@ function buildSearchFromNav(
   mode: Mode,
   cookingStep: CookingWizardStep,
   cookingContext: CookingNavContext = {},
+  lang?: Lang,
 ): string {
   const params = new URLSearchParams();
   params.set("mode", mode);
+  const safeLang = parseLangParam(lang);
+  if (safeLang) params.set("lang", safeLang);
   if (mode === "coccion") {
     params.set("step", cookingStep);
-    if (cookingContext.animal) params.set("animal", animalIdsByLabel[cookingContext.animal]);
+    if (cookingContext.animal && (cookingStep !== "cut" || Boolean(cookingContext.cut))) {
+      params.set("animal", animalIdsByLabel[cookingContext.animal]);
+    }
     if (cookingContext.cut) {
       const canonicalCut = canonicalizeCutId(
         cookingContext.cut,
@@ -713,16 +737,14 @@ function mapBeefLargeWeightPresetToKg(weightRange: CookingWeightRange): string {
 function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const urlLang = parseLangParam(searchParams.get("lang"));
 
   // ── Onboarding gate ─────────────────────────────────────────────────────────
   // null  = not yet resolved (server render + first paint — avoids hydration mismatch)
   // true  = show onboarding
   // false = go straight to the app
   //
-  // IMPORTANT: localStorage must only be read inside useEffect (after hydration).
-  // Reading it during render (even via lazy initializer) causes a server/client
-  // mismatch because the server has no localStorage → useState returns false →
-  // client may return true → React throws a hydration error.
+  // IMPORTANT: localStorage reads must be guarded because server render has no window.
   const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
   const [showProModal, setShowProModal] = useState<false | "planning">(false);
   const [showCookCompleteProModal, setShowCookCompleteProModal] = useState(false);
@@ -736,7 +758,14 @@ function HomeContent() {
     return () => window.cancelAnimationFrame(raf);
   }, []);
 
-  const [lang, setLang] = useState<Lang>("es");
+  const [lang, setLang] = useState<Lang>(() => {
+    if (urlLang) return urlLang;
+    if (typeof window !== "undefined") {
+      const storedLang = parseLangParam(window.localStorage.getItem(LANG_STORAGE_KEY));
+      if (storedLang) return storedLang;
+    }
+    return "es";
+  });
   const t = texts[lang];
 
   const [mode, setMode] = useState<Mode>("inicio");
@@ -787,12 +816,18 @@ function HomeContent() {
   const isApplyingPopRef = useRef(false);
   const liveAdvanceRef = useRef(false);
   const navInitializedRef = useRef(false);
+  const hasCutSelectionPreviewHistoryRef = useRef(false);
   const cookingContextRef = useRef({
     animal,
     cut,
     doneness,
     thickness,
   });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(LANG_STORAGE_KEY, lang);
+  }, [lang]);
 
   const baseCuts = useMemo(() => getCutItems(animal, lang), [animal, lang]);
   const selectedCutMeta = useMemo(() => (cut ? getCutById(cut) : undefined), [cut]);
@@ -817,6 +852,7 @@ function HomeContent() {
 
   const currentDonenessOptions = getDonenessSelectOptions(animal, lang);
   const showThickness = cut ? shouldShowThickness(cut) : true;
+  const isCutSelectionSheetOpen = mode === "coccion" && cookingStep === "cut" && Boolean(cut);
   const [liveClientReady, setLiveClientReady] = useState(false);
   const [liveSteps, setLiveSteps] = useState<LiveStep[]>(MOCK_LIVE_STEPS);
   const [liveContext, setLiveContext] = useState<string | undefined>(undefined);
@@ -914,11 +950,19 @@ function HomeContent() {
       isCutSelectionContextOnlyChange &&
       !currentNav.cookingContext.cut &&
       Boolean(nextCookingContext.cut);
+    const isCutSelectionPreviewOpenFromHistoryBase =
+      isCutSelectionContextOnlyChange &&
+      Boolean(nextCookingContext.cut) &&
+      !hasCutSelectionPreviewHistoryRef.current;
+    const allowCutSelectionPreviewPushWhileApplyingPop =
+      isCutSelectionPreviewOpenFromBase || isCutSelectionPreviewOpenFromHistoryBase;
     const shouldPush =
       requestedMethod === "push" &&
       navChanged &&
-      !isApplyingPopRef.current &&
-      (!isCutSelectionContextOnlyChange || isCutSelectionPreviewOpenFromBase) &&
+      (!isApplyingPopRef.current || allowCutSelectionPreviewPushWhileApplyingPop) &&
+      (!isCutSelectionContextOnlyChange ||
+        isCutSelectionPreviewOpenFromBase ||
+        isCutSelectionPreviewOpenFromHistoryBase) &&
       !isAnimalOnlyCutSelectionFilterChange;
     const method: "push" | "replace" = shouldPush ? "push" : "replace";
 
@@ -926,23 +970,47 @@ function HomeContent() {
     setCookingStep(nextCookingStep);
 
     if (typeof window === "undefined") return;
-    const search = buildSearchFromNav(nextMode, nextCookingStep, nextCookingContext);
+    const search = buildSearchFromNav(nextMode, nextCookingStep, nextCookingContext, lang);
     const url = `${window.location.pathname}${search}${window.location.hash}`;
-    const state = { mode: nextMode, cookingStep: nextCookingStep, cookingContext: nextCookingContext };
+    const beforeSnapshot = {
+      historyLength: window.history.length,
+    };
     if (method === "replace") {
-      window.history.replaceState(state, "", url);
+      router.replace(url);
     } else {
-      window.history.pushState(state, "", url);
+      router.push(url);
+      const targetHref = new URL(url, window.location.origin).href;
+      const fallbackHistoryLength = beforeSnapshot.historyLength;
+      window.setTimeout(() => {
+        const onTargetUrl = window.location.href === targetHref;
+        const historyDidNotGrow = window.history.length === fallbackHistoryLength;
+        if (onTargetUrl && historyDidNotGrow) {
+          window.history.pushState(window.history.state, "", url);
+        }
+      }, 1200);
     }
-  }, []);
+
+    if (nextMode === "coccion" && nextCookingStep === "cut") {
+      if (nextCookingContext.cut) {
+        hasCutSelectionPreviewHistoryRef.current =
+          method === "push" || hasCutSelectionPreviewHistoryRef.current;
+      } else {
+        hasCutSelectionPreviewHistoryRef.current = false;
+      }
+    } else {
+      hasCutSelectionPreviewHistoryRef.current = false;
+    }
+  }, [router, lang]);
 
   function syncCutSelectionPreviewFromNav(nav: ParsedNav) {
     if (nav.mode !== "coccion" || nav.cookingStep !== "cut") return;
     if (nav.cookingContext.cut) {
       setCut(nav.cookingContext.cut);
+      hasCutSelectionPreviewHistoryRef.current = true;
       return;
     }
     setCut("");
+    hasCutSelectionPreviewHistoryRef.current = false;
   }
 
   function getCurrentCookingNavContext(): CookingNavContext {
@@ -1000,7 +1068,7 @@ function HomeContent() {
     const sourceAnimal = contextParams.animal;
     const sourceCutId = contextParams.cutId;
     if (!sourceAnimal || !sourceCutId) {
-      const homeUrl = buildHomeUrl();
+      const homeUrl = buildHomeUrl(lang);
       window.history.replaceState({ mode: "inicio", cookingStep: "animal", cookingContext: {} }, "", homeUrl);
       setMode("inicio");
       setCookingStep("animal");
@@ -1069,7 +1137,36 @@ function HomeContent() {
     const nav = parseNavFromSearch(window.location.search);
     const raf = window.requestAnimationFrame(() => {
       applyCookingNavContext(nav.cookingContext);
-      commitNav(nav.mode, nav.cookingStep, "replace", nav.cookingContext);
+      const shouldBootstrapCutSelectionBaseEntry =
+        nav.mode === "coccion" &&
+        nav.cookingStep === "cut" &&
+        Boolean(nav.cookingContext.cut);
+
+      if (shouldBootstrapCutSelectionBaseEntry) {
+        const baseContext: CookingNavContext = nav.cookingContext.animal
+          ? { animal: nav.cookingContext.animal }
+          : {};
+        const baseSearch = buildSearchFromNav("coccion", "cut", baseContext, lang);
+        const detailSearch = buildSearchFromNav(
+          "coccion",
+          "cut",
+          {
+            ...baseContext,
+            cut: nav.cookingContext.cut,
+          },
+          lang,
+        );
+        const baseUrl = `${window.location.pathname}${baseSearch}${window.location.hash}`;
+        const detailUrl = `${window.location.pathname}${detailSearch}${window.location.hash}`;
+
+        setMode("coccion");
+        setCookingStep("cut");
+        window.history.replaceState(window.history.state, "", baseUrl);
+        router.push(detailUrl);
+        hasCutSelectionPreviewHistoryRef.current = true;
+      } else {
+        commitNav(nav.mode, nav.cookingStep, "replace", nav.cookingContext);
+      }
       navInitializedRef.current = true;
     });
 
@@ -1177,7 +1274,7 @@ function HomeContent() {
       if (payload && !payloadMatchesUrl) {
         window.sessionStorage.removeItem(LIVE_COOKING_STORAGE_KEY);
       }
-      const built = buildLiveStepsFromPayload(safePayload, MOCK_LIVE_STEPS);
+      const built = buildLiveStepsFromPayload(safePayload, MOCK_LIVE_STEPS, lang);
 
       if (!built.usedFallback && !hasDistinctLiveSteps(built.steps, MOCK_LIVE_STEPS)) {
         console.warn("[live-cooking] Live steps match mock signature unexpectedly", {
@@ -1496,6 +1593,7 @@ function HomeContent() {
         cutId: rebuilt.config.cut,
         doneness: toLiveDoneness(rebuilt.config.doneness),
         thickness: liveThickness,
+        lang: rebuilt.config.lang,
       }),
     );
   }
@@ -1641,12 +1739,7 @@ function HomeContent() {
   function handleCutSelectionPreviewChange(nextCutId: string | null) {
     if (nextCutId) {
       setCut(nextCutId);
-      const currentNav = typeof window === "undefined" ? null : parseNavFromSearch(window.location.search);
-      const hasPreviewEntry =
-        currentNav?.mode === "coccion" &&
-        currentNav.cookingStep === "cut" &&
-        Boolean(currentNav.cookingContext.cut);
-      commitNav("coccion", "cut", hasPreviewEntry ? "replace" : "push", {
+      commitNav("coccion", "cut", "push", {
         animal,
         cut: nextCutId,
       });
@@ -1654,7 +1747,7 @@ function HomeContent() {
     }
 
     setCut("");
-    commitNav("coccion", "cut", "replace", { animal });
+    commitNav("coccion", "cut", "replace", {});
   }
 
   function handleCutSelectionStartCooking(profile: GeneratedCutProfile) {
@@ -1680,6 +1773,51 @@ function HomeContent() {
       ...(profile.showThickness ? { thickness: selectedThickness } : {}),
     });
     track({ name: "cut_selected", animal: selectedAnimal, cutId: profile.id, lang });
+  }
+
+  function handleHomePopularCutSelect(selection: HomePopularCutSelection) {
+    const selectedAnimal = animalLabelsById[selection.animal] ?? animal;
+    const selectedCutId = selection.cutId.trim();
+    if (!selectedCutId) return;
+
+    setAnimal(selectedAnimal);
+    setCut(selectedCutId);
+    if (selection.doneness && !isVegetableContextAnimal(selectedAnimal)) {
+      setDoneness(selection.doneness);
+    }
+    if (selection.thickness && shouldShowThickness(selectedCutId)) {
+      setThickness(selection.thickness);
+    }
+    resetAdaptiveDetailInputs();
+    setBlocks({});
+    setCheckedItems({});
+    resetSaveMenuState();
+
+    if (typeof window === "undefined") {
+      commitNav("coccion", "cut", "push", {
+        animal: selectedAnimal,
+      });
+      commitNav("coccion", "cut", "push", {
+        animal: selectedAnimal,
+        cut: selectedCutId,
+      });
+      track({ name: "cut_selected", animal: selectedAnimal, cutId: selectedCutId, lang });
+      return;
+    }
+
+    const baseContext: CookingNavContext = { animal: selectedAnimal };
+    const detailContext: CookingNavContext = { animal: selectedAnimal, cut: selectedCutId };
+    const baseSearch = buildSearchFromNav("coccion", "cut", baseContext, lang);
+    const detailSearch = buildSearchFromNav("coccion", "cut", detailContext, lang);
+    const baseUrl = `${window.location.pathname}${baseSearch}${window.location.hash}`;
+    const detailUrl = `${window.location.pathname}${detailSearch}${window.location.hash}`;
+
+    setMode("coccion");
+    setCookingStep("cut");
+    window.history.pushState(window.history.state, "", baseUrl);
+    router.push(detailUrl);
+    hasCutSelectionPreviewHistoryRef.current = true;
+    track({ name: "cut_selected", animal: selectedAnimal, cutId: selectedCutId, lang });
   }
 
   async function callAI(
@@ -1933,6 +2071,12 @@ ERROR
 
   function handleLanguageChange(nextLang: Lang) {
     setLang(nextLang);
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      params.set("lang", nextLang);
+      const query = params.toString();
+      router.replace(`${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`);
+    }
     setBlocks({});
     setCheckedItems({});
     setPlanGenerated(false);
@@ -1948,6 +2092,10 @@ ERROR
       setShowProModal("planning");
     }
     commitNav(nextMode, nextStep, "push");
+  }
+
+  function handleHomePrimaryCtaClick() {
+    commitNav("coccion", "cut", "push");
   }
 
   function handleModeChange(nextMode: Mode) {
@@ -2029,8 +2177,9 @@ ERROR
             cutId,
             doneness,
             thickness: thickness !== undefined ? String(thickness) : undefined,
+            lang,
           })
-        : buildHomeUrl();
+        : buildHomeUrl(lang);
     router.push(targetUrl);
   }
 
@@ -2059,7 +2208,7 @@ ERROR
             onDismiss={() => setShowCookCompleteProModal(false)}
           />
         )}
-        <div className="bg-[#0a0a0a] md:flex md:min-h-screen md:items-start md:justify-center md:py-8">
+        <div className="bg-[#0a0a0a] md:flex md:min-h-screen md:items-center md:justify-center md:py-8">
           <div className="flex h-screen w-full flex-col overflow-hidden md:h-[844px] md:w-[390px] md:rounded-[3rem] md:border md:border-white/10 md:shadow-[0_32px_80px_rgba(0,0,0,0.8)]">
             {!liveClientReady ? (
               <div className="flex flex-1 flex-col items-center justify-center bg-[#020202]">
@@ -2096,20 +2245,22 @@ ERROR
       />
     )}
     <main
-      className={`${ds.shell.page} overflow-x-hidden px-3 pt-2 !pb-[max(120px,env(safe-area-inset-bottom))] sm:px-4 sm:pt-5 lg:px-8 lg:pt-6 lg:!pb-12 xl:px-10`}
+      className={`${ds.shell.page} relative mx-auto flex min-h-screen min-w-0 w-full max-w-[1280px] flex-col overflow-x-hidden px-3 pt-2 sm:px-4 sm:pt-5 lg:px-8 lg:pt-6`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <div className={`${ds.shell.container} w-full lg:max-w-[1180px] xl:max-w-[1360px] 2xl:max-w-[1520px]`}>
-        <DesktopModeTabs mode={mode} onModeChange={handleModeChange} t={t} />
+      <div className={`${ds.shell.container} mx-auto min-w-0 w-full max-w-[1180px] flex-1`}>
+        <DesktopModeTabs lang={lang} mode={mode} onModeChange={handleModeChange} t={t} />
 
         {mode === "inicio" && (
           <HomeScreen
             lang={lang}
             onLangChange={handleLanguageChange}
+            onPopularCutSelect={handleHomePopularCutSelect}
             savedMenusCount={savedMenus.length}
             t={t}
             onModeChange={handleModeChange}
+            onPrimaryCtaClick={handleHomePrimaryCtaClick}
           />
         )}
 
@@ -2441,7 +2592,13 @@ ERROR
         )}
       </div>
 
-      <AppBottomNav mode={mode} onModeChange={handleModeChange} t={t} />
+      <AppBottomNav
+        lang={lang}
+        mode={mode}
+        onModeChange={handleModeChange}
+        disabled={isCutSelectionSheetOpen}
+        t={t}
+      />
     </main>
     </>
   );

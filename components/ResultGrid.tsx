@@ -12,6 +12,11 @@ import {
   type SetupType,
 } from "@/lib/setupVisualMap";
 import { formatTitle, getGrillManagerLineClass, getShoppingItems } from "@/lib/uiHelpers";
+import {
+  localizeResultSurfaceCopy,
+  sanitizeCriticalErrorCopy,
+  sanitizeSetupSummaryCopy,
+} from "@/lib/i18n/surfaceFallbacks";
 import ResultCard from "@/components/ResultCard";
 import ResultTimeline from "./ResultTimeline";
 
@@ -64,6 +69,24 @@ function compactDetailValue(value: string) {
   return clean.length > 96 ? `${clean.slice(0, 93).trim()}...` : clean;
 }
 
+function getLocalizedInternalCopyFallback(lang: "es" | "en" | "fi") {
+  if (lang === "es") return "Evita sobrecocinar el centro magro antes de terminar el dorado.";
+  if (lang === "fi") return "Valta ylikypsentamasta vähärasvaista osaa ennen pinnan viimeistelya.";
+  return "Avoid overcooking the lean center before the crust finishes.";
+}
+
+function looksLikeInternalDescriptorCopy(value: string) {
+  return /\b(overcook(?:ing)?|lean eye|fat renders|pink core|fat rim|thin crust|low chew|firm beef bite|buttery soft bite)\b/i.test(
+    value,
+  );
+}
+
+function sanitizeUserFacingGuidance(value: string, lang: "es" | "en" | "fi") {
+  if (lang === "en") return value;
+  if (!looksLikeInternalDescriptorCopy(value)) return value;
+  return getLocalizedInternalCopyFallback(lang);
+}
+
 function getSearchableLines(blocks: Blocks, keys: string[]) {
   return keys
     .flatMap((key) => blocks[key]?.split("\n") ?? [])
@@ -111,41 +134,49 @@ type SetupOverlayChip = {
   tone: "direct" | "indirect" | "neutral";
 };
 
-function getSetupOverlayChips(setup?: SetupType): SetupOverlayChip[] {
+function getSetupOverlayChips(setup: SetupType | undefined, lang: "es" | "en" | "fi"): SetupOverlayChip[] {
   const normalizedSetup = normalizeSetupText(setup).replace(/[_\s]+/g, "-");
+  const labels = {
+    indirect: lang === "es" ? "❄️ Indirecto" : lang === "fi" ? "❄️ Epasuora" : "❄️ Indirect",
+    finalSear: lang === "es" ? "Sellado final" : lang === "fi" ? "Lopullinen ruskistus" : "Final sear",
+    lowHeat: lang === "es" ? "Baja temperatura" : lang === "fi" ? "Matala lampo" : "Low heat",
+    twoZones: lang === "es" ? "2 zonas" : lang === "fi" ? "2 vyohyketta" : "2 zones",
+    mixZone: lang === "es" ? "🔥 Directo + ❄️ Indirecto" : lang === "fi" ? "🔥 Suora + ❄️ Epasuora" : "🔥 Direct + ❄️ Indirect",
+    direct: lang === "es" ? "🔥 Directo" : lang === "fi" ? "🔥 Suora" : "🔥 Direct",
+  };
 
   if (normalizedSetup === "reverse-sear") {
     return [
-      { label: "❄️ Indirecto", tone: "indirect" },
-      { label: "Sellado final", tone: "direct" },
+      { label: labels.indirect, tone: "indirect" },
+      { label: labels.finalSear, tone: "direct" },
     ];
   }
 
   if (normalizedSetup === "low-slow" || normalizedSetup === "low-and-slow") {
     return [
-      { label: "❄️ Indirecto", tone: "indirect" },
-      { label: "Baja temperatura", tone: "neutral" },
+      { label: labels.indirect, tone: "indirect" },
+      { label: labels.lowHeat, tone: "neutral" },
     ];
   }
 
   if (normalizedSetup === "two-zone") {
     return [
-      { label: "🔥 Directo + ❄️ Indirecto", tone: "neutral" },
-      { label: "2 zonas", tone: "neutral" },
+      { label: labels.mixZone, tone: "neutral" },
+      { label: labels.twoZones, tone: "neutral" },
     ];
   }
 
   if (normalizedSetup === "indirect" || normalizedSetup === "indirecto") {
-    return [{ label: "❄️ Indirecto", tone: "indirect" }];
+    return [{ label: labels.indirect, tone: "indirect" }];
   }
 
   if (normalizedSetup === "direct" || normalizedSetup === "direct-heat" || normalizedSetup === "directo") {
-    return [{ label: "🔥 Directo", tone: "direct" }];
+    return [{ label: labels.direct, tone: "direct" }];
   }
 
   return [
-    { label: "🔥 Directo + ❄️ Indirecto", tone: "neutral" },
-    { label: "2 zonas", tone: "neutral" },
+    { label: labels.mixZone, tone: "neutral" },
+    { label: labels.twoZones, tone: "neutral" },
   ];
 }
 
@@ -207,9 +238,9 @@ function SetupVisualAnchor({
   const setupEquipment = resolveSetupEquipment(equipment) ?? resolveSetupEquipment(content);
   const detectedSetup = setup ?? detectSetupFromText(content);
   const setupImage = getSetupVisual(setupEquipment, detectedSetup);
-  const overlayChips = getSetupOverlayChips(detectedSetup);
-  const setupLine = compactSummaryValue(content);
-  const isEnglish = lang === "en";
+  const overlayChips = getSetupOverlayChips(detectedSetup, lang);
+  const setupLine = sanitizeSetupSummaryCopy(compactSummaryValue(content), lang, equipment);
+  const setupVisualLabel = lang === "es" ? "Visual de configuración" : lang === "fi" ? "Asetuskuva" : "Setup visual";
 
   return (
     <section className="relative col-span-full overflow-hidden rounded-[2rem] border border-orange-300/20 bg-slate-950 shadow-2xl shadow-black/30 ring-1 ring-inset ring-white/[0.04]">
@@ -232,7 +263,7 @@ function SetupVisualAnchor({
 
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950 via-slate-950/82 to-transparent p-4 pt-16 sm:p-5 sm:pt-20">
         <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300/90">
-          {isEnglish ? "Setup visual" : "Setup visual"}
+          {setupVisualLabel}
         </p>
         <p className="mt-1 line-clamp-2 max-w-2xl text-sm font-semibold leading-relaxed text-white">
           {setupLine}
@@ -263,29 +294,29 @@ function extractDonenessValue(blocks: Blocks, keys: string[]) {
   return compactSummaryValue(value || line);
 }
 
-export function buildResultSummary(blocks: Blocks, keys: string[]): ResultSummary {
+export function buildResultSummary(blocks: Blocks, keys: string[], lang: "es" | "en" | "fi" = "es"): ResultSummary {
   const setupKey = findBlockKey(keys, ["SETUP", "CONFIGURACION", "CONFIGURACIÓN"]);
   const timeKey = findBlockKey(keys, ["TIEMPOS", "TIMES"]);
   const tempKey = findBlockKey(keys, ["TEMPERATURA", "TEMPERATURE"]);
   const errorKey = findBlockKey(keys, ["ERROR", "ERROR CLAVE", "KEY ERROR"]);
 
   return {
-    method: setupKey ? compactSummaryValue(blocks[setupKey]) : "",
-    time: timeKey ? compactSummaryValue(blocks[timeKey]) : "",
-    temperature: tempKey ? compactSummaryValue(blocks[tempKey]) : "",
-    doneness: extractDonenessValue(blocks, keys),
-    rest: extractMatchingLine(blocks, keys, [
+    method: setupKey ? compactSummaryValue(localizeResultSurfaceCopy(blocks[setupKey], lang)) : "",
+    time: timeKey ? compactSummaryValue(localizeResultSurfaceCopy(blocks[timeKey], lang)) : "",
+    temperature: tempKey ? compactSummaryValue(localizeResultSurfaceCopy(blocks[tempKey], lang)) : "",
+    doneness: localizeResultSurfaceCopy(extractDonenessValue(blocks, keys), lang),
+    rest: localizeResultSurfaceCopy(extractMatchingLine(blocks, keys, [
       /\b(reposo|reposar|descanso|rest|resting)\b/i,
-    ]),
-    cutting: extractMatchingLine(blocks, keys, [
+    ]), lang),
+    cutting: localizeResultSurfaceCopy(extractMatchingLine(blocks, keys, [
       /\b(cortar|corte|cortarlo|trinchar|slice|cutting|carve)\b/i,
       /\b(contra\s+(la\s+)?fibra|against\s+the\s+grain)\b/i,
-    ]),
-    safety: extractMatchingLine(blocks, keys, [
+    ]), lang),
+    safety: localizeResultSurfaceCopy(extractMatchingLine(blocks, keys, [
       /\b(seguridad|seguro|inocuo|safety|safe)\b/i,
       /\b(term[oó]metro|thermometer|no\s+servir|do\s+not\s+serve)\b/i,
-    ]),
-    criticalError: errorKey ? compactDetailValue(blocks[errorKey]) : "",
+    ]), lang),
+    criticalError: errorKey ? sanitizeUserFacingGuidance(compactDetailValue(blocks[errorKey]), lang) : "",
   };
 }
 
@@ -303,7 +334,8 @@ function ShoppingListCard({
   setCheckedItems: (value: Record<string, boolean>) => void;
 }) {
   const items = getShoppingItems(content);
-  const isEnglish = lang === "en";
+  const checklistLabel = lang === "es" ? "Checklist" : lang === "fi" ? "Tarkistuslista" : "Checklist";
+  const itemsLabel = lang === "es" ? "items" : lang === "fi" ? "tuotetta" : "items";
 
   return (
     <div
@@ -315,13 +347,13 @@ function ShoppingListCard({
           <div className={ds.media.iconBox}>🛒</div>
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-emerald-300">
-              {isEnglish ? "Checklist" : "Checklist"}
+              {checklistLabel}
             </p>
             <h3 className="mt-1 text-sm font-semibold tracking-wide text-white">{title}</h3>
           </div>
         </div>
         <Badge className="w-fit font-medium" tone="glass">
-          {items.length} {isEnglish ? "items" : "items"}
+          {items.length} {itemsLabel}
         </Badge>
       </div>
 
@@ -359,7 +391,12 @@ function GrillManagerCard({
     .map((line) => line.trim())
     .filter(Boolean);
 
-  const isEs = lang === "es";
+  const subtitle =
+    lang === "es"
+      ? "Control inteligente de zonas y prioridades"
+      : lang === "fi"
+        ? "Alykas vyohykkeiden ja prioriteettien hallinta"
+        : "Smart zone and priority control";
 
   return (
     <div
@@ -371,11 +408,7 @@ function GrillManagerCard({
           <div className={ds.media.iconBox}>🎛️</div>
           <div>
             <h3 className="text-sm font-semibold tracking-wide text-white">{title}</h3>
-            <p className="mt-1 text-sm leading-relaxed text-slate-400">
-              {isEs
-                ? "Control inteligente de zonas y prioridades"
-                : "Smart zone and priority control"}
-            </p>
+            <p className="mt-1 text-sm leading-relaxed text-slate-400">{subtitle}</p>
           </div>
         </div>
         <Badge tone="danger">PRO</Badge>
@@ -423,10 +456,27 @@ function findBlockKey(keys: string[], candidates: string[]) {
   return keys.find((key) => candidates.includes(key.toUpperCase()));
 }
 
-function getOrderedResultItems(blocks: Blocks, keys: string[]): ResultItem[] {
-  const hasEnglishCookingBlocks = Boolean(blocks.TIMES || blocks.TEMPERATURE || blocks.STEPS);
-  const hasEnglishMenuBlocks = Boolean(blocks.ORDER || blocks.SHOPPING || blocks.QUANTITIES);
-  const useEnglish = hasEnglishCookingBlocks || hasEnglishMenuBlocks;
+function getLocalizedBlockTitle(key: string, lang: "es" | "en" | "fi") {
+  const upperKey = key.toUpperCase();
+  if (upperKey === "SETUP" || upperKey === "CONFIGURACION" || upperKey === "CONFIGURACIÓN") {
+    return lang === "es" ? "🔥 Configuración" : lang === "fi" ? "🔥 Asetus" : "🔥 Setup";
+  }
+  if (upperKey === "TIMES" || upperKey === "TIEMPOS") {
+    return lang === "es" ? "⏱️ Tiempos" : lang === "fi" ? "⏱️ Ajat" : "⏱️ Times";
+  }
+  if (upperKey === "TEMPERATURE" || upperKey === "TEMPERATURA") {
+    return lang === "es" ? "🌡️ Temperatura" : lang === "fi" ? "🌡️ Lampotila" : "🌡️ Temperature";
+  }
+  if (upperKey === "STEPS" || upperKey === "PASOS") {
+    return lang === "es" ? "🧠 Pasos" : lang === "fi" ? "🧠 Vaiheet" : "🧠 Steps";
+  }
+  if (upperKey === "SHOPPING" || upperKey === "COMPRA") {
+    return lang === "es" ? "🛒 Lista de compra" : lang === "fi" ? "🛒 Ostoslista" : "🛒 Shopping list";
+  }
+  return formatTitle(key);
+}
+
+function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en" | "fi"): ResultItem[] {
   const setupKey = findBlockKey(keys, ["SETUP", "CONFIGURACION", "CONFIGURACIÓN"]);
   const timeKey = findBlockKey(keys, ["TIEMPOS", "TIMES"]);
   const tempKey = findBlockKey(keys, ["TEMPERATURA", "TEMPERATURE"]);
@@ -438,8 +488,8 @@ function getOrderedResultItems(blocks: Blocks, keys: string[]): ResultItem[] {
   if (setupKey) {
     items.push({
       key: setupKey,
-      title: formatTitle(setupKey),
-      content: blocks[setupKey],
+      title: getLocalizedBlockTitle(setupKey, lang),
+      content: localizeResultSurfaceCopy(sanitizeSetupSummaryCopy(blocks[setupKey], lang), lang),
       setup: detectSetupFromText(blocks[setupKey]),
       type: "card",
       variant: "setup",
@@ -447,10 +497,19 @@ function getOrderedResultItems(blocks: Blocks, keys: string[]): ResultItem[] {
   }
 
   if (errorKey) {
+    const errorTitle =
+      lang === "es"
+        ? "Error que arruina este corte"
+        : lang === "fi"
+          ? "Virhe joka pilaa taman leikkauksen"
+          : "Error that ruins this cut";
     items.push({
       key: errorKey,
-      title: useEnglish ? "Error that ruins this cut" : "Error que arruina este corte",
-      content: blocks[errorKey],
+      title: errorTitle,
+      content: localizeResultSurfaceCopy(
+        sanitizeCriticalErrorCopy(sanitizeUserFacingGuidance(blocks[errorKey], lang), lang),
+        lang,
+      ),
       type: "card",
       variant: "tip",
     });
@@ -459,8 +518,8 @@ function getOrderedResultItems(blocks: Blocks, keys: string[]): ResultItem[] {
   if (stepsKey) {
     items.push({
       key: stepsKey,
-      title: formatTitle(stepsKey),
-      content: blocks[stepsKey],
+      title: getLocalizedBlockTitle(stepsKey, lang),
+      content: localizeResultSurfaceCopy(blocks[stepsKey], lang),
       type: "card",
       variant: "primary",
     });
@@ -470,9 +529,11 @@ function getOrderedResultItems(blocks: Blocks, keys: string[]): ResultItem[] {
     if (usedKeys.has(key)) return;
 
     if (key === "TIMELINE") {
+      const timelineTitle =
+        lang === "es" ? "⏱️ Timeline Parrillada" : lang === "fi" ? "⏱️ BBQ-aikajana" : "⏱️ BBQ Timeline";
       items.push({
         key,
-        title: useEnglish ? "⏱️ BBQ Timeline" : "⏱️ Timeline Parrillada",
+        title: timelineTitle,
         content: blocks[key],
         type: "timeline",
       });
@@ -480,9 +541,11 @@ function getOrderedResultItems(blocks: Blocks, keys: string[]): ResultItem[] {
     }
 
     if (key === "GRILL_MANAGER") {
+      const grillManagerTitle =
+        lang === "es" ? "🔥 Grill Manager Pro" : lang === "fi" ? "🔥 Grill Manager Pro" : "🔥 Grill Manager Pro";
       items.push({
         key,
-        title: useEnglish ? "🔥 Grill Manager Pro" : "🔥 Grill Manager Pro",
+        title: grillManagerTitle,
         content: blocks[key],
         type: "grill",
       });
@@ -490,11 +553,16 @@ function getOrderedResultItems(blocks: Blocks, keys: string[]): ResultItem[] {
     }
 
     if (key === "COMPRA" || key === "SHOPPING") {
-      items.push({ key, title: formatTitle(key), content: blocks[key], type: "shopping" });
+      items.push({ key, title: getLocalizedBlockTitle(key, lang), content: blocks[key], type: "shopping" });
       return;
     }
 
-    items.push({ key, title: formatTitle(key), content: blocks[key], type: "card" });
+    items.push({
+      key,
+      title: getLocalizedBlockTitle(key, lang),
+      content: localizeResultSurfaceCopy(blocks[key], lang),
+      type: "card",
+    });
   });
 
   return items;
@@ -522,7 +590,7 @@ export default function ResultGrid({
     noResult: string;
   };
 }) {
-  const items = getOrderedResultItems(blocks, keys);
+  const items = getOrderedResultItems(blocks, keys, lang);
   const setupKey = findBlockKey(keys, ["SETUP", "CONFIGURACION", "CONFIGURACIÓN"]);
 
   return (

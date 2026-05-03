@@ -1,5 +1,6 @@
 import type { LivePhase } from "./TimerDial";
 import type { LiveCookingStepState } from "./LiveCookingScreen";
+import { getLiveText, type SurfaceLang } from "@/lib/i18n/surfaceFallbacks";
 
 const STATUS_COLOR: Record<LivePhase, string> = {
   idle: "text-zinc-400",
@@ -13,7 +14,7 @@ type Props = {
   currentStep: LiveCookingStepState;
   currentIndex: number;
   dotClass: string;
-  isEs: boolean;
+  lang: SurfaceLang;
   onBack?: () => void;
   overallProgressPct: string;
   phase: LivePhase;
@@ -26,7 +27,7 @@ export default function LiveHeader({
   currentStep,
   currentIndex,
   dotClass,
-  isEs,
+  lang,
   onBack,
   overallProgressPct,
   phase,
@@ -34,6 +35,7 @@ export default function LiveHeader({
   alertsEnabled,
   onEnableAlerts,
 }: Props) {
+  const text = getLiveText(lang);
   return (
     <header className="relative flex h-10 shrink-0 items-center gap-2 border-b border-white/[0.055] px-3.5">
       {onBack && (
@@ -42,7 +44,7 @@ export default function LiveHeader({
           onClick={onBack}
           className="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-bold text-white/55 transition active:scale-[0.97]"
         >
-          {isEs ? "Plan" : "Plan"}
+          {text.plan}
         </button>
       )}
 
@@ -65,7 +67,7 @@ export default function LiveHeader({
       <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5">
         <span className={`h-1.5 w-1.5 rounded-full ${dotClass}`} />
         <span className="text-[9px] font-black uppercase tracking-[0.18em] text-white/80">
-          Live
+            {text.live}
         </span>
       </div>
 
@@ -74,7 +76,7 @@ export default function LiveHeader({
           onEnableAlerts &&
           (alertsEnabled ? (
             <span className={`text-[9px] font-bold ${STATUS_COLOR[phase]}`}>
-              {isEs ? "Avisos" : "Alerts"}
+              {text.alerts}
             </span>
           ) : (
             <button
@@ -82,14 +84,14 @@ export default function LiveHeader({
               onClick={onEnableAlerts}
               className="rounded-full border border-orange-500/25 bg-orange-500/10 px-2 py-0.5 text-[9px] font-black text-orange-200 transition active:scale-[0.97]"
             >
-              {isEs ? "Avisos" : "Alerts"}
+              {text.alerts}
             </button>
           ))}
         <span className="rounded-full border border-white/10 bg-white/[0.05] px-2 py-0.5 text-[10px] tabular-nums">
-          <span className="font-semibold text-white/38">{isEs ? "Paso " : "Step "}</span>
+          <span className="font-semibold text-white/38">{`${text.step} `}</span>
           <span className="font-black text-white/75">{currentIndex + 1}</span>
           <span className="font-medium text-white/30">
-            {isEs ? ` de ${stepCount}` : ` of ${stepCount}`}
+            {` ${text.of} ${stepCount}`}
           </span>
         </span>
       </div>

@@ -43,14 +43,16 @@ export default function ResultHero({
   };
 }) {
   const isEs = lang === "es";
-  const eyebrow = animal || context || (isEs ? "Plan de cocción" : "Cooking plan");
-  const title = cut || (isEs ? "Resultado listo" : "Result ready");
+  const isFi = lang === "fi";
+  const liveLabel = isEs ? "En vivo" : isFi ? "Live" : "Live";
+  const eyebrow = animal || context || (isEs ? "Plan de coccion" : isFi ? "Kypsennyssuunnitelma" : "Cooking plan");
+  const title = cut || (isEs ? "Resultado listo" : isFi ? "Tulos valmis" : "Result ready");
   const method = summary?.method || "";
 
   const heroMetrics = [
-    { label: isEs ? "Tiempo" : "Time", value: summary?.time, tone: "orange" },
-    { label: isEs ? "Temperatura" : "Temp", value: summary?.temperature, tone: "red" },
-    { label: isEs ? "Reposo" : "Rest", value: summary?.rest, tone: "sky" },
+    { label: isEs ? "Tiempo" : isFi ? "Aika" : "Time", value: summary?.time, tone: "orange" },
+    { label: isEs ? "Temperatura" : isFi ? "Lampotila" : "Temp", value: summary?.temperature, tone: "red" },
+    { label: isEs ? "Reposo" : isFi ? "Lepuutus" : "Rest", value: summary?.rest, tone: "sky" },
   ].filter((item): item is { label: string; value: string; tone: string } => Boolean(item.value));
 
   function getMetricClass(tone: string) {
@@ -89,6 +91,8 @@ export default function ResultHero({
                   <p className="text-sm leading-6 text-slate-400">
                     {isEs
                       ? "Lo esencial para cocinar sin dudar."
+                      : isFi
+                        ? "Oleellinen selkeaan ja varmaan kypsennykseen."
                       : "The essentials for confident cooking."}
                   </p>
                 )}
@@ -101,7 +105,7 @@ export default function ResultHero({
                 onClick={onEdit}
                 variant="secondary"
               >
-                {isEs ? "Editar" : "Edit"}
+                {isEs ? "Editar" : isFi ? "Muokkaa" : "Edit"}
               </Button>
             )}
           </div>
@@ -141,20 +145,24 @@ export default function ResultHero({
 
               <div className="min-w-0 flex-1">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-300">
-                  {isEs ? "Siguiente acción" : "Next action"}
+                  {isEs ? "Siguiente accion" : isFi ? "Seuraava toiminto" : "Next action"}
                 </p>
                 <p className="mt-0.5 text-base font-black leading-tight text-white">
                   {t.startCooking}
                 </p>
                 <p className="mt-1 text-xs font-medium text-orange-100/80">
-                  {isEs ? "Abrir guía en vivo con este plan" : "Open the live guide with this plan"}
+                  {isEs
+                    ? "Abrir guia en vivo con este plan"
+                    : isFi
+                      ? "Avaa live-opas talla suunnitelmalla"
+                      : "Open the live guide with this plan"}
                 </p>
               </div>
 
               <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-orange-400/25 bg-orange-500/[0.12] px-2.5 py-1 shadow-sm shadow-orange-500/10">
                 <span className="h-1.5 w-1.5 rounded-full bg-orange-400" />
                 <span className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-300">
-                  Live
+                  {liveLabel}
                 </span>
               </div>
             </button>

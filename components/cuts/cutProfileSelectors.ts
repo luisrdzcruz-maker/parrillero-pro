@@ -257,7 +257,11 @@ export function getWhyChooseLabel(profile: GeneratedCutProfile, lang: Lang = "en
     en: "A reliable choice for this cooking path.",
     fi: "Luotettava valinta tähän kypsennystapaan.",
   };
+  const override = getOverride(profile);
   const catalogCut = getLegacyCatalogCut(profile);
+  const requested = getFirstNonEmpty([override?.descriptions?.[lang], catalogCut?.notes?.[lang]]);
+  if (requested) return toDisplaySentence(requested);
+  if (lang !== "en") return toDisplaySentence(fallbackByLang[lang]);
   const englishText = getFirstNonEmpty([
     profile.textureResultEn,
     profile.proTipEn,
@@ -303,6 +307,11 @@ export function getSafetyNote(profile: GeneratedCutProfile, lang: Lang = "en") {
   if (profile.safetyNoteEn?.trim()) {
     const translated = translateSafetyNote(profile.safetyNoteEn, lang);
     if (translated) return toDisplaySentence(translated);
+    if (lang !== "en") {
+      return lang === "es"
+        ? "Verifica temperatura interna y manipula con seguridad."
+        : "Tarkista sisalampotila ja kasittele turvallisesti.";
+    }
     return toDisplaySentence(profile.safetyNoteEn);
   }
   if (lang === "es") return "Usa señales visuales y manipulación segura.";
@@ -389,6 +398,7 @@ export function getCutDescription(profile: GeneratedCutProfile, lang: Lang = "en
     catalogCut?.notes?.[lang],
   ]);
   if (requested) return toDisplaySentence(requested);
+  if (lang !== "en") return toDisplaySentence(getNeutralDescriptorFallback(profile, lang));
 
   const english = getFirstNonEmpty([
     override?.descriptions?.en,

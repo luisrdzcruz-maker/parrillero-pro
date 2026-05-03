@@ -8,6 +8,12 @@ import { getInputProfileForCut } from "@/lib/cooking/inputProfiles";
 import { getCutById } from "@/lib/cookingRules";
 import { Badge, Button, Section } from "@/components/ui";
 import { ds } from "@/lib/design-system";
+import {
+  getAnimalSurfaceLabel,
+  getDetailsSetupLabels,
+  getDonenessSurfaceLabel,
+  getEquipmentSurfaceLabel,
+} from "@/lib/i18n/surfaceFallbacks";
 import type { AppText, Lang } from "@/lib/i18n/texts";
 import type { Doneness } from "@/lib/types/domain";
 import {
@@ -293,7 +299,7 @@ function CookingAnimalStep({
           <FoodCard
             key={item}
             selected={animal === item}
-            title={item}
+            title={getAnimalSurfaceLabel(item, lang)}
             subtitle={getAnimalPreview(item, lang)}
             image={foodImages[item]}
             badge={undefined}
@@ -668,7 +674,7 @@ function CookingCutStep({
 
       <div className="max-w-3xl pl-11 md:pl-0">
         <p className="text-[11px] font-black uppercase tracking-[0.22em] text-orange-300/75">
-          {lang === "es" ? "Categoría" : "Category"}
+          {lang === "es" ? "Categoría" : lang === "fi" ? "Kategoria" : "Category"}
         </p>
         <h1 className="mt-2 text-4xl font-black tracking-tight text-white sm:text-5xl">
           {t.chooseCut}
@@ -676,7 +682,9 @@ function CookingCutStep({
         <p className="mt-2 text-sm font-medium leading-6 text-slate-400 sm:text-base">
           {lang === "es"
             ? "Selecciona el corte para ajustar fuego y tiempos."
-            : "Select the cut to tune heat and timings."}
+            : lang === "fi"
+              ? "Valitse leikkaus, jotta lampo ja ajat saadaan kohdalleen."
+              : "Select the cut to tune heat and timings."}
         </p>
       </div>
 
@@ -694,7 +702,7 @@ function CookingCutStep({
       {gridCuts.length > 0 && (
         <div className="space-y-3 sm:space-y-4">
           <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/25">
-            {lang === "es" ? "Todos los cortes" : "All cuts"}
+            {lang === "es" ? "Todos los cortes" : lang === "fi" ? "Kaikki leikkaukset" : "All cuts"}
           </p>
           <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {gridCuts.map((item) => (
@@ -726,10 +734,10 @@ function getDetailsHeroBadge({
   showDoneness: boolean;
   showWeightPreset: boolean;
 }) {
-  if (showWeightPreset) return lang === "es" ? "Corte crítico" : "Critical cut";
-  if (showAdvancedExactThickness) return lang === "es" ? "Control fino" : "Fine control";
-  if (showDoneness) return lang === "es" ? "Alta precisión" : "High precision";
-  return lang === "es" ? "Control fino" : "Fine control";
+  if (showWeightPreset) return lang === "es" ? "Corte critico" : lang === "fi" ? "Tarkea leikkaus" : "Critical cut";
+  if (showAdvancedExactThickness) return lang === "es" ? "Control fino" : lang === "fi" ? "Tarkka hallinta" : "Fine control";
+  if (showDoneness) return lang === "es" ? "Alta precision" : lang === "fi" ? "Korkea tarkkuus" : "High precision";
+  return lang === "es" ? "Control fino" : lang === "fi" ? "Tarkka hallinta" : "Fine control";
 }
 
 function CookingDetailsHero({
@@ -748,7 +756,9 @@ function CookingDetailsHero({
   const fallbackTip =
     lang === "es"
       ? "Fuego y tiempos ajustados a este corte."
-      : "Heat and timing tuned to this cut.";
+      : lang === "fi"
+        ? "Lampo ja ajoitus on viritetty talle leikkaukselle."
+        : "Heat and timing tuned to this cut.";
 
   return (
     <div className="animate-live-enter relative overflow-hidden rounded-[1.75rem] border border-orange-300/15 bg-zinc-950 shadow-[0_22px_70px_rgba(0,0,0,0.45)] ring-1 ring-inset ring-white/[0.04] sm:rounded-[2rem]">
@@ -780,7 +790,7 @@ function CookingDetailsHero({
               {badge}
             </span>
             <span className="rounded-full border border-white/10 bg-black/45 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/55 backdrop-blur-md">
-              {animal}
+              {getAnimalSurfaceLabel(animal, lang)}
             </span>
           </div>
           <h1 className="max-w-2xl text-[1.7rem] font-black leading-none tracking-tight text-white drop-shadow-[0_3px_18px_rgba(0,0,0,0.85)] sm:text-4xl">
@@ -965,13 +975,26 @@ function CookingDetailsStep({
     showDoneness,
     showWeightPreset,
   });
-  const measurementsTitle = lang === "es" ? "Tamaño y peso" : "Size and weight";
-  const cookingTitle = lang === "es" ? "Punto y equipo" : "Doneness and gear";
+  const measurementsTitle = lang === "es" ? "Tamano y peso" : lang === "fi" ? "Koko ja paino" : "Size and weight";
+  const cookingTitle = lang === "es" ? "Punto y equipo" : lang === "fi" ? "Kypsyys ja valine" : "Doneness and gear";
+  const localizedDonenessOptions = currentDonenessOptions.map((option) =>
+    typeof option === "string"
+      ? option
+      : {
+          ...option,
+          label: lang === "fi" ? getDonenessSurfaceLabel(option.value, lang) : option.label,
+        },
+  );
+  const localizedCookingEquipmentOptions = cookingEquipmentOptions.map((value) => ({
+    value,
+    label: getEquipmentSurfaceLabel(value, lang),
+  }));
   const hasMeasurementFields =
     showSizePreset || showWeightRange || showWeightPreset || showVegetableFormat || showAdvancedExactThickness;
+  const detailsSetupText = getDetailsSetupLabels(lang);
 
   return (
-    <section className="relative mx-auto max-w-4xl animate-[fadeIn_220ms_ease-out] space-y-2.5 pt-1 sm:space-y-4">
+    <section className="relative mx-auto max-w-4xl animate-[fadeIn_220ms_ease-out] space-y-2.5 pb-4 pt-1 sm:space-y-4 sm:pb-6 lg:pb-6">
       <DetailsBackButton label={selectedCut.name} onBack={onBack} />
 
       <CookingDetailsHero
@@ -987,10 +1010,10 @@ function CookingDetailsStep({
           <div className="flex items-end justify-between gap-3">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-200/75">
-                {lang === "es" ? "Configuración" : "Cooking setup"}
+                {detailsSetupText.section}
               </p>
               <h2 className="mt-1 text-xl font-black tracking-tight text-white">
-                {lang === "es" ? "Ajusta los detalles" : "Adjust details"}
+                {detailsSetupText.title}
               </h2>
             </div>
             <div className="hidden rounded-full border border-orange-300/20 bg-orange-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-orange-200 sm:block">
@@ -1069,14 +1092,14 @@ function CookingDetailsStep({
                 label={t.doneness}
                 value={doneness}
                 onChange={setDoneness}
-                options={currentDonenessOptions}
+                options={localizedDonenessOptions}
               />
             )}
             <DetailsSelect
               label={t.equipment}
               value={equipment}
               onChange={setEquipment}
-              options={cookingEquipmentOptions}
+              options={localizedCookingEquipmentOptions}
             />
           </DetailsFieldGroup>
         </div>
@@ -1136,7 +1159,7 @@ function CookingResultStep({
     const payload = createLiveCookingPayload({
       input: {
         animal,
-        cut,
+        cut: cutId ?? cut,
         equipment,
         doneness,
         thickness: showThickness ? thickness : "2",
@@ -1167,6 +1190,7 @@ function CookingResultStep({
         cutId: cutId ?? cut,
         doneness: toLiveDoneness(doneness),
         thickness: liveThickness,
+        lang,
       }),
     );
   }
@@ -1174,11 +1198,11 @@ function CookingResultStep({
   return (
     <div className="space-y-4">
       <ResultCards
-        animal={animal}
+        animal={getAnimalSurfaceLabel(animal, lang)}
         blocks={blocks}
-        context={`${animal} · ${equipment}`}
+        context={`${getAnimalSurfaceLabel(animal, lang)} · ${getEquipmentSurfaceLabel(equipment, lang)}`}
         cut={cut}
-        doneness={doneness}
+        doneness={getDonenessSurfaceLabel(doneness, lang)}
         equipment={equipment}
         lang={lang}
         loading={false}
@@ -1233,13 +1257,13 @@ export function ResultCards({
   const keys = Object.keys(blocks);
   const hasResult = keys.length > 0;
   const canStartCooking = Boolean(blocks.PASOS || blocks.STEPS);
-  const resultSummary = buildResultSummary(blocks, keys);
+  const resultSummary = buildResultSummary(blocks, keys, lang ?? "es");
 
   function copyText() {
     if (typeof window === "undefined" || !navigator.clipboard) return;
 
     navigator.clipboard.writeText(buildText(blocks));
-    alert(lang === "es" ? "Copiado" : "Copied");
+    alert(lang === "es" ? "Copiado" : lang === "fi" ? "Kopioitu" : "Copied");
   }
 
   function shareWhatsApp() {
@@ -1269,10 +1293,15 @@ export function ResultCards({
         summary={resultSummary}
         t={{
           copy: t.copy,
-          save: lang === "es" ? "Guardar" : "Save",
-          saving: lang === "es" ? "Guardando..." : "Saving...",
-          share: lang === "es" ? "Compartir" : "Share",
-          startCooking: lang === "es" ? "Empezar Live Cooking" : "Start Live Cooking",
+          save: lang === "es" ? "Guardar" : lang === "fi" ? "Tallenna" : "Save",
+          saving: lang === "es" ? "Guardando..." : lang === "fi" ? "Tallennetaan..." : "Saving...",
+          share: lang === "es" ? "Compartir" : lang === "fi" ? "Jaa" : "Share",
+          startCooking:
+            lang === "es"
+              ? "Iniciar coccion en vivo"
+              : lang === "fi"
+                ? "Aloita live-kypsennys"
+                : "Start Live Cooking",
         }}
       />
 

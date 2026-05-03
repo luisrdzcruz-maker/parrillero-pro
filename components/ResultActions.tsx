@@ -36,44 +36,60 @@ export default function ResultActions({
   const [localSaveStatus, setLocalSaveStatus] = useState<SaveMenuStatus>("idle");
   const status = rawStatus ?? localSaveStatus;
   const [shareStatus, setShareStatus] = useState<"idle" | "sharing" | "shared" | "copied">("idle");
-  const isEnglish = lang !== "es";
+  const labels = {
+    save:
+      lang === "es"
+        ? { idle: "Guardar", saving: "Guardando...", success: "Guardado", error: "No se pudo guardar" }
+        : lang === "fi"
+          ? { idle: "Tallenna", saving: "Tallennetaan...", success: "Tallennettu", error: "Tallennus ei onnistunut" }
+          : { idle: "Save", saving: "Saving...", success: "Saved", error: "Could not save" },
+    share:
+      lang === "es"
+        ? {
+            idle: "Compartir",
+            sharing: "Compartiendo...",
+            shared: "Compartido",
+            copied: "Copiado",
+            sharedFeedback: "Compartido desde el menu nativo",
+            copiedFeedback: "Copiado al portapapeles",
+          }
+        : lang === "fi"
+          ? {
+              idle: "Jaa",
+              sharing: "Jaetaan...",
+              shared: "Jaettu",
+              copied: "Kopioitu",
+              sharedFeedback: "Jaettu laitteen jakovalikosta",
+              copiedFeedback: "Kopioitu leikepoydalle",
+            }
+          : {
+              idle: "Share",
+              sharing: "Sharing...",
+              shared: "Shared",
+              copied: "Copied",
+              sharedFeedback: "Shared with your device share sheet",
+              copiedFeedback: "Copied to clipboard",
+            },
+  } as const;
   const saveLabel =
     status === "saving"
-      ? isEnglish
-        ? "Saving..."
-        : "Guardando..."
+      ? labels.save.saving
       : status === "success"
-        ? isEnglish
-          ? "Saved"
-          : "Guardado"
-        : isEnglish
-          ? "Save"
-          : "Guardar";
+        ? labels.save.success
+        : labels.save.idle;
   const shareLabel =
     shareStatus === "sharing"
-      ? isEnglish
-        ? "Sharing..."
-        : "Compartiendo..."
+      ? labels.share.sharing
       : shareStatus === "shared"
-        ? isEnglish
-          ? "Shared"
-          : "Compartido"
+        ? labels.share.shared
         : shareStatus === "copied"
-          ? isEnglish
-            ? "Copied"
-            : "Copiado"
-          : isEnglish
-            ? "Share"
-            : "Compartir";
+          ? labels.share.copied
+          : labels.share.idle;
   const shareFeedback =
     shareStatus === "shared"
-      ? isEnglish
-        ? "Shared with your device share sheet"
-        : "Compartido desde el menú nativo"
+      ? labels.share.sharedFeedback
       : shareStatus === "copied"
-        ? isEnglish
-          ? "Copied to clipboard"
-          : "Copiado al portapapeles"
+        ? labels.share.copiedFeedback
         : "";
 
   if (!hasResult) return null;
@@ -95,9 +111,13 @@ export default function ResultActions({
   }
 
   function getShareText() {
-    return isEnglish
-      ? "Parrillero Pro cooking result. Open the app to review the full plan."
-      : "Resultado de cocción de Parrillero Pro. Abre la app para revisar el plan completo.";
+    if (lang === "es") {
+      return "Resultado de coccion de Parrillero Pro. Abre la app para revisar el plan completo.";
+    }
+    if (lang === "fi") {
+      return "Parrillero Pron kypsennystulos. Avaa sovellus ja tarkista koko suunnitelma.";
+    }
+    return "Parrillero Pro cooking result. Open the app to review the full plan.";
   }
 
   async function handleNativeShare() {
@@ -189,14 +209,14 @@ export default function ResultActions({
               className="inline-block h-3 w-3 shrink-0 animate-spin rounded-full border-2 border-orange-400/35 border-t-orange-200 motion-reduce:animate-none"
               aria-hidden
             />
-            {isEnglish ? "Saving..." : "Guardando..."}
+            {labels.save.saving}
           </Badge>
         )}
 
-        {status === "success" && <Badge tone="success">{isEnglish ? "Saved" : "Guardado"}</Badge>}
+        {status === "success" && <Badge tone="success">{labels.save.success}</Badge>}
 
         {status === "error" && (
-          <Badge tone="danger">{isEnglish ? "Could not save" : "No se pudo guardar"}</Badge>
+          <Badge tone="danger">{labels.save.error}</Badge>
         )}
 
         {!compact &&

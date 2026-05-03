@@ -233,7 +233,7 @@ function HomeSettingsStrip({
   onLangChange: (lang: Lang) => void;
 }) {
   return (
-    <section className="mb-24 flex items-center justify-between gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 sm:px-5 lg:mb-0">
+    <section className="flex items-center justify-between gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 sm:px-5">
       <div className="min-w-0">
         <p className="truncate text-[10px] font-black uppercase tracking-[0.18em] text-white/62">
           {t.homeSettingsKicker}
@@ -267,12 +267,21 @@ export function HomeScreen({
   onLangChange,
   savedMenusCount,
   onModeChange,
+  onPrimaryCtaClick,
+  onPopularCutSelect,
   t,
 }: {
   lang: Lang;
   onLangChange: (lang: Lang) => void;
   savedMenusCount: number;
   onModeChange: (mode: Mode) => void;
+  onPrimaryCtaClick?: () => void;
+  onPopularCutSelect?: (cut: {
+    animal: Animal;
+    cutId: string;
+    doneness?: string;
+    thickness?: string;
+  }) => void;
   t: AppText;
 }) {
   const router = useRouter();
@@ -324,12 +333,23 @@ export function HomeScreen({
   ];
 
   function openPopularCut(cut: PopularCut) {
+    if (onPopularCutSelect) {
+      onPopularCutSelect({
+        animal: cut.animal,
+        cutId: cut.cutId,
+        doneness: cut.doneness,
+        thickness: cut.thickness,
+      });
+      return;
+    }
+
     router.push(
       buildCookingDetailsUrl({
         animal: cut.animal,
         cutId: cut.cutId,
         doneness: cut.doneness,
         thickness: cut.thickness,
+        lang,
       }),
     );
   }
@@ -347,7 +367,7 @@ export function HomeScreen({
         title: t.homeGuidedCooking,
         description: t.homeGuidedCookingSub,
         emphasized: true,
-        onClick: () => router.push("/?mode=coccion&step=cut"),
+        onClick: () => onModeChange("coccion"),
       },
       {
         id: "plan-bbq",
@@ -374,13 +394,14 @@ export function HomeScreen({
         icon: "⏱️",
         title: t.homeLiveCooking,
         description: t.homeLiveCookingSub,
-        onClick: () => router.push(buildLiveUrl({})),
+        onClick: () => router.push(buildLiveUrl({ lang })),
       });
     }
 
     return actions;
   }, [
     hasActiveLivePlan,
+    lang,
     onModeChange,
     router,
     savedMenusCount,
@@ -392,6 +413,7 @@ export function HomeScreen({
     t.homeParrillada,
     t.homeParrilladaSub,
     t.homeSaved,
+    onPopularCutSelect,
   ]);
 
   return (
@@ -436,13 +458,13 @@ export function HomeScreen({
         </div>
       )}
 
-    <div className="mx-auto w-full max-w-2xl space-y-3 overflow-x-hidden sm:space-y-4 lg:max-w-3xl">
+    <div className="mx-auto min-w-0 w-full max-w-2xl space-y-3 overflow-x-hidden pb-4 sm:space-y-4 sm:pb-6 lg:max-w-3xl lg:pb-6">
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <FadeIn>
         <HeroSection
           t={t}
           onStartCooking={(e) =>
-            fireRipple(e.clientX, e.clientY, () => router.push("/?mode=coccion&step=cut"))
+            fireRipple(e.clientX, e.clientY, () => (onPrimaryCtaClick ? onPrimaryCtaClick() : onModeChange("coccion")))
           }
           onPlanBbq={() => onModeChange("plan")}
         />
