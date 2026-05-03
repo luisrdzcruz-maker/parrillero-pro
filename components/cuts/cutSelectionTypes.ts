@@ -221,3 +221,38 @@ export function getResetFiltersLabel(lang?: Lang) {
   if (resolvedLang === "fi") return "Nollaa suodattimet";
   return "Reset filters";
 }
+
+export function getCutSearchPlaceholder(lang?: Lang) {
+  const resolvedLang = resolveLang(lang);
+  if (resolvedLang === "es") return "Buscar corte por nombre...";
+  if (resolvedLang === "fi") return "Hae leikkauksen nimellä...";
+  return "Search by cut name...";
+}
+
+export function getCutSearchAriaLabel(lang?: Lang) {
+  const resolvedLang = resolveLang(lang);
+  if (resolvedLang === "es") return "Buscar entre todos los cortes";
+  if (resolvedLang === "fi") return "Hae kaikista leikkauksista";
+  return "Search all cuts";
+}
+
+export function getCutSearchClearLabel(lang?: Lang) {
+  const resolvedLang = resolveLang(lang);
+  if (resolvedLang === "es") return "Limpiar búsqueda";
+  if (resolvedLang === "fi") return "Tyhjennä haku";
+  return "Clear search";
+}
+
+export function getCutSearchNoResultsTitle(query: string, lang?: Lang) {
+  const resolvedLang = resolveLang(lang);
+  if (resolvedLang === "es") return `No encontramos cortes para "${query}"`;
+  if (resolvedLang === "fi") return `Ei leikkauksia haulle "${query}"`;
+  return `No cuts found for "${query}"`;
+}
+
+export function getCutSearchNoResultsMessage(lang?: Lang) {
+  const resolvedLang = resolveLang(lang);
+  if (resolvedLang === "es") return "Prueba otro nombre, alias o zona del animal.";
+  if (resolvedLang === "fi") return "Kokeile toista nimeä, aliasnimeä tai eläimen aluetta.";
+  return "Try another name, alias, or animal area.";
+}

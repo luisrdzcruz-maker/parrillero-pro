@@ -9,6 +9,7 @@ import { CutMap } from "./CutMap";
 import { CutViewToggle } from "./CutViewToggle";
 import { IntentSelector } from "./IntentSelector";
 import { QuickPicks } from "./QuickPicks";
+import { normalizeCutSearchText, searchCutProfiles } from "./cutSearch";
 import {
   filterCutsByIntent,
   getCategoryLabel,
@@ -21,6 +22,11 @@ import {
   getAllGoalsLabel,
   getAnimalLabel,
   getAnimalLabels,
+  getCutSearchAriaLabel,
+  getCutSearchClearLabel,
+  getCutSearchNoResultsMessage,
+  getCutSearchNoResultsTitle,
+  getCutSearchPlaceholder,
   getClearZoneLabel,
   getCompactAnimalLabel,
   getCurrentSelectionLabel,
@@ -79,6 +85,7 @@ export function CutSelectionScreen({
   const [localSelectedCutId, setLocalSelectedCutId] = useState<string | null>(null);
   const [catalogExpanded, setCatalogExpanded] = useState(false);
   const [viewMode, setViewMode] = useState<CutViewMode>("list");
+  const [searchQuery, setSearchQuery] = useState("");
   const isSelectedCutControlled = selectedCutId !== undefined;
 
   const selectedIntent =
@@ -132,6 +139,17 @@ export function CutSelectionScreen({
     () => getCategoryGroups(animalProfiles, effectiveLang),
     [animalProfiles, effectiveLang],
   );
+  const normalizedSearchQuery = useMemo(() => normalizeCutSearchText(searchQuery), [searchQuery]);
+  const isSearchActive = normalizedSearchQuery.length > 0;
+  const searchedProfiles = useMemo(
+    () => searchCutProfiles(visibleProfiles, searchQuery, { lang: effectiveLang, animalId: selectedAnimal }),
+    [effectiveLang, searchQuery, selectedAnimal, visibleProfiles],
+  );
+  const searchedGroups = useMemo(
+    () => getCategoryGroups(searchedProfiles, effectiveLang),
+    [effectiveLang, searchedProfiles],
+  );
+  const catalogGroups = isSearchActive ? searchedGroups : groupedProfiles;
   const chipAnimalLabel = (animalId: GeneratedAnimalId) => getCompactAnimalLabel(animalId, effectiveLang);
   const activeFilterLabel =
     selectedIntent
@@ -155,8 +173,24 @@ export function CutSelectionScreen({
     if (!onAnimalChange || nextAnimal === selectedAnimal) return;
     setCatalogExpanded(false);
     setViewMode("list");
+    setSearchQuery("");
     handleZoneChange(null);
     onAnimalChange(nextAnimal);
+  };
+  const handleCatalogExpandedChange = (nextExpanded: boolean) => {
+    setCatalogExpanded(nextExpanded);
+    if (!nextExpanded) {
+      setSearchQuery("");
+    }
+  };
+  const handleViewModeChange = (nextMode: CutViewMode) => {
+    setViewMode(nextMode);
+    if (nextMode === "map") {
+      setSearchQuery("");
+    }
+  };
+  const clearSearch = () => {
+    setSearchQuery("");
   };
   const viewAllLabel = getViewAllLabel(totalCutsByAnimal, selectedAnimal, effectiveLang);
   const hideAllLabel = getHideAllLabel(effectiveLang);
@@ -214,7 +248,7 @@ export function CutSelectionScreen({
             />
             <button
               type="button"
-              onClick={() => setCatalogExpanded((prev) => !prev)}
+              onClick={() => handleCatalogExpandedChange(!catalogExpanded)}
               className="w-full rounded-2xl border border-white/15 bg-white/[0.04] px-4 py-3 text-left text-sm font-black text-zinc-100 transition hover:border-orange-300/45 hover:bg-orange-500/10 active:scale-[0.99]"
               aria-expanded={catalogExpanded}
             >
@@ -224,7 +258,7 @@ export function CutSelectionScreen({
             {catalogExpanded && (
               <div className="space-y-3">
                 <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
-                  <CutViewToggle lang={effectiveLang} value={viewMode} onChange={setViewMode} />
+                  <CutViewToggle lang={effectiveLang} value={viewMode} onChange={handleViewModeChange} />
                   {selectedZone && (
                     <button
                       type="button"
@@ -235,6 +269,32 @@ export function CutSelectionScreen({
                     </button>
                   )}
                 </div>
+                {viewMode === "list" && (
+                  <div className="relative">
+                    <label htmlFor="cut-search-input" className="sr-only">
+                      {getCutSearchAriaLabel(effectiveLang)}
+                    </label>
+                    <input
+                      id="cut-search-input"
+                      type="search"
+                      value={searchQuery}
+                      onChange={(event) => setSearchQuery(event.target.value)}
+                      placeholder={getCutSearchPlaceholder(effectiveLang)}
+                      aria-label={getCutSearchAriaLabel(effectiveLang)}
+                      className="h-11 w-full rounded-2xl border border-white/15 bg-black/35 px-4 pr-12 text-sm font-semibold text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-orange-300/60 focus:ring-2 focus:ring-orange-400/30"
+                    />
+                    {isSearchActive && (
+                      <button
+                        type="button"
+                        onClick={clearSearch}
+                        aria-label={getCutSearchClearLabel(effectiveLang)}
+                        className="absolute right-1.5 top-1/2 flex h-8 min-w-8 -translate-y-1/2 items-center justify-center rounded-full border border-orange-400/25 bg-orange-500/12 px-2 text-xs font-black text-orange-200 transition hover:bg-orange-500/20 active:scale-[0.97]"
+                      >
+                        &#10005;
+                      </button>
+                    )}
+                  </div>
+                )}
 
                 {viewMode === "map" && (
                   <CutMap
@@ -244,14 +304,32 @@ export function CutSelectionScreen({
                     onZoneChange={handleZoneChange}
                   />
                 )}
-                <CutList
-                  groups={groupedProfiles}
-                  lang={effectiveLang}
-                  selectedCutId={selectedProfile?.id}
-                  hasActiveFilters={hasActiveFilters}
-                  onResetFilters={handleResetFilters}
-                  onSelect={handleProfileChange}
-                />
+                {isSearchActive && catalogGroups.length === 0 ? (
+                  <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-6 text-center">
+                    <p className="text-lg font-black tracking-tight text-white">
+                      {getCutSearchNoResultsTitle(searchQuery.trim(), effectiveLang)}
+                    </p>
+                    <p className="mx-auto mt-2 max-w-sm text-sm font-semibold leading-6 text-zinc-500">
+                      {getCutSearchNoResultsMessage(effectiveLang)}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={clearSearch}
+                      className="mt-5 rounded-full border border-orange-400/30 bg-orange-500/10 px-5 py-3 text-xs font-black text-orange-200 transition hover:bg-orange-500/15 active:scale-[0.97]"
+                    >
+                      {getCutSearchClearLabel(effectiveLang)}
+                    </button>
+                  </div>
+                ) : (
+                  <CutList
+                    groups={catalogGroups}
+                    lang={effectiveLang}
+                    selectedCutId={selectedProfile?.id}
+                    hasActiveFilters={hasActiveFilters && !isSearchActive}
+                    onResetFilters={handleResetFilters}
+                    onSelect={handleProfileChange}
+                  />
+                )}
               </div>
             )}
 
