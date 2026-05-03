@@ -54,7 +54,7 @@ export function CutBottomSheet({ profile, lang, onClose, onStartCooking }: CutBo
 
   return (
     <>
-      <aside className="fixed inset-x-0 bottom-0 z-50 mx-auto flex w-full max-w-3xl items-end px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-4 md:hidden">
+      <aside className="fixed inset-x-0 bottom-0 z-[80] mx-auto flex w-full max-w-3xl items-end px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-4 md:hidden">
         <CutDetailContent
           profile={profile}
           lang={effectiveLang}
