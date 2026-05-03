@@ -2,7 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { LivePhase } from "@/components/live/TimerDial";
-import { getLiveText, type SurfaceLang } from "@/lib/i18n/surfaceFallbacks";
+import {
+  getLiveText,
+  localizeLiveStepName,
+  localizeLiveZoneLabel,
+  sanitizeLiveInstructionCopy,
+  type SurfaceLang,
+} from "@/lib/i18n/surfaceFallbacks";
 
 export type LiveZone = "direct" | "indirect" | "rest";
 export type UrgencyLevel = "normal" | "attention" | "critical";
@@ -68,19 +74,19 @@ export function normalizeLiveZone(zone?: string | null): LiveZone {
 
 function pickStepName(step: LiveStep, lang: SurfaceLang) {
   const text = getLiveText(lang);
-  return step.label.trim() || text.nextStep;
+  return localizeLiveStepName(step.label.trim() || text.nextStep, lang);
 }
 
 function pickInstructions(step: LiveStep, lang: SurfaceLang) {
-  return (
+  const rawValue =
     step.notes?.trim() ||
     step.label.trim() ||
     (lang === "es"
       ? "Manten calor estable y avanza al terminar este paso."
       : lang === "fi"
         ? "Pidä lämpö tasaisena ja jatka, kun vaihe on valmis."
-        : "Keep heat stable and move when this step is done.")
-  );
+        : "Keep heat stable and move when this step is done.");
+  return sanitizeLiveInstructionCopy(rawValue, lang);
 }
 
 function safeDuration(value: number) {
@@ -123,7 +129,7 @@ function buildLiveStepStates(
       name: pickStepName(step, lang),
       duration,
       zone: normalizeLiveZone(step.zone),
-      displayZone: step.zone?.trim() || "",
+      displayZone: localizeLiveZoneLabel(step.zone?.trim() || "", lang),
       instructions: pickInstructions(step, lang),
       tempTarget: step.tempTarget ?? null,
       isActive,

@@ -212,41 +212,49 @@ type SetupOverlayChip = {
   tone: "direct" | "indirect" | "neutral";
 };
 
-function getSetupOverlayChips(setup?: SetupType): SetupOverlayChip[] {
+function getSetupOverlayChips(setup: SetupType | undefined, lang: "es" | "en" | "fi"): SetupOverlayChip[] {
   const normalizedSetup = normalizeSetupText(setup).replace(/[_\s]+/g, "-");
+  const labels = {
+    indirect: lang === "es" ? "❄️ Indirecto" : lang === "fi" ? "❄️ Epasuora" : "❄️ Indirect",
+    finalSear: lang === "es" ? "Sellado final" : lang === "fi" ? "Lopullinen ruskistus" : "Final sear",
+    lowHeat: lang === "es" ? "Baja temperatura" : lang === "fi" ? "Matala lampo" : "Low heat",
+    twoZones: lang === "es" ? "2 zonas" : lang === "fi" ? "2 vyohyketta" : "2 zones",
+    mixZone: lang === "es" ? "🔥 Directo + ❄️ Indirecto" : lang === "fi" ? "🔥 Suora + ❄️ Epasuora" : "🔥 Direct + ❄️ Indirect",
+    direct: lang === "es" ? "🔥 Directo" : lang === "fi" ? "🔥 Suora" : "🔥 Direct",
+  };
 
   if (normalizedSetup === "reverse-sear") {
     return [
-      { label: "❄️ Indirecto", tone: "indirect" },
-      { label: "Sellado final", tone: "direct" },
+      { label: labels.indirect, tone: "indirect" },
+      { label: labels.finalSear, tone: "direct" },
     ];
   }
 
   if (normalizedSetup === "low-slow" || normalizedSetup === "low-and-slow") {
     return [
-      { label: "❄️ Indirecto", tone: "indirect" },
-      { label: "Baja temperatura", tone: "neutral" },
+      { label: labels.indirect, tone: "indirect" },
+      { label: labels.lowHeat, tone: "neutral" },
     ];
   }
 
   if (normalizedSetup === "two-zone") {
     return [
-      { label: "🔥 Directo + ❄️ Indirecto", tone: "neutral" },
-      { label: "2 zonas", tone: "neutral" },
+      { label: labels.mixZone, tone: "neutral" },
+      { label: labels.twoZones, tone: "neutral" },
     ];
   }
 
   if (normalizedSetup === "indirect" || normalizedSetup === "indirecto") {
-    return [{ label: "❄️ Indirecto", tone: "indirect" }];
+    return [{ label: labels.indirect, tone: "indirect" }];
   }
 
   if (normalizedSetup === "direct" || normalizedSetup === "direct-heat" || normalizedSetup === "directo") {
-    return [{ label: "🔥 Directo", tone: "direct" }];
+    return [{ label: labels.direct, tone: "direct" }];
   }
 
   return [
-    { label: "🔥 Directo + ❄️ Indirecto", tone: "neutral" },
-    { label: "2 zonas", tone: "neutral" },
+    { label: labels.mixZone, tone: "neutral" },
+    { label: labels.twoZones, tone: "neutral" },
   ];
 }
 
@@ -318,7 +326,7 @@ function SetupVisualToggle({
         : "Heat zones and suggested flow";
   const hideLabel = lang === "es" ? "Ocultar" : lang === "fi" ? "Piilota" : "Hide";
   const viewLabel = lang === "es" ? "Ver →" : lang === "fi" ? "Nayta →" : "View →";
-  const overlayChips = getSetupOverlayChips(detectedSetup);
+  const overlayChips = getSetupOverlayChips(detectedSetup, lang);
 
   if (!isSetupCard(title)) return null;
 

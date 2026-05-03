@@ -44,7 +44,7 @@ export default function LiveHeader({
           onClick={onBack}
           className="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-bold text-white/55 transition active:scale-[0.97]"
         >
-          {lang === "es" ? "Plan" : lang === "fi" ? "Suunnitelma" : "Plan"}
+          {text.plan}
         </button>
       )}
 

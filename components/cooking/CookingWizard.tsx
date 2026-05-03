@@ -1243,7 +1243,7 @@ export function ResultCards({
     if (typeof window === "undefined" || !navigator.clipboard) return;
 
     navigator.clipboard.writeText(buildText(blocks));
-    alert(lang === "es" ? "Copiado" : "Copied");
+    alert(lang === "es" ? "Copiado" : lang === "fi" ? "Kopioitu" : "Copied");
   }
 
   function shareWhatsApp() {
@@ -1273,10 +1273,15 @@ export function ResultCards({
         summary={resultSummary}
         t={{
           copy: t.copy,
-          save: lang === "es" ? "Guardar" : "Save",
-          saving: lang === "es" ? "Guardando..." : "Saving...",
-          share: lang === "es" ? "Compartir" : "Share",
-          startCooking: lang === "es" ? "Empezar Live Cooking" : "Start Live Cooking",
+          save: lang === "es" ? "Guardar" : lang === "fi" ? "Tallenna" : "Save",
+          saving: lang === "es" ? "Guardando..." : lang === "fi" ? "Tallennetaan..." : "Saving...",
+          share: lang === "es" ? "Compartir" : lang === "fi" ? "Jaa" : "Share",
+          startCooking:
+            lang === "es"
+              ? "Iniciar coccion en vivo"
+              : lang === "fi"
+                ? "Aloita live-kypsennys"
+                : "Start Live Cooking",
         }}
       />
 

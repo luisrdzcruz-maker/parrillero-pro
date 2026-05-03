@@ -150,8 +150,8 @@ function buildStepNotes(input: LiveCookingInputSnapshot, setupText: string, time
     `${input.doneness} · ${input.thickness} cm`,
   ].join(" | ");
 
-  const setupLabel = input.lang === "es" ? "Setup" : input.lang === "fi" ? "Asetus" : "Setup";
-  const timelineLabel = input.lang === "es" ? "Timeline" : input.lang === "fi" ? "Aikajana" : "Timeline";
+  const setupLabel = input.lang === "es" ? "Configuracion" : input.lang === "fi" ? "Asetus" : "Setup";
+  const timelineLabel = input.lang === "es" ? "Cronograma" : input.lang === "fi" ? "Aikajana" : "Timeline";
   const setup = setupText ? `${setupLabel}: ${setupText}` : "";
   const timeline = timelineText ? `${timelineLabel}: ${timelineText}` : "";
 

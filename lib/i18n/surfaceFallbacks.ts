@@ -14,6 +14,16 @@ function isLikelyEnglish(value: string) {
   );
 }
 
+function isLikelyInternalDescriptor(value: string) {
+  const normalized = normalizeText(value);
+  return (
+    /\bfailing to render the cap fat side first\b/.test(normalized) ||
+    /\b(overcook(?:ing)?|lean eye|fat renders|pink core|fat rim|thin crust|low chew|firm beef bite|buttery soft bite)\b/.test(
+      normalized,
+    )
+  );
+}
+
 export function getDetailsSetupLabels(lang: SurfaceLang) {
   if (lang === "es") {
     return {
@@ -37,15 +47,7 @@ export function getDetailsSetupLabels(lang: SurfaceLang) {
 
 export function sanitizeCriticalErrorCopy(value: string, lang: SurfaceLang) {
   if (lang === "en") return value;
-
-  const normalized = normalizeText(value);
-  const looksInternal =
-    /\bfailing to render the cap fat side first\b/.test(normalized) ||
-    /\b(overcook(?:ing)?|lean eye|fat renders|pink core|fat rim|thin crust|low chew|firm beef bite|buttery soft bite)\b/.test(
-      normalized,
-    );
-
-  if (!looksInternal) return value;
+  if (!isLikelyInternalDescriptor(value)) return value;
   if (lang === "es") return "Evita sobrecocinar el centro antes de terminar el dorado exterior.";
   return "Valta ylikypsentamasta keskiosaa ennen kuin pinta on valmis.";
 }
@@ -83,6 +85,14 @@ export function localizeLiveStepEntry(entry: string, lang: SurfaceLang) {
       : "Esilamita grilli: rakenna suora alue ja viileampi varavyohyke.";
   }
 
+  if (/\bsear\s+side\s*1\b/.test(normalized)) {
+    return lang === "es" ? "Sellar lado 1: marca costra sin mover la pieza." : "Ruskista puoli 1: tee paistopinta liikuttamatta lihaa.";
+  }
+
+  if (/\bsear\s+side\s*2\b/.test(normalized)) {
+    return lang === "es" ? "Sellar lado 2: iguala color y termina la costra." : "Ruskista puoli 2: tasaa vari ja viimeistele paistopinta.";
+  }
+
   if (normalized.includes("mark step done")) {
     return lang === "es" ? "Marca el paso como completado." : "Merkitse vaihe valmiiksi.";
   }
@@ -91,12 +101,86 @@ export function localizeLiveStepEntry(entry: string, lang: SurfaceLang) {
   return "Jatka hallitulla lampotilalla ja varmista kypsyys ennen seuraavaa vaihetta.";
 }
 
+export function localizeLiveStepName(name: string, lang: SurfaceLang) {
+  if (lang === "en") return name;
+  const normalized = normalizeText(name);
+
+  if (normalized.includes("preheat grill")) {
+    return lang === "es" ? "Precalentar parrilla" : "Esilamita grilli";
+  }
+  if (/\bsear\s+side\s*1\b/.test(normalized)) {
+    return lang === "es" ? "Sellar lado 1" : "Ruskista puoli 1";
+  }
+  if (/\bsear\s+side\s*2\b/.test(normalized)) {
+    return lang === "es" ? "Sellar lado 2" : "Ruskista puoli 2";
+  }
+  if (normalized.includes("rest")) {
+    return lang === "es" ? "Reposar" : "Lepuuta";
+  }
+  if (!isLikelyEnglish(name)) return name;
+  return lang === "es" ? "Paso de coccion" : "Kypsennysvaihe";
+}
+
+export function sanitizeLiveInstructionCopy(value: string, lang: SurfaceLang) {
+  if (lang === "en") return value;
+  const normalized = normalizeText(value);
+  if (!isLikelyEnglish(value) && !isLikelyInternalDescriptor(value)) return value;
+
+  if (normalized.includes("do not press the meat")) {
+    return lang === "es"
+      ? "No presiones la carne para mantener los jugos."
+      : "Ala paina lihaa, jotta nesteet eivat karkaa.";
+  }
+  if (normalized.includes("preheat grill")) {
+    return lang === "es"
+      ? "Precalienta la parrilla y prepara una zona directa con zona de seguridad."
+      : "Esilamita grilli ja valmistele suora alue seka viileampi varavyohyke.";
+  }
+  if (/\bsear\s+side\s*1\b/.test(normalized)) {
+    return lang === "es"
+      ? "Sella el lado 1 sin mover la pieza hasta formar costra."
+      : "Ruskista puoli 1 liikuttamatta lihaa, kunnes paistopinta muodostuu.";
+  }
+  if (/\bsear\s+side\s*2\b/.test(normalized)) {
+    return lang === "es"
+      ? "Sella el lado 2 y equilibra el color exterior."
+      : "Ruskista puoli 2 ja tasaa ulkopinnan vari.";
+  }
+  if (isLikelyInternalDescriptor(value)) {
+    return lang === "es"
+      ? "Evita sobrecocinar el centro antes de terminar el dorado."
+      : "Valta ylikypsentamasta keskiosaa ennen paistopinnan viimeistelya.";
+  }
+  return lang === "es"
+    ? "Sigue este paso con fuego controlado y verifica el punto antes de avanzar."
+    : "Jatka hallitulla lammolla ja varmista kypsyys ennen seuraavaa vaihetta.";
+}
+
+export function localizeLiveZoneLabel(value: string, lang: SurfaceLang) {
+  const normalized = normalizeText(value);
+  const text = getLiveText(lang);
+  if (normalized.includes("rest") || normalized.includes("repos") || normalized.includes("serv")) {
+    return text.zoneRest;
+  }
+  if (normalized.includes("indirect") || normalized.includes("epasuor")) {
+    return text.zoneIndirect;
+  }
+  return text.zoneDirect;
+}
+
 export function getLiveText(lang: SurfaceLang) {
   if (lang === "es") {
     return {
+      plan: "Plan",
       noStepsTitle: "No hay pasos de cocina disponibles",
       noStepsBody: "Vuelve al plan y genera una coccion nueva.",
       backToPlan: "Volver al plan",
+      upNext: "Sigue",
+      done: "Listo",
+      timeRemaining: "Tiempo restante",
+      manualStep: "Paso manual",
+      followAction: "Sigue la accion",
+      advanceWhenDone: "Avanza cuando este paso termine.",
       cookingComplete: "Coccion completada",
       cookingCompleteBody: "Corta, sirve y disfruta.",
       saveCook: "Guardar esta coccion",
@@ -130,9 +214,16 @@ export function getLiveText(lang: SurfaceLang) {
 
   if (lang === "fi") {
     return {
+      plan: "Suunnitelma",
       noStepsTitle: "Live-vaiheita ei ole saatavilla",
       noStepsBody: "Palaa suunnitelmaan ja luo uusi kypsennys.",
       backToPlan: "Takaisin suunnitelmaan",
+      upNext: "Seuraavaksi",
+      done: "Valmis",
+      timeRemaining: "Aikaa jaljella",
+      manualStep: "Manuaalinen vaihe",
+      followAction: "Seuraa toimintoa",
+      advanceWhenDone: "Jatka, kun tama vaihe on valmis.",
       cookingComplete: "Kypsennys valmis",
       cookingCompleteBody: "Leikkaa, tarjoile ja nauti.",
       saveCook: "Tallenna tama kypsennys",
@@ -165,9 +256,16 @@ export function getLiveText(lang: SurfaceLang) {
   }
 
   return {
+    plan: "Plan",
     noStepsTitle: "No live steps available",
     noStepsBody: "Return to the plan and start again.",
     backToPlan: "Back to plan",
+    upNext: "Up next",
+    done: "Done",
+    timeRemaining: "Time remaining",
+    manualStep: "Manual step",
+    followAction: "Follow the action",
+    advanceWhenDone: "Advance when this step is done.",
     cookingComplete: "Cooking complete",
     cookingCompleteBody: "Slice, serve, enjoy.",
     saveCook: "Save this cook",

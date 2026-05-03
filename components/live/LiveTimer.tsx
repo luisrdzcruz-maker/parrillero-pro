@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { UrgencyLevel } from "@/hooks/useLiveCooking";
 import type { LivePhase } from "./TimerDial";
+import { getLiveText, type SurfaceLang } from "@/lib/i18n/surfaceFallbacks";
 
 function formatTime(seconds: number): string {
   const safeSeconds = Math.max(0, Math.round(seconds));
@@ -30,6 +31,7 @@ type Props = {
   remainingTime: number;
   progress: number;
   phase: LivePhase;
+  lang?: SurfaceLang;
   reduceMotion?: boolean;
   urgency: UrgencyLevel;
   children?: ReactNode;
@@ -40,10 +42,12 @@ export default function LiveTimer({
   remainingTime,
   progress,
   phase,
+  lang = "en",
   reduceMotion = false,
   urgency,
   children,
 }: Props) {
+  const liveText = getLiveText(lang);
   const hasTimer = duration > 0;
   const isAttention = hasTimer && remainingTime <= 15 && phase !== "idle" && phase !== "complete";
   const isCritical = hasTimer && remainingTime <= 5 && phase !== "idle" && phase !== "complete";
@@ -52,9 +56,9 @@ export default function LiveTimer({
   if (!hasTimer) {
     return (
       <section className="rounded-[1.35rem] border border-white/[0.07] bg-white/[0.035] px-4 py-3.5 text-center">
-        <p className="text-[9px] font-black uppercase tracking-[0.24em] text-white/30">Manual step</p>
-        <p className="mt-1 text-[clamp(1.8rem,9vw,2.7rem)] font-black leading-none text-white">Follow the action</p>
-        <p className="mt-1 text-xs font-semibold text-white/42">Advance when this step is done.</p>
+        <p className="text-[9px] font-black uppercase tracking-[0.24em] text-white/30">{liveText.manualStep}</p>
+        <p className="mt-1 text-[clamp(1.8rem,9vw,2.7rem)] font-black leading-none text-white">{liveText.followAction}</p>
+        <p className="mt-1 text-xs font-semibold text-white/42">{liveText.advanceWhenDone}</p>
         {children && <div className="mt-2.5">{children}</div>}
       </section>
     );
@@ -71,7 +75,7 @@ export default function LiveTimer({
       } ${isAttention && !reduceMotion ? "animate-pulse" : ""}`}
     >
       <p className="text-[9px] font-black uppercase tracking-[0.24em] text-white/32">
-        {phase === "complete" ? "Done" : "Time remaining"}
+        {phase === "complete" ? liveText.done : liveText.timeRemaining}
       </p>
       <p
         className={`mt-1 font-mono font-black leading-none tabular-nums tracking-[-0.08em] transition-all duration-200 ${

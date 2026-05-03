@@ -341,6 +341,7 @@ export default function LiveCookingScreen({
             remainingTime={currentStep.remainingTime}
             progress={currentStep.progress}
             phase={phase}
+            lang={lang ?? "en"}
             reduceMotion={reduceMotion}
             urgency={urgency}
           >
@@ -367,7 +368,7 @@ export default function LiveCookingScreen({
 
         {!isComplete && nextStep && (
           <div className="shrink-0">
-            <LiveNextStepPreview nextStep={nextStep} />
+            <LiveNextStepPreview nextStep={nextStep} lang={lang ?? "en"} />
           </div>
         )}
 
