@@ -159,10 +159,10 @@ export function CutSelectionScreen({
   const hideAllLabel = getHideAllLabel(effectiveLang);
 
   return (
-    <main className="relative min-h-full w-full max-w-full overflow-x-hidden bg-[#030201] text-white">
+    <main className="relative min-h-full w-full max-w-full overflow-hidden bg-[#030201] text-white">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -left-40 -top-40 h-[320px] w-[320px] rounded-full bg-orange-500/14 blur-[110px]" />
-        <div className="absolute right-[-180px] top-16 h-[280px] w-[280px] rounded-full bg-red-600/10 blur-[120px]" />
+        <div className="absolute right-[-120px] top-16 h-[280px] w-[280px] rounded-full bg-red-600/10 blur-[120px]" />
       </div>
 
       <section className="relative mx-auto flex min-h-full w-full max-w-5xl flex-col px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-2 sm:px-6 lg:pb-36">

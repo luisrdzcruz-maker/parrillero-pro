@@ -4,8 +4,18 @@ html,
 body {
   margin: 0;
   padding: 0;
+  width: 100%;
+  max-width: 100%;
   min-height: 100%;
+  overflow-x: hidden;
   background: #020617;
+}
+
+@supports (overflow: clip) {
+  html,
+  body {
+    overflow-x: clip;
+  }
 }
 
 /* ── Fire ambient animations ── */
