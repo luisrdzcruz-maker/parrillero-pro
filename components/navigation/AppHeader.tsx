@@ -147,11 +147,11 @@ export function BottomNavigation({
   return (
     <nav
       aria-hidden={disabled}
-      className={`w-full max-w-full overflow-x-hidden px-2 pb-[max(0.7rem,env(safe-area-inset-bottom))] pt-1.5 lg:hidden ${
-        disabled ? "pointer-events-none opacity-0" : ""
+      className={`fixed inset-x-0 bottom-0 z-[70] w-full max-w-full overflow-x-hidden px-2 pb-[max(0.7rem,env(safe-area-inset-bottom))] pt-1.5 transition-opacity lg:hidden ${
+        disabled ? "pointer-events-none opacity-0" : "pointer-events-none opacity-100"
       }`}
     >
-      <div className="mx-auto grid w-full max-w-[448px] min-w-0 grid-cols-5 items-center gap-0.5 overflow-hidden rounded-[2rem] border border-white/10 bg-black/70 p-1.5 shadow-2xl shadow-black/60 backdrop-blur-xl">
+      <div className="pointer-events-auto mx-auto grid w-full max-w-[448px] min-w-0 grid-cols-5 items-center gap-0.5 overflow-hidden rounded-[2rem] border border-white/10 bg-black/70 p-1.5 shadow-2xl shadow-black/60 backdrop-blur-xl">
         <Tab
           active={mode === "inicio"}
           label={t.start}
