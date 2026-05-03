@@ -57,6 +57,7 @@ import {
   shouldShowThickness,
 } from "@/lib/cookingRules";
 import { ds } from "@/lib/design-system";
+import { sanitizeCriticalErrorCopy } from "@/lib/i18n/surfaceFallbacks";
 import { texts, type Lang } from "@/lib/i18n/texts";
 import {
   buildLiveStepsFromPayload,
@@ -239,7 +240,9 @@ function getCutName(cut: ProductCut, lang: Lang) {
 }
 
 function getCutDescription(cut: ProductCut, lang: Lang) {
-  return cut.notes?.[catalogLang(lang)] ?? cut.error[engineLang(lang)] ?? "";
+  const localizedNote = cut.notes?.[catalogLang(lang)];
+  if (localizedNote) return localizedNote;
+  return sanitizeCriticalErrorCopy(cut.error[engineLang(lang)] ?? "", lang);
 }
 
 function getCutItems(animal: AnimalLabel, lang: Lang): CutItem[] {

@@ -14,6 +14,7 @@ import LiveStepCard from "./LiveStepCard";
 import LiveTimeline from "./LiveTimeline";
 import LiveTimer from "./LiveTimer";
 import type { LivePhase } from "./TimerDial";
+import { getLiveText } from "@/lib/i18n/surfaceFallbacks";
 
 export type { LiveCookingStepState, LiveStep, LiveZone } from "@/hooks/useLiveCooking";
 
@@ -168,7 +169,9 @@ export default function LiveCookingScreen({
     remaining,
     paused,
     started: hasStarted,
+    lang: lang ?? "en",
   });
+  const liveText = getLiveText(lang ?? "en");
   const fallbackContext = useMemo(() => {
     const safeAnimal = liveUrlState.animal || "Vacuno";
     const parts = [
@@ -193,7 +196,7 @@ export default function LiveCookingScreen({
       ? Math.max(0, Math.min(1, (currentStepIndex + (currentStep?.progress ?? 0)) / allSteps.length))
       : 0;
   const overallProgressPct = `${Math.round(overallProgress * 100)}%`;
-  const ctaUrgency = ctaLabel === "Mark step done" && urgency === "normal" ? "normal" : urgency;
+  const ctaUrgency = ctaLabel === liveText.markDone && urgency === "normal" ? "normal" : urgency;
   const shouldPulseCta = !reduceMotion && (urgency === "attention" || urgency === "critical");
   const dotClass = reduceMotion ? DOT_CLASS[phase].replace("animate-pulse ", "") : DOT_CLASS[phase];
 
@@ -246,7 +249,7 @@ export default function LiveCookingScreen({
   }, [currentStep, reduceMotion]);
 
   function handleBack() {
-    if (hasStarted && hasTimer && !paused && !isComplete && !window.confirm("Cooking in progress - leave?")) {
+    if (hasStarted && hasTimer && !paused && !isComplete && !window.confirm(liveText.leaveConfirm)) {
       return;
     }
     onBack?.();
@@ -290,15 +293,15 @@ export default function LiveCookingScreen({
   if (!currentStep) {
     return (
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center bg-[#020202] px-6 text-center text-white">
-        <p className="text-2xl font-black">No live steps available</p>
-        <p className="mt-2 text-sm font-semibold text-white/45">Return to the plan and start again.</p>
+        <p className="text-2xl font-black">{liveText.noStepsTitle}</p>
+        <p className="mt-2 text-sm font-semibold text-white/45">{liveText.noStepsBody}</p>
         {onBack && (
           <button
             type="button"
             onClick={onBack}
             className="mt-6 rounded-2xl bg-orange-500 px-5 py-3 text-sm font-black text-black"
           >
-            Back to plan
+            {liveText.backToPlan}
           </button>
         )}
       </div>
@@ -317,7 +320,7 @@ export default function LiveCookingScreen({
         currentIndex={currentStepIndex}
         currentStep={currentStep}
         dotClass={dotClass}
-        isEs={lang === "es"}
+        lang={lang ?? "en"}
         onBack={onBack ? handleBack : undefined}
         onEnableAlerts={onEnableAlerts}
         overallProgressPct={overallProgressPct}
@@ -343,7 +346,7 @@ export default function LiveCookingScreen({
           >
             <LiveTimeline
               currentIndex={currentStepIndex}
-              isEs={lang === "es"}
+              lang={lang ?? "en"}
               onGoToStep={handleGoToStep}
               phase={phase}
               steps={allSteps}
@@ -372,10 +375,10 @@ export default function LiveCookingScreen({
           <div className="shrink-0 space-y-2">
             <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-center">
               <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-400">
-                Cooking complete
+                {liveText.cookingComplete}
               </p>
               <p className="mt-1 text-xs font-semibold text-white/60">
-                Slice, serve, enjoy.
+                {liveText.cookingCompleteBody}
               </p>
             </div>
 
@@ -394,8 +397,8 @@ export default function LiveCookingScreen({
                 }`}
               >
                 {saveState === "saved"
-                  ? "Saved"
-                  : "Save this cook"}
+                  ? liveText.savedCook
+                  : liveText.saveCook}
               </button>
             )}
           </div>
@@ -412,7 +415,7 @@ export default function LiveCookingScreen({
                 onClick={onReset}
                 className="shrink-0 px-2 py-1 text-[10px] font-bold text-white/18 transition hover:text-white/38 active:scale-[0.98]"
               >
-                Reset
+                {liveText.reset}
               </button>
             )}
           </div>

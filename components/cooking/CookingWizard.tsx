@@ -8,6 +8,7 @@ import { getInputProfileForCut } from "@/lib/cooking/inputProfiles";
 import { getCutById } from "@/lib/cookingRules";
 import { Badge, Button, Section } from "@/components/ui";
 import { ds } from "@/lib/design-system";
+import { getDetailsSetupLabels } from "@/lib/i18n/surfaceFallbacks";
 import type { AppText, Lang } from "@/lib/i18n/texts";
 import type { Doneness } from "@/lib/types/domain";
 import {
@@ -726,10 +727,10 @@ function getDetailsHeroBadge({
   showDoneness: boolean;
   showWeightPreset: boolean;
 }) {
-  if (showWeightPreset) return lang === "es" ? "Corte crítico" : "Critical cut";
-  if (showAdvancedExactThickness) return lang === "es" ? "Control fino" : "Fine control";
-  if (showDoneness) return lang === "es" ? "Alta precisión" : "High precision";
-  return lang === "es" ? "Control fino" : "Fine control";
+  if (showWeightPreset) return lang === "es" ? "Corte critico" : lang === "fi" ? "Tarkea leikkaus" : "Critical cut";
+  if (showAdvancedExactThickness) return lang === "es" ? "Control fino" : lang === "fi" ? "Tarkka hallinta" : "Fine control";
+  if (showDoneness) return lang === "es" ? "Alta precision" : lang === "fi" ? "Korkea tarkkuus" : "High precision";
+  return lang === "es" ? "Control fino" : lang === "fi" ? "Tarkka hallinta" : "Fine control";
 }
 
 function CookingDetailsHero({
@@ -748,7 +749,9 @@ function CookingDetailsHero({
   const fallbackTip =
     lang === "es"
       ? "Fuego y tiempos ajustados a este corte."
-      : "Heat and timing tuned to this cut.";
+      : lang === "fi"
+        ? "Lampo ja ajoitus on viritetty talle leikkaukselle."
+        : "Heat and timing tuned to this cut.";
 
   return (
     <div className="animate-live-enter relative overflow-hidden rounded-[1.75rem] border border-orange-300/15 bg-zinc-950 shadow-[0_22px_70px_rgba(0,0,0,0.45)] ring-1 ring-inset ring-white/[0.04] sm:rounded-[2rem]">
@@ -965,10 +968,11 @@ function CookingDetailsStep({
     showDoneness,
     showWeightPreset,
   });
-  const measurementsTitle = lang === "es" ? "Tamaño y peso" : "Size and weight";
-  const cookingTitle = lang === "es" ? "Punto y equipo" : "Doneness and gear";
+  const measurementsTitle = lang === "es" ? "Tamano y peso" : lang === "fi" ? "Koko ja paino" : "Size and weight";
+  const cookingTitle = lang === "es" ? "Punto y equipo" : lang === "fi" ? "Kypsyys ja valine" : "Doneness and gear";
   const hasMeasurementFields =
     showSizePreset || showWeightRange || showWeightPreset || showVegetableFormat || showAdvancedExactThickness;
+  const detailsSetupText = getDetailsSetupLabels(lang);
 
   return (
     <section className="relative mx-auto max-w-4xl animate-[fadeIn_220ms_ease-out] space-y-2.5 pt-1 sm:space-y-4">
@@ -987,10 +991,10 @@ function CookingDetailsStep({
           <div className="flex items-end justify-between gap-3">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-200/75">
-                {lang === "es" ? "Configuración" : "Cooking setup"}
+                {detailsSetupText.section}
               </p>
               <h2 className="mt-1 text-xl font-black tracking-tight text-white">
-                {lang === "es" ? "Ajusta los detalles" : "Adjust details"}
+                {detailsSetupText.title}
               </h2>
             </div>
             <div className="hidden rounded-full border border-orange-300/20 bg-orange-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-orange-200 sm:block">

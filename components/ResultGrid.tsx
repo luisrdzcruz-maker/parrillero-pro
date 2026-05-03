@@ -12,6 +12,7 @@ import {
   type SetupType,
 } from "@/lib/setupVisualMap";
 import { formatTitle, getGrillManagerLineClass, getShoppingItems } from "@/lib/uiHelpers";
+import { sanitizeCriticalErrorCopy, sanitizeSetupSummaryCopy } from "@/lib/i18n/surfaceFallbacks";
 import ResultCard from "@/components/ResultCard";
 import ResultTimeline from "./ResultTimeline";
 
@@ -226,8 +227,8 @@ function SetupVisualAnchor({
   const detectedSetup = setup ?? detectSetupFromText(content);
   const setupImage = getSetupVisual(setupEquipment, detectedSetup);
   const overlayChips = getSetupOverlayChips(detectedSetup);
-  const setupLine = compactSummaryValue(content);
-  const isEnglish = lang === "en";
+  const setupLine = sanitizeSetupSummaryCopy(compactSummaryValue(content), lang, equipment);
+  const setupVisualLabel = lang === "es" ? "Visual de setup" : lang === "fi" ? "Setup-kuva" : "Setup visual";
 
   return (
     <section className="relative col-span-full overflow-hidden rounded-[2rem] border border-orange-300/20 bg-slate-950 shadow-2xl shadow-black/30 ring-1 ring-inset ring-white/[0.04]">
@@ -250,7 +251,7 @@ function SetupVisualAnchor({
 
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950 via-slate-950/82 to-transparent p-4 pt-16 sm:p-5 sm:pt-20">
         <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300/90">
-          {isEnglish ? "Setup visual" : "Setup visual"}
+          {setupVisualLabel}
         </p>
         <p className="mt-1 line-clamp-2 max-w-2xl text-sm font-semibold leading-relaxed text-white">
           {setupLine}
@@ -321,7 +322,8 @@ function ShoppingListCard({
   setCheckedItems: (value: Record<string, boolean>) => void;
 }) {
   const items = getShoppingItems(content);
-  const isEnglish = lang === "en";
+  const checklistLabel = lang === "es" ? "Checklist" : lang === "fi" ? "Tarkistuslista" : "Checklist";
+  const itemsLabel = lang === "es" ? "items" : lang === "fi" ? "tuotetta" : "items";
 
   return (
     <div
@@ -333,13 +335,13 @@ function ShoppingListCard({
           <div className={ds.media.iconBox}>🛒</div>
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-emerald-300">
-              {isEnglish ? "Checklist" : "Checklist"}
+              {checklistLabel}
             </p>
             <h3 className="mt-1 text-sm font-semibold tracking-wide text-white">{title}</h3>
           </div>
         </div>
         <Badge className="w-fit font-medium" tone="glass">
-          {items.length} {isEnglish ? "items" : "items"}
+          {items.length} {itemsLabel}
         </Badge>
       </div>
 
@@ -377,7 +379,12 @@ function GrillManagerCard({
     .map((line) => line.trim())
     .filter(Boolean);
 
-  const isEs = lang === "es";
+  const subtitle =
+    lang === "es"
+      ? "Control inteligente de zonas y prioridades"
+      : lang === "fi"
+        ? "Alykas vyohykkeiden ja prioriteettien hallinta"
+        : "Smart zone and priority control";
 
   return (
     <div
@@ -389,11 +396,7 @@ function GrillManagerCard({
           <div className={ds.media.iconBox}>🎛️</div>
           <div>
             <h3 className="text-sm font-semibold tracking-wide text-white">{title}</h3>
-            <p className="mt-1 text-sm leading-relaxed text-slate-400">
-              {isEs
-                ? "Control inteligente de zonas y prioridades"
-                : "Smart zone and priority control"}
-            </p>
+            <p className="mt-1 text-sm leading-relaxed text-slate-400">{subtitle}</p>
           </div>
         </div>
         <Badge tone="danger">PRO</Badge>
@@ -441,6 +444,26 @@ function findBlockKey(keys: string[], candidates: string[]) {
   return keys.find((key) => candidates.includes(key.toUpperCase()));
 }
 
+function getLocalizedBlockTitle(key: string, lang: "es" | "en" | "fi") {
+  const upperKey = key.toUpperCase();
+  if (upperKey === "SETUP" || upperKey === "CONFIGURACION" || upperKey === "CONFIGURACIÓN") {
+    return lang === "es" ? "🔥 Setup" : lang === "fi" ? "🔥 Asetus" : "🔥 Setup";
+  }
+  if (upperKey === "TIMES" || upperKey === "TIEMPOS") {
+    return lang === "es" ? "⏱️ Tiempos" : lang === "fi" ? "⏱️ Ajat" : "⏱️ Times";
+  }
+  if (upperKey === "TEMPERATURE" || upperKey === "TEMPERATURA") {
+    return lang === "es" ? "🌡️ Temperatura" : lang === "fi" ? "🌡️ Lampotila" : "🌡️ Temperature";
+  }
+  if (upperKey === "STEPS" || upperKey === "PASOS") {
+    return lang === "es" ? "🧠 Pasos" : lang === "fi" ? "🧠 Vaiheet" : "🧠 Steps";
+  }
+  if (upperKey === "SHOPPING" || upperKey === "COMPRA") {
+    return lang === "es" ? "🛒 Lista de compra" : lang === "fi" ? "🛒 Ostoslista" : "🛒 Shopping list";
+  }
+  return formatTitle(key);
+}
+
 function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en" | "fi"): ResultItem[] {
   const hasEnglishCookingBlocks = Boolean(blocks.TIMES || blocks.TEMPERATURE || blocks.STEPS);
   const hasEnglishMenuBlocks = Boolean(blocks.ORDER || blocks.SHOPPING || blocks.QUANTITIES);
@@ -456,8 +479,8 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en"
   if (setupKey) {
     items.push({
       key: setupKey,
-      title: formatTitle(setupKey),
-      content: blocks[setupKey],
+      title: getLocalizedBlockTitle(setupKey, lang),
+      content: sanitizeSetupSummaryCopy(blocks[setupKey], lang),
       setup: detectSetupFromText(blocks[setupKey]),
       type: "card",
       variant: "setup",
@@ -465,10 +488,16 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en"
   }
 
   if (errorKey) {
+    const errorTitle =
+      lang === "es"
+        ? "Error que arruina este corte"
+        : lang === "fi"
+          ? "Virhe joka pilaa taman leikkauksen"
+          : "Error that ruins this cut";
     items.push({
       key: errorKey,
-      title: useEnglish ? "Error that ruins this cut" : "Error que arruina este corte",
-      content: sanitizeUserFacingGuidance(blocks[errorKey], lang),
+      title: useEnglish && lang === "en" ? "Error that ruins this cut" : errorTitle,
+      content: sanitizeCriticalErrorCopy(sanitizeUserFacingGuidance(blocks[errorKey], lang), lang),
       type: "card",
       variant: "tip",
     });
@@ -477,7 +506,7 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en"
   if (stepsKey) {
     items.push({
       key: stepsKey,
-      title: formatTitle(stepsKey),
+      title: getLocalizedBlockTitle(stepsKey, lang),
       content: blocks[stepsKey],
       type: "card",
       variant: "primary",
@@ -512,7 +541,7 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en"
       return;
     }
 
-    items.push({ key, title: formatTitle(key), content: blocks[key], type: "card" });
+    items.push({ key, title: getLocalizedBlockTitle(key, lang), content: blocks[key], type: "card" });
   });
 
   return items;

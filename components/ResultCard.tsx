@@ -35,17 +35,18 @@ function getVariantLabel(
   lang: "es" | "en" | "fi",
 ): string {
   const isEs = lang === "es";
+  const isFi = lang === "fi";
   switch (variant) {
     case "primary":
-      return isEs ? "Pasos de cocción" : "Cooking steps";
+      return isEs ? "Pasos de coccion" : isFi ? "Kypsennysvaiheet" : "Cooking steps";
     case "tip":
-      return isEs ? "Error crítico" : "Critical error";
+      return isEs ? "Error critico" : isFi ? "Kriittinen virhe" : "Critical error";
     case "summary":
-      return isEs ? "Tiempos · Temperatura" : "Times · Temperature";
+      return isEs ? "Tiempos · Temperatura" : isFi ? "Ajat · Lampotila" : "Times · Temperature";
     case "setup":
-      return isEs ? "Setup del fuego" : "Fire setup";
+      return isEs ? "Setup del fuego" : isFi ? "Tuliasetus" : "Fire setup";
     default:
-      return "Plan";
+      return isFi ? "Suunnitelma" : "Plan";
   }
 }
 
@@ -308,7 +309,15 @@ function SetupVisualToggle({
   const setupEquipment = resolveSetupEquipment(equipment) ?? resolveSetupEquipment(content);
   const detectedSetup = setup ?? detectSetupFromText(content);
   const setupImage = getSetupVisual(setupEquipment, detectedSetup);
-  const isEs = lang === "es";
+  const setupTitle = lang === "es" ? "Visual de setup" : lang === "fi" ? "Setup-kuva" : "Setup visual";
+  const setupSubtitle =
+    lang === "es"
+      ? "Zonas de calor y flujo recomendado"
+      : lang === "fi"
+        ? "Lampoalueet ja suositeltu jarjestys"
+        : "Heat zones and suggested flow";
+  const hideLabel = lang === "es" ? "Ocultar" : lang === "fi" ? "Piilota" : "Hide";
+  const viewLabel = lang === "es" ? "Ver →" : lang === "fi" ? "Nayta →" : "View →";
   const overlayChips = getSetupOverlayChips(detectedSetup);
 
   if (!isSetupCard(title)) return null;
@@ -327,16 +336,16 @@ function SetupVisualToggle({
           </span>
           <div className="min-w-0">
             <p className="text-[11px] font-black uppercase tracking-[0.2em] text-orange-300">
-              Setup visual
+              {setupTitle}
             </p>
             <p className="mt-0.5 line-clamp-1 text-[11px] text-slate-400">
-              {isEs ? "Zonas de calor y flujo recomendado" : "Heat zones and suggested flow"}
+              {setupSubtitle}
             </p>
           </div>
         </div>
 
         <span className="shrink-0 rounded-full border border-orange-400/30 bg-orange-500/15 px-3 py-1.5 text-xs font-black text-orange-200 shadow-lg shadow-orange-950/10 transition-colors hover:bg-orange-500/25 active:scale-[0.97]">
-          {open ? (isEs ? "Ocultar" : "Hide") : isEs ? "Ver →" : "View →"}
+          {open ? hideLabel : viewLabel}
         </span>
       </button>
 

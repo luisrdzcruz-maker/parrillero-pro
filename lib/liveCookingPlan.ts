@@ -1,4 +1,5 @@
 import type { LiveStep } from "@/components/live/LiveCookingScreen";
+import { localizeLiveStepEntry, sanitizeSetupSummaryCopy } from "@/lib/i18n/surfaceFallbacks";
 
 export const LIVE_COOKING_STORAGE_KEY = "parrillero_live_cooking_plan_v1";
 
@@ -52,18 +53,18 @@ function block(blocks: LiveCookingBlocks, ...keys: string[]) {
 
 function inferZone(text: string) {
   const line = text.toLowerCase();
-  if (/rest|reposo/.test(line)) return "Reposo";
-  if (/serve|servir|finish|terminar|listo/.test(line)) return "Servir";
-  if (/indirect|indirecto|oven|horno|core|centro/.test(line)) return "Indirecto";
-  if (/preheat|precalent|stabilize|estabiliza|setup|zona/.test(line)) return "Directo";
-  if (/sear|sellad|dorar|browning|crisp/.test(line)) return "Directo";
-  return "Directo";
+  if (/rest|reposo/.test(line)) return "Rest";
+  if (/serve|servir|finish|terminar|listo/.test(line)) return "Serve";
+  if (/indirect|indirecto|oven|horno|core|centro/.test(line)) return "Indirect";
+  if (/preheat|precalent|stabilize|estabiliza|setup|zona/.test(line)) return "Direct";
+  if (/sear|sellad|dorar|browning|crisp/.test(line)) return "Direct";
+  return "Direct";
 }
 
 function defaultDurationByZone(zone: string) {
-  if (zone === "Reposo") return 360;
-  if (zone === "Servir") return 0;
-  if (zone === "Indirecto") return 420;
+  if (zone === "Rest") return 360;
+  if (zone === "Serve") return 0;
+  if (zone === "Indirect") return 420;
   return 240;
 }
 
@@ -149,8 +150,10 @@ function buildStepNotes(input: LiveCookingInputSnapshot, setupText: string, time
     `${input.doneness} · ${input.thickness} cm`,
   ].join(" | ");
 
-  const setup = setupText ? `Setup: ${setupText}` : "";
-  const timeline = timelineText ? `Timeline: ${timelineText}` : "";
+  const setupLabel = input.lang === "es" ? "Setup" : input.lang === "fi" ? "Asetus" : "Setup";
+  const timelineLabel = input.lang === "es" ? "Timeline" : input.lang === "fi" ? "Aikajana" : "Timeline";
+  const setup = setupText ? `${setupLabel}: ${setupText}` : "";
+  const timeline = timelineText ? `${timelineLabel}: ${timelineText}` : "";
 
   return [details, setup, timeline].filter(Boolean).join(" | ");
 }
@@ -236,9 +239,10 @@ export function buildLiveStepsFromPayload(
   const tempText = block(payload.blocks, "TEMPERATURA", "TEMPERATURE");
   const stepsText = block(payload.blocks, "PASOS", "STEPS");
   const timelineText = block(payload.blocks, "TIMELINE", "TIMING");
-  const entries = parsePlanSteps(stepsText);
+  const entries = parsePlanSteps(stepsText).map((entry) => localizeLiveStepEntry(entry, payload.input.lang));
   const targets = parseTempTargets(tempText);
-  const sharedNotes = buildStepNotes(payload.input, setupText, timelineText);
+  const setupSummary = sanitizeSetupSummaryCopy(setupText, payload.input.lang, payload.input.equipment);
+  const sharedNotes = buildStepNotes(payload.input, setupSummary, timelineText);
 
   if (entries.length === 0) {
     return {
