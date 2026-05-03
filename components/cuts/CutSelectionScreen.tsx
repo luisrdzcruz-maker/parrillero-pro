@@ -170,8 +170,7 @@ export function CutSelectionScreen({
 
       <section className="relative mx-auto flex min-h-full w-full max-w-5xl flex-col px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-2 sm:px-6 lg:pb-36">
         <header className="rounded-[1.2rem] border border-orange-300/15 bg-white/[0.04] px-2.5 py-2 shadow-[0_14px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:px-3 sm:py-2.5">
-          <div className="overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex min-w-max items-center gap-1.5 sm:gap-2">
+          <div className="grid grid-cols-2 gap-1.5 touch-pan-y sm:grid-cols-3">
             {animalOptions.map(([animalId]) => {
               const selected = animalId === selectedAnimal;
               return (
@@ -179,17 +178,16 @@ export function CutSelectionScreen({
                   key={animalId}
                   type="button"
                   onClick={() => handleAnimalSelect(animalId)}
-                  className={`shrink-0 rounded-full border px-2.5 py-1.5 text-[11px] font-black leading-none transition active:scale-[0.98] sm:px-3 sm:text-xs ${
+                  className={`min-w-0 rounded-full border px-2.5 py-1.5 text-center text-[11px] font-black leading-none transition active:scale-[0.98] sm:px-3 sm:text-xs ${
                     selected
                       ? "border-orange-300/80 bg-orange-500/25 text-orange-100 shadow-[0_0_0_1px_rgba(251,146,60,0.25)]"
                       : "border-white/15 bg-white/5 text-zinc-200 hover:border-orange-300/40 hover:bg-orange-500/10"
                   }`}
                 >
-                  {chipAnimalLabel(animalId)}
+                  <span className="block truncate">{chipAnimalLabel(animalId)}</span>
                 </button>
               );
             })}
-            </div>
           </div>
           <div className="mt-2 px-0.5 text-[11px] font-semibold text-zinc-400 sm:text-xs">
             <span className="truncate">{compactStatusLine}</span>

@@ -34,10 +34,7 @@ export function QuickPicks({ profiles, intent, lang, limit = 4, selectedCutId, o
         </div>
         <span className="text-xs font-bold text-zinc-500">{picks.length}</span>
       </div>
-      <div
-        className="flex max-w-full min-w-0 snap-x snap-mandatory gap-1.5 overflow-x-auto overscroll-x-contain px-1 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        style={{ msOverflowStyle: "none" }}
-      >
+      <div className="grid max-w-full min-w-0 grid-cols-2 gap-1.5 px-1 pb-0.5 touch-pan-y">
         {picks.map((profile) => {
           const isActive = selectedCutId === profile.id;
           return (
@@ -45,7 +42,7 @@ export function QuickPicks({ profiles, intent, lang, limit = 4, selectedCutId, o
               key={profile.id}
               type="button"
               onClick={() => onSelect(profile)}
-              className={`min-w-[136px] shrink-0 snap-start rounded-xl border p-2 text-left transition active:scale-[0.97] ${
+              className={`min-w-0 rounded-xl border p-2 text-left transition active:scale-[0.97] ${
                 isActive
                   ? "border-orange-400 bg-orange-500/20"
                   : "border-white/10 bg-black/25 hover:border-orange-400/45 hover:bg-white/[0.07]"
