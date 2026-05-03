@@ -276,7 +276,7 @@ export function CutSelectionScreen({
                     </label>
                     <input
                       id="cut-search-input"
-                      type="search"
+                      type="text"
                       value={searchQuery}
                       onChange={(event) => setSearchQuery(event.target.value)}
                       placeholder={getCutSearchPlaceholder(effectiveLang)}
