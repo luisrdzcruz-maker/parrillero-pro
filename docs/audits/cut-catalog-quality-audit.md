@@ -17,9 +17,9 @@
 2. Generator writes `lib/generated/cutProfiles.ts`.
 3. Cut Selection loads `generatedCutProfiles` by animal/category/intent.
 4. UI text is assembled in `cutProfileSelectors.ts`:
-   - display name: override -> resolved catalog cut names -> generated canonical English
-   - description: override -> legacy `notes` -> generated EN fallbacks
-   - aliases: override -> merged aliases from resolved catalog + generated `aliasesEn`
+  - display name: override -> resolved catalog cut names -> generated canonical English
+  - description: override -> legacy `notes` -> generated EN fallbacks
+  - aliases: override -> merged aliases from resolved catalog + generated `aliasesEn`
 5. `resolveProductCut()` merges generated profile + legacy product catalog where IDs overlap.
 
 Important behavior:
@@ -159,21 +159,21 @@ Compatibility risks if runtime schema is changed:
 ## Prioritized cleanup plan
 
 1. **P0 - Catalog Runtime Alignment (must happen before search)**
-   - propagate localized display names from CSV to generated runtime.
-   - propagate anatomical `zone` to generated runtime and expose via selectors.
-   - separate `descriptor`, `safety_note`, `warning`, `critical_mistake` in generation output.
+  - propagate localized display names from CSV to generated runtime.
+  - propagate anatomical `zone` to generated runtime and expose via selectors.
+  - separate `descriptor`, `safety_note`, `warning`, `critical_mistake` in generation output.
 2. **P0 - Selector de-hardcoding**
-   - remove one-off maps (`localizedCutContentOverrides`, `helpfulAliasByCutId`) once catalog provides equivalent fields.
-   - stop exact-English safety sentence matching; use structured safety fields per locale.
+  - remove one-off maps (`localizedCutContentOverrides`, `helpfulAliasByCutId`) once catalog provides equivalent fields.
+  - stop exact-English safety sentence matching; use structured safety fields per locale.
 3. **P1 - Alias/search normalization**
-   - move from mixed alias list to locale-scoped alias arrays.
-   - add butcher/restaurant synonyms for low-recall cuts listed in Alias/search gaps.
+  - move from mixed alias list to locale-scoped alias arrays.
+  - add butcher/restaurant synonyms for low-recall cuts listed in Alias/search gaps.
 4. **P1 - Legacy/generated consistency contract**
-   - define per-field authority (generated catalog first, legacy fallback only).
-   - add compatibility adapter during schema transition to avoid breaking current selectors/runtime merge.
+  - define per-field authority (generated catalog first, legacy fallback only).
+  - add compatibility adapter during schema transition to avoid breaking current selectors/runtime merge.
 5. **P2 - Editorial quality hardening**
-   - normalize tone so user-facing descriptions stay neutral, while safety/warnings remain explicit in dedicated fields.
-   - validate fish/chicken/pork safety wording consistency across locales.
+  - normalize tone so user-facing descriptions stay neutral, while safety/warnings remain explicit in dedicated fields.
+  - validate fish/chicken/pork safety wording consistency across locales.
 
 ## Search readiness score
 

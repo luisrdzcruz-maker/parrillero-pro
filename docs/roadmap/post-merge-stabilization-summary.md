@@ -77,14 +77,16 @@ All primary screens are reachable on mobile and desktop. The stable baseline is 
 
 Validated behavior:
 
-| Area | Current state |
-| --- | --- |
-| Mobile layout | No known blocking horizontal overflow on `360x740`, `375x812`, or `390x844`. |
-| Desktop layout | Centered shell with inline detail behavior at desktop widths. |
-| Primary CTAs | Clickable in the active flow; bottom nav should not intercept them. |
-| Navigation | Back behavior closes detail before leaving Cut Selection, then returns Home. |
-| Locale | `lang` persists through core flows and survives URL-driven navigation. |
-| Engine | Deterministic local engine remains the core planning source. |
+
+| Area           | Current state                                                                |
+| -------------- | ---------------------------------------------------------------------------- |
+| Mobile layout  | No known blocking horizontal overflow on `360x740`, `375x812`, or `390x844`. |
+| Desktop layout | Centered shell with inline detail behavior at desktop widths.                |
+| Primary CTAs   | Clickable in the active flow; bottom nav should not intercept them.          |
+| Navigation     | Back behavior closes detail before leaving Cut Selection, then returns Home. |
+| Locale         | `lang` persists through core flows and survives URL-driven navigation.       |
+| Engine         | Deterministic local engine remains the core planning source.                 |
+
 
 Approved product direction remains Hybrid Premium:
 
@@ -99,15 +101,17 @@ Approved product direction remains Hybrid Premium:
 
 ## Validation status
 
-| Gate | Result |
-| --- | --- |
-| Merge to `main` | Complete. |
-| `npm run check` on `main` | PASS. |
-| Cooking QA | PASS - `1116/1116`. |
-| Mobile CTA smoke | PASS for stabilization target viewports. |
-| Desktop inline detail smoke | PASS for stabilization baseline. |
-| Back-stack behavior | PASS for core detail close and return-to-Home flow. |
-| FI/ES/EN core locale flow | PASS for stabilization baseline. |
+
+| Gate                        | Result                                              |
+| --------------------------- | --------------------------------------------------- |
+| Merge to `main`             | Complete.                                           |
+| `npm run check` on `main`   | PASS.                                               |
+| Cooking QA                  | PASS - `1116/1116`.                                 |
+| Mobile CTA smoke            | PASS for stabilization target viewports.            |
+| Desktop inline detail smoke | PASS for stabilization baseline.                    |
+| Back-stack behavior         | PASS for core detail close and return-to-Home flow. |
+| FI/ES/EN core locale flow   | PASS for stabilization baseline.                    |
+
 
 This document does not replace post-merge QA. A dedicated post-merge QA / stability confirmation pass should still verify the merged baseline on the current deployment before new feature work begins.
 
@@ -281,16 +285,18 @@ Work items:
 
 ### Recommended agent lanes
 
-| Agent lane | Scope | Must not touch |
-| --- | --- | --- |
-| Post-merge QA agent | Read-only stability confirmation and report writing. | Product code unless explicitly reassigned. |
-| Catalog runtime agent | CSV/source data mapping, generator logic, runtime profile alignment, catalog QA. | UI redesign and navigation. |
-| Search UI agent | Search input/results inside "View all cuts" after runtime alignment. | Generator/runtime schema changes unless explicitly scoped. |
-| Result UI agent | Result hierarchy, card consolidation, setup visual placement. | Engine calculations and catalog generation. |
-| Live Cooking UI agent | Active cooking controls, timers, compact execution UI. | Decorative imagery and engine rules. |
-| Home UI agent | Entry conversion and top-screen clarity. | Cut Selection, Result, and engine logic. |
-| Navigation agent | URL params, Back behavior, mode transitions, locale persistence. | Visual redesign and engine/data changes. |
-| i18n/catalog display agent | Locale strings, display-name mapping, equipment labels. | Engine heuristics and layout refactors. |
+
+| Agent lane                 | Scope                                                                            | Must not touch                                             |
+| -------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Post-merge QA agent        | Read-only stability confirmation and report writing.                             | Product code unless explicitly reassigned.                 |
+| Catalog runtime agent      | CSV/source data mapping, generator logic, runtime profile alignment, catalog QA. | UI redesign and navigation.                                |
+| Search UI agent            | Search input/results inside "View all cuts" after runtime alignment.             | Generator/runtime schema changes unless explicitly scoped. |
+| Result UI agent            | Result hierarchy, card consolidation, setup visual placement.                    | Engine calculations and catalog generation.                |
+| Live Cooking UI agent      | Active cooking controls, timers, compact execution UI.                           | Decorative imagery and engine rules.                       |
+| Home UI agent              | Entry conversion and top-screen clarity.                                         | Cut Selection, Result, and engine logic.                   |
+| Navigation agent           | URL params, Back behavior, mode transitions, locale persistence.                 | Visual redesign and engine/data changes.                   |
+| i18n/catalog display agent | Locale strings, display-name mapping, equipment labels.                          | Engine heuristics and layout refactors.                    |
+
 
 ### Coordination rules
 

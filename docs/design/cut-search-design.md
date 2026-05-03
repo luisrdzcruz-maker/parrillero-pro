@@ -1,578 +1,540 @@
 # Cut Search Design
 
 Branch: `feature/post-merge-catalog-search-prep`  
-Status: Planning only — no code changes  
+Status: Product and technical design only; do not implement until Catalog Runtime Alignment is complete  
 Date: 2026-05-03
 
 ---
 
 ## Goal
 
-Give users who already know a cut name a fast way to find it inside the expanded catalog,
-without disrupting the guided-first selection flow that most users follow.
+Design a lightweight cut search feature for the expanded "View all cuts" catalog. The feature should help users who already know a cut name, butcher name, restaurant name, or anatomical term find a cut quickly without changing the guided-first Cut Selection flow.
 
-Search is a secondary power tool for known-item lookup.
-It appears only after the user has explicitly expanded "View all cuts."
+Search is a secondary power tool. The default path remains:
+
+```text
+Animal -> intent -> recommendations -> View all cuts
+```
+
+Search should be implemented later only after the catalog runtime can reliably expose localized display names, anatomical zone data, cleaner aliases, and separated descriptor/safety fields.
 
 ---
 
 ## Non-goals
 
-- Search is **not** a top-level entry point for the Cut Selection flow.
-- Search does **not** replace the guided Animal → Intent → Recommendations flow.
-- Search is **not** a global app search across recipes, plans, or history.
-- Search does **not** require a backend index, fuzzy library, or network call.
-- Search does **not** need to surface results across different animals simultaneously.
-- The first version does **not** need to support ranking, scoring, or analytics.
-- Cut Map mode is **not** in scope — search applies to list mode only (see Interaction section).
+- Search is not a top-level entry point for Cut Selection.
+- Search does not appear on the default guided-first screen.
+- Search does not replace animal chips, intent chips, recommendations, or "View all cuts."
+- Search does not become global app search across recipes, plans, saved items, or history.
+- Search does not require a backend index, server call, analytics system, or external fuzzy-search dependency in the first version.
+- Search does not require full catalog translation before launch, but it does require runtime access to localized names where they already exist.
+- Search must not use safety warnings, cooking caveats, or descriptor prose as searchable result descriptions.
 
 ---
 
 ## Placement
 
-### Rule
+Search appears only after the user expands "View all cuts." It must not be visible above recommendations or at the top of the default Cut Selection screen.
 
-Search input appears **only inside the expanded catalog**, immediately below the
-"View all cuts / Hide all cuts" toggle button and above the `CutViewToggle` (list / map).
+Recommended placement:
 
-```
-[ Animal chips                              ]
-[ Intent chips                             ]
-[ Quick Picks                              ]
-[ ─────────────── ]
-[ View all cuts (N) ▼ ]    ← toggle button
-  ↓ when expanded:
-[ 🔍 Search cuts...                        ]  ← NEW: search input
-[ List | Map toggle                        ]
-[ Cut categories / CutList                 ]
+```text
+[ Animal chips                         ]
+[ Intent chips                         ]
+[ Recommendations / quick picks         ]
+[ View all cuts (N)                    ]
+  expanded:
+[ Search all cuts input                ]
+[ List | Map toggle                    ]
+[ Filtered grouped catalog             ]
 ```
 
-### Why this position
+The input belongs visually and technically to the expanded catalog. Collapsing "View all cuts" should remove the search UI and reset the query.
 
-- It is visually inside the "all cuts" context — search only makes sense when the full
-  catalog is visible.
-- It does not compete with Intent chips, which are the primary filter above.
-- It remains below the fold for users who never expand the catalog, so it never slows
-  down the default guided flow.
-- Collapsing the catalog removes the search input from the DOM entirely, resetting state
-  automatically.
-
-### Desktop
-
-On desktop (≥768px), the search input renders in the same position within the left-panel
-catalog area. The aside panel that shows the "visibleProfiles" count is not affected by
-search state.
+On desktop, the same placement applies inside the catalog column. The detail panel remains available beside the list and should not be displaced by the search input.
 
 ---
 
-## UX Flow
+## UX flow
 
-### Happy path
+When search is empty, the expanded catalog behaves exactly like today: categories render normally, current animal selection applies, intent chips remain active, and recommendations above the catalog are unchanged.
 
-1. User opens Cut Selection (`mode=coccion`, `cookingStep=cut`).
-2. User sees animal chips, intent chips, quick picks — the guided-first default.
-3. User taps / clicks "View all cuts (N)".
-4. Catalog expands. Search input appears immediately below the toggle.
-5. User types "picaña" (or "picanha", or "rump cap").
-6. As they type (debounced 150ms), the `CutList` filters to matching cuts only.
-7. Non-matching categories are hidden. Empty categories do not render a heading.
-8. User taps the matching cut card → `CutBottomSheet` opens normally.
-9. User proceeds to cook — no change to the existing selection callback flow.
+When the user types, results update inline inside the expanded catalog. The result set should be capped visually to a practical number, with a recommended first version cap of 24 visible cuts. If more than 24 cuts match, show the strongest-ranked results first and include a compact count such as "Showing 24 of 38 matches." The exact count copy can be finalized during implementation.
 
-### Clearing search
+When the user clears search, the query returns to empty, all catalog categories for the active animal and intent state return, and scroll should remain in the expanded catalog area rather than jumping to the top of the screen.
 
-- A clear (×) button appears inside the input when the query is non-empty.
-- Tapping it resets the query and restores the full grouped catalog.
-- Collapsing the catalog also resets the query (state lives in `CutSelectionScreen`).
+Animal filter interaction:
 
-### Interaction with Intent chips
+- Search is scoped to the currently selected animal by default.
+- Changing animal should clear search because the active catalog context changed.
+- The animal chip remains the primary animal selector; search should not invite broad cross-animal lookup in v1.
 
-- Intent chips and search are **independent filters that stack**.
-- When an intent chip is active (e.g. "Quick"), the visible cuts are already narrowed
-  by `filterCutsByIntent`. The search then filters within that narrowed set.
-- Effective pipeline: `animalProfiles` → `filterByIntent` → `filterBySearchQuery` → `groupedProfiles`.
-- No warning is shown when both are active. The combined result is immediately obvious.
+Intent chip interaction:
 
-### Interaction with Zone / Map filter
+- Intent chips and search stack as filters.
+- The recommended pipeline is `animal -> intent -> search -> ranking -> grouping`.
+- Clearing the active intent while search is non-empty expands the searchable set within the active animal.
+- If active intent plus search yields no results, the empty state should offer both "clear search" and "reset filters."
 
-- Search applies only in **list view mode** (`viewMode === "list"`).
-- When the user switches to **map view** (`viewMode === "map"`), the search input is
-  hidden and the query is cleared.
-- Rationale: map view has its own zone-based discovery flow. Mixing free-text search
-  with a visual map tap is ambiguous. Keep them separate.
-- When the user switches back to list view, search input re-appears with an empty query.
+Category behavior:
 
-### No results state
+- With an empty query, categories stay expanded/collapsed according to existing catalog behavior.
+- With a non-empty query, categories should filter dynamically and hide empty categories.
+- If ranking returns a mixed set across categories, preserve category headings for scanability, but order matching cards within each category by rank.
+- Do not auto-expand a heavy educational section. Search is for known-item lookup, not catalog browsing.
 
-- When the query produces zero matching cuts (across all categories), show a centered
-  empty state block where `CutList` normally renders:
+Expanded/collapsed catalog behavior:
 
-  ```
-  [ 🔍 ]
-  No cuts found for "bajada de lomo"
-  Try a different name or clear the search
-  ```
+- Search state exists only while "View all cuts" is expanded.
+- Collapsing the catalog clears the query.
+- Re-expanding starts with an empty input and the standard catalog.
 
-  The empty state does not suggest cuts — it is not a recommendation engine.
-  It only tells the user the query returned nothing and offers a clear action.
+Map mode interaction:
 
----
+- Search is list-first. In v1, the search input should appear only in expanded list catalog mode.
+- Switching to map mode should hide the search input and clear the query.
+- The map remains an optional discovery mode based on zones, not a free-text search surface.
 
-## Search Matching Strategy
+Recommendations interaction:
 
-### Scope
+- Recommendations remain above "View all cuts" and are not re-ranked by search.
+- Search results should not replace recommendation cards or imply a stronger cooking recommendation.
+- Popular/recommended boost can help ranking inside search only after the user has opted into the full catalog.
 
-Search runs **client-side only**, in memory, against the already-loaded
-`GeneratedCutProfile` array (merged with `ProductCut` display data via existing
-`getCutDisplayName` / `getCutAliases` selectors). No network call. No index file.
+Mobile bottom nav interaction:
 
-### Fields searched (in priority order)
+- The input and results must not sit under the bottom navigation.
+- Focus, clear button, and result taps must not be intercepted by bottom nav hit areas.
+- Add enough bottom padding to the results region when the keyboard is closed and when the bottom nav is visible.
 
-| Priority | Field | Source | Notes |
-|----------|-------|---------|-------|
-| 1 | Display name in current language | `getCutDisplayName(profile, lang)` | Resolves overrides → `ProductCut.names[lang]` → `canonicalNameEn` |
-| 2 | `canonicalNameEn` | `GeneratedCutProfile.canonicalNameEn` | Always English |
-| 3 | Aliases | `getCutAliases(profile)` → `string[]` | Merges overrides → `ProductCut.aliases` → `aliasesEn` |
-| 4 | All localized names (non-current langs) | `ProductCut.names` for `es / en / fi` | Catches cross-language lookup (user types ES name while app is in EN) |
-| 5 | Category label in current language | `categoryLabelsByLang[lang][category]` | e.g. searching "lomo" finds all loin-category cuts |
-| 6 | Animal label | `getAnimalLabel(animalId, lang)` | Low priority — animal chips are the primary animal filter |
+Desktop inline detail interaction:
 
-### Matching algorithm
-
-- **Normalization:** lowercase + remove diacritics (`normalize("NFD").replace(/\p{Mn}/gu, "")`)
-  on both query and all target strings before comparison.
-- **Matching type:** substring match (not full-word, not prefix-only).
-  - "rib" matches "ribeye", "prime rib", "short ribs".
-  - "lomo" matches "lomo vetado", "lomito".
-- **No fuzzy matching** in v1. Substring is sufficient for the cut catalog scale
-  (≤200 cuts per animal). Fuzzy matching adds complexity and false positives.
-- **Multi-token:** split query by whitespace; a cut matches only if **all tokens** match
-  any of its searchable strings (AND logic). Single-token queries use the above directly.
-  - "lomo fino" → tokens ["lomo", "fino"] → must match both somewhere across all fields.
-
-### Alias coverage — restaurant and butcher names
-
-The current `aliasesEn` array in `GeneratedCutProfile` and `aliases` in `ProductCut`
-are the primary vehicle for restaurant and butcher names.
-
-Examples of aliases that should already be present (or need adding via catalog):
-- `ribeye` aliases: "entrecote", "ojo de bife", "chuletón"
-- `picanha` aliases: "picaña", "rump cap", "rump cover", "coulotte"
-- `brisket` aliases: "pecho", "falda delantera"
-
-**Data gap risk:** aliases in the current data are English-biased (`aliasesEn`).
-Spanish and Finnish butcher names may not yet be in the catalog. This is a **catalog
-quality task**, separate from the search implementation. The design doc for catalog
-enrichment is `docs/audits/cut-catalog-quality-audit.md`.
-
-### Anatomical area
-
-The current data model does not have a dedicated `anatomicalArea` field.
-`GeneratedCutProfile.category` is the closest equivalent (e.g., `loin`, `rib`, `chuck`).
-The search covers category labels in the current language, which covers most anatomical
-lookup patterns (user searching "costilla" will match rib-category cuts).
-
-A future `anatomicalAreaEs/En/Fi` field on `GeneratedCutProfile` could improve this,
-but is not required for v1.
+- Selecting a search result should open or update the existing inline detail panel, matching normal catalog behavior.
+- The detail panel remains usable while search is active.
+- Clearing search should not close an already-open detail unless the selected cut is no longer in the current animal context.
 
 ---
 
-## i18n Copy
+## Search matching strategy
 
-All new strings follow the existing pattern: inline language dictionaries in
-`cutSelectionTypes.ts` or `cutProfileSelectors.ts`, with `es | en | fi` keys.
+Search should run client-side against a memoized normalized index built from runtime catalog records for the active animal. Current catalog size is small enough for simple in-memory search.
 
-### Search input placeholder
+Searchable fields:
 
-| Lang | Copy |
-|------|------|
-| `es` | `Buscar corte...` |
-| `en` | `Search cuts...` |
-| `fi` | `Hae leikkaus...` |
+- Localized cut display name for the active app language.
+- English name or canonical English name.
+- Aliases, including butcher and restaurant names.
+- Restaurant or butcher display names when stored separately from general aliases.
+- Category labels.
+- Anatomical area or zone labels.
+- Animal labels, as low-priority terms only.
 
-### Clear button aria-label
+Normalization:
 
-| Lang | Copy |
-|------|------|
-| `es` | `Limpiar búsqueda` |
-| `en` | `Clear search` |
-| `fi` | `Tyhjennä haku` |
+- Trim whitespace.
+- Lowercase.
+- Normalize diacritics for matching.
+- Collapse repeated spaces.
+- Tokenize on whitespace and common separators.
+- Keep display text unchanged; normalization is only for matching and ranking.
 
-### Empty state — heading
+Matching behavior:
 
-| Lang | Copy |
-|------|------|
-| `es` | `Sin resultados para "{query}"` |
-| `en` | `No cuts found for "{query}"` |
-| `fi` | `Ei tuloksia haulle "{query}"` |
+- Empty query returns the normal expanded catalog.
+- Exact normalized full-name matches should rank highest.
+- Alias exact matches should rank nearly as high as display-name exact matches.
+- Starts-with matches are stronger than contains matches.
+- Contains matches should work for known partial names such as `rib`, `lomo`, or `pica`.
+- Multi-token queries should initially use AND logic across indexed fields, so each token must match at least one indexed term.
+- Heavy fuzzy search is not needed initially. Consider fuzzy matching only if QA shows common misspellings fail frequently after aliases and localized names are aligned.
 
-### Empty state — subtext
+Do not index:
 
-| Lang | Copy |
-|------|------|
-| `es` | `Intenta otro nombre o limpia la búsqueda` |
-| `en` | `Try a different name or clear the search` |
-| `fi` | `Kokeile eri nimeä tai tyhjennä haku` |
+- Safety warnings.
+- Doneness warnings.
+- Long descriptors intended for result cards.
+- Cooking instructions.
+- Generated explanatory prose.
 
-### Search input aria-label (screen readers)
-
-| Lang | Copy |
-|------|------|
-| `es` | `Buscar entre todos los cortes` |
-| `en` | `Search all cuts` |
-| `fi` | `Hae kaikista leikkauksista` |
+Those fields can create misleading search matches and bad result copy.
 
 ---
 
-## Data Requirements
+## Ranking strategy
 
-### No new data fields required for v1
+Ranking should make known-item lookup feel predictable and deterministic. Recommended scoring order:
 
-The search implementation can run entirely on existing fields:
+1. Exact localized display-name match.
+2. Exact English or canonical English name match.
+3. Exact alias, restaurant name, or butcher name match.
+4. Localized or English name starts-with match.
+5. Alias starts-with match.
+6. Localized or English name contains match.
+7. Alias contains match.
+8. Category match.
+9. Anatomical area or zone match.
+10. Animal match.
 
-- `getCutDisplayName(profile, lang)` — already exists in `cutProfileSelectors.ts`
-- `getCutAliases(profile)` — already exists in `cutProfileSelectors.ts`
-- `ProductCut.names` — already in `cookingCatalog.ts`
-- `categoryLabelsByLang` — already in `cutSelectionTypes.ts`
+Boosts:
 
-### Catalog quality improvement (separate task, not blocking v1)
+- Apply a small popular/recommended boost within otherwise similar matches.
+- Boost cuts already surfaced by the current recommendation context, but never enough to outrank an exact name or exact alias match.
+- Prefer active-language matches over fallback-language matches when scores are otherwise equal.
 
-To improve search recall for Spanish and Finnish common names, the following catalog
-enrichment should happen as a follow-up, not as a blocker for the search feature:
+Tie breakers:
 
-1. Audit `aliasesEn` for entries that contain non-English butcher/market names.
-2. If a multi-language alias array (`aliases: Partial<Record<Language, string[]>>`)
-   is needed in `ProductCut`, design it as a separate catalog migration task.
-3. Until then, Spanish/Finnish aliases can be added directly to
-   `localizedCutContentOverrides` in `cutProfileSelectors.ts`.
+- Active-language exactness.
+- Recommended or popular flag.
+- Existing catalog order.
+- Stable `cutId` order as the final fallback.
 
----
-
-## Component Impact
-
-### New component
-
-**`CutSearchInput`** — `components/cuts/CutSearchInput.tsx`
-
-Responsibilities:
-- Controlled input (`value`, `onChange`, `onClear` props).
-- Renders search icon, text input, optional clear button.
-- No logic — presentational only.
-- Accepts `placeholder`, `aria-label` as props (passed from parent with correct lang).
-
-### Modified component
-
-**`CutSelectionScreen`** — `components/cuts/CutSelectionScreen.tsx`
-
-Changes:
-- Add `searchQuery: string` state (default `""`).
-- Clear `searchQuery` when `catalogExpanded` transitions to `false`.
-- Clear `searchQuery` when `viewMode` switches to `"map"`.
-- Add `filterCutsBySearchQuery(profiles, query, lang)` selector call between
-  intent filter and `groupedProfiles` construction.
-- Mount `<CutSearchInput>` when `catalogExpanded && viewMode === "list"`.
-- Mount `<CutEmptySearchState>` (or inline) when catalog filtered result is empty.
-
-### New utility function
-
-**`filterCutsBySearchQuery`** — added to `cutProfileSelectors.ts`
-
-Signature:
-
-```typescript
-export function filterCutsBySearchQuery(
-  profiles: GeneratedCutProfile[],
-  query: string,
-  lang: Lang
-): GeneratedCutProfile[]
-```
-
-Internal behavior:
-1. If `query.trim() === ""`, return `profiles` unchanged.
-2. Normalize query: lowercase + strip diacritics. Split by whitespace → tokens.
-3. For each profile, build a searchable string array using existing selectors.
-4. Return profiles where **every token** matches at least one string in the array.
-
-### No changes required
-
-- `CutList` — receives filtered `groupedProfiles` already; no change.
-- `QuickPicks` — not affected by catalog search.
-- `IntentSelector` — not affected; search stacks on top of intent filter.
-- `CutBottomSheet` / `CutCard` — no change.
-- `app/page.tsx` — no change; search state lives entirely in `CutSelectionScreen`.
-- Engine, `cookingRules`, result flow — no change.
+The first implementation should keep scoring transparent and easy to test. Avoid opaque fuzzy scoring until the data and QA evidence justify it.
 
 ---
 
-## Mobile Behavior
+## i18n copy
 
-- `CutSearchInput` is full-width, height ≥ 44px tap target.
-- On focus, the mobile keyboard opens. The input scrolls into view (browser default
-  `scrollIntoView` behavior is sufficient — no custom scroll logic needed).
-- The clear (×) button is inside the input on the right, ≥ 44×44px tap area.
-- No autocomplete dropdown — results update inline in `CutList` below.
-- On mobile, the `CutViewToggle` (List | Map) remains above the search input so the
-  user can always switch modes without scrolling past results.
+Placeholder copy:
 
-Wait — reconsider position:
 
-```
-[ 🔍 Search cuts...           × ]   ← search input
-[ List | Map                    ]   ← view toggle
-```
+| Language | Placeholder                  |
+| -------- | ---------------------------- |
+| Spanish  | `Buscar corte por nombre...` |
+| English  | `Search by cut name...`      |
+| Finnish  | `Hae leikkauksen nimellä...` |
 
-vs.
 
-```
-[ List | Map                    ]   ← view toggle
-[ 🔍 Search cuts...           × ]   ← search input
-```
+Accessible input label:
 
-**Decision: Search input above view toggle.** Rationale: search is only visible in
-list mode anyway (hidden when map is active), so placing it above the toggle keeps it
-contextually tied to the list. When the user switches to map, the input disappears and
-the toggle moves up naturally.
 
-- Debounce: 150ms on `onChange`. Avoids re-filtering on every keystroke, especially
-  important on low-end mobile where the filter runs synchronously on the main thread.
+| Language | Label                           |
+| -------- | ------------------------------- |
+| Spanish  | `Buscar entre todos los cortes` |
+| English  | `Search all cuts`               |
+| Finnish  | `Hae kaikista leikkauksista`    |
 
----
 
-## Desktop Behavior
+Clear button:
 
-- Same position and logic as mobile.
-- On desktop (≥768px), the search input spans the catalog column width.
-- The aside panel (right side, showing `visibleProfiles` count and intent filter summary)
-  is **not** updated to reflect search results — it reflects the intent-filtered count
-  only, as today. No change to the aside.
-- Keyboard shortcut: no dedicated shortcut in v1. The input is reachable via Tab.
-- The input is not auto-focused on catalog expansion — this would be disruptive on
-  desktop where the user may have just clicked the toggle.
 
----
+| Language | Label              |
+| -------- | ------------------ |
+| Spanish  | `Limpiar búsqueda` |
+| English  | `Clear search`     |
+| Finnish  | `Tyhjennä haku`    |
 
-## Performance Considerations
 
-### Scale
+No results heading:
 
-- The `generatedCutProfiles` array is already in memory when `CutSelectionScreen`
-  mounts. Per-animal slices are typically 20–60 profiles (beef ~50, pork ~20, etc.).
-- Substring match across 6 fields × 60 profiles = ~360 string operations per keystroke.
-  At 150ms debounce this is negligible — no memoization or worker needed.
 
-### No external library needed
+| Language | Copy                                   |
+| -------- | -------------------------------------- |
+| Spanish  | `No encontramos cortes para "{query}"` |
+| English  | `No cuts found for "{query}"`          |
+| Finnish  | `Ei leikkauksia haulle "{query}"`      |
 
-- Fuse.js, Flexsearch, MiniSearch, Lunr — all overkill for ≤200 items.
-- They add bundle weight and introduce fuzzy-match false positives that degrade trust
-  in a cooking context (a user searching "entraña" should not see "ternera").
-- Decision: plain substring match as described. Reassess only if catalog grows to
-  1000+ items, which is not planned.
 
-### Memoization
+No results subtext:
 
-- `filterCutsBySearchQuery` should be wrapped in `useMemo` inside `CutSelectionScreen`,
-  keyed on `[animalProfiles, selectedIntent, searchQuery, lang]`.
-- This avoids redundant re-computation when unrelated state changes (e.g., bottom sheet
-  open/close) trigger re-renders of `CutSelectionScreen`.
 
-### Bundle impact
+| Language | Copy                                                    |
+| -------- | ------------------------------------------------------- |
+| Spanish  | `Prueba otro nombre, alias o zona del animal.`          |
+| English  | `Try another name, alias, or animal area.`              |
+| Finnish  | `Kokeile toista nimeä, aliasnimeä tai eläimen aluetta.` |
 
-- `CutSearchInput` is a small presentational component.
-- `filterCutsBySearchQuery` adds ~20 lines to `cutProfileSelectors.ts`.
-- No new dependency in `package.json`.
-- No impact on bundle size beyond the component code itself.
+
+Reset filters action:
+
+
+| Language | Copy                  |
+| -------- | --------------------- |
+| Spanish  | `Restablecer filtros` |
+| English  | `Reset filters`       |
+| Finnish  | `Nollaa suodattimet`  |
+
+
+Clear search action:
+
+
+| Language | Copy               |
+| -------- | ------------------ |
+| Spanish  | `Limpiar búsqueda` |
+| English  | `Clear search`     |
+| Finnish  | `Tyhjennä haku`    |
+
+
+Final Finnish wording should be reviewed in-product with the existing language style. The key requirement is that the copy stays short enough for mobile.
 
 ---
 
-## Implementation Plan
+## Data requirements
 
-This feature should be implemented in a single focused branch.
-Suggested branch name: `feature/cut-catalog-search`
+Search should wait until Catalog Runtime Alignment is complete enough to support reliable matching. Required before implementation:
 
-### Step 1 — Add strings
+- Runtime localized display names from CSV or catalog source reach the cut selection runtime.
+- Runtime `zone` or `anatomicalArea` is available for each searchable cut where the source data supports it.
+- Aliases are clearer and can represent butcher/restaurant names without mixing them into unrelated prose.
+- Descriptor fields and safety/warning fields are separated so search does not accidentally index or display safety copy as descriptive search text.
 
-Add the i18n strings from the "i18n Copy" section above to the existing inline
-dictionaries in `cutSelectionTypes.ts` (follow the existing pattern for `getViewAllLabel`,
-`getHideAllLabel`, etc.).
+Strongly beneficial:
 
-### Step 2 — Add `filterCutsBySearchQuery` to `cutProfileSelectors.ts`
+- Locale-scoped aliases, such as Spanish butcher names separate from English restaurant names.
+- Distinct fields for `aliases`, `restaurantNames`, and `butcherNames` if the catalog pipeline supports them.
+- Localized category and zone labels.
+- Stable cut IDs across generated/runtime catalog records.
 
-Pure function, no side effects. Write the function and verify with a quick unit check
-(or add to the existing QA script if one exists for selectors).
+Not required:
 
-Fields to build the searchable string array per profile:
-```typescript
-const fields = [
-  getCutDisplayName(profile, lang),          // priority 1
-  profile.canonicalNameEn,                   // priority 2
-  ...getCutAliases(profile),                 // priority 3
-  ...Object.values(resolveProductCut(profile.id)?.names ?? {}), // priority 4
-  categoryLabelsByLang[lang][profile.category] ?? profile.category, // priority 5
-  getAnimalLabel(profile.animalId, lang),    // priority 6
-]
-```
+- Full translation of every catalog description.
+- Backend search infrastructure.
+- Fuzzy-search dependency.
+- Cross-animal global catalog search.
 
-### Step 3 — Build `CutSearchInput` component
+Fallback rule:
 
-Presentational only. Props:
-```typescript
-interface CutSearchInputProps {
-  value: string
-  onChange: (value: string) => void
-  onClear: () => void
-  placeholder: string
-  ariaLabel: string
-}
-```
-
-Styling follows existing design tokens and input patterns in the app. Dark background,
-premium feel. No border-radius surprises — match the existing card / input language.
-
-### Step 4 — Integrate into `CutSelectionScreen`
-
-1. Add `searchQuery` state.
-2. Add effects to clear on catalog collapse and on map mode switch.
-3. Wire `filterCutsBySearchQuery` into the profile pipeline (after intent filter,
-   before `groupedProfiles` / `CutList`).
-4. Mount `<CutSearchInput>` when `catalogExpanded && viewMode === "list"`.
-5. Show empty state when filtered result is empty.
-
-### Step 5 — QA
-
-Run through the QA checklist below. Fix any regressions before merging.
-
-### Step 6 — Lint + build check
-
-```bash
-npm run lint
-npm run build
-```
-
-No new lint errors should be introduced. Check that `filterCutsBySearchQuery`
-does not cause type errors with existing selectors.
+- If localized display name is missing for the active locale, fall back to English for matching and display according to existing product fallback rules.
+- Do not show mixed-language descriptor snippets in result cards just because they matched.
 
 ---
 
-## QA Checklist
+## Component impact
 
-### Placement and visibility
+This section describes expected future implementation impact only. No code should be changed in this planning branch.
 
-- [ ] Search input does **not** appear on the Cut Selection default screen (catalog collapsed).
-- [ ] Search input **does** appear immediately after tapping "View all cuts".
-- [ ] Search input disappears when the user taps "Hide all cuts".
-- [ ] Search input disappears when the user switches to map view.
-- [ ] Search input reappears (empty) when switching back to list view.
+Expected UI component impact:
 
-### Language
+- Add a controlled `CutSearchInput` inside the expanded catalog section.
+- Add a compact `CutSearchEmptyState` or equivalent inline empty state.
+- Keep `CutList` mostly unchanged by passing it already-filtered grouped results.
+- Keep recommendations unchanged.
+- Keep map mode unchanged except for clearing/hiding search when map mode is active.
 
-- [ ] Placeholder reads correctly in ES, EN, and FI.
-- [ ] Empty state heading correctly interpolates the query string in all three languages.
-- [ ] Clear button aria-label is correct in all three languages.
+Expected state impact:
 
-### Matching — positive cases
+- Add local `searchQuery` state in the cut selection screen or catalog section.
+- Keep search state local to the expanded catalog.
+- Clear query on catalog collapse, animal change, and map-mode switch.
+- Do not put query state in global app mode or cooking plan state.
+- Do not persist query in saved plans.
 
-- [ ] Typing "ribeye" returns the ribeye profile.
-- [ ] Typing "ojo de bife" returns the ribeye profile (alias match).
-- [ ] Typing "lomo" returns all loin-category cuts.
-- [ ] Typing "rump" returns picanha / rump cap (alias match).
-- [ ] Typing "RIB" (uppercase) returns rib-related cuts (case-insensitive).
-- [ ] Typing "picanã" (diacritic variant) returns picanha (diacritic-insensitive).
-- [ ] Multi-token: typing "lomo fino" returns only loin cuts that also match "fino".
+Expected selector/index impact:
 
-### Matching — negative cases
+- Build a memoized normalized search index from active animal records.
+- Filter and rank profiles from the current animal and intent-filtered set.
+- Keep index construction separate from UI components where practical.
+- Avoid indexing safety/warning copy.
 
-- [ ] Typing a random string ("zzzzz") shows the empty state, not a broken UI.
-- [ ] Empty state shows the query string correctly, not `[object Object]` or blank.
+Expected layout impact:
 
-### Interaction with intent chips
+- Mobile: full-width input with 44px minimum tap targets, visible clear button, and no overlap with bottom nav.
+- Desktop: inline input within the centered catalog layout, without blocking the detail panel.
 
-- [ ] With "Quick" intent active, search further narrows the quick-filtered cuts.
-- [ ] Clearing the intent chip while search is active shows the full search results.
-- [ ] Both can be active simultaneously without visual conflict.
+---
 
-### Interaction with zone filter (CutMap)
+## Implementation steps
 
-- [ ] Switching to map view while search is active hides the input and clears the query.
-- [ ] Switching back to list view starts with an empty search, full catalog.
+Phase 0: Catalog Runtime Alignment
 
-### State reset
+- Ensure localized CSV/catalog display names reach runtime.
+- Ensure `zone` or `anatomicalArea` reaches runtime.
+- Clarify aliases and, if possible, introduce locale-scoped aliases.
+- Separate descriptor fields from safety/warning fields.
+- Confirm search can build an index without reading generated prose or safety text.
 
-- [ ] Changing the animal clears the search query (catalog collapses, which clears state).
-- [ ] Collapsing and re-expanding the catalog resets the search to empty.
+Phase 1: Search state and normalized index
 
-### Mobile
+- Add local search query state scoped to the expanded catalog.
+- Add normalization helpers for lowercase, diacritic-insensitive matching, whitespace cleanup, and tokenization.
+- Build a memoized index for the active animal from localized name, English name, aliases, butcher/restaurant names, category, zone, and animal.
+- Keep the index small, deterministic, and client-side.
 
-- [ ] Search input is ≥ 44px tall.
-- [ ] Clear (×) button has ≥ 44×44px tap area.
-- [ ] Keyboard opens on focus without breaking the layout.
-- [ ] Results update while typing (debounced, no perceptible lag on mid-range device).
+Phase 2: Search input inside expanded catalog
 
-### Desktop
+- Render input only when "View all cuts" is expanded and list catalog mode is active.
+- Do not auto-focus on expansion.
+- Add clear button when query is non-empty.
+- Keep the input visually subordinate to the guided-first controls.
 
-- [ ] Search input spans the catalog column width.
-- [ ] Tab navigation reaches the search input.
-- [ ] No auto-focus on catalog expansion.
-- [ ] Aside panel count is unaffected by search query.
+Phase 3: Search result filtering and ranking
 
-### Accessibility
+- Apply search after animal and intent filters.
+- Rank exact name and alias matches above starts-with and contains matches.
+- Apply category, zone, and animal matches as lower-priority matches.
+- Add small popular/recommended boost without overriding exact known-item matches.
+- Hide empty categories while search is active.
+- Cap visible results to a practical number if the matched set is large.
 
-- [ ] Input has correct `aria-label` in current language.
-- [ ] Clear button has correct `aria-label`.
-- [ ] Empty state is announced by screen reader (uses semantic element, not `div` only).
-- [ ] No focus trap — user can tab out of the search input.
+Phase 4: i18n copy
 
-### Performance
+- Add ES/EN/FI placeholder, label, clear, empty-state, and reset-filter copy.
+- Verify mobile line lengths.
+- Confirm Finnish wording against existing app tone.
 
-- [ ] Typing rapidly (all characters) does not produce visible jank on mobile Chrome.
-- [ ] No console errors or warnings during search interaction.
-- [ ] No re-render of `CutBottomSheet` or `QuickPicks` when search query changes.
+Phase 5: QA
+
+- Run focused mobile, desktop, language, filter, navigation, and accessibility QA from the checklist below.
+- Verify search never appears in the default guided-first screen.
+- Verify no product code paths index safety or warning copy.
+
+---
+
+## QA checklist
+
+Placement and flow:
+
+- Search is absent on the default guided-first Cut Selection screen.
+- Search appears only after "View all cuts" is expanded.
+- Search disappears and clears when "View all cuts" is collapsed.
+- Recommendations remain visible above the expanded catalog and are not replaced by search.
+- Search remains a secondary control visually.
+
+Viewport coverage:
+
+- Mobile 360px wide.
+- Mobile 375px wide.
+- Mobile 390px wide.
+- Desktop 1280px wide.
+- No horizontal overflow in any target viewport.
+
+Languages:
+
+- Placeholder copy works in ES.
+- Placeholder copy works in EN.
+- Placeholder copy works in FI.
+- Empty state copy works in ES.
+- Empty state copy works in EN.
+- Empty state copy works in FI.
+- Locale fallback does not produce confusing mixed-language result snippets.
+
+Animal filters:
+
+- Search is scoped to the selected animal.
+- Changing animal clears search.
+- Animal chip interaction remains usable while catalog is expanded.
+- Animal labels are low-priority matches only.
+
+Intent filters:
+
+- Search stacks after active intent filtering.
+- Clearing intent while search is active expands matching results.
+- Reset filters action clears active intent filters where applicable.
+- Empty state is clear when query plus intent has zero results.
+
+Search actions:
+
+- Empty search shows normal grouped catalog.
+- Typing filters results inline.
+- Clearing search restores the normal expanded catalog.
+- Exact localized names rank first.
+- English names match when active locale is ES or FI.
+- Aliases match.
+- Butcher/restaurant names match when available.
+- Category matches appear below stronger name and alias matches.
+- Zone/anatomical area matches appear below stronger name and alias matches.
+
+Empty state:
+
+- No-results heading includes the query.
+- Empty state suggests trying another name, alias, or animal area.
+- Clear search action works.
+- Reset filters action works when filters are active.
+- Empty state does not present generated recommendations.
+
+Catalog and map:
+
+- Empty categories are hidden while search is active.
+- Category headings remain useful for matching results.
+- Switching to map mode hides search and clears query.
+- Switching back to list mode starts with empty search.
+- Map mode does not become dependent on search.
+
+Mobile behavior:
+
+- Keyboard opens on focus without major layout jump.
+- Input remains visible enough while typing.
+- Scroll position stays in the expanded catalog area when clearing search.
+- Clear button is visible and has at least 44px tap target.
+- Result cards remain tappable above bottom nav.
+- Bottom nav does not intercept search input, clear button, or result taps.
+- No overlay or autocomplete panel blocks catalog results.
+
+Desktop behavior:
+
+- Search is inline with the catalog layout.
+- Catalog remains centered and readable.
+- Detail panel remains usable while search is active.
+- Opening detail from a search result works.
+- Clearing search does not break the selected detail panel.
+
+Navigation:
+
+- Back behavior remains consistent with current Cut Selection flow.
+- Back does not unexpectedly re-open search.
+- Back from a detail/bottom sheet returns to the search results when that is current behavior.
+- Search query is not persisted into unrelated app modes.
+
+Performance:
+
+- Index is memoized.
+- Normalized tokens are reused instead of rebuilt unnecessarily.
+- Typing does not produce visible jank on mobile.
+- No heavy fuzzy-search library is included.
+- No network request is made for search.
+
+Data safety:
+
+- Search index includes localized names where available.
+- Search index includes English names.
+- Search index includes aliases.
+- Search index includes butcher/restaurant names when available.
+- Search index includes category and zone/anatomical area labels.
+- Search index excludes safety warnings.
+- Search index excludes long cooking descriptors.
 
 ---
 
 ## Risks
 
-### R1 — Alias coverage gap
+Search becoming the primary flow:
 
-**Risk:** Users searching Spanish or Finnish butcher names may get zero results because
-`aliasesEn` is English-biased and `ProductCut.aliases` is sparse.  
-**Severity:** Medium — degrades recall, does not break the feature.  
-**Mitigation:** The feature still works for English and canonical names. Alias enrichment
-is a catalog quality task that can proceed in parallel or as a follow-up.  
-**Owner:** Catalog / Engine Agent.
+- Risk: placing search too high would undermine guided-first decision support.
+- Mitigation: render only inside expanded "View all cuts"; no default-screen search; no auto-focus on screen load.
 
-### R2 — `resolveProductCut` cost inside search loop
+Bad data producing bad results:
 
-**Risk:** `resolveProductCut(profile.id)` does a lookup per profile per keystroke.
-If the internal implementation is not O(1) (e.g., linear scan), this multiplies cost.  
-**Severity:** Low at current catalog scale. Medium if catalog grows significantly.  
-**Mitigation:** Verify `resolveProductCut` uses a Map or object index internally.
-If it does a `.find()` scan, pre-build the lookup map once outside the filter function
-and pass it in, or cache via `useMemo` on the profile array.
+- Risk: missing localized names, unclear aliases, or absent zones reduce trust.
+- Mitigation: block implementation until Catalog Runtime Alignment provides names, zones, and cleaner alias fields.
 
-### R3 — "All tokens must match" is too strict
+Safety or warning copy leaking into search:
 
-**Risk:** Searching "lomo de cerdo" (3 tokens) might return zero results if a profile
-only matches "lomo" and "cerdo" separately but not a third token.  
-**Severity:** Low — most queries will be 1–2 tokens for a cut name.  
-**Mitigation:** The first deployed version can start with AND-logic and relax to
-OR-logic for 3+ tokens if real user testing shows the strict mode causes frustration.
+- Risk: indexing warnings or descriptors could create alarming or irrelevant matches.
+- Mitigation: explicitly index only name, alias, category, zone, and animal fields; keep safety fields out.
 
-### R4 — Diacritic normalization edge cases (Finnish)
+Locale fallback confusion:
 
-**Risk:** Finnish has ä, ö characters. Stripping diacritics (`ä → a`, `ö → o`) might
-cause unexpected cross-matches in Finnish text.  
-**Severity:** Very low at current catalog scale (few Finnish-specific names).  
-**Mitigation:** For the search query input, normalize both sides identically.
-Do not strip diacritics from display output — normalization is query-only.
+- Risk: ES/FI users may see English names or aliases without understanding why.
+- Mitigation: prefer active-locale display names, use English as fallback only, and avoid mixed-language snippets.
 
-### R5 — Component re-render scope
+Keyboard and bottom nav issues:
 
-**Risk:** `searchQuery` state in `CutSelectionScreen` may cause unnecessary re-renders
-of components that do not depend on it (e.g., `QuickPicks`, animal chips).  
-**Severity:** Low — component tree is not deep.  
-**Mitigation:** Use `useMemo` for filtered profiles. Keep `CutSearchInput` and
-`CutList` as the only re-render targets on query change via careful prop drilling
-or component splitting. Do not use a global state store for this.
+- Risk: mobile keyboard or bottom nav can hide input, clear button, or result cards.
+- Mitigation: verify 360/375/390 widths, maintain bottom padding, and avoid overlay-based result panels.
+
+Overly fuzzy matching:
+
+- Risk: fuzzy search can return surprising cuts in a cooking context.
+- Mitigation: start with deterministic normalized matching and transparent ranking; add fuzzy only after QA evidence.
+
+Result overload:
+
+- Risk: broad category or animal matches could return too many cuts.
+- Mitigation: rank exact and name-based matches first, cap visible results when needed, and keep category/zone matches lower priority.
+
+Map/search ambiguity:
+
+- Risk: combining map zone selection and text search can create unclear filter state.
+- Mitigation: keep search list-only in v1 and clear query when switching to map mode.
 
 ---
 
