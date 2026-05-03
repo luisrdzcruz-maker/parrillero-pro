@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Badge, Button } from "@/components/ui";
+import { texts } from "@/lib/i18n/texts";
 
 type SaveMenuStatus = "idle" | "saving" | "success" | "error";
 
@@ -33,61 +34,30 @@ export default function ResultActions({
     startCooking: string;
   };
 }) {
+  const copy = texts[lang];
   const [localSaveStatus, setLocalSaveStatus] = useState<SaveMenuStatus>("idle");
   const status = rawStatus ?? localSaveStatus;
   const [shareStatus, setShareStatus] = useState<"idle" | "sharing" | "shared" | "copied">("idle");
   const labels = {
-    live:
-      lang === "es"
-        ? {
-            eyebrow: "Siguiente accion",
-            helper: "Abre la guia en vivo con este plan",
-            status: "Live",
-          }
-        : lang === "fi"
-          ? {
-              eyebrow: "Seuraava toiminto",
-              helper: "Avaa live-opas talla suunnitelmalla",
-              status: "Live",
-            }
-          : {
-              eyebrow: "Next action",
-              helper: "Open the live guide with this plan",
-              status: "Live",
-            },
-    save:
-      lang === "es"
-        ? { idle: "Guardar", saving: "Guardando...", success: "Guardado", error: "No se pudo guardar" }
-        : lang === "fi"
-          ? { idle: "Tallenna", saving: "Tallennetaan...", success: "Tallennettu", error: "Tallennus ei onnistunut" }
-          : { idle: "Save", saving: "Saving...", success: "Saved", error: "Could not save" },
-    share:
-      lang === "es"
-        ? {
-            idle: "Compartir",
-            sharing: "Compartiendo...",
-            shared: "Compartido",
-            copied: "Copiado",
-            sharedFeedback: "Compartido desde el menu nativo",
-            copiedFeedback: "Copiado al portapapeles",
-          }
-        : lang === "fi"
-          ? {
-              idle: "Jaa",
-              sharing: "Jaetaan...",
-              shared: "Jaettu",
-              copied: "Kopioitu",
-              sharedFeedback: "Jaettu laitteen jakovalikosta",
-              copiedFeedback: "Kopioitu leikepoydalle",
-            }
-          : {
-              idle: "Share",
-              sharing: "Sharing...",
-              shared: "Shared",
-              copied: "Copied",
-              sharedFeedback: "Shared with your device share sheet",
-              copiedFeedback: "Copied to clipboard",
-            },
+    live: {
+      eyebrow: copy.resultActionsLiveEyebrow,
+      helper: copy.resultActionsLiveHelper,
+      status: copy.resultActionsLiveStatus,
+    },
+    save: {
+      idle: copy.resultActionsSaveIdle,
+      saving: copy.resultActionsSaveSaving,
+      success: copy.resultActionsSaveSuccess,
+      error: copy.resultActionsSaveError,
+    },
+    share: {
+      idle: copy.resultActionsShareIdle,
+      sharing: copy.resultActionsShareSharing,
+      shared: copy.resultActionsShareShared,
+      copied: copy.resultActionsShareCopied,
+      sharedFeedback: copy.resultActionsShareFeedbackShared,
+      copiedFeedback: copy.resultActionsShareFeedbackCopied,
+    },
   } as const;
   const saveLabel =
     status === "saving"
@@ -129,13 +99,7 @@ export default function ResultActions({
   }
 
   function getShareText() {
-    if (lang === "es") {
-      return "Resultado de coccion de Parrillero Pro. Abre la app para revisar el plan completo.";
-    }
-    if (lang === "fi") {
-      return "Parrillero Pron kypsennystulos. Avaa sovellus ja tarkista koko suunnitelma.";
-    }
-    return "Parrillero Pro cooking result. Open the app to review the full plan.";
+    return copy.resultActionsShareBody;
   }
 
   async function handleNativeShare() {

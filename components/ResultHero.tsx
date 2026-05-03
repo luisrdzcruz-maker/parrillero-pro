@@ -4,6 +4,7 @@ import ResultActions from "@/components/ResultActions";
 import ResultHeader from "@/components/ResultHeader";
 import { Panel } from "@/components/ui";
 import type { ResultSummary } from "@/components/ResultGrid";
+import { texts } from "@/lib/i18n/texts";
 
 type SaveMenuStatus = "idle" | "saving" | "success" | "error";
 type Lang = "es" | "en" | "fi";
@@ -178,19 +179,18 @@ export default function ResultHero({
     startCooking: string;
   };
 }) {
-  const isEs = lang === "es";
-  const isFi = lang === "fi";
-  const eyebrow = animal || context || (isEs ? "Plan de coccion" : isFi ? "Kypsennyssuunnitelma" : "Cooking plan");
-  const title = cut || (isEs ? "Resultado listo" : isFi ? "Tulos valmis" : "Result ready");
+  const copy = texts[lang];
+  const eyebrow = animal || context || copy.resultHeroEyebrowFallback;
+  const title = cut || copy.resultHeroTitleFallback;
   const method = summary?.method || "";
   const restMetric = compactRestMetric(summary?.rest);
   const target = compactTemperatureMetric(summary?.temperature, summary?.doneness || doneness, lang);
   const usedMetricValues = new Set<string>();
 
   const heroMetrics = [
-    { label: isEs ? "Tiempo" : isFi ? "Aika" : "Time", value: compactTimeMetric(summary?.time, restMetric), tone: "orange" },
-    { label: isEs ? "Objetivo" : isFi ? "Tavoite" : "Target", value: target, tone: "red" },
-    { label: isEs ? "Reposo" : isFi ? "Lepuutus" : "Rest", value: restMetric, tone: "sky" },
+    { label: copy.resultHeroMetricTime, value: compactTimeMetric(summary?.time, restMetric), tone: "orange" },
+    { label: copy.resultHeroMetricTarget, value: target, tone: "red" },
+    { label: copy.resultHeroMetricRest, value: restMetric, tone: "sky" },
   ].filter((item): item is { label: string; value: string; tone: MetricTone } => {
     if (!item.value) return false;
     const normalized = item.value.toLowerCase();
@@ -220,13 +220,9 @@ export default function ResultHero({
             safety={summary?.safety}
             title={title}
             t={{
-              edit: isEs ? "Editar" : isFi ? "Muokkaa" : "Edit",
-              fallbackSummary: isEs
-                ? "Lo esencial para cocinar sin dudar."
-                : isFi
-                  ? "Oleellinen selkeaan ja varmaan kypsennykseen."
-                  : "The essentials for confident cooking.",
-              safety: isEs ? "Senal segura" : isFi ? "Turvasignaali" : "Safety signal",
+              edit: copy.resultHeroEdit,
+              fallbackSummary: copy.resultHeroFallbackSummary,
+              safety: copy.resultHeroSafety,
             }}
           />
 
