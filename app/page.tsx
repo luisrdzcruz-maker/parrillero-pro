@@ -57,17 +57,11 @@ import {
   shouldShowThickness,
 } from "@/lib/cookingRules";
 import { ds } from "@/lib/design-system";
-import { getAnimalSurfaceLabel, getDonenessSurfaceLabel, sanitizeCriticalErrorCopy } from "@/lib/i18n/surfaceFallbacks";
+import { getDonenessSurfaceLabel, sanitizeCriticalErrorCopy } from "@/lib/i18n/surfaceFallbacks";
 import { texts, type Lang } from "@/lib/i18n/texts";
 import {
-  buildLiveStepsFromPayload,
-  buildLiveStepsSignature,
   createLiveCookingPayload,
-  hasDistinctLiveSteps,
-  LIVE_COOKING_STORAGE_KEY,
-  readLiveCookingPayload,
   saveLiveCookingPayload,
-  type LiveCookingPlanPayload,
 } from "@/lib/liveCookingPlan";
 import { buildLiveUrl } from "@/lib/navigation/buildLiveUrl";
 import {
@@ -81,7 +75,6 @@ import {
   isCutSelectionFilterContextChangeOnly,
   isSameCookingContext,
   isVegetableContextAnimal,
-  normalizeCookingContextValue,
   parseCookingAnimal,
   parseNavFromSearch,
   parsePositiveNumberParam,
@@ -103,6 +96,7 @@ import {
 } from "@/lib/parser/normalizeBlocks";
 import { parseBlocks } from "@/lib/parser/parseBlocks";
 import { generateParrilladaPlan } from "@/lib/parrilladaEngine";
+import { useLiveCookingSession } from "@/hooks/useLiveCookingSession";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, type TouchEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -420,83 +414,6 @@ const animalLabelsById: Record<string, AnimalLabel> = Object.fromEntries(
   Object.entries(animalIdsByLabel).map(([label, id]) => [id, label]),
 ) as Record<string, AnimalLabel>;
 
-function parseLiveUrlState(lang: Lang) {
-  if (typeof window === "undefined") {
-    const defaultAnimal = "Vacuno" as AnimalLabel;
-    return {
-      animal: defaultAnimal,
-      cutId: null as string | null,
-      doneness: getInitialDoneness(defaultAnimal),
-      thickness: "2",
-      donenessFromUrl: undefined as string | undefined,
-      thicknessFromUrl: undefined as string | undefined,
-      context: getAnimalSurfaceLabel(defaultAnimal, lang),
-      lang,
-    };
-  }
-
-  const { animal, cutId: rawCutId, doneness: rawDoneness, thickness: rawThickness, lang: rawLang } = parseLiveParams(
-    window.location.search,
-  );
-  const liveAnimal = parseCookingAnimal(animal ?? null) ?? "Vacuno";
-  const liveCutParam = rawCutId;
-  const liveCutMeta = liveCutParam ? getCutById(liveCutParam) : undefined;
-  const cutId = liveCutMeta?.id ?? null;
-  const donenessParam = rawDoneness?.trim();
-  const donenessFromUrl =
-    donenessParam && getDonenessOptions(animalIdsByLabel[liveAnimal]).some((option) => option.id === donenessParam)
-      ? donenessParam
-      : undefined;
-  const doneness = donenessFromUrl ?? getInitialDoneness(liveAnimal);
-  const thicknessFromUrl = parsePositiveNumberParam(rawThickness != null ? String(rawThickness) : null);
-  const thickness = thicknessFromUrl ?? "2";
-  const localizedAnimal = getAnimalSurfaceLabel(liveAnimal, lang);
-  const context = liveCutMeta ? `${localizedAnimal} · ${getCutName(liveCutMeta, lang)}` : localizedAnimal;
-  const resolvedLang = rawLang ?? lang;
-
-  return { animal: liveAnimal, cutId, doneness, thickness, donenessFromUrl, thicknessFromUrl, context, lang: resolvedLang };
-}
-
-function normalizeLiveContextToken(value: string | undefined) {
-  return value?.trim().toLowerCase() ?? "";
-}
-
-function isMatchingThickness(liveThickness: string, payloadThickness: string) {
-  const liveNumber = Number(liveThickness.replace(",", "."));
-  const payloadNumber = Number(payloadThickness.replace(",", "."));
-  if (Number.isFinite(liveNumber) && Number.isFinite(payloadNumber)) {
-    return Math.abs(liveNumber - payloadNumber) < 0.001;
-  }
-  return normalizeLiveContextToken(liveThickness) === normalizeLiveContextToken(payloadThickness);
-}
-
-function doesPayloadMatchLiveUrlContext(
-  payload: LiveCookingPlanPayload | null,
-  liveFromUrl: ReturnType<typeof parseLiveUrlState>,
-) {
-  if (!payload) return false;
-  if (!liveFromUrl.cutId) return false;
-
-  const sameAnimal =
-    normalizeLiveContextToken(payload.input.animal) === normalizeLiveContextToken(liveFromUrl.animal);
-  const sameCut = normalizeLiveContextToken(payload.input.cut) === normalizeLiveContextToken(liveFromUrl.cutId);
-  const payloadDoneness = normalizeLiveContextToken(payload.input.doneness);
-  const sameDoneness =
-    payloadDoneness.length === 0 ||
-    normalizeLiveContextToken(liveFromUrl.donenessFromUrl) === payloadDoneness;
-  const sameLang = payload.input.lang === liveFromUrl.lang;
-  const payloadRequiresThickness = shouldShowThickness(payload.input.cut);
-  const payloadThickness = normalizeLiveContextToken(payload.input.thickness);
-  const sameThickness =
-    !payloadRequiresThickness ||
-    payloadThickness.length === 0 ||
-    (liveFromUrl.thicknessFromUrl
-      ? isMatchingThickness(liveFromUrl.thicknessFromUrl, payload.input.thickness)
-      : false);
-
-  return sameAnimal && sameCut && sameDoneness && sameThickness && sameLang;
-}
-
 function mapSizePresetToThickness(sizePreset: CookingSizePreset): string {
   if (sizePreset === "small") return "2.5";
   if (sizePreset === "large") return "5";
@@ -616,7 +533,6 @@ function HomeContent() {
 
   const touchStartRef = useRef<TouchPoint | null>(null);
   const isApplyingPopRef = useRef(false);
-  const liveAdvanceRef = useRef(false);
   const navInitializedRef = useRef(false);
   const hasCutSelectionPreviewHistoryRef = useRef(false);
   const cookingContextRef = useRef({
@@ -655,12 +571,24 @@ function HomeContent() {
   const currentDonenessOptions = getDonenessSelectOptions(animal, lang);
   const showThickness = cut ? shouldShowThickness(cut) : true;
   const isCutSelectionSheetOpen = mode === "coccion" && cookingStep === "cut" && Boolean(cut);
-  const [liveClientReady, setLiveClientReady] = useState(false);
-  const [liveSteps, setLiveSteps] = useState<LiveStep[]>(MOCK_LIVE_STEPS);
-  const [liveContext, setLiveContext] = useState<string | undefined>(undefined);
-  const [liveCurrentIndex, setLiveCurrentIndex] = useState(0);
-  const [liveRemaining, setLiveRemaining] = useState(0);
-  const [livePaused, setLivePaused] = useState(true);
+  const liveSession = useLiveCookingSession({
+    mode,
+    lang,
+    searchParamsKey: searchParams.toString(),
+    mockSteps: MOCK_LIVE_STEPS,
+  });
+  const {
+    liveClientReady,
+    liveSteps,
+    liveContext,
+    liveCurrentIndex,
+    liveRemaining,
+    livePaused,
+    liveCookComplete,
+    togglePause,
+    goToNextStep,
+    jumpToStep,
+  } = liveSession;
 
   function resetAdaptiveDetailInputs() {
     setAdvancedThicknessEnabled(false);
@@ -1046,11 +974,6 @@ function HomeContent() {
     }
   }, [searchParams, cut]);
 
-  const liveStep = liveSteps[liveCurrentIndex] ?? liveSteps[0];
-  const liveIsLast = liveCurrentIndex === liveSteps.length - 1;
-  const liveHasTimer = liveStep ? liveStep.duration > 0 : false;
-  const liveCookComplete = mode === "cocina" && liveClientReady && liveIsLast && liveRemaining === 0;
-
   useEffect(() => {
     cookingContextRef.current = {
       animal,
@@ -1059,78 +982,6 @@ function HomeContent() {
       thickness,
     };
   }, [animal, cut, doneness, thickness]);
-
-  useEffect(() => {
-    if (mode !== "cocina") {
-      const frame = window.requestAnimationFrame(() => {
-        setLiveClientReady(false);
-      });
-      return () => window.cancelAnimationFrame(frame);
-    }
-
-    const frame = window.requestAnimationFrame(() => {
-      const liveFromUrl = parseLiveUrlState(lang);
-      const payload = readLiveCookingPayload();
-      const payloadMatchesUrl = doesPayloadMatchLiveUrlContext(payload, liveFromUrl);
-      const safePayload = payloadMatchesUrl ? payload : null;
-      if (payload && !payloadMatchesUrl) {
-        window.sessionStorage.removeItem(LIVE_COOKING_STORAGE_KEY);
-      }
-      const built = buildLiveStepsFromPayload(safePayload, [], lang);
-
-      if (!built.usedFallback && !hasDistinctLiveSteps(built.steps, MOCK_LIVE_STEPS)) {
-        console.warn("[live-cooking] Live steps match mock signature unexpectedly", {
-          payloadSignature: safePayload?.signature ?? "",
-          liveSignature: built.signature,
-          mockSignature: buildLiveStepsSignature(MOCK_LIVE_STEPS),
-        });
-      }
-
-      setLiveSteps(built.steps);
-      setLiveContext(safePayload ? built.context ?? liveFromUrl.context : liveFromUrl.cutId ? liveFromUrl.context : undefined);
-      setLiveCurrentIndex(0);
-      setLiveRemaining(built.steps[0]?.duration ?? 0);
-      setLivePaused(true);
-      setLiveClientReady(true);
-    });
-
-    return () => window.cancelAnimationFrame(frame);
-  }, [mode, lang, searchParams]);
-
-  useEffect(() => {
-    if (mode !== "cocina" || !liveClientReady || livePaused || !liveHasTimer) return;
-    const id = window.setInterval(() => {
-      setLiveRemaining((previous) => Math.max(0, previous - 1));
-    }, 1000);
-    return () => window.clearInterval(id);
-  }, [mode, liveClientReady, livePaused, liveHasTimer]);
-
-  useEffect(() => {
-    if (
-      mode !== "cocina" ||
-      !liveClientReady ||
-      liveRemaining > 0 ||
-      !liveHasTimer ||
-      liveIsLast ||
-      liveAdvanceRef.current
-    ) {
-      return;
-    }
-
-    liveAdvanceRef.current = true;
-    const id = window.setTimeout(() => {
-      const next = liveCurrentIndex + 1;
-      setLiveCurrentIndex(next);
-      setLiveRemaining((liveSteps[next] ?? liveSteps[liveSteps.length - 1]).duration);
-      setLivePaused(false);
-      liveAdvanceRef.current = false;
-    }, 1200);
-
-    return () => {
-      window.clearTimeout(id);
-      liveAdvanceRef.current = false;
-    };
-  }, [mode, liveClientReady, liveRemaining, liveHasTimer, liveIsLast, liveCurrentIndex, liveSteps]);
 
   useEffect(() => {
     if (!liveCookComplete || cookCompleteModalFiredRef.current || isPro()) return;
@@ -1951,28 +1802,6 @@ ERROR
     handleSwipeNavigation(deltaX > 0 ? "back" : "forward");
   }
 
-  function handleCompleteLiveStep() {
-    if (liveSteps.length === 0) return;
-
-    if (liveIsLast) {
-      setLiveRemaining(0);
-      return;
-    }
-
-    const next = liveCurrentIndex + 1;
-    setLiveCurrentIndex(next);
-    setLiveRemaining((liveSteps[next] ?? liveSteps[liveSteps.length - 1]).duration);
-    setLivePaused(false);
-  }
-
-  function handleGoToLiveStep(index: number) {
-    if (liveSteps.length === 0) return;
-    const nextIndex = Math.max(0, Math.min(liveSteps.length - 1, index));
-    setLiveCurrentIndex(nextIndex);
-    setLiveRemaining(liveSteps[nextIndex]?.duration ?? 0);
-    setLivePaused(false);
-  }
-
   function handleLivePlanNavigation() {
     if (typeof window === "undefined") return;
     const { animal, cutId, doneness, thickness } = parseLiveParams(window.location.search);
@@ -2029,9 +1858,9 @@ ERROR
                 context={liveContext}
                 lang={lang}
                 onBack={handleLivePlanNavigation}
-                onPause={() => setLivePaused((value) => !value)}
-                onCompleteStep={handleCompleteLiveStep}
-                onGoToStep={handleGoToLiveStep}
+                onPause={togglePause}
+                onCompleteStep={goToNextStep}
+                onGoToStep={jumpToStep}
                 onSaveCook={() => persistSavedCook(liveSteps, liveContext)}
               />
             )}
