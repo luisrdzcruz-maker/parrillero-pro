@@ -6,21 +6,23 @@ import { Badge, Card, Grid } from "@/components/ui";
 import { ds } from "@/lib/design-system";
 import {
   detectSetupFromText,
-  getSetupVisual,
   SETUP_VISUAL_FALLBACK,
-  type SetupEquipment,
   type SetupType,
 } from "@/lib/setupVisualMap";
 import { formatTitle, getGrillManagerLineClass, getShoppingItems } from "@/lib/uiHelpers";
+import { localizeResultSurfaceCopy, sanitizeCriticalErrorCopy } from "@/lib/i18n/surfaceFallbacks";
 import {
-  localizeResultSurfaceCopy,
-  sanitizeCriticalErrorCopy,
-  sanitizeSetupSummaryCopy,
-} from "@/lib/i18n/surfaceFallbacks";
+  buildResultSummary as buildResultSummaryHelper,
+  sanitizeUserFacingGuidance,
+  type ResultBlocks,
+  type ResultLang,
+  type ResultSummary,
+} from "@/lib/results/resultSummary";
+import { buildSetupVisualResult, getSetupOverlayChipClass } from "@/lib/results/setupVisualResult";
 import ResultCard from "@/components/ResultCard";
 import ResultTimeline from "./ResultTimeline";
 
-type Blocks = Record<string, string>;
+type Blocks = ResultBlocks;
 type ResultItem =
   | {
       key: string;
@@ -38,162 +40,7 @@ type ResultItem =
 const fullWidthPanel = `${ds.panel.result} transition-all duration-200 col-span-full`;
 const inlineFallbackImage =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='700' viewBox='0 0 1200 700'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='30%25' r='70%25'%3E%3Cstop offset='0%25' stop-color='%23f97316' stop-opacity='.45'/%3E%3Cstop offset='60%25' stop-color='%230f172a'/%3E%3Cstop offset='100%25' stop-color='%23020617'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='1200' height='700' fill='url(%23g)'/%3E%3Cpath d='M280 470h640' stroke='%23fb923c' stroke-width='18' stroke-linecap='round' opacity='.55'/%3E%3Cpath d='M340 405h520' stroke='%23fed7aa' stroke-width='10' stroke-linecap='round' opacity='.38'/%3E%3Ccircle cx='600' cy='300' r='105' fill='%23f97316' opacity='.18'/%3E%3C/svg%3E";
-
-export type ResultSummary = {
-  method: string;
-  time: string;
-  temperature: string;
-  doneness: string;
-  rest: string;
-  cutting: string;
-  safety: string;
-  criticalError: string;
-};
-
-function getFirstUsefulLine(value = "") {
-  return (
-    value
-      .split("\n")
-      .map((line) => line.trim().replace(/^[-•]\s*/, ""))
-      .find(Boolean) ?? ""
-  );
-}
-
-function compactSummaryValue(value: string) {
-  const clean = getFirstUsefulLine(value);
-  return clean.length > 78 ? `${clean.slice(0, 75).trim()}...` : clean;
-}
-
-function compactDetailValue(value: string) {
-  const clean = getFirstUsefulLine(value).replace(/^[^:]{1,28}:\s*/, "");
-  return clean.length > 96 ? `${clean.slice(0, 93).trim()}...` : clean;
-}
-
-function getLocalizedInternalCopyFallback(lang: "es" | "en" | "fi") {
-  if (lang === "es") return "Evita sobrecocinar el centro magro antes de terminar el dorado.";
-  if (lang === "fi") return "Valta ylikypsentamasta vähärasvaista osaa ennen pinnan viimeistelya.";
-  return "Avoid overcooking the lean center before the crust finishes.";
-}
-
-function looksLikeInternalDescriptorCopy(value: string) {
-  return /\b(overcook(?:ing)?|lean eye|fat renders|pink core|fat rim|thin crust|low chew|firm beef bite|buttery soft bite)\b/i.test(
-    value,
-  );
-}
-
-function sanitizeUserFacingGuidance(value: string, lang: "es" | "en" | "fi") {
-  if (lang === "en") return value;
-  if (!looksLikeInternalDescriptorCopy(value)) return value;
-  return getLocalizedInternalCopyFallback(lang);
-}
-
-function getSearchableLines(blocks: Blocks, keys: string[]) {
-  return keys
-    .flatMap((key) => blocks[key]?.split("\n") ?? [])
-    .map((line) => line.trim().replace(/^[-•*\d.)\s]+/, ""))
-    .filter(Boolean);
-}
-
-function extractMatchingLine(blocks: Blocks, keys: string[], patterns: RegExp[]) {
-  const lines = getSearchableLines(blocks, keys);
-  const match = lines.find((line) => patterns.some((pattern) => pattern.test(line)));
-  return match ? compactDetailValue(match) : "";
-}
-
-function normalizeSetupText(value = "") {
-  return value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-}
-
-function resolveSetupEquipment(value = ""): SetupEquipment | undefined {
-  const normalized = normalizeSetupText(value);
-
-  if (normalized.includes("kamado")) return "kamado";
-  if (
-    normalized.includes("interior") ||
-    normalized.includes("indoor") ||
-    normalized.includes("cocina") ||
-    normalized.includes("sarten") ||
-    normalized.includes("horno") ||
-    normalized.includes("oven")
-  ) {
-    return "indoor";
-  }
-  if (normalized.includes("carbon") || normalized.includes("charcoal")) return "charcoal";
-  if (normalized.includes("gas") || normalized.includes("napoleon") || normalized.includes("rogue")) {
-    return "gas";
-  }
-
-  return undefined;
-}
-
-type SetupOverlayChip = {
-  label: string;
-  tone: "direct" | "indirect" | "neutral";
-};
-
-function getSetupOverlayChips(setup: SetupType | undefined, lang: "es" | "en" | "fi"): SetupOverlayChip[] {
-  const normalizedSetup = normalizeSetupText(setup).replace(/[_\s]+/g, "-");
-  const labels = {
-    indirect: lang === "es" ? "❄️ Indirecto" : lang === "fi" ? "❄️ Epasuora" : "❄️ Indirect",
-    finalSear: lang === "es" ? "Sellado final" : lang === "fi" ? "Lopullinen ruskistus" : "Final sear",
-    lowHeat: lang === "es" ? "Baja temperatura" : lang === "fi" ? "Matala lampo" : "Low heat",
-    twoZones: lang === "es" ? "2 zonas" : lang === "fi" ? "2 vyohyketta" : "2 zones",
-    mixZone: lang === "es" ? "🔥 Directo + ❄️ Indirecto" : lang === "fi" ? "🔥 Suora + ❄️ Epasuora" : "🔥 Direct + ❄️ Indirect",
-    direct: lang === "es" ? "🔥 Directo" : lang === "fi" ? "🔥 Suora" : "🔥 Direct",
-  };
-
-  if (normalizedSetup === "reverse-sear") {
-    return [
-      { label: labels.indirect, tone: "indirect" },
-      { label: labels.finalSear, tone: "direct" },
-    ];
-  }
-
-  if (normalizedSetup === "low-slow" || normalizedSetup === "low-and-slow") {
-    return [
-      { label: labels.indirect, tone: "indirect" },
-      { label: labels.lowHeat, tone: "neutral" },
-    ];
-  }
-
-  if (normalizedSetup === "two-zone") {
-    return [
-      { label: labels.mixZone, tone: "neutral" },
-      { label: labels.twoZones, tone: "neutral" },
-    ];
-  }
-
-  if (normalizedSetup === "indirect" || normalizedSetup === "indirecto") {
-    return [{ label: labels.indirect, tone: "indirect" }];
-  }
-
-  if (normalizedSetup === "direct" || normalizedSetup === "direct-heat" || normalizedSetup === "directo") {
-    return [{ label: labels.direct, tone: "direct" }];
-  }
-
-  return [
-    { label: labels.mixZone, tone: "neutral" },
-    { label: labels.twoZones, tone: "neutral" },
-  ];
-}
-
-function getSetupOverlayChipClass(tone: SetupOverlayChip["tone"]) {
-  const base =
-    "rounded-full border border-white/15 bg-black/40 px-3 py-1 text-xs font-black uppercase leading-none tracking-[0.08em] shadow-lg backdrop-blur-md ring-1 ring-inset ring-white/10";
-
-  if (tone === "direct") {
-    return `${base} text-orange-200 shadow-orange-950/40`;
-  }
-
-  if (tone === "indirect") {
-    return `${base} text-sky-200 shadow-sky-950/40`;
-  }
-
-  return `${base} text-white shadow-black/30`;
-}
+export type { ResultSummary };
 
 function SetupVisualImage({ src }: { src: string }) {
   const [fallbackStep, setFallbackStep] = useState<"none" | "asset" | "inline">("none");
@@ -230,17 +77,17 @@ function SetupVisualAnchor({
 }: {
   content?: string;
   equipment?: string;
-  lang: "es" | "en" | "fi";
+  lang: ResultLang;
   setup?: SetupType;
 }) {
-  if (!content?.trim()) return null;
-
-  const setupEquipment = resolveSetupEquipment(equipment) ?? resolveSetupEquipment(content);
-  const detectedSetup = setup ?? detectSetupFromText(content);
-  const setupImage = getSetupVisual(setupEquipment, detectedSetup);
-  const overlayChips = getSetupOverlayChips(detectedSetup, lang);
-  const setupLine = sanitizeSetupSummaryCopy(compactSummaryValue(content), lang, equipment);
-  const setupVisualLabel = lang === "es" ? "Visual de configuración" : lang === "fi" ? "Asetuskuva" : "Setup visual";
+  const setupVisual = buildSetupVisualResult({
+    content,
+    equipment,
+    lang,
+    setup,
+  });
+  if (!setupVisual) return null;
+  const { setupImage, overlayChips, setupLine, setupVisualLabel } = setupVisual;
 
   return (
     <section className="relative col-span-full overflow-hidden rounded-[2rem] border border-orange-300/20 bg-slate-950 shadow-2xl shadow-black/30 ring-1 ring-inset ring-white/[0.04]">
@@ -273,51 +120,8 @@ function SetupVisualAnchor({
   );
 }
 
-function extractDonenessValue(blocks: Blocks, keys: string[]) {
-  const explicitKey = findBlockKey(keys, ["PUNTO", "DONENESS", "POINT", "KYPSYYS"]);
-  if (explicitKey) return compactSummaryValue(blocks[explicitKey]);
-
-  const candidateText = keys
-    .map((key) => blocks[key])
-    .filter(Boolean)
-    .join("\n");
-  const line = candidateText
-    .split("\n")
-    .map((value) => value.trim())
-    .find((value) =>
-      /(^|\b)(punto|doneness|point|t[eé]rmino|termino|kypsyys)(\b|:)/i.test(value),
-    );
-
-  if (!line) return "";
-
-  const [, value = ""] = line.split(/:\s+(.+)/);
-  return compactSummaryValue(value || line);
-}
-
-export function buildResultSummary(blocks: Blocks, keys: string[], lang: "es" | "en" | "fi" = "es"): ResultSummary {
-  const setupKey = findBlockKey(keys, ["SETUP", "CONFIGURACION", "CONFIGURACIÓN"]);
-  const timeKey = findBlockKey(keys, ["TIEMPOS", "TIMES"]);
-  const tempKey = findBlockKey(keys, ["TEMPERATURA", "TEMPERATURE"]);
-  const errorKey = findBlockKey(keys, ["ERROR", "ERROR CLAVE", "KEY ERROR"]);
-
-  return {
-    method: setupKey ? compactSummaryValue(localizeResultSurfaceCopy(blocks[setupKey], lang)) : "",
-    time: timeKey ? compactSummaryValue(localizeResultSurfaceCopy(blocks[timeKey], lang)) : "",
-    temperature: tempKey ? compactSummaryValue(localizeResultSurfaceCopy(blocks[tempKey], lang)) : "",
-    doneness: localizeResultSurfaceCopy(extractDonenessValue(blocks, keys), lang),
-    rest: localizeResultSurfaceCopy(extractMatchingLine(blocks, keys, [
-      /\b(reposo|reposar|descanso|rest|resting)\b/i,
-    ]), lang),
-    cutting: localizeResultSurfaceCopy(extractMatchingLine(blocks, keys, [
-      /\b(cortar|corte|cortarlo|trinchar|slice|cutting|carve)\b/i,
-      /\b(contra\s+(la\s+)?fibra|against\s+the\s+grain)\b/i,
-    ]), lang),
-    safety: localizeResultSurfaceCopy(extractMatchingLine(blocks, keys, [
-      /\b(seguridad|seguro|inocuo|safety|safe)\b/i,
-      /\b(term[oó]metro|thermometer|no\s+servir|do\s+not\s+serve)\b/i,
-    ]), lang),
-    criticalError: errorKey ? sanitizeUserFacingGuidance(compactDetailValue(blocks[errorKey]), lang) : "",
-  };
+export function buildResultSummary(blocks: Blocks, keys: string[], lang: ResultLang = "es"): ResultSummary {
+  return buildResultSummaryHelper(blocks, keys, lang);
 }
 
 function ShoppingListCard({
