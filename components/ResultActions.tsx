@@ -37,6 +37,24 @@ export default function ResultActions({
   const status = rawStatus ?? localSaveStatus;
   const [shareStatus, setShareStatus] = useState<"idle" | "sharing" | "shared" | "copied">("idle");
   const labels = {
+    live:
+      lang === "es"
+        ? {
+            eyebrow: "Siguiente accion",
+            helper: "Abre la guia en vivo con este plan",
+            status: "Live",
+          }
+        : lang === "fi"
+          ? {
+              eyebrow: "Seuraava toiminto",
+              helper: "Avaa live-opas talla suunnitelmalla",
+              status: "Live",
+            }
+          : {
+              eyebrow: "Next action",
+              helper: "Open the live guide with this plan",
+              status: "Live",
+            },
     save:
       lang === "es"
         ? { idle: "Guardar", saving: "Guardando...", success: "Guardado", error: "No se pudo guardar" }
@@ -163,7 +181,42 @@ export default function ResultActions({
 
   return (
     <div className={compact ? "flex flex-col gap-2" : "flex flex-col gap-3"}>
-      <div className={compact ? "grid grid-cols-3 gap-2" : "flex flex-wrap items-center gap-2"}>
+      {actions.onStartCooking && (
+        <button
+          type="button"
+          onClick={actions.onStartCooking}
+          className="group relative flex w-full items-center gap-4 overflow-hidden rounded-[1.5rem] border border-orange-300/45 bg-orange-500 px-4 py-4 text-left text-slate-950 shadow-2xl shadow-orange-950/25 ring-1 ring-inset ring-white/20 transition-all duration-200 hover:bg-orange-400 active:scale-[0.99] sm:px-5"
+        >
+          <span
+            aria-hidden="true"
+            className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-white/20 to-transparent opacity-80"
+          />
+          <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-black/15 text-base font-black shadow-sm shadow-black/10 ring-1 ring-inset ring-black/10">
+            &gt;
+          </span>
+
+          <span className="relative min-w-0 flex-1">
+            <span className="block text-[10px] font-black uppercase tracking-[0.22em] text-slate-900/70">
+              {labels.live.eyebrow}
+            </span>
+            <span className="mt-0.5 block text-base font-black leading-tight text-slate-950">
+              {t.startCooking}
+            </span>
+            <span className="mt-1 block text-xs font-bold leading-snug text-slate-950/70">
+              {labels.live.helper}
+            </span>
+          </span>
+
+          <span className="relative flex shrink-0 items-center gap-1.5 rounded-full border border-black/10 bg-black/10 px-2.5 py-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-slate-950" />
+            <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-950">
+              {labels.live.status}
+            </span>
+          </span>
+        </button>
+      )}
+
+      <div className={compact || secondary ? "grid grid-cols-3 gap-2" : "flex flex-wrap items-center gap-2"}>
         {actions.onSave && (
           <Button
             aria-busy={status === "saving"}
@@ -229,19 +282,6 @@ export default function ResultActions({
             </Badge>
           )}
       </div>
-
-      {!compact && actions.onStartCooking && (
-        <div className="pt-3 border-t border-white/5">
-          <Button
-            className="py-3 font-black"
-            fullWidth
-            onClick={actions.onStartCooking}
-            variant="outlineAccent"
-          >
-            {t.startCooking}
-          </Button>
-        </div>
-      )}
     </div>
   );
 }
