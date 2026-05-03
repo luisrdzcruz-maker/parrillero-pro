@@ -174,9 +174,8 @@ export default function LiveCookingScreen({
   });
   const liveText = getLiveText(resolvedLang);
   const fallbackContext = useMemo(() => {
-    const safeAnimal = getAnimalSurfaceLabel(liveUrlState.animal || "beef", resolvedLang);
     const parts = [
-      safeAnimal,
+      liveUrlState.animal ? getAnimalSurfaceLabel(liveUrlState.animal, resolvedLang) : null,
       liveUrlState.cutId,
       liveUrlState.doneness ? getDonenessSurfaceLabel(liveUrlState.doneness, resolvedLang) : null,
       liveUrlState.thickness ? `${liveUrlState.thickness}cm` : null,
@@ -268,6 +267,13 @@ export default function LiveCookingScreen({
     }
   }
 
+  function handlePauseToggle() {
+    if (!hasStarted) {
+      setHasStarted(true);
+    }
+    onPause();
+  }
+
   function handleGoToStep(index: number) {
     if (!hasStarted) return;
     onGoToStep?.(index);
@@ -293,18 +299,33 @@ export default function LiveCookingScreen({
 
   if (!currentStep) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center bg-[#020202] px-6 text-center text-white">
-        <p className="text-2xl font-black">{liveText.noStepsTitle}</p>
-        <p className="mt-2 text-sm font-semibold text-white/45">{liveText.noStepsBody}</p>
-        {onBack && (
-          <button
-            type="button"
-            onClick={onBack}
-            className="mt-6 rounded-2xl bg-orange-500 px-5 py-3 text-sm font-black text-black"
-          >
-            {liveText.backToPlan}
-          </button>
-        )}
+      <div className="flex min-h-0 flex-1 flex-col bg-[#020202] px-5 py-6 text-white">
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center rounded-[2rem] border border-white/[0.08] bg-[radial-gradient(ellipse_at_50%_0%,rgba(249,115,22,0.13),transparent_58%),rgba(255,255,255,0.025)] px-5 text-center shadow-[0_24px_70px_rgba(0,0,0,0.45)]">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-orange-300/20 bg-orange-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-orange-200">
+            <span className="h-1.5 w-1.5 rounded-full bg-orange-400" />
+            {liveText.live}
+          </div>
+          <p className="max-w-[18rem] text-[clamp(1.75rem,8vw,2.45rem)] font-black leading-none tracking-[-0.05em]">
+            {liveText.noStepsTitle}
+          </p>
+          <p className="mt-3 max-w-[19rem] text-sm font-semibold leading-snug text-white/52">
+            {liveText.noStepsBody}
+          </p>
+          {resolvedContext && (
+            <p className="mt-4 max-w-[17rem] truncate rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] font-bold text-white/38">
+              {resolvedContext}
+            </p>
+          )}
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="mt-6 min-h-12 w-full max-w-[18rem] rounded-2xl bg-orange-500 px-5 py-3 text-sm font-black text-black shadow-[0_10px_36px_rgba(249,115,22,0.32)] transition active:scale-[0.98]"
+            >
+              {liveText.backToPlan}
+            </button>
+          )}
+        </div>
       </div>
     );
   }
@@ -425,18 +446,32 @@ export default function LiveCookingScreen({
       </main>
 
       <nav className="shrink-0 border-t border-white/[0.08] bg-black/[0.72] px-3.5 py-2 shadow-[0_-18px_42px_rgba(0,0,0,0.38)] backdrop-blur-xl pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-        <button
-          type="button"
-          onClick={handlePrimaryAction}
-          disabled={isComplete}
-          className={`min-h-14 w-full rounded-[1.25rem] px-4 text-lg font-black tracking-[-0.02em] transition-all duration-200 active:scale-[0.98] disabled:opacity-80 ${
-            shouldPulseCta ? "animate-pulse" : ""
-          } ${
-            isComplete ? CTA_STYLE.complete : CTA_STYLE[ctaUrgency]
-          }`}
-        >
-          {ctaLabel}
-        </button>
+        <p className="mb-1 text-center text-[9px] font-black uppercase tracking-[0.2em] text-white/28">
+          {liveText.nextAction}
+        </p>
+        <div className="flex items-center gap-2">
+          {hasStarted && hasTimer && !isComplete && (
+            <button
+              type="button"
+              onClick={handlePauseToggle}
+              className="min-h-14 shrink-0 rounded-[1.25rem] border border-white/10 bg-white/[0.055] px-4 text-xs font-black text-white/68 transition active:scale-[0.98]"
+            >
+              {paused ? liveText.resumeTimer : liveText.pauseTimer}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={handlePrimaryAction}
+            disabled={isComplete}
+            className={`min-h-14 min-w-0 flex-1 rounded-[1.25rem] px-4 text-lg font-black tracking-[-0.02em] transition-all duration-200 active:scale-[0.98] disabled:opacity-80 ${
+              shouldPulseCta ? "animate-pulse" : ""
+            } ${
+              isComplete ? CTA_STYLE.complete : CTA_STYLE[ctaUrgency]
+            }`}
+          >
+            {ctaLabel}
+          </button>
+        </div>
       </nav>
     </div>
   );

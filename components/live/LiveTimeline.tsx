@@ -35,7 +35,7 @@ export default function LiveTimeline({
       <div className="flex items-center gap-[3px]" aria-label={text.progressAria}>
         {steps.map((step, index) => {
           const barClass = step.isCompleted
-            ? "bg-white/18"
+            ? "bg-emerald-400/45"
             : step.isActive
               ? `${CURRENT_SEGMENT[phase]} shadow-sm`
               : step.isNext
@@ -49,7 +49,7 @@ export default function LiveTimeline({
               type="button"
               onClick={() => onGoToStep?.(index)}
               className={`group flex min-h-5 flex-1 items-center py-1 ${
-                step.isCompleted ? "opacity-45" : ""
+                step.isCompleted ? "opacity-70" : ""
               }`}
               aria-label={`${text.goToStep} ${index + 1}`}
               title={step.name}
@@ -57,7 +57,7 @@ export default function LiveTimeline({
               <div className={`h-[5px] w-full overflow-hidden rounded-full ${barClass}`}>
                 <div
                   className={`h-full rounded-full transition-[width] duration-500 ${
-                    step.isActive ? "bg-white/55" : step.isCompleted ? "bg-white/35" : "bg-transparent"
+                    step.isActive ? "bg-white/55" : step.isCompleted ? "bg-emerald-200/65" : "bg-transparent"
                   }`}
                   style={{ width: progressWidth }}
                 />

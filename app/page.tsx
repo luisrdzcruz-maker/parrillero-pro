@@ -1076,7 +1076,7 @@ function HomeContent() {
       if (payload && !payloadMatchesUrl) {
         window.sessionStorage.removeItem(LIVE_COOKING_STORAGE_KEY);
       }
-      const built = buildLiveStepsFromPayload(safePayload, MOCK_LIVE_STEPS, lang);
+      const built = buildLiveStepsFromPayload(safePayload, [], lang);
 
       if (!built.usedFallback && !hasDistinctLiveSteps(built.steps, MOCK_LIVE_STEPS)) {
         console.warn("[live-cooking] Live steps match mock signature unexpectedly", {
@@ -1087,9 +1087,9 @@ function HomeContent() {
       }
 
       setLiveSteps(built.steps);
-      setLiveContext(safePayload ? built.context ?? liveFromUrl.context : liveFromUrl.context);
+      setLiveContext(safePayload ? built.context ?? liveFromUrl.context : liveFromUrl.cutId ? liveFromUrl.context : undefined);
       setLiveCurrentIndex(0);
-      setLiveRemaining((built.steps[0] ?? MOCK_LIVE_STEPS[0]).duration);
+      setLiveRemaining(built.steps[0]?.duration ?? 0);
       setLivePaused(true);
       setLiveClientReady(true);
     });
@@ -1952,6 +1952,8 @@ ERROR
   }
 
   function handleCompleteLiveStep() {
+    if (liveSteps.length === 0) return;
+
     if (liveIsLast) {
       setLiveRemaining(0);
       return;
@@ -1964,8 +1966,10 @@ ERROR
   }
 
   function handleGoToLiveStep(index: number) {
-    setLiveCurrentIndex(index);
-    setLiveRemaining((liveSteps[index] ?? liveSteps[liveSteps.length - 1]).duration);
+    if (liveSteps.length === 0) return;
+    const nextIndex = Math.max(0, Math.min(liveSteps.length - 1, index));
+    setLiveCurrentIndex(nextIndex);
+    setLiveRemaining(liveSteps[nextIndex]?.duration ?? 0);
     setLivePaused(false);
   }
 
