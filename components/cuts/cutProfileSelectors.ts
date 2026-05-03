@@ -376,14 +376,32 @@ function getFirstNonEmpty(values: Array<string | undefined>) {
   return "";
 }
 
+function getRuntimeDisplayName(profile: GeneratedCutProfile, lang: Lang) {
+  if (lang === "es") {
+    return getFirstNonEmpty([profile.displayNameEsEs, profile.displayNameEn, profile.canonicalNameEn]);
+  }
+  if (lang === "fi") {
+    return getFirstNonEmpty([profile.displayNameFi, profile.displayNameEn, profile.canonicalNameEn]);
+  }
+  return getFirstNonEmpty([profile.displayNameEn, profile.canonicalNameEn]);
+}
+
 export function getCutDisplayName(profile: GeneratedCutProfile, lang: Lang = "en") {
+  const runtimeName = getRuntimeDisplayName(profile, lang);
+  if (runtimeName) return runtimeName;
+
   const override = getOverride(profile);
   const catalogCut = getCatalogCut(profile);
 
   const requested = getFirstNonEmpty([override?.names?.[lang], catalogCut?.names?.[lang]]);
   if (requested) return requested;
 
-  const english = getFirstNonEmpty([override?.names?.en, catalogCut?.names?.en, profile.canonicalNameEn]);
+  const english = getFirstNonEmpty([
+    override?.names?.en,
+    catalogCut?.names?.en,
+    profile.displayNameEn,
+    profile.canonicalNameEn,
+  ]);
   if (english) return english;
 
   return fallbackNameFromId(profile);
@@ -421,7 +439,7 @@ export function getCutAliases(profile: GeneratedCutProfile, lang: Lang = "en") {
   const english = override?.aliases?.en ?? [];
   if (english.length > 0) return english;
 
-  return [...new Set([...(catalogCut?.aliases ?? []), ...profile.aliasesEn])];
+  return [...new Set([...(catalogCut?.aliases ?? []), ...(profile.aliasesMixed ?? []), ...profile.aliasesEn])];
 }
 
 function titleCase(value: string) {

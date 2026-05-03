@@ -24,6 +24,7 @@
     "pipeline:cuts": "npm run pipeline:assets -- cuts",
     "validate:cuts": "node scripts/validate-cuts.mjs",
     "generate:cuts": "node scripts/generate-cuts.mjs",
+    "validate:generated-cuts": "tsx scripts/validate-generated-cut-runtime.ts",
     "pipeline:vegetables": "npm run pipeline:assets -- vegetables",
     "pipeline:icons": "npm run pipeline:assets -- icons",
     "pipeline:steps": "npm run pipeline:assets -- steps",
