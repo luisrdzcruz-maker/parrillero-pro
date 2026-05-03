@@ -56,6 +56,12 @@ import {
   getDonenessOptions,
   shouldShowThickness,
 } from "@/lib/cookingRules";
+import {
+  mapBeefLargeWeightPresetToKg,
+  mapSizePresetToThickness,
+  mapThicknessToSizePreset,
+  mapWeightRangeToKg,
+} from "@/lib/cooking/inputMapping";
 import { ds } from "@/lib/design-system";
 import { getDonenessSurfaceLabel, sanitizeCriticalErrorCopy } from "@/lib/i18n/surfaceFallbacks";
 import { texts, type Lang } from "@/lib/i18n/texts";
@@ -413,45 +419,6 @@ function persistSavedCook(steps: LiveStep[], context: string | undefined) {
 const animalLabelsById: Record<string, AnimalLabel> = Object.fromEntries(
   Object.entries(animalIdsByLabel).map(([label, id]) => [id, label]),
 ) as Record<string, AnimalLabel>;
-
-function mapSizePresetToThickness(sizePreset: CookingSizePreset): string {
-  if (sizePreset === "small") return "2.5";
-  if (sizePreset === "large") return "5";
-  return "3.5";
-}
-
-function mapWeightRangeToKg(weightRange: CookingWeightRange, wholeChicken: boolean): string {
-  if (wholeChicken) {
-    if (weightRange === "light") return "1.2";
-    if (weightRange === "large") return "2";
-    return "1.6";
-  }
-
-  if (weightRange === "light") return "0.8";
-  if (weightRange === "large") return "1.8";
-  return "1.2";
-}
-
-function mapThicknessToSizePreset(thicknessValue: string): CookingSizePreset {
-  const parsed = Number(thicknessValue.replace(",", "."));
-  if (!Number.isFinite(parsed)) return "medium";
-  const preset = thicknessCmToPreset(parsed);
-  if (preset === "thin") return "small";
-  if (preset === "thick") return "large";
-  return "medium";
-}
-
-function thicknessCmToPreset(thicknessCm: number): "thin" | "normal" | "thick" {
-  if (thicknessCm < 2) return "thin";
-  if (thicknessCm <= 3.5) return "normal";
-  return "thick";
-}
-
-function mapBeefLargeWeightPresetToKg(weightRange: CookingWeightRange): string {
-  if (weightRange === "light") return "0.9";
-  if (weightRange === "large") return "1.6";
-  return "1.2";
-}
 
 function HomeContent() {
   const router = useRouter();
