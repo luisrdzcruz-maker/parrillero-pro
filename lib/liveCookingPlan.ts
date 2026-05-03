@@ -261,7 +261,7 @@ export function buildLiveStepsFromPayload(
     const explicitTemp = parseTempTargets(entry).pull;
     const tempTarget =
       explicitTemp ??
-      (zone === "Reposo" || zone === "Servir" ? targets.final : targets.pull ?? null);
+      (zone === "Rest" ? targets.final : targets.pull ?? null);
 
     return {
       id: `plan-step-${index + 1}`,
