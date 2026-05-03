@@ -53,8 +53,8 @@ export function CutBottomSheet({ profile, lang, onClose, onStartCooking }: CutBo
   const primaryCtaLabel = getPrimaryCtaLabel(effectiveLang, displayName);
 
   return (
-    <aside className="fixed inset-x-0 top-0 z-50 mx-auto flex h-screen h-[100dvh] max-w-3xl items-end px-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-[calc(env(safe-area-inset-top)+2rem)] sm:pt-[calc(env(safe-area-inset-top)+0.75rem)] lg:pb-3">
-      <div className="max-h-[calc(100vh-env(safe-area-inset-top)-2rem)] max-h-[calc(100dvh-env(safe-area-inset-top)-2rem)] w-full overflow-y-auto rounded-t-[2rem] border border-white/10 bg-[#070503]/95 p-4 shadow-[0_-28px_110px_rgba(0,0,0,0.72)] backdrop-blur-2xl sm:max-h-[calc(100vh-env(safe-area-inset-top)-0.75rem)] sm:max-h-[calc(100dvh-env(safe-area-inset-top)-0.75rem)] sm:rounded-[2rem] sm:p-5">
+    <aside className="fixed inset-x-0 top-0 z-50 mx-auto flex h-screen h-[100dvh] max-w-3xl items-end px-3 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-[calc(env(safe-area-inset-top)+2.25rem)] sm:pb-4 sm:pt-[calc(env(safe-area-inset-top)+0.75rem)] lg:pb-3">
+      <div className="max-h-[calc(100vh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-10.25rem)] max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-10.25rem)] w-full overflow-y-auto scroll-pb-[calc(8rem+env(safe-area-inset-bottom))] rounded-t-[2rem] border border-white/10 bg-[#070503]/95 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-28px_110px_rgba(0,0,0,0.72)] backdrop-blur-2xl sm:max-h-[calc(100vh-env(safe-area-inset-top)-1.75rem)] sm:max-h-[calc(100dvh-env(safe-area-inset-top)-1.75rem)] sm:scroll-pb-8 sm:rounded-[2rem] sm:p-5 sm:pb-5">
         <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-white/20" />
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
