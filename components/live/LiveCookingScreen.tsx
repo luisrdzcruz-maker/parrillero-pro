@@ -454,7 +454,7 @@ export default function LiveCookingScreen({
             <button
               type="button"
               onClick={handlePauseToggle}
-              className="min-h-14 shrink-0 rounded-[1.25rem] border border-white/10 bg-white/[0.055] px-4 text-xs font-black text-white/68 transition active:scale-[0.98]"
+              className="min-h-14 w-[4.9rem] shrink-0 rounded-[1.25rem] border border-white/14 bg-white/[0.075] px-2 text-[11px] font-black text-white/82 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition active:scale-[0.98]"
             >
               {paused ? liveText.resumeTimer : liveText.pauseTimer}
             </button>

@@ -30,11 +30,11 @@ export default function LiveNextStepPreview({ nextStep, lang = "en" }: Props) {
         ? text.zoneIndirect
         : text.zoneRest;
   return (
-    <div className="flex min-w-0 items-center gap-2.5 rounded-2xl border border-white/[0.06] bg-white/[0.025] px-3.5 py-2.5">
+    <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-2xl border border-white/[0.06] bg-white/[0.025] px-3.5 py-2.5">
       <span className="shrink-0 text-[9px] font-black uppercase tracking-[0.2em] text-white/28">
         {text.upNext}
       </span>
-      <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-white/55">
+      <span className="min-w-[7rem] flex-1 truncate text-[13px] font-bold text-white/55">
         {nextStep.name}
       </span>
       <span

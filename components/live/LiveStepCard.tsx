@@ -146,13 +146,13 @@ export default function LiveStepCard({
         className={`rounded-[1.35rem] border p-4 transition-all duration-200 ease-out ${URGENCY_STYLES[urgency]} ${transitionClass}`}
       >
         {/* Zone rail — 3 heat zones, current highlighted */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
           {zoneRailItems.map(({ key, label }) => {
             const isActive = currentStep.zone === key;
             return (
               <span
                 key={key}
-                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.13em] transition-all duration-300 ${
+                className={`inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.13em] transition-all duration-300 ${
                   isActive
                     ? ZONE_RAIL_ACTIVE[key]
                     : "border-white/[0.07] bg-transparent text-white/22"
@@ -165,13 +165,13 @@ export default function LiveStepCard({
                       : "bg-white/15"
                   }`}
                 />
-                {label}
+                <span className="truncate">{label}</span>
               </span>
             );
           })}
 
           {currentStep.tempTarget !== null && (
-            <span className="ml-auto rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 text-[11px] font-black text-white/65">
+            <span className="ml-auto shrink-0 rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 text-[11px] font-black text-white/65">
               {currentStep.tempTarget}°C
             </span>
           )}
@@ -183,7 +183,7 @@ export default function LiveStepCard({
         <h1 className="mt-1.5 overflow-hidden text-[clamp(1.75rem,8vw,2.85rem)] font-black leading-[0.98] tracking-[-0.055em] text-white [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">
           {currentStep.name}
         </h1>
-        <p className="mt-2.5 overflow-hidden whitespace-pre-line text-[clamp(0.92rem,3.6vw,1rem)] font-semibold leading-snug text-white/72 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:3]">
+        <p className="mt-2.5 overflow-hidden whitespace-pre-line text-[clamp(0.9rem,3.5vw,1rem)] font-semibold leading-snug text-white/72 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:4]">
           {currentStep.instructions}
         </p>
 
