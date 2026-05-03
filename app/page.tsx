@@ -942,10 +942,22 @@ function HomeContent() {
     if (typeof window === "undefined") return;
     const search = buildSearchFromNav(nextMode, nextCookingStep, nextCookingContext);
     const url = `${window.location.pathname}${search}${window.location.hash}`;
+    const beforeSnapshot = {
+      historyLength: window.history.length,
+    };
     if (method === "replace") {
       router.replace(url);
     } else {
       router.push(url);
+      const targetHref = new URL(url, window.location.origin).href;
+      const fallbackHistoryLength = beforeSnapshot.historyLength;
+      window.setTimeout(() => {
+        const onTargetUrl = window.location.href === targetHref;
+        const historyDidNotGrow = window.history.length === fallbackHistoryLength;
+        if (onTargetUrl && historyDidNotGrow) {
+          window.history.pushState(window.history.state, "", url);
+        }
+      }, 1200);
     }
 
     if (nextMode === "coccion" && nextCookingStep === "cut") {
@@ -1971,6 +1983,11 @@ ERROR
     commitNav(nextMode, nextStep, "push");
   }
 
+  function handleHomePrimaryCtaClick() {
+    if (mode !== "inicio") return;
+    commitNav("coccion", "cut", "push");
+  }
+
   function handleModeChange(nextMode: Mode) {
     navigateMode(nextMode);
   }
@@ -2131,6 +2148,7 @@ ERROR
             savedMenusCount={savedMenus.length}
             t={t}
             onModeChange={handleModeChange}
+            onPrimaryCtaClick={handleHomePrimaryCtaClick}
           />
         )}
 

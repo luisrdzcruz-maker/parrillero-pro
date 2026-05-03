@@ -267,12 +267,14 @@ export function HomeScreen({
   onLangChange,
   savedMenusCount,
   onModeChange,
+  onPrimaryCtaClick,
   t,
 }: {
   lang: Lang;
   onLangChange: (lang: Lang) => void;
   savedMenusCount: number;
   onModeChange: (mode: Mode) => void;
+  onPrimaryCtaClick?: () => void;
   t: AppText;
 }) {
   const router = useRouter();
@@ -442,7 +444,7 @@ export function HomeScreen({
         <HeroSection
           t={t}
           onStartCooking={(e) =>
-            fireRipple(e.clientX, e.clientY, () => onModeChange("coccion"))
+            fireRipple(e.clientX, e.clientY, () => (onPrimaryCtaClick ? onPrimaryCtaClick() : onModeChange("coccion")))
           }
           onPlanBbq={() => onModeChange("plan")}
         />
