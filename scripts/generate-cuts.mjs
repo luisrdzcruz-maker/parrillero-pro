@@ -62,6 +62,12 @@ export type GeneratedCutProfile = {
   animalId: GeneratedAnimalId;
   category: string;
   canonicalNameEn: string;
+  displayNameEn: string;
+  displayNameEsEs?: string;
+  displayNameEsAr?: string;
+  displayNameFi?: string;
+  zone?: string;
+  anatomicalArea?: string;
   inputProfileId?: string;
   defaultThicknessCm: number;
   showThickness: boolean;
@@ -79,9 +85,12 @@ export type GeneratedCutProfile = {
   estimatedTotalTimeMin?: number;
   cookingMinutes?: number;
   targetTempC?: number;
+  shortDescriptionEn?: string;
   safetyNoteEn?: string;
+  criticalWarningEn?: string;
   errorEn: string;
   aliasesEn: string[];
+  aliasesMixed?: string[];
   notesEn?: string;
   tipsEn: string[];
   criticalMistakeEn?: string;

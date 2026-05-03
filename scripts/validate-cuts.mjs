@@ -38,6 +38,29 @@ function validateRegressionChecks() {
     regressions.push(`ground_beef must map to ["well_done"] only`);
   }
 
+  const ribeye = profileById.get("ribeye");
+  if (!ribeye) {
+    regressions.push(`Missing required profile: ribeye`);
+  } else {
+    if (!ribeye.displayNameEsEs) regressions.push(`ribeye must include displayNameEsEs from CSV`);
+    if (!ribeye.displayNameFi) regressions.push(`ribeye must include displayNameFi from CSV`);
+    if (!ribeye.zone || !ribeye.anatomicalArea) {
+      regressions.push(`ribeye must include zone/anatomicalArea from CSV zone`);
+    }
+  }
+
+  if (groundBeef) {
+    if (!groundBeef.shortDescriptionEn) {
+      regressions.push(`ground_beef must include shortDescriptionEn`);
+    }
+    if (!groundBeef.safetyNoteEn) {
+      regressions.push(`ground_beef must include safetyNoteEn`);
+    }
+    if (groundBeef.notesEn !== groundBeef.shortDescriptionEn) {
+      regressions.push(`ground_beef notesEn must match shortDescriptionEn and not mix safety_note`);
+    }
+  }
+
   const requiredGeneratedCuts = [
     "ribeye",
     "striploin",

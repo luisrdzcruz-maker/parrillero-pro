@@ -145,7 +145,14 @@ export function normalizeCutProfile(record, line) {
   const resolvedDefaultDoneness = resolveDefaultDoneness(record, allowedDoneness);
   const resolvedInputProfileId = emptyToUndefined(record.input_profile_id) ?? inferredInputProfileId;
   const resolvedConfidenceLevel = resolveConfidenceLevel(record);
-  const notes = [record.notes, record.safety_note].map((value) => value.trim()).filter(Boolean).join(" ");
+  const shortDescriptionEn = emptyToUndefined(record.notes ?? "");
+  const safetyNoteEn = emptyToUndefined(record.safety_note ?? "");
+  const criticalMistakeEn = emptyToUndefined(record.critical_mistake ?? "");
+  const zone = normalizeZone(record.zone);
+  const anatomicalArea = zone;
+  // CSV currently stores aliases in a single mixed-language column.
+  // Keep aliasesEn for backward compatibility until aliases_en/es/fi columns are introduced.
+  const aliasesMixed = parseSemicolonList(record.aliases);
   const estimatedTimeMinPerCm = averageRange(record.estimated_time_min_per_cm);
   const estimatedTotalTimeMin = averageRange(record.estimated_total_time_min);
   const tips = [record.quick_pick_tags, record.cutting_direction]
@@ -157,6 +164,12 @@ export function normalizeCutProfile(record, line) {
     animalId,
     category: record.category,
     canonicalNameEn: record.display_name_en,
+    displayNameEn: record.display_name_en,
+    displayNameEsEs: emptyToUndefined(record.display_name_es_es ?? ""),
+    displayNameEsAr: emptyToUndefined(record.display_name_es_ar ?? ""),
+    displayNameFi: emptyToUndefined(record.display_name_fi ?? ""),
+    zone,
+    anatomicalArea,
     inputProfileId: resolvedInputProfileId,
     defaultThicknessCm: inferDefaultThicknessCm(record),
     showThickness: shouldShowThickness(record),
@@ -174,18 +187,26 @@ export function normalizeCutProfile(record, line) {
     estimatedTotalTimeMin,
     cookingMinutes: estimatedTotalTimeMin,
     targetTempC: averageRange(record.target_temp_c),
-    safetyNoteEn: emptyToUndefined(record.safety_note ?? ""),
-    errorEn: record.safety_note || record.notes,
-    aliasesEn: parseSemicolonList(record.aliases),
-    notesEn: emptyToUndefined(notes),
+    shortDescriptionEn,
+    safetyNoteEn,
+    criticalWarningEn: criticalMistakeEn,
+    errorEn: criticalMistakeEn ?? safetyNoteEn ?? shortDescriptionEn ?? record.display_name_en,
+    aliasesEn: aliasesMixed,
+    aliasesMixed,
+    notesEn: shortDescriptionEn,
     tipsEn: tips,
-    criticalMistakeEn: emptyToUndefined(record.critical_mistake ?? ""),
+    criticalMistakeEn,
     cuttingDirectionEn: emptyToUndefined(record.cutting_direction ?? ""),
     proTipEn: emptyToUndefined(record.pro_tip ?? ""),
     textureResultEn: emptyToUndefined(record.texture_result ?? ""),
     setupVisualKeyEn: emptyToUndefined(record.setup_visual_key ?? ""),
     sourceLine: line,
   };
+}
+
+function normalizeZone(value = "") {
+  const trimmed = value.trim();
+  return trimmed === "" ? undefined : trimmed;
 }
 
 function validateRecord(record, line, seenIds, errors) {

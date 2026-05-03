@@ -40,6 +40,12 @@ export type GeneratedCutProfile = {
   animalId: GeneratedAnimalId;
   category: string;
   canonicalNameEn: string;
+  displayNameEn: string;
+  displayNameEsEs?: string;
+  displayNameEsAr?: string;
+  displayNameFi?: string;
+  zone?: string;
+  anatomicalArea?: string;
   inputProfileId?: string;
   defaultThicknessCm: number;
   showThickness: boolean;
@@ -57,9 +63,12 @@ export type GeneratedCutProfile = {
   estimatedTotalTimeMin?: number;
   cookingMinutes?: number;
   targetTempC?: number;
+  shortDescriptionEn?: string;
   safetyNoteEn?: string;
+  criticalWarningEn?: string;
   errorEn: string;
   aliasesEn: string[];
+  aliasesMixed?: string[];
   notesEn?: string;
   tipsEn: string[];
   criticalMistakeEn?: string;
@@ -75,6 +84,12 @@ export const generatedCutProfiles = [
     "animalId": "beef",
     "category": "steak",
     "canonicalNameEn": "Ribeye",
+    "displayNameEn": "Ribeye",
+    "displayNameEsEs": "entrecot",
+    "displayNameEsAr": "ojo de bife",
+    "displayNameFi": "entrecôte",
+    "zone": "rib",
+    "anatomicalArea": "rib",
     "inputProfileId": "beef-steak",
     "defaultThicknessCm": 2,
     "showThickness": true,
@@ -97,8 +112,17 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 4,
     "targetTempC": 54,
-    "errorEn": "Fatty premium steak.",
+    "shortDescriptionEn": "Fatty premium steak.",
+    "criticalWarningEn": "failing to render the cap fat side first",
+    "errorEn": "failing to render the cap fat side first",
     "aliasesEn": [
+      "ribeye",
+      "rib eye",
+      "cube roll",
+      "ojo de bife",
+      "entrecot"
+    ],
+    "aliasesMixed": [
       "ribeye",
       "rib eye",
       "cube roll",
@@ -123,6 +147,12 @@ export const generatedCutProfiles = [
     "animalId": "beef",
     "category": "steak",
     "canonicalNameEn": "Striploin",
+    "displayNameEn": "Striploin",
+    "displayNameEsEs": "lomo bajo",
+    "displayNameEsAr": "bife de chorizo",
+    "displayNameFi": "ulkofilee",
+    "zone": "loin",
+    "anatomicalArea": "loin",
     "inputProfileId": "beef-steak",
     "defaultThicknessCm": 2,
     "showThickness": true,
@@ -145,8 +175,16 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 4,
     "targetTempC": 54,
-    "errorEn": "Classic steakhouse cut.",
+    "shortDescriptionEn": "Classic steakhouse cut.",
+    "criticalWarningEn": "overcooking the lean eye before fat renders",
+    "errorEn": "overcooking the lean eye before fat renders",
     "aliasesEn": [
+      "striploin",
+      "New York strip",
+      "sirloin steak UK",
+      "bife de chorizo"
+    ],
+    "aliasesMixed": [
       "striploin",
       "New York strip",
       "sirloin steak UK",
@@ -169,6 +207,12 @@ export const generatedCutProfiles = [
     "animalId": "beef",
     "category": "steak",
     "canonicalNameEn": "Tenderloin",
+    "displayNameEn": "Tenderloin",
+    "displayNameEsEs": "solomillo",
+    "displayNameEsAr": "lomo",
+    "displayNameFi": "sisäfilee",
+    "zone": "loin",
+    "anatomicalArea": "loin",
     "inputProfileId": "beef-steak",
     "defaultThicknessCm": 2,
     "showThickness": true,
@@ -191,8 +235,17 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 3,
     "targetTempC": 52,
-    "errorEn": "Very tender and lean.",
+    "shortDescriptionEn": "Very tender and lean.",
+    "criticalWarningEn": "using aggressive heat too long on lean meat",
+    "errorEn": "using aggressive heat too long on lean meat",
     "aliasesEn": [
+      "tenderloin",
+      "filet",
+      "fillet",
+      "filet mignon",
+      "solomillo"
+    ],
+    "aliasesMixed": [
       "tenderloin",
       "filet",
       "fillet",
@@ -216,6 +269,12 @@ export const generatedCutProfiles = [
     "animalId": "beef",
     "category": "steak",
     "canonicalNameEn": "Picanha",
+    "displayNameEn": "Picanha",
+    "displayNameEsEs": "tapa de cuadril",
+    "displayNameEsAr": "tapa de cuadril",
+    "displayNameFi": "picanha",
+    "zone": "rump",
+    "anatomicalArea": "rump",
     "inputProfileId": "beef-steak",
     "defaultThicknessCm": 2,
     "showThickness": true,
@@ -238,8 +297,17 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 4,
     "targetTempC": 54,
-    "errorEn": "Keep fat cap intact.",
+    "shortDescriptionEn": "Keep fat cap intact.",
+    "criticalWarningEn": "scoring too deep and losing fat cap juices",
+    "errorEn": "scoring too deep and losing fat cap juices",
     "aliasesEn": [
+      "picanha",
+      "rump cap",
+      "sirloin cap",
+      "coulotte",
+      "tapa de cuadril"
+    ],
+    "aliasesMixed": [
       "picanha",
       "rump cap",
       "sirloin cap",
@@ -263,6 +331,12 @@ export const generatedCutProfiles = [
     "animalId": "beef",
     "category": "steak",
     "canonicalNameEn": "Bavette / Flap Steak",
+    "displayNameEn": "Bavette / Flap Steak",
+    "displayNameEsEs": "vacío",
+    "displayNameEsAr": "vacío",
+    "displayNameFi": "kuve",
+    "zone": "flank",
+    "anatomicalArea": "flank",
     "inputProfileId": "beef-steak",
     "defaultThicknessCm": 3,
     "showThickness": true,
@@ -283,8 +357,17 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 3,
     "targetTempC": 54,
-    "errorEn": "Fibrous and flavorful.",
+    "shortDescriptionEn": "Fibrous and flavorful.",
+    "criticalWarningEn": "cutting with the grain and making long chewy fibers",
+    "errorEn": "cutting with the grain and making long chewy fibers",
     "aliasesEn": [
+      "bavette",
+      "vacío",
+      "flap steak",
+      "flap meat",
+      "sirloin flap"
+    ],
+    "aliasesMixed": [
       "bavette",
       "vacío",
       "flap steak",
@@ -308,6 +391,12 @@ export const generatedCutProfiles = [
     "animalId": "beef",
     "category": "steak",
     "canonicalNameEn": "Skirt Steak",
+    "displayNameEn": "Skirt Steak",
+    "displayNameEsEs": "entraña",
+    "displayNameEsAr": "entraña",
+    "displayNameFi": "pallealiha",
+    "zone": "diaphragm",
+    "anatomicalArea": "diaphragm",
     "inputProfileId": "beef-steak",
     "defaultThicknessCm": 3,
     "showThickness": true,
@@ -327,8 +416,16 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 3,
     "targetTempC": 54,
+    "shortDescriptionEn": "Fast hot sear.",
     "errorEn": "Fast hot sear.",
     "aliasesEn": [
+      "entraña",
+      "skirt steak",
+      "outside skirt",
+      "inside skirt",
+      "falda"
+    ],
+    "aliasesMixed": [
       "entraña",
       "skirt steak",
       "outside skirt",
@@ -348,6 +445,12 @@ export const generatedCutProfiles = [
     "animalId": "beef",
     "category": "steak",
     "canonicalNameEn": "Flank Steak",
+    "displayNameEn": "Flank Steak",
+    "displayNameEsEs": "falda",
+    "displayNameEsAr": "vacío fino",
+    "displayNameFi": "kuve",
+    "zone": "flank",
+    "anatomicalArea": "flank",
     "inputProfileId": "beef-steak",
     "defaultThicknessCm": 3,
     "showThickness": true,
@@ -368,8 +471,14 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 4,
     "targetTempC": 54,
+    "shortDescriptionEn": "Marinade helps tenderness.",
     "errorEn": "Marinade helps tenderness.",
     "aliasesEn": [
+      "flank steak",
+      "falda",
+      "London broil"
+    ],
+    "aliasesMixed": [
       "flank steak",
       "falda",
       "London broil"
@@ -387,6 +496,12 @@ export const generatedCutProfiles = [
     "animalId": "beef",
     "category": "steak",
     "canonicalNameEn": "Flat Iron",
+    "displayNameEn": "Flat Iron",
+    "displayNameEsEs": "espaldilla plana",
+    "displayNameEsAr": "marucha",
+    "displayNameFi": "lapa",
+    "zone": "shoulder",
+    "anatomicalArea": "shoulder",
     "inputProfileId": "beef-steak",
     "defaultThicknessCm": 2,
     "showThickness": true,
@@ -408,8 +523,14 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 4,
     "targetTempC": 54,
+    "shortDescriptionEn": "Tender if cleaned well.",
     "errorEn": "Tender if cleaned well.",
     "aliasesEn": [
+      "flat iron",
+      "top blade steak",
+      "marucha"
+    ],
+    "aliasesMixed": [
       "flat iron",
       "top blade steak",
       "marucha"
@@ -427,6 +548,12 @@ export const generatedCutProfiles = [
     "animalId": "beef",
     "category": "roast",
     "canonicalNameEn": "Tri-Tip",
+    "displayNameEn": "Tri-Tip",
+    "displayNameEsEs": "culatín de contra",
+    "displayNameEsAr": "colita de cuadril",
+    "displayNameFi": "tri-tip",
+    "zone": "sirloin",
+    "anatomicalArea": "sirloin",
     "inputProfileId": "beef-large",
     "defaultThicknessCm": 5,
     "showThickness": true,
@@ -449,8 +576,14 @@ export const generatedCutProfiles = [
     "restingMinutes": 10,
     "estimatedTimeMinPerCm": 5,
     "targetTempC": 56,
+    "shortDescriptionEn": "Great for indirect grilling.",
     "errorEn": "Great for indirect grilling.",
     "aliasesEn": [
+      "tri-tip",
+      "maminha",
+      "colita de cuadril"
+    ],
+    "aliasesMixed": [
       "tri-tip",
       "maminha",
       "colita de cuadril"
@@ -469,6 +602,12 @@ export const generatedCutProfiles = [
     "animalId": "beef",
     "category": "steak",
     "canonicalNameEn": "Hanger Steak",
+    "displayNameEn": "Hanger Steak",
+    "displayNameEsEs": "solomillo de pulmón",
+    "displayNameEsAr": "entraña gruesa",
+    "displayNameFi": "pallealiha",
+    "zone": "diaphragm",
+    "anatomicalArea": "diaphragm",
     "inputProfileId": "beef-steak",
     "defaultThicknessCm": 3,
     "showThickness": true,
@@ -489,8 +628,14 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 3,
     "targetTempC": 54,
+    "shortDescriptionEn": "Strong beef flavor.",
     "errorEn": "Strong beef flavor.",
     "aliasesEn": [
+      "hanger steak",
+      "onglet",
+      "butcher's steak"
+    ],
+    "aliasesMixed": [
       "hanger steak",
       "onglet",
       "butcher's steak"
@@ -508,6 +653,12 @@ export const generatedCutProfiles = [
     "animalId": "beef",
     "category": "steak",
     "canonicalNameEn": "Denver Steak",
+    "displayNameEn": "Denver Steak",
+    "displayNameEsEs": "denver steak",
+    "displayNameEsAr": "bife denver",
+    "displayNameFi": "denver steak",
+    "zone": "chuck",
+    "anatomicalArea": "chuck",
     "inputProfileId": "beef-steak",
     "defaultThicknessCm": 2,
     "showThickness": true,
@@ -529,8 +680,13 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 4,
     "targetTempC": 54,
+    "shortDescriptionEn": "Modern chuck steak.",
     "errorEn": "Modern chuck steak.",
     "aliasesEn": [
+      "Denver steak",
+      "under blade steak"
+    ],
+    "aliasesMixed": [
       "Denver steak",
       "under blade steak"
     ],
@@ -547,6 +703,12 @@ export const generatedCutProfiles = [
     "animalId": "beef",
     "category": "steak",
     "canonicalNameEn": "Chuck Eye",
+    "displayNameEn": "Chuck Eye",
+    "displayNameEsEs": "entrecot de aguja",
+    "displayNameEsAr": "bife de aguja",
+    "displayNameFi": "etuselkäpihvi",
+    "zone": "chuck",
+    "anatomicalArea": "chuck",
     "inputProfileId": "beef-steak",
     "defaultThicknessCm": 3,
     "showThickness": true,
@@ -568,8 +730,13 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 4,
     "targetTempC": 54,
+    "shortDescriptionEn": "Ribeye-like but less consistent.",
     "errorEn": "Ribeye-like but less consistent.",
     "aliasesEn": [
+      "chuck eye",
+      "poor man's ribeye"
+    ],
+    "aliasesMixed": [
       "chuck eye",
       "poor man's ribeye"
     ],
@@ -585,6 +752,12 @@ export const generatedCutProfiles = [
     "animalId": "beef",
     "category": "steak",
     "canonicalNameEn": "Top Sirloin",
+    "displayNameEn": "Top Sirloin",
+    "displayNameEsEs": "solomillo bajo",
+    "displayNameEsAr": "bife de cuadril",
+    "displayNameFi": "paahtopaisti",
+    "zone": "sirloin",
+    "anatomicalArea": "sirloin",
     "inputProfileId": "beef-steak",
     "defaultThicknessCm": 3,
     "showThickness": true,
@@ -606,8 +779,13 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 5,
     "targetTempC": 56,
+    "shortDescriptionEn": "Lean and versatile.",
     "errorEn": "Lean and versatile.",
     "aliasesEn": [
+      "top sirloin",
+      "cuadril"
+    ],
+    "aliasesMixed": [
       "top sirloin",
       "cuadril"
     ],
@@ -624,6 +802,12 @@ export const generatedCutProfiles = [
     "animalId": "beef",
     "category": "steak",
     "canonicalNameEn": "Rump Steak",
+    "displayNameEn": "Rump Steak",
+    "displayNameEsEs": "cadera",
+    "displayNameEsAr": "cuadril",
+    "displayNameFi": "paisti",
+    "zone": "rump",
+    "anatomicalArea": "rump",
     "inputProfileId": "beef-steak",
     "defaultThicknessCm": 3,
     "showThickness": true,
@@ -645,8 +829,14 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 5,
     "targetTempC": 56,
+    "shortDescriptionEn": "Do not overcook.",
     "errorEn": "Do not overcook.",
     "aliasesEn": [
+      "rump steak",
+      "cuadril",
+      "cadera"
+    ],
+    "aliasesMixed": [
       "rump steak",
       "cuadril",
       "cadera"
@@ -664,6 +854,12 @@ export const generatedCutProfiles = [
     "animalId": "beef",
     "category": "steak",
     "canonicalNameEn": "T-Bone",
+    "displayNameEn": "T-Bone",
+    "displayNameEsEs": "t-bone",
+    "displayNameEsAr": "bife con lomo",
+    "displayNameFi": "t-luupihvi",
+    "zone": "loin",
+    "anatomicalArea": "loin",
     "inputProfileId": "beef-steak",
     "defaultThicknessCm": 3,
     "showThickness": true,
@@ -685,8 +881,13 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 5,
     "targetTempC": 54,
+    "shortDescriptionEn": "Bone causes uneven cooking.",
     "errorEn": "Bone causes uneven cooking.",
     "aliasesEn": [
+      "T-bone",
+      "porterhouse"
+    ],
+    "aliasesMixed": [
       "T-bone",
       "porterhouse"
     ],
@@ -702,6 +903,12 @@ export const generatedCutProfiles = [
     "animalId": "beef",
     "category": "steak",
     "canonicalNameEn": "Porterhouse",
+    "displayNameEn": "Porterhouse",
+    "displayNameEsEs": "porterhouse",
+    "displayNameEsAr": "bife porterhouse",
+    "displayNameFi": "porterhouse-pihvi",
+    "zone": "loin",
+    "anatomicalArea": "loin",
     "inputProfileId": "beef-steak",
     "defaultThicknessCm": 3,
     "showThickness": true,
@@ -723,8 +930,13 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 5,
     "targetTempC": 54,
+    "shortDescriptionEn": "Large tenderloin side.",
     "errorEn": "Large tenderloin side.",
     "aliasesEn": [
+      "porterhouse",
+      "large T-bone"
+    ],
+    "aliasesMixed": [
       "porterhouse",
       "large T-bone"
     ],
@@ -740,6 +952,12 @@ export const generatedCutProfiles = [
     "animalId": "beef",
     "category": "steak",
     "canonicalNameEn": "Tomahawk",
+    "displayNameEn": "Tomahawk",
+    "displayNameEsEs": "tomahawk",
+    "displayNameEsAr": "tomahawk",
+    "displayNameFi": "tomahawk-pihvi",
+    "zone": "rib",
+    "anatomicalArea": "rib",
     "inputProfileId": "beef-steak",
     "defaultThicknessCm": 3,
     "showThickness": true,
@@ -762,8 +980,15 @@ export const generatedCutProfiles = [
     "restingMinutes": 10,
     "estimatedTimeMinPerCm": 6,
     "targetTempC": 54,
-    "errorEn": "Very thick bone-in ribeye.",
+    "shortDescriptionEn": "Very thick bone-in ribeye.",
+    "criticalWarningEn": "trying to cook only over direct heat and burning outside",
+    "errorEn": "trying to cook only over direct heat and burning outside",
     "aliasesEn": [
+      "tomahawk",
+      "bone-in ribeye",
+      "cowboy steak"
+    ],
+    "aliasesMixed": [
       "tomahawk",
       "bone-in ribeye",
       "cowboy steak"
@@ -785,6 +1010,12 @@ export const generatedCutProfiles = [
     "animalId": "beef",
     "category": "bbq",
     "canonicalNameEn": "Brisket",
+    "displayNameEn": "Brisket",
+    "displayNameEsEs": "pecho",
+    "displayNameEsAr": "pecho",
+    "displayNameFi": "rinta",
+    "zone": "breast",
+    "anatomicalArea": "breast",
     "inputProfileId": "beef-large",
     "defaultThicknessCm": 5,
     "showThickness": false,
@@ -805,8 +1036,13 @@ export const generatedCutProfiles = [
     "estimatedTotalTimeMin": 600,
     "cookingMinutes": 600,
     "targetTempC": 93,
+    "shortDescriptionEn": "Cook until tender, not by steak doneness.",
     "errorEn": "Cook until tender, not by steak doneness.",
     "aliasesEn": [
+      "brisket",
+      "pecho"
+    ],
+    "aliasesMixed": [
       "brisket",
       "pecho"
     ],
@@ -823,6 +1059,12 @@ export const generatedCutProfiles = [
     "animalId": "beef",
     "category": "bbq",
     "canonicalNameEn": "Short Ribs",
+    "displayNameEn": "Short Ribs",
+    "displayNameEsEs": "costilla corta",
+    "displayNameEsAr": "asado de tira",
+    "displayNameFi": "lyhyet kylkiluut",
+    "zone": "rib",
+    "anatomicalArea": "rib",
     "inputProfileId": "beef-large",
     "defaultThicknessCm": 5,
     "showThickness": false,
@@ -844,8 +1086,14 @@ export const generatedCutProfiles = [
     "estimatedTotalTimeMin": 270,
     "cookingMinutes": 270,
     "targetTempC": 90,
+    "shortDescriptionEn": "Collagen-rich.",
     "errorEn": "Collagen-rich.",
     "aliasesEn": [
+      "short ribs",
+      "asado de tira",
+      "flanken ribs"
+    ],
+    "aliasesMixed": [
       "short ribs",
       "asado de tira",
       "flanken ribs"
@@ -863,6 +1111,12 @@ export const generatedCutProfiles = [
     "animalId": "beef",
     "category": "bbq",
     "canonicalNameEn": "Chuck Roast",
+    "displayNameEn": "Chuck Roast",
+    "displayNameEsEs": "aguja",
+    "displayNameEsAr": "aguja",
+    "displayNameFi": "etuselkä",
+    "zone": "chuck",
+    "anatomicalArea": "chuck",
     "inputProfileId": "beef-large",
     "defaultThicknessCm": 5,
     "showThickness": false,
@@ -884,8 +1138,14 @@ export const generatedCutProfiles = [
     "estimatedTotalTimeMin": 330,
     "cookingMinutes": 330,
     "targetTempC": 92,
+    "shortDescriptionEn": "Good pulled beef.",
     "errorEn": "Good pulled beef.",
     "aliasesEn": [
+      "chuck",
+      "aguja",
+      "shoulder roast"
+    ],
+    "aliasesMixed": [
       "chuck",
       "aguja",
       "shoulder roast"
@@ -903,6 +1163,12 @@ export const generatedCutProfiles = [
     "animalId": "beef",
     "category": "ground",
     "canonicalNameEn": "Ground Beef",
+    "displayNameEn": "Ground Beef",
+    "displayNameEsEs": "carne picada",
+    "displayNameEsAr": "carne picada",
+    "displayNameFi": "naudan jauheliha",
+    "zone": "mixed",
+    "anatomicalArea": "mixed",
     "inputProfileId": "default",
     "defaultThicknessCm": 2,
     "showThickness": false,
@@ -923,6 +1189,7 @@ export const generatedCutProfiles = [
     "restingMinutes": 2,
     "estimatedTimeMinPerCm": 3,
     "targetTempC": 65,
+    "shortDescriptionEn": "Cook fully to 71°C / 160°F for safety.",
     "safetyNoteEn": "Ground beef must be cooked to 71°C / 160°F. Medium carries food safety risk.",
     "errorEn": "Ground beef must be cooked to 71°C / 160°F. Medium carries food safety risk.",
     "aliasesEn": [
@@ -930,7 +1197,12 @@ export const generatedCutProfiles = [
       "minced beef",
       "carne molida"
     ],
-    "notesEn": "Cook fully to 71°C / 160°F for safety. Ground beef must be cooked to 71°C / 160°F. Medium carries food safety risk.",
+    "aliasesMixed": [
+      "ground beef",
+      "minced beef",
+      "carne molida"
+    ],
+    "notesEn": "Cook fully to 71°C / 160°F for safety.",
     "tipsEn": [
       "burger",
       "quick",
@@ -943,6 +1215,12 @@ export const generatedCutProfiles = [
     "animalId": "pork",
     "category": "steak",
     "canonicalNameEn": "Pork Tenderloin",
+    "displayNameEn": "Pork Tenderloin",
+    "displayNameEsEs": "solomillo de cerdo",
+    "displayNameEsAr": "solomillo de cerdo",
+    "displayNameFi": "porsaan sisäfilee",
+    "zone": "loin",
+    "anatomicalArea": "loin",
     "inputProfileId": "pork-fast",
     "defaultThicknessCm": 2,
     "showThickness": true,
@@ -965,13 +1243,18 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 4,
     "targetTempC": 64,
+    "shortDescriptionEn": "Lean and tender.",
     "safetyNoteEn": "Cook to safe pork temperature.",
     "errorEn": "Cook to safe pork temperature.",
     "aliasesEn": [
       "pork tenderloin",
       "pork fillet"
     ],
-    "notesEn": "Lean and tender. Cook to safe pork temperature.",
+    "aliasesMixed": [
+      "pork tenderloin",
+      "pork fillet"
+    ],
+    "notesEn": "Lean and tender.",
     "tipsEn": [
       "quick",
       "lean",
@@ -984,6 +1267,12 @@ export const generatedCutProfiles = [
     "animalId": "pork",
     "category": "roast",
     "canonicalNameEn": "Pork Loin",
+    "displayNameEn": "Pork Loin",
+    "displayNameEsEs": "lomo de cerdo",
+    "displayNameEsAr": "lomo de cerdo",
+    "displayNameFi": "porsaan ulkofilee",
+    "zone": "loin",
+    "anatomicalArea": "loin",
     "inputProfileId": "pork-fast",
     "defaultThicknessCm": 5,
     "showThickness": true,
@@ -1006,13 +1295,18 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 5,
     "targetTempC": 66,
+    "shortDescriptionEn": "Brine recommended.",
     "safetyNoteEn": "Cook to safe pork temperature.",
     "errorEn": "Cook to safe pork temperature.",
     "aliasesEn": [
       "pork loin",
       "boneless loin"
     ],
-    "notesEn": "Brine recommended. Cook to safe pork temperature.",
+    "aliasesMixed": [
+      "pork loin",
+      "boneless loin"
+    ],
+    "notesEn": "Brine recommended.",
     "tipsEn": [
       "lean",
       "against the grain"
@@ -1024,6 +1318,12 @@ export const generatedCutProfiles = [
     "animalId": "pork",
     "category": "steak",
     "canonicalNameEn": "Pork Chop",
+    "displayNameEn": "Pork Chop",
+    "displayNameEsEs": "chuleta de cerdo",
+    "displayNameEsAr": "costeleta de cerdo",
+    "displayNameFi": "porsaankyljys",
+    "zone": "loin",
+    "anatomicalArea": "loin",
     "inputProfileId": "pork-fast",
     "defaultThicknessCm": 3,
     "showThickness": true,
@@ -1045,13 +1345,19 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 5,
     "targetTempC": 66,
+    "shortDescriptionEn": "Bone-in is juicier.",
     "safetyNoteEn": "Cook to safe pork temperature.",
-    "errorEn": "Cook to safe pork temperature.",
+    "criticalWarningEn": "pulling too late and overshooting safe juicy range",
+    "errorEn": "pulling too late and overshooting safe juicy range",
     "aliasesEn": [
       "pork chop",
       "cutlet"
     ],
-    "notesEn": "Bone-in is juicier. Cook to safe pork temperature.",
+    "aliasesMixed": [
+      "pork chop",
+      "cutlet"
+    ],
+    "notesEn": "Bone-in is juicier.",
     "tipsEn": [
       "quick",
       "slice against the grain and avoid bone curve"
@@ -1067,6 +1373,12 @@ export const generatedCutProfiles = [
     "animalId": "pork",
     "category": "steak",
     "canonicalNameEn": "Iberian Secreto",
+    "displayNameEn": "Iberian Secreto",
+    "displayNameEsEs": "secreto ibérico",
+    "displayNameEsAr": "secreto ibérico",
+    "displayNameFi": "secreto ibérico",
+    "zone": "shoulder",
+    "anatomicalArea": "shoulder",
     "inputProfileId": "pork-fast",
     "defaultThicknessCm": 2,
     "showThickness": true,
@@ -1087,13 +1399,19 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 4,
     "targetTempC": 66,
+    "shortDescriptionEn": "Fatty Iberian cut.",
     "safetyNoteEn": "Cook to safe pork temperature.",
-    "errorEn": "Cook to safe pork temperature.",
+    "criticalWarningEn": "cooking too cool and leaving fat under rendered",
+    "errorEn": "cooking too cool and leaving fat under rendered",
     "aliasesEn": [
       "secreto",
       "iberian secreto"
     ],
-    "notesEn": "Fatty Iberian cut. Cook to safe pork temperature.",
+    "aliasesMixed": [
+      "secreto",
+      "iberian secreto"
+    ],
+    "notesEn": "Fatty Iberian cut.",
     "tipsEn": [
       "premium",
       "quick",
@@ -1110,6 +1428,12 @@ export const generatedCutProfiles = [
     "animalId": "pork",
     "category": "steak",
     "canonicalNameEn": "Iberian Presa",
+    "displayNameEn": "Iberian Presa",
+    "displayNameEsEs": "presa ibérica",
+    "displayNameEsAr": "presa ibérica",
+    "displayNameFi": "presa ibérica",
+    "zone": "shoulder",
+    "anatomicalArea": "shoulder",
     "inputProfileId": "pork-fast",
     "defaultThicknessCm": 2,
     "showThickness": true,
@@ -1131,13 +1455,18 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 5,
     "targetTempC": 66,
+    "shortDescriptionEn": "Premium Iberian shoulder cut.",
     "safetyNoteEn": "Cook to safe pork temperature.",
     "errorEn": "Cook to safe pork temperature.",
     "aliasesEn": [
       "presa",
       "iberian presa"
     ],
-    "notesEn": "Premium Iberian shoulder cut. Cook to safe pork temperature.",
+    "aliasesMixed": [
+      "presa",
+      "iberian presa"
+    ],
+    "notesEn": "Premium Iberian shoulder cut.",
     "tipsEn": [
       "premium",
       "against the grain"
@@ -1149,6 +1478,12 @@ export const generatedCutProfiles = [
     "animalId": "pork",
     "category": "steak",
     "canonicalNameEn": "Iberian Pluma",
+    "displayNameEn": "Iberian Pluma",
+    "displayNameEsEs": "pluma ibérica",
+    "displayNameEsAr": "pluma ibérica",
+    "displayNameFi": "pluma ibérica",
+    "zone": "loin shoulder",
+    "anatomicalArea": "loin shoulder",
     "inputProfileId": "pork-fast",
     "defaultThicknessCm": 2,
     "showThickness": true,
@@ -1170,6 +1505,7 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 4,
     "targetTempC": 66,
+    "shortDescriptionEn": "Thin premium Iberian cut.",
     "safetyNoteEn": "Cook to safe pork temperature.",
     "errorEn": "Cook to safe pork temperature.",
     "aliasesEn": [
@@ -1177,7 +1513,12 @@ export const generatedCutProfiles = [
       "iberian pluma",
       "feather cut"
     ],
-    "notesEn": "Thin premium Iberian cut. Cook to safe pork temperature.",
+    "aliasesMixed": [
+      "pluma",
+      "iberian pluma",
+      "feather cut"
+    ],
+    "notesEn": "Thin premium Iberian cut.",
     "tipsEn": [
       "premium",
       "quick",
@@ -1190,6 +1531,12 @@ export const generatedCutProfiles = [
     "animalId": "pork",
     "category": "steak",
     "canonicalNameEn": "Pork Collar",
+    "displayNameEn": "Pork Collar",
+    "displayNameEsEs": "cabeza de lomo",
+    "displayNameEsAr": "bondiola",
+    "displayNameFi": "kassler",
+    "zone": "neck",
+    "anatomicalArea": "neck",
     "inputProfileId": "pork-fast",
     "defaultThicknessCm": 2,
     "showThickness": true,
@@ -1211,6 +1558,7 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 5,
     "targetTempC": 72,
+    "shortDescriptionEn": "Fatty and forgiving.",
     "safetyNoteEn": "Cook to safe pork temperature.",
     "errorEn": "Cook to safe pork temperature.",
     "aliasesEn": [
@@ -1220,7 +1568,14 @@ export const generatedCutProfiles = [
       "bondiola",
       "kassler"
     ],
-    "notesEn": "Fatty and forgiving. Cook to safe pork temperature.",
+    "aliasesMixed": [
+      "pork collar",
+      "pork neck",
+      "coppa",
+      "bondiola",
+      "kassler"
+    ],
+    "notesEn": "Fatty and forgiving.",
     "tipsEn": [
       "easy",
       "value",
@@ -1233,6 +1588,12 @@ export const generatedCutProfiles = [
     "animalId": "pork",
     "category": "bbq",
     "canonicalNameEn": "Pork Shoulder",
+    "displayNameEn": "Pork Shoulder",
+    "displayNameEsEs": "paleta de cerdo",
+    "displayNameEsAr": "paleta",
+    "displayNameFi": "porsaan lapa",
+    "zone": "shoulder",
+    "anatomicalArea": "shoulder",
     "inputProfileId": "pork-fast",
     "defaultThicknessCm": 5,
     "showThickness": false,
@@ -1254,6 +1615,7 @@ export const generatedCutProfiles = [
     "estimatedTotalTimeMin": 480,
     "cookingMinutes": 480,
     "targetTempC": 93,
+    "shortDescriptionEn": "Great for pulled pork.",
     "safetyNoteEn": "Cook until tender and safe.",
     "errorEn": "Cook until tender and safe.",
     "aliasesEn": [
@@ -1261,7 +1623,12 @@ export const generatedCutProfiles = [
       "picnic shoulder",
       "paleta"
     ],
-    "notesEn": "Great for pulled pork. Cook until tender and safe.",
+    "aliasesMixed": [
+      "pork shoulder",
+      "picnic shoulder",
+      "paleta"
+    ],
+    "notesEn": "Great for pulled pork.",
     "tipsEn": [
       "slow",
       "bbq",
@@ -1274,6 +1641,12 @@ export const generatedCutProfiles = [
     "animalId": "pork",
     "category": "bbq",
     "canonicalNameEn": "Boston Butt",
+    "displayNameEn": "Boston Butt",
+    "displayNameEsEs": "cabeza de lomo/paleta",
+    "displayNameEsAr": "bondiola/paleta",
+    "displayNameFi": "kassler/lapa",
+    "zone": "shoulder",
+    "anatomicalArea": "shoulder",
     "inputProfileId": "pork-fast",
     "defaultThicknessCm": 5,
     "showThickness": false,
@@ -1295,6 +1668,7 @@ export const generatedCutProfiles = [
     "estimatedTotalTimeMin": 480,
     "cookingMinutes": 480,
     "targetTempC": 93,
+    "shortDescriptionEn": "US BBQ cut.",
     "safetyNoteEn": "Cook until tender and safe.",
     "errorEn": "Cook until tender and safe.",
     "aliasesEn": [
@@ -1302,7 +1676,12 @@ export const generatedCutProfiles = [
       "pork butt",
       "shoulder butt"
     ],
-    "notesEn": "US BBQ cut. Cook until tender and safe.",
+    "aliasesMixed": [
+      "Boston butt",
+      "pork butt",
+      "shoulder butt"
+    ],
+    "notesEn": "US BBQ cut.",
     "tipsEn": [
       "slow",
       "bbq",
@@ -1315,6 +1694,12 @@ export const generatedCutProfiles = [
     "animalId": "pork",
     "category": "ribs",
     "canonicalNameEn": "Baby Back Ribs",
+    "displayNameEn": "Baby Back Ribs",
+    "displayNameEsEs": "costillas de lomo",
+    "displayNameEsAr": "costillitas",
+    "displayNameFi": "porsaan kylkirivi",
+    "zone": "ribs",
+    "anatomicalArea": "ribs",
     "inputProfileId": "pork-fast",
     "defaultThicknessCm": 5,
     "showThickness": false,
@@ -1337,13 +1722,19 @@ export const generatedCutProfiles = [
     "estimatedTotalTimeMin": 180,
     "cookingMinutes": 180,
     "targetTempC": 90,
+    "shortDescriptionEn": "Tender loin ribs.",
     "safetyNoteEn": "Cook until tender and safe.",
-    "errorEn": "Cook until tender and safe.",
+    "criticalWarningEn": "cooking by time only and skipping tenderness checks",
+    "errorEn": "cooking by time only and skipping tenderness checks",
     "aliasesEn": [
       "baby back ribs",
       "loin ribs"
     ],
-    "notesEn": "Tender loin ribs. Cook until tender and safe.",
+    "aliasesMixed": [
+      "baby back ribs",
+      "loin ribs"
+    ],
+    "notesEn": "Tender loin ribs.",
     "tipsEn": [
       "bbq",
       "cut between bones after resting"
@@ -1359,6 +1750,12 @@ export const generatedCutProfiles = [
     "animalId": "pork",
     "category": "ribs",
     "canonicalNameEn": "Spare Ribs",
+    "displayNameEn": "Spare Ribs",
+    "displayNameEsEs": "costillar de cerdo",
+    "displayNameEsAr": "pechito de cerdo",
+    "displayNameFi": "porsaan kylkiluut",
+    "zone": "ribs",
+    "anatomicalArea": "ribs",
     "inputProfileId": "pork-fast",
     "defaultThicknessCm": 5,
     "showThickness": false,
@@ -1380,6 +1777,7 @@ export const generatedCutProfiles = [
     "estimatedTotalTimeMin": 240,
     "cookingMinutes": 240,
     "targetTempC": 90,
+    "shortDescriptionEn": "Fattier ribs.",
     "safetyNoteEn": "Cook until tender and safe.",
     "errorEn": "Cook until tender and safe.",
     "aliasesEn": [
@@ -1387,7 +1785,12 @@ export const generatedCutProfiles = [
       "costillar",
       "pechito"
     ],
-    "notesEn": "Fattier ribs. Cook until tender and safe.",
+    "aliasesMixed": [
+      "spare ribs",
+      "costillar",
+      "pechito"
+    ],
+    "notesEn": "Fattier ribs.",
     "tipsEn": [
       "bbq",
       "slow",
@@ -1400,6 +1803,12 @@ export const generatedCutProfiles = [
     "animalId": "pork",
     "category": "bbq",
     "canonicalNameEn": "Pork Belly",
+    "displayNameEn": "Pork Belly",
+    "displayNameEsEs": "panceta",
+    "displayNameEsAr": "panceta",
+    "displayNameFi": "porsaan kylki",
+    "zone": "belly",
+    "anatomicalArea": "belly",
     "inputProfileId": "pork-fast",
     "defaultThicknessCm": 5,
     "showThickness": false,
@@ -1422,6 +1831,7 @@ export const generatedCutProfiles = [
     "estimatedTotalTimeMin": 135,
     "cookingMinutes": 135,
     "targetTempC": 85,
+    "shortDescriptionEn": "Very fatty.",
     "safetyNoteEn": "Cook until rendered and safe.",
     "errorEn": "Cook until rendered and safe.",
     "aliasesEn": [
@@ -1429,7 +1839,12 @@ export const generatedCutProfiles = [
       "panceta",
       "belly"
     ],
-    "notesEn": "Very fatty. Cook until rendered and safe.",
+    "aliasesMixed": [
+      "pork belly",
+      "panceta",
+      "belly"
+    ],
+    "notesEn": "Very fatty.",
     "tipsEn": [
       "slow",
       "crispy",
@@ -1442,6 +1857,12 @@ export const generatedCutProfiles = [
     "animalId": "pork",
     "category": "steak",
     "canonicalNameEn": "Pork Belly Slices",
+    "displayNameEn": "Pork Belly Slices",
+    "displayNameEsEs": "panceta en tiras",
+    "displayNameEsAr": "panceta en tiras",
+    "displayNameFi": "porsaan kylkisiivut",
+    "zone": "belly",
+    "anatomicalArea": "belly",
     "inputProfileId": "pork-fast",
     "defaultThicknessCm": 2,
     "showThickness": true,
@@ -1462,13 +1883,18 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 4,
     "targetTempC": 75,
+    "shortDescriptionEn": "Good for fast grilling.",
     "safetyNoteEn": "Cook to safe pork temperature.",
     "errorEn": "Cook to safe pork temperature.",
     "aliasesEn": [
       "belly slices",
       "pork belly strips"
     ],
-    "notesEn": "Good for fast grilling. Cook to safe pork temperature.",
+    "aliasesMixed": [
+      "belly slices",
+      "pork belly strips"
+    ],
+    "notesEn": "Good for fast grilling.",
     "tipsEn": [
       "quick",
       "not critical"
@@ -1480,6 +1906,12 @@ export const generatedCutProfiles = [
     "animalId": "pork",
     "category": "bbq",
     "canonicalNameEn": "Pork Hock",
+    "displayNameEn": "Pork Hock",
+    "displayNameEsEs": "codillo",
+    "displayNameEsAr": "garrón",
+    "displayNameFi": "potka",
+    "zone": "leg",
+    "anatomicalArea": "leg",
     "inputProfileId": "pork-fast",
     "defaultThicknessCm": 5,
     "showThickness": false,
@@ -1502,6 +1934,7 @@ export const generatedCutProfiles = [
     "estimatedTotalTimeMin": 270,
     "cookingMinutes": 270,
     "targetTempC": 93,
+    "shortDescriptionEn": "Collagen-rich.",
     "safetyNoteEn": "Cook until tender and safe.",
     "errorEn": "Cook until tender and safe.",
     "aliasesEn": [
@@ -1509,7 +1942,12 @@ export const generatedCutProfiles = [
       "knuckle",
       "codillo"
     ],
-    "notesEn": "Collagen-rich. Cook until tender and safe.",
+    "aliasesMixed": [
+      "pork hock",
+      "knuckle",
+      "codillo"
+    ],
+    "notesEn": "Collagen-rich.",
     "tipsEn": [
       "slow",
       "around bone"
@@ -1521,6 +1959,12 @@ export const generatedCutProfiles = [
     "animalId": "pork",
     "category": "ground",
     "canonicalNameEn": "Ground Pork",
+    "displayNameEn": "Ground Pork",
+    "displayNameEsEs": "carne picada de cerdo",
+    "displayNameEsAr": "carne picada de cerdo",
+    "displayNameFi": "porsaan jauheliha",
+    "zone": "mixed",
+    "anatomicalArea": "mixed",
     "inputProfileId": "default",
     "defaultThicknessCm": 2,
     "showThickness": false,
@@ -1540,13 +1984,18 @@ export const generatedCutProfiles = [
     "restingMinutes": 2,
     "estimatedTimeMinPerCm": 3,
     "targetTempC": 71,
+    "shortDescriptionEn": "For burgers and sausages.",
     "safetyNoteEn": "Ground pork must be cooked safely.",
     "errorEn": "Ground pork must be cooked safely.",
     "aliasesEn": [
       "ground pork",
       "minced pork"
     ],
-    "notesEn": "For burgers and sausages. Ground pork must be cooked safely.",
+    "aliasesMixed": [
+      "ground pork",
+      "minced pork"
+    ],
+    "notesEn": "For burgers and sausages.",
     "tipsEn": [
       "burger",
       "quick",
@@ -1559,6 +2008,12 @@ export const generatedCutProfiles = [
     "animalId": "chicken",
     "category": "breast",
     "canonicalNameEn": "Chicken Breast",
+    "displayNameEn": "Chicken Breast",
+    "displayNameEsEs": "pechuga",
+    "displayNameEsAr": "pechuga",
+    "displayNameFi": "broilerin rintafilee",
+    "zone": "breast",
+    "anatomicalArea": "breast",
     "inputProfileId": "chicken-breast",
     "defaultThicknessCm": 2,
     "showThickness": true,
@@ -1580,13 +2035,19 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 5,
     "targetTempC": 73,
+    "shortDescriptionEn": "Easy to dry out.",
     "safetyNoteEn": "Chicken must be fully cooked.",
-    "errorEn": "Chicken must be fully cooked.",
+    "criticalWarningEn": "pulling late and drying the lean center",
+    "errorEn": "pulling late and drying the lean center",
     "aliasesEn": [
       "chicken breast",
       "breast fillet"
     ],
-    "notesEn": "Easy to dry out. Chicken must be fully cooked.",
+    "aliasesMixed": [
+      "chicken breast",
+      "breast fillet"
+    ],
+    "notesEn": "Easy to dry out.",
     "tipsEn": [
       "quick",
       "lean",
@@ -1603,6 +2064,12 @@ export const generatedCutProfiles = [
     "animalId": "chicken",
     "category": "breast",
     "canonicalNameEn": "Chicken Tenderloin",
+    "displayNameEn": "Chicken Tenderloin",
+    "displayNameEsEs": "solomillo de pollo",
+    "displayNameEsAr": "filetillo de pollo",
+    "displayNameFi": "broilerin sisäfilee",
+    "zone": "breast",
+    "anatomicalArea": "breast",
     "inputProfileId": "chicken-breast",
     "defaultThicknessCm": 2,
     "showThickness": true,
@@ -1623,13 +2090,18 @@ export const generatedCutProfiles = [
     "restingMinutes": 3,
     "estimatedTimeMinPerCm": 4,
     "targetTempC": 73,
+    "shortDescriptionEn": "Very fast.",
     "safetyNoteEn": "Chicken must be fully cooked.",
     "errorEn": "Chicken must be fully cooked.",
     "aliasesEn": [
       "chicken tender",
       "inner fillet"
     ],
-    "notesEn": "Very fast. Chicken must be fully cooked.",
+    "aliasesMixed": [
+      "chicken tender",
+      "inner fillet"
+    ],
+    "notesEn": "Very fast.",
     "tipsEn": [
       "quick",
       "easy",
@@ -1642,6 +2114,12 @@ export const generatedCutProfiles = [
     "animalId": "chicken",
     "category": "thigh",
     "canonicalNameEn": "Chicken Thigh",
+    "displayNameEn": "Chicken Thigh",
+    "displayNameEsEs": "contramuslo",
+    "displayNameEsAr": "muslo",
+    "displayNameFi": "broilerin paisti",
+    "zone": "leg",
+    "anatomicalArea": "leg",
     "inputProfileId": "poultry-whole",
     "defaultThicknessCm": 2,
     "showThickness": true,
@@ -1663,13 +2141,18 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 6,
     "targetTempC": 78,
+    "shortDescriptionEn": "Forgiving and juicy.",
     "safetyNoteEn": "Chicken must be fully cooked.",
     "errorEn": "Chicken must be fully cooked.",
     "aliasesEn": [
       "chicken thigh",
       "boneless thigh"
     ],
-    "notesEn": "Forgiving and juicy. Chicken must be fully cooked.",
+    "aliasesMixed": [
+      "chicken thigh",
+      "boneless thigh"
+    ],
+    "notesEn": "Forgiving and juicy.",
     "tipsEn": [
       "easy",
       "juicy",
@@ -1682,6 +2165,12 @@ export const generatedCutProfiles = [
     "animalId": "chicken",
     "category": "thigh",
     "canonicalNameEn": "Bone-in Chicken Thigh",
+    "displayNameEn": "Bone-in Chicken Thigh",
+    "displayNameEsEs": "contramuslo con hueso",
+    "displayNameEsAr": "muslo con hueso",
+    "displayNameFi": "luullinen broilerin paisti",
+    "zone": "leg",
+    "anatomicalArea": "leg",
     "inputProfileId": "poultry-whole",
     "defaultThicknessCm": 2,
     "showThickness": true,
@@ -1702,12 +2191,16 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 6,
     "targetTempC": 80,
+    "shortDescriptionEn": "Needs more time near bone.",
     "safetyNoteEn": "Chicken must be fully cooked.",
     "errorEn": "Chicken must be fully cooked.",
     "aliasesEn": [
       "bone-in chicken thigh"
     ],
-    "notesEn": "Needs more time near bone. Chicken must be fully cooked.",
+    "aliasesMixed": [
+      "bone-in chicken thigh"
+    ],
+    "notesEn": "Needs more time near bone.",
     "tipsEn": [
       "easy",
       "juicy",
@@ -1720,6 +2213,12 @@ export const generatedCutProfiles = [
     "animalId": "chicken",
     "category": "leg",
     "canonicalNameEn": "Chicken Drumstick",
+    "displayNameEn": "Chicken Drumstick",
+    "displayNameEsEs": "jamoncito",
+    "displayNameEsAr": "pata",
+    "displayNameFi": "broilerin koipi",
+    "zone": "leg",
+    "anatomicalArea": "leg",
     "inputProfileId": "poultry-whole",
     "defaultThicknessCm": 2,
     "showThickness": true,
@@ -1740,13 +2239,18 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 6,
     "targetTempC": 80,
+    "shortDescriptionEn": "Popular BBQ piece.",
     "safetyNoteEn": "Chicken must be fully cooked.",
     "errorEn": "Chicken must be fully cooked.",
     "aliasesEn": [
       "drumstick",
       "koipi"
     ],
-    "notesEn": "Popular BBQ piece. Chicken must be fully cooked.",
+    "aliasesMixed": [
+      "drumstick",
+      "koipi"
+    ],
+    "notesEn": "Popular BBQ piece.",
     "tipsEn": [
       "easy",
       "around bone"
@@ -1758,6 +2262,12 @@ export const generatedCutProfiles = [
     "animalId": "chicken",
     "category": "leg",
     "canonicalNameEn": "Chicken Leg Quarter",
+    "displayNameEn": "Chicken Leg Quarter",
+    "displayNameEsEs": "cuarto trasero",
+    "displayNameEsAr": "pata muslo",
+    "displayNameFi": "broilerin koipireisi",
+    "zone": "leg",
+    "anatomicalArea": "leg",
     "inputProfileId": "poultry-whole",
     "defaultThicknessCm": 3,
     "showThickness": false,
@@ -1780,13 +2290,18 @@ export const generatedCutProfiles = [
     "estimatedTotalTimeMin": 45,
     "cookingMinutes": 45,
     "targetTempC": 80,
+    "shortDescriptionEn": "Common Finnish cut.",
     "safetyNoteEn": "Chicken must be fully cooked.",
     "errorEn": "Chicken must be fully cooked.",
     "aliasesEn": [
       "leg quarter",
       "koipireisi"
     ],
-    "notesEn": "Common Finnish cut. Chicken must be fully cooked.",
+    "aliasesMixed": [
+      "leg quarter",
+      "koipireisi"
+    ],
+    "notesEn": "Common Finnish cut.",
     "tipsEn": [
       "value",
       "separate joints"
@@ -1798,6 +2313,12 @@ export const generatedCutProfiles = [
     "animalId": "chicken",
     "category": "wing",
     "canonicalNameEn": "Chicken Wing",
+    "displayNameEn": "Chicken Wing",
+    "displayNameEsEs": "alita",
+    "displayNameEsAr": "alita",
+    "displayNameFi": "broilerin siipi",
+    "zone": "wing",
+    "anatomicalArea": "wing",
     "inputProfileId": "poultry-whole",
     "defaultThicknessCm": 2,
     "showThickness": false,
@@ -1819,6 +2340,7 @@ export const generatedCutProfiles = [
     "restingMinutes": 3,
     "estimatedTimeMinPerCm": 5,
     "targetTempC": 83,
+    "shortDescriptionEn": "Cook higher for crisp skin.",
     "safetyNoteEn": "Chicken must be fully cooked.",
     "errorEn": "Chicken must be fully cooked.",
     "aliasesEn": [
@@ -1826,7 +2348,12 @@ export const generatedCutProfiles = [
       "siipi",
       "buffalo wing"
     ],
-    "notesEn": "Cook higher for crisp skin. Chicken must be fully cooked.",
+    "aliasesMixed": [
+      "wing",
+      "siipi",
+      "buffalo wing"
+    ],
+    "notesEn": "Cook higher for crisp skin.",
     "tipsEn": [
       "snack",
       "crispy",
@@ -1839,6 +2366,12 @@ export const generatedCutProfiles = [
     "animalId": "chicken",
     "category": "whole",
     "canonicalNameEn": "Whole Chicken",
+    "displayNameEn": "Whole Chicken",
+    "displayNameEsEs": "pollo entero",
+    "displayNameEsAr": "pollo entero",
+    "displayNameFi": "kokonainen broileri",
+    "zone": "whole",
+    "anatomicalArea": "whole",
     "inputProfileId": "poultry-whole",
     "defaultThicknessCm": 6,
     "showThickness": false,
@@ -1860,13 +2393,19 @@ export const generatedCutProfiles = [
     "estimatedTotalTimeMin": 75,
     "cookingMinutes": 75,
     "targetTempC": 78,
+    "shortDescriptionEn": "Check breast and thigh.",
     "safetyNoteEn": "Chicken must be fully cooked.",
-    "errorEn": "Chicken must be fully cooked.",
+    "criticalWarningEn": "ignoring thigh temp while chasing breast doneness",
+    "errorEn": "ignoring thigh temp while chasing breast doneness",
     "aliasesEn": [
       "whole chicken",
       "broiler"
     ],
-    "notesEn": "Check breast and thigh. Chicken must be fully cooked.",
+    "aliasesMixed": [
+      "whole chicken",
+      "broiler"
+    ],
+    "notesEn": "Check breast and thigh.",
     "tipsEn": [
       "family",
       "bbq",
@@ -1883,6 +2422,12 @@ export const generatedCutProfiles = [
     "animalId": "chicken",
     "category": "whole",
     "canonicalNameEn": "Spatchcock Chicken",
+    "displayNameEn": "Spatchcock Chicken",
+    "displayNameEsEs": "pollo mariposa",
+    "displayNameEsAr": "pollo mariposa",
+    "displayNameFi": "perhosleikattu broileri",
+    "zone": "whole",
+    "anatomicalArea": "whole",
     "inputProfileId": "poultry-whole",
     "defaultThicknessCm": 6,
     "showThickness": false,
@@ -1905,13 +2450,18 @@ export const generatedCutProfiles = [
     "estimatedTotalTimeMin": 48,
     "cookingMinutes": 48,
     "targetTempC": 78,
+    "shortDescriptionEn": "Best whole chicken format for grill.",
     "safetyNoteEn": "Chicken must be fully cooked.",
     "errorEn": "Chicken must be fully cooked.",
     "aliasesEn": [
       "spatchcock",
       "butterflied chicken"
     ],
-    "notesEn": "Best whole chicken format for grill. Chicken must be fully cooked.",
+    "aliasesMixed": [
+      "spatchcock",
+      "butterflied chicken"
+    ],
+    "notesEn": "Best whole chicken format for grill.",
     "tipsEn": [
       "family",
       "easy",
@@ -1924,6 +2474,12 @@ export const generatedCutProfiles = [
     "animalId": "chicken",
     "category": "ground",
     "canonicalNameEn": "Ground Chicken",
+    "displayNameEn": "Ground Chicken",
+    "displayNameEsEs": "carne picada de pollo",
+    "displayNameEsAr": "carne picada de pollo",
+    "displayNameFi": "broilerin jauheliha",
+    "zone": "mixed",
+    "anatomicalArea": "mixed",
     "inputProfileId": "default",
     "defaultThicknessCm": 2,
     "showThickness": false,
@@ -1943,13 +2499,18 @@ export const generatedCutProfiles = [
     "restingMinutes": 3,
     "estimatedTimeMinPerCm": 4,
     "targetTempC": 75,
+    "shortDescriptionEn": "Safety-first.",
     "safetyNoteEn": "Ground chicken must be fully cooked.",
     "errorEn": "Ground chicken must be fully cooked.",
     "aliasesEn": [
       "ground chicken",
       "minced chicken"
     ],
-    "notesEn": "Safety-first. Ground chicken must be fully cooked.",
+    "aliasesMixed": [
+      "ground chicken",
+      "minced chicken"
+    ],
+    "notesEn": "Safety-first.",
     "tipsEn": [
       "burger",
       "quick",
@@ -1962,6 +2523,12 @@ export const generatedCutProfiles = [
     "animalId": "fish",
     "category": "fillet",
     "canonicalNameEn": "Salmon Fillet",
+    "displayNameEn": "Salmon Fillet",
+    "displayNameEsEs": "filete de salmón",
+    "displayNameEsAr": "filete de salmón",
+    "displayNameFi": "lohifilee",
+    "zone": "fillet",
+    "anatomicalArea": "fillet",
     "inputProfileId": "fish-fillet",
     "defaultThicknessCm": 2,
     "showThickness": true,
@@ -1982,13 +2549,19 @@ export const generatedCutProfiles = [
     "restingMinutes": 3,
     "estimatedTimeMinPerCm": 4,
     "targetTempC": 55,
+    "shortDescriptionEn": "Fatty and forgiving.",
     "safetyNoteEn": "Use very fresh fish; cook higher for vulnerable guests.",
-    "errorEn": "Use very fresh fish; cook higher for vulnerable guests.",
+    "criticalWarningEn": "overcooking until albumin leaks heavily and flesh chalks",
+    "errorEn": "overcooking until albumin leaks heavily and flesh chalks",
     "aliasesEn": [
       "salmon",
       "lohi"
     ],
-    "notesEn": "Fatty and forgiving. Use very fresh fish; cook higher for vulnerable guests.",
+    "aliasesMixed": [
+      "salmon",
+      "lohi"
+    ],
+    "notesEn": "Fatty and forgiving.",
     "tipsEn": [
       "quick",
       "fatty",
@@ -2005,6 +2578,12 @@ export const generatedCutProfiles = [
     "animalId": "fish",
     "category": "steak",
     "canonicalNameEn": "Salmon Steak",
+    "displayNameEn": "Salmon Steak",
+    "displayNameEsEs": "rodaja de salmón",
+    "displayNameEsAr": "rodaja de salmón",
+    "displayNameFi": "lohikiekko",
+    "zone": "steak",
+    "anatomicalArea": "steak",
     "inputProfileId": "fish-fillet",
     "defaultThicknessCm": 2,
     "showThickness": true,
@@ -2025,13 +2604,18 @@ export const generatedCutProfiles = [
     "restingMinutes": 3,
     "estimatedTimeMinPerCm": 4,
     "targetTempC": 55,
+    "shortDescriptionEn": "Bone-in cross cut.",
     "safetyNoteEn": "Use very fresh fish; cook higher for vulnerable guests.",
     "errorEn": "Use very fresh fish; cook higher for vulnerable guests.",
     "aliasesEn": [
       "salmon steak",
       "lohikiekko"
     ],
-    "notesEn": "Bone-in cross cut. Use very fresh fish; cook higher for vulnerable guests.",
+    "aliasesMixed": [
+      "salmon steak",
+      "lohikiekko"
+    ],
+    "notesEn": "Bone-in cross cut.",
     "tipsEn": [
       "quick",
       "around bone"
@@ -2043,6 +2627,12 @@ export const generatedCutProfiles = [
     "animalId": "fish",
     "category": "steak",
     "canonicalNameEn": "Tuna Steak",
+    "displayNameEn": "Tuna Steak",
+    "displayNameEsEs": "atún",
+    "displayNameEsAr": "atún",
+    "displayNameFi": "tonnikalapihvi",
+    "zone": "loin",
+    "anatomicalArea": "loin",
     "inputProfileId": "fish-fillet",
     "defaultThicknessCm": 3,
     "showThickness": true,
@@ -2063,14 +2653,21 @@ export const generatedCutProfiles = [
     "restingMinutes": 3,
     "estimatedTimeMinPerCm": 3,
     "targetTempC": 49,
+    "shortDescriptionEn": "Best seared outside, red center.",
     "safetyNoteEn": "Low final temp is only appropriate for sushi-grade fish.",
-    "errorEn": "Low final temp is only appropriate for sushi-grade fish.",
+    "criticalWarningEn": "leaving too long and turning center dry gray",
+    "errorEn": "leaving too long and turning center dry gray",
     "aliasesEn": [
       "tuna steak",
       "yellowfin",
       "bluefin"
     ],
-    "notesEn": "Best seared outside, red center. Low final temp is only appropriate for sushi-grade fish.",
+    "aliasesMixed": [
+      "tuna steak",
+      "yellowfin",
+      "bluefin"
+    ],
+    "notesEn": "Best seared outside, red center.",
     "tipsEn": [
       "premium",
       "quick",
@@ -2087,6 +2684,12 @@ export const generatedCutProfiles = [
     "animalId": "fish",
     "category": "whole",
     "canonicalNameEn": "Whole Sea Bass",
+    "displayNameEn": "Whole Sea Bass",
+    "displayNameEsEs": "lubina entera",
+    "displayNameEsAr": "lubina entera",
+    "displayNameFi": "meriahven",
+    "zone": "whole",
+    "anatomicalArea": "whole",
     "inputProfileId": "fish-whole",
     "defaultThicknessCm": 6,
     "showThickness": false,
@@ -2108,6 +2711,7 @@ export const generatedCutProfiles = [
     "estimatedTotalTimeMin": 24,
     "cookingMinutes": 24,
     "targetTempC": 59,
+    "shortDescriptionEn": "Great whole grilled fish.",
     "safetyNoteEn": "Cook until flesh flakes easily.",
     "errorEn": "Cook until flesh flakes easily.",
     "aliasesEn": [
@@ -2115,7 +2719,12 @@ export const generatedCutProfiles = [
       "branzino",
       "lubina"
     ],
-    "notesEn": "Great whole grilled fish. Cook until flesh flakes easily.",
+    "aliasesMixed": [
+      "sea bass",
+      "branzino",
+      "lubina"
+    ],
+    "notesEn": "Great whole grilled fish.",
     "tipsEn": [
       "whole fish",
       "lift fillets from bone"
@@ -2127,6 +2736,12 @@ export const generatedCutProfiles = [
     "animalId": "fish",
     "category": "whole",
     "canonicalNameEn": "Whole Sea Bream",
+    "displayNameEn": "Whole Sea Bream",
+    "displayNameEsEs": "dorada entera",
+    "displayNameEsAr": "dorada entera",
+    "displayNameFi": "kultaotsa-ahven",
+    "zone": "whole",
+    "anatomicalArea": "whole",
     "inputProfileId": "fish-whole",
     "defaultThicknessCm": 6,
     "showThickness": false,
@@ -2148,6 +2763,7 @@ export const generatedCutProfiles = [
     "estimatedTotalTimeMin": 24,
     "cookingMinutes": 24,
     "targetTempC": 59,
+    "shortDescriptionEn": "Mediterranean classic.",
     "safetyNoteEn": "Cook until flesh flakes easily.",
     "errorEn": "Cook until flesh flakes easily.",
     "aliasesEn": [
@@ -2155,7 +2771,12 @@ export const generatedCutProfiles = [
       "dorada",
       "gilt-head bream"
     ],
-    "notesEn": "Mediterranean classic. Cook until flesh flakes easily.",
+    "aliasesMixed": [
+      "sea bream",
+      "dorada",
+      "gilt-head bream"
+    ],
+    "notesEn": "Mediterranean classic.",
     "tipsEn": [
       "whole fish",
       "lift fillets from bone"
@@ -2167,6 +2788,12 @@ export const generatedCutProfiles = [
     "animalId": "fish",
     "category": "whole",
     "canonicalNameEn": "Whole Turbot",
+    "displayNameEn": "Whole Turbot",
+    "displayNameEsEs": "rodaballo entero",
+    "displayNameEsAr": "rodaballo entero",
+    "displayNameFi": "piikkikampela",
+    "zone": "flatfish",
+    "anatomicalArea": "flatfish",
     "inputProfileId": "fish-whole",
     "defaultThicknessCm": 6,
     "showThickness": false,
@@ -2188,6 +2815,7 @@ export const generatedCutProfiles = [
     "estimatedTotalTimeMin": 35,
     "cookingMinutes": 35,
     "targetTempC": 58,
+    "shortDescriptionEn": "Premium flatfish.",
     "safetyNoteEn": "Cook until flesh releases from bone.",
     "errorEn": "Cook until flesh releases from bone.",
     "aliasesEn": [
@@ -2195,7 +2823,12 @@ export const generatedCutProfiles = [
       "rodaballo",
       "piikkikampela"
     ],
-    "notesEn": "Premium flatfish. Cook until flesh releases from bone.",
+    "aliasesMixed": [
+      "turbot",
+      "rodaballo",
+      "piikkikampela"
+    ],
+    "notesEn": "Premium flatfish.",
     "tipsEn": [
       "premium",
       "whole fish",
@@ -2208,6 +2841,12 @@ export const generatedCutProfiles = [
     "animalId": "fish",
     "category": "tail",
     "canonicalNameEn": "Monkfish Tail",
+    "displayNameEn": "Monkfish Tail",
+    "displayNameEsEs": "rape",
+    "displayNameEsAr": "abadejo/rape",
+    "displayNameFi": "merikrotti",
+    "zone": "tail",
+    "anatomicalArea": "tail",
     "inputProfileId": "fish-fillet",
     "defaultThicknessCm": 3,
     "showThickness": true,
@@ -2228,6 +2867,7 @@ export const generatedCutProfiles = [
     "restingMinutes": 5,
     "estimatedTimeMinPerCm": 5,
     "targetTempC": 58,
+    "shortDescriptionEn": "Meaty texture.",
     "safetyNoteEn": "Cook until opaque and firm.",
     "errorEn": "Cook until opaque and firm.",
     "aliasesEn": [
@@ -2235,7 +2875,12 @@ export const generatedCutProfiles = [
       "lotte",
       "rape"
     ],
-    "notesEn": "Meaty texture. Cook until opaque and firm.",
+    "aliasesMixed": [
+      "monkfish",
+      "lotte",
+      "rape"
+    ],
+    "notesEn": "Meaty texture.",
     "tipsEn": [
       "premium",
       "firm",
@@ -2248,6 +2893,12 @@ export const generatedCutProfiles = [
     "animalId": "fish",
     "category": "loin",
     "canonicalNameEn": "Cod Loin",
+    "displayNameEn": "Cod Loin",
+    "displayNameEsEs": "lomo de bacalao",
+    "displayNameEsAr": "lomo de bacalao",
+    "displayNameFi": "turskan seläke",
+    "zone": "loin",
+    "anatomicalArea": "loin",
     "inputProfileId": "fish-fillet",
     "defaultThicknessCm": 3,
     "showThickness": true,
@@ -2269,13 +2920,18 @@ export const generatedCutProfiles = [
     "restingMinutes": 3,
     "estimatedTimeMinPerCm": 5,
     "targetTempC": 55,
+    "shortDescriptionEn": "Delicate lean fish.",
     "safetyNoteEn": "Cook gently; flakes easily.",
     "errorEn": "Cook gently; flakes easily.",
     "aliasesEn": [
       "cod loin",
       "turska"
     ],
-    "notesEn": "Delicate lean fish. Cook gently; flakes easily.",
+    "aliasesMixed": [
+      "cod loin",
+      "turska"
+    ],
+    "notesEn": "Delicate lean fish.",
     "tipsEn": [
       "lean",
       "serve in flakes"
@@ -2287,6 +2943,12 @@ export const generatedCutProfiles = [
     "animalId": "fish",
     "category": "steak",
     "canonicalNameEn": "Halibut Steak",
+    "displayNameEn": "Halibut Steak",
+    "displayNameEsEs": "fletán",
+    "displayNameEsAr": "fletán",
+    "displayNameFi": "pallas",
+    "zone": "steak",
+    "anatomicalArea": "steak",
     "inputProfileId": "fish-fillet",
     "defaultThicknessCm": 3,
     "showThickness": true,
@@ -2307,13 +2969,18 @@ export const generatedCutProfiles = [
     "restingMinutes": 3,
     "estimatedTimeMinPerCm": 5,
     "targetTempC": 55,
+    "shortDescriptionEn": "Lean and firm.",
     "safetyNoteEn": "Do not overcook lean fish.",
     "errorEn": "Do not overcook lean fish.",
     "aliasesEn": [
       "halibut",
       "pallas"
     ],
-    "notesEn": "Lean and firm. Do not overcook lean fish.",
+    "aliasesMixed": [
+      "halibut",
+      "pallas"
+    ],
+    "notesEn": "Lean and firm.",
     "tipsEn": [
       "premium",
       "lean",
@@ -2326,6 +2993,12 @@ export const generatedCutProfiles = [
     "animalId": "fish",
     "category": "steak",
     "canonicalNameEn": "Swordfish Steak",
+    "displayNameEn": "Swordfish Steak",
+    "displayNameEsEs": "pez espada",
+    "displayNameEsAr": "pez espada",
+    "displayNameFi": "miekkakala",
+    "zone": "steak",
+    "anatomicalArea": "steak",
     "inputProfileId": "fish-fillet",
     "defaultThicknessCm": 2,
     "showThickness": true,
@@ -2346,13 +3019,18 @@ export const generatedCutProfiles = [
     "restingMinutes": 3,
     "estimatedTimeMinPerCm": 4,
     "targetTempC": 58,
+    "shortDescriptionEn": "Meaty fish steak.",
     "safetyNoteEn": "Cook to firm opaque texture.",
     "errorEn": "Cook to firm opaque texture.",
     "aliasesEn": [
       "swordfish",
       "emperador"
     ],
-    "notesEn": "Meaty fish steak. Cook to firm opaque texture.",
+    "aliasesMixed": [
+      "swordfish",
+      "emperador"
+    ],
+    "notesEn": "Meaty fish steak.",
     "tipsEn": [
       "firm",
       "quick",
@@ -2365,6 +3043,12 @@ export const generatedCutProfiles = [
     "animalId": "fish",
     "category": "whole",
     "canonicalNameEn": "Alfonsino / Beryx",
+    "displayNameEn": "Alfonsino / Beryx",
+    "displayNameEsEs": "virrey",
+    "displayNameEsAr": "virrey",
+    "displayNameFi": "limapää / beryx",
+    "zone": "whole fish",
+    "anatomicalArea": "whole fish",
     "inputProfileId": "fish-whole",
     "defaultThicknessCm": 6,
     "showThickness": false,
@@ -2387,15 +3071,23 @@ export const generatedCutProfiles = [
     "estimatedTotalTimeMin": 27,
     "cookingMinutes": 27,
     "targetTempC": 58,
+    "shortDescriptionEn": "Virrey added as requested; scientific name Beryx decadactylus.",
     "safetyNoteEn": "Cook until opaque and flaky; exact market name varies.",
-    "errorEn": "Cook until opaque and flaky; exact market name varies.",
+    "criticalWarningEn": "treating it like lean fish and overcooking the loin",
+    "errorEn": "treating it like lean fish and overcooking the loin",
     "aliasesEn": [
       "virrey",
       "Beryx decadactylus",
       "alfonsino",
       "red bream"
     ],
-    "notesEn": "Virrey added as requested; scientific name Beryx decadactylus. Cook until opaque and flaky; exact market name varies.",
+    "aliasesMixed": [
+      "virrey",
+      "Beryx decadactylus",
+      "alfonsino",
+      "red bream"
+    ],
+    "notesEn": "Virrey added as requested; scientific name Beryx decadactylus.",
     "tipsEn": [
       "premium",
       "whole fish",
@@ -2412,6 +3104,12 @@ export const generatedCutProfiles = [
     "animalId": "vegetables",
     "category": "vegetable",
     "canonicalNameEn": "Corn on the Cob",
+    "displayNameEn": "Corn on the Cob",
+    "displayNameEsEs": "maíz",
+    "displayNameEsAr": "choclo",
+    "displayNameFi": "maissi",
+    "zone": "vegetable",
+    "anatomicalArea": "vegetable",
     "inputProfileId": "vegetable-format",
     "defaultThicknessCm": 2,
     "showThickness": false,
@@ -2428,8 +3126,14 @@ export const generatedCutProfiles = [
     "restingMinutes": 2,
     "estimatedTotalTimeMin": 14,
     "cookingMinutes": 14,
+    "shortDescriptionEn": "Turn often.",
     "errorEn": "Turn often.",
     "aliasesEn": [
+      "corn",
+      "sweet corn",
+      "choclo"
+    ],
+    "aliasesMixed": [
       "corn",
       "sweet corn",
       "choclo"
@@ -2447,6 +3151,12 @@ export const generatedCutProfiles = [
     "animalId": "vegetables",
     "category": "vegetable",
     "canonicalNameEn": "Eggplant Slices",
+    "displayNameEn": "Eggplant Slices",
+    "displayNameEsEs": "berenjena",
+    "displayNameEsAr": "berenjena",
+    "displayNameFi": "munakoiso",
+    "zone": "vegetable",
+    "anatomicalArea": "vegetable",
     "inputProfileId": "vegetable-format",
     "defaultThicknessCm": 2,
     "showThickness": false,
@@ -2463,8 +3173,14 @@ export const generatedCutProfiles = [
     "restingMinutes": 2,
     "estimatedTotalTimeMin": 11,
     "cookingMinutes": 11,
+    "shortDescriptionEn": "Salt beforehand if desired.",
     "errorEn": "Salt beforehand if desired.",
     "aliasesEn": [
+      "eggplant",
+      "aubergine",
+      "munakoiso"
+    ],
+    "aliasesMixed": [
       "eggplant",
       "aubergine",
       "munakoiso"
@@ -2482,6 +3198,12 @@ export const generatedCutProfiles = [
     "animalId": "vegetables",
     "category": "vegetable",
     "canonicalNameEn": "Asparagus",
+    "displayNameEn": "Asparagus",
+    "displayNameEsEs": "espárragos",
+    "displayNameEsAr": "espárragos",
+    "displayNameFi": "parsa",
+    "zone": "vegetable",
+    "anatomicalArea": "vegetable",
     "inputProfileId": "vegetable-format",
     "defaultThicknessCm": 2,
     "showThickness": false,
@@ -2498,8 +3220,14 @@ export const generatedCutProfiles = [
     "restingMinutes": 1,
     "estimatedTotalTimeMin": 7,
     "cookingMinutes": 7,
-    "errorEn": "Fast cooking.",
+    "shortDescriptionEn": "Fast cooking.",
+    "criticalWarningEn": "skipping oil and salt then drying before browning",
+    "errorEn": "skipping oil and salt then drying before browning",
     "aliasesEn": [
+      "asparagus",
+      "parsa"
+    ],
+    "aliasesMixed": [
       "asparagus",
       "parsa"
     ],
@@ -2520,6 +3248,12 @@ export const generatedCutProfiles = [
     "animalId": "vegetables",
     "category": "vegetable",
     "canonicalNameEn": "Bell Peppers",
+    "displayNameEn": "Bell Peppers",
+    "displayNameEsEs": "pimientos",
+    "displayNameEsAr": "morrones",
+    "displayNameFi": "paprika",
+    "zone": "vegetable",
+    "anatomicalArea": "vegetable",
     "inputProfileId": "vegetable-format",
     "defaultThicknessCm": 2,
     "showThickness": false,
@@ -2536,8 +3270,14 @@ export const generatedCutProfiles = [
     "restingMinutes": 2,
     "estimatedTotalTimeMin": 12,
     "cookingMinutes": 12,
+    "shortDescriptionEn": "Can peel after charring.",
     "errorEn": "Can peel after charring.",
     "aliasesEn": [
+      "bell pepper",
+      "capsicum",
+      "morrón"
+    ],
+    "aliasesMixed": [
       "bell pepper",
       "capsicum",
       "morrón"
@@ -2555,6 +3295,12 @@ export const generatedCutProfiles = [
     "animalId": "vegetables",
     "category": "vegetable",
     "canonicalNameEn": "Potato Halves",
+    "displayNameEn": "Potato Halves",
+    "displayNameEsEs": "patatas",
+    "displayNameEsAr": "papas",
+    "displayNameFi": "peruna",
+    "zone": "vegetable",
+    "anatomicalArea": "vegetable",
     "inputProfileId": "vegetable-format",
     "defaultThicknessCm": 2,
     "showThickness": false,
@@ -2571,8 +3317,15 @@ export const generatedCutProfiles = [
     "restingMinutes": 3,
     "estimatedTotalTimeMin": 30,
     "cookingMinutes": 30,
-    "errorEn": "Parboiling improves result.",
+    "shortDescriptionEn": "Parboiling improves result.",
+    "criticalWarningEn": "grilling raw halves and leaving centers undercooked",
+    "errorEn": "grilling raw halves and leaving centers undercooked",
     "aliasesEn": [
+      "potato",
+      "papa",
+      "peruna"
+    ],
+    "aliasesMixed": [
       "potato",
       "papa",
       "peruna"
@@ -2594,6 +3347,12 @@ export const generatedCutProfiles = [
     "animalId": "vegetables",
     "category": "vegetable",
     "canonicalNameEn": "Mushrooms",
+    "displayNameEn": "Mushrooms",
+    "displayNameEsEs": "setas/champiñones",
+    "displayNameEsAr": "hongos/champiñones",
+    "displayNameFi": "sieni",
+    "zone": "vegetable",
+    "anatomicalArea": "vegetable",
     "inputProfileId": "vegetable-format",
     "defaultThicknessCm": 2,
     "showThickness": false,
@@ -2610,8 +3369,14 @@ export const generatedCutProfiles = [
     "restingMinutes": 2,
     "estimatedTotalTimeMin": 9,
     "cookingMinutes": 9,
+    "shortDescriptionEn": "Avoid overcrowding.",
     "errorEn": "Avoid overcrowding.",
     "aliasesEn": [
+      "mushrooms",
+      "champignons",
+      "sieni"
+    ],
+    "aliasesMixed": [
       "mushrooms",
       "champignons",
       "sieni"
@@ -2629,6 +3394,12 @@ export const generatedCutProfiles = [
     "animalId": "vegetables",
     "category": "vegetable",
     "canonicalNameEn": "Onion Halves",
+    "displayNameEn": "Onion Halves",
+    "displayNameEsEs": "cebolla",
+    "displayNameEsAr": "cebolla",
+    "displayNameFi": "sipuli",
+    "zone": "vegetable",
+    "anatomicalArea": "vegetable",
     "inputProfileId": "vegetable-format",
     "defaultThicknessCm": 2,
     "showThickness": false,
@@ -2645,8 +3416,13 @@ export const generatedCutProfiles = [
     "restingMinutes": 2,
     "estimatedTotalTimeMin": 19,
     "cookingMinutes": 19,
+    "shortDescriptionEn": "Keep root for structure.",
     "errorEn": "Keep root for structure.",
     "aliasesEn": [
+      "onion",
+      "sipuli"
+    ],
+    "aliasesMixed": [
       "onion",
       "sipuli"
     ],
@@ -2663,6 +3439,12 @@ export const generatedCutProfiles = [
     "animalId": "vegetables",
     "category": "vegetable",
     "canonicalNameEn": "Carrots",
+    "displayNameEn": "Carrots",
+    "displayNameEsEs": "zanahorias",
+    "displayNameEsAr": "zanahorias",
+    "displayNameFi": "porkkana",
+    "zone": "vegetable",
+    "anatomicalArea": "vegetable",
     "inputProfileId": "vegetable-format",
     "defaultThicknessCm": 2,
     "showThickness": false,
@@ -2679,8 +3461,13 @@ export const generatedCutProfiles = [
     "restingMinutes": 2,
     "estimatedTotalTimeMin": 15,
     "cookingMinutes": 15,
+    "shortDescriptionEn": "Glaze works well.",
     "errorEn": "Glaze works well.",
     "aliasesEn": [
+      "carrot",
+      "porkkana"
+    ],
+    "aliasesMixed": [
       "carrot",
       "porkkana"
     ],
@@ -2696,6 +3483,12 @@ export const generatedCutProfiles = [
     "animalId": "vegetables",
     "category": "vegetable",
     "canonicalNameEn": "Zucchini",
+    "displayNameEn": "Zucchini",
+    "displayNameEsEs": "calabacín",
+    "displayNameEsAr": "zucchini",
+    "displayNameFi": "kesäkurpitsa",
+    "zone": "vegetable",
+    "anatomicalArea": "vegetable",
     "inputProfileId": "vegetable-format",
     "defaultThicknessCm": 2,
     "showThickness": false,
@@ -2712,8 +3505,14 @@ export const generatedCutProfiles = [
     "restingMinutes": 1,
     "estimatedTotalTimeMin": 8,
     "cookingMinutes": 8,
+    "shortDescriptionEn": "Do not overcook.",
     "errorEn": "Do not overcook.",
     "aliasesEn": [
+      "zucchini",
+      "courgette",
+      "kesäkurpitsa"
+    ],
+    "aliasesMixed": [
       "zucchini",
       "courgette",
       "kesäkurpitsa"
