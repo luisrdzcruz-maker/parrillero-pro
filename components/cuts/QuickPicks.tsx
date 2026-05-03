@@ -1,25 +1,26 @@
 "use client";
 
-import type { GeneratedAnimalId, GeneratedCutProfile } from "@/lib/generated/cutProfiles";
+import type { GeneratedCutProfile } from "@/lib/generated/cutProfiles";
 import type { Lang } from "@/lib/i18n/texts";
 import {
   getCutDescriptor,
   getDisplayName,
   getEstimatedTimeLabel,
-  getQuickPicksByAnimal,
+  getRecommendedCuts,
 } from "./cutProfileSelectors";
 import type { CutIntent } from "./cutSelectionTypes";
 
 type QuickPicksProps = {
-  animal: GeneratedAnimalId;
+  profiles: GeneratedCutProfile[];
   intent: CutIntent | null;
   lang: Lang;
+  limit?: number;
   selectedCutId?: string;
   onSelect: (profile: GeneratedCutProfile) => void;
 };
 
-export function QuickPicks({ animal, intent, lang, selectedCutId, onSelect }: QuickPicksProps) {
-  const picks = getQuickPicksByAnimal(animal, intent);
+export function QuickPicks({ profiles, intent, lang, limit = 4, selectedCutId, onSelect }: QuickPicksProps) {
+  const picks = getRecommendedCuts(profiles, intent, limit);
 
   if (picks.length === 0) return null;
 
@@ -28,7 +29,7 @@ export function QuickPicks({ animal, intent, lang, selectedCutId, onSelect }: Qu
       <div className="mb-1.5 flex items-center justify-between px-1">
         <div>
           <h2 className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-400">
-            {lang === "es" ? "Selecciones rápidas" : lang === "fi" ? "Pikavalinnat" : "Quick picks"}
+            {lang === "es" ? "Recomendados" : lang === "fi" ? "Suositukset" : "Recommended"}
           </h2>
         </div>
         <span className="text-xs font-bold text-zinc-500">{picks.length}</span>

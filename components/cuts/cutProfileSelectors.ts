@@ -135,6 +135,42 @@ export function getQuickPicksByAnimal(animal: GeneratedAnimalId, tag?: CutIntent
   return taggedCuts.slice(0, 6);
 }
 
+export function getRecommendedCuts(
+  profiles: GeneratedCutProfile[],
+  intent: CutIntent | null,
+  limit = 4,
+) {
+  if (profiles.length === 0) return [];
+
+  const ranked = profiles
+    .map((profile) => ({ profile, score: getRecommendationScore(profile, intent) }))
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      const aMinutes = getEstimatedMinutes(a.profile) ?? Number.POSITIVE_INFINITY;
+      const bMinutes = getEstimatedMinutes(b.profile) ?? Number.POSITIVE_INFINITY;
+      if (aMinutes !== bMinutes) return aMinutes - bMinutes;
+      return a.profile.canonicalNameEn.localeCompare(b.profile.canonicalNameEn);
+    });
+
+  const picks: GeneratedCutProfile[] = [];
+  const seenCategories = new Set<string>();
+  for (const entry of ranked) {
+    const category = entry.profile.category || "other";
+    if (seenCategories.has(category)) continue;
+    picks.push(entry.profile);
+    seenCategories.add(category);
+    if (picks.length === limit) return picks;
+  }
+
+  for (const entry of ranked) {
+    if (picks.some((profile) => profile.id === entry.profile.id)) continue;
+    picks.push(entry.profile);
+    if (picks.length === limit) return picks;
+  }
+
+  return picks;
+}
+
 export function getCategoryGroups(profiles: GeneratedCutProfile[], lang: Lang = "en"): CutGroup[] {
   const groups = new Map<string, GeneratedCutProfile[]>();
 
@@ -229,6 +265,36 @@ export function getSafetyNote(profile: GeneratedCutProfile, lang: Lang = "en") {
 
 function getTagSet(profile: GeneratedCutProfile) {
   return new Set(profile.tipsEn.map((tag) => tag.trim().toLowerCase()).filter(Boolean));
+}
+
+function getEstimatedMinutes(profile: GeneratedCutProfile) {
+  if (profile.estimatedTotalTimeMin) return profile.estimatedTotalTimeMin;
+  if (profile.cookingMinutes) return profile.cookingMinutes;
+  if (profile.estimatedTimeMinPerCm) {
+    const thickness = Number.isFinite(profile.defaultThicknessCm) ? profile.defaultThicknessCm : 2;
+    return Math.round(profile.estimatedTimeMinPerCm * Math.max(1, thickness));
+  }
+  return null;
+}
+
+function getRecommendationScore(profile: GeneratedCutProfile, intent: CutIntent | null) {
+  const tags = getTagSet(profile);
+  let score = 0;
+
+  if (intent && hasIntent(profile, intent)) score += 40;
+  if (tags.has("easy") || profile.confidenceLevel === "high") score += 18;
+  if (tags.has("premium")) score += 14;
+
+  const minutes = getEstimatedMinutes(profile);
+  if (minutes !== null) {
+    score += Math.max(0, 16 - Math.min(16, Math.round(minutes / 3)));
+  } else {
+    score += 4;
+  }
+
+  if (profile.confidenceLevel === "medium") score += 6;
+  if (profile.confidenceLevel === "low") score += 2;
+  return score;
 }
 
 function getOverride(profile: GeneratedCutProfile) {

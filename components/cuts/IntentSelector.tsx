@@ -15,15 +15,10 @@ type IntentSelectorProps = {
 export function IntentSelector({ lang, selectedIntent, onIntentChange }: IntentSelectorProps) {
   return (
     <section className="min-w-0 max-w-full rounded-[1.2rem] border border-white/10 bg-white/[0.03] p-2 shadow-xl shadow-black/20 backdrop-blur-xl">
-      <div className="mb-1.5 flex items-center justify-between px-1">
-        <div>
-          <h2 className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-400">
-            {lang === "es" ? "Objetivo de cocción" : lang === "fi" ? "Kypsennystavoite" : "Cooking goal"}
-          </h2>
-        </div>
-        <span className="text-[10px] font-black uppercase tracking-[0.14em] text-orange-300/80">
-          {lang === "es" ? "Filtro" : lang === "fi" ? "Suodatin" : "Filter"}
-        </span>
+      <div className="mb-1.5 px-1">
+        <h2 className="text-[12px] font-black tracking-tight text-white">
+          {lang === "es" ? "¿Qué buscas?" : lang === "fi" ? "Mitä etsit?" : "What are you looking for?"}
+        </h2>
       </div>
       <div
         className="flex max-w-full min-w-0 gap-1 overflow-x-auto px-0.5 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible"

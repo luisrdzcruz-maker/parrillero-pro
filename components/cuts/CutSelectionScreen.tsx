@@ -6,7 +6,6 @@ import type { GeneratedAnimalId, GeneratedCutProfile } from "@/lib/generated/cut
 import { CutBottomSheet } from "./CutBottomSheet";
 import { CutList } from "./CutList";
 import { CutMap } from "./CutMap";
-import { CutViewToggle } from "./CutViewToggle";
 import { IntentSelector } from "./IntentSelector";
 import { QuickPicks } from "./QuickPicks";
 import {
@@ -55,7 +54,6 @@ export function CutSelectionScreen({
     sourceFilter: intentFilter,
     selectedIntent: intentFilter,
   });
-  const [viewMode, setViewMode] = useState<CutViewMode>("list");
   const [zoneState, setZoneState] = useState<{
     sourceAnimal: CutSelectionScreenProps["selectedAnimal"];
     selectedZone: string | null;
@@ -64,6 +62,8 @@ export function CutSelectionScreen({
     selectedZone: null,
   });
   const [localSelectedCutId, setLocalSelectedCutId] = useState<string | null>(null);
+  const [catalogExpanded, setCatalogExpanded] = useState(false);
+  const [viewMode, setViewMode] = useState<CutViewMode>("list");
 
   const selectedIntent =
     intentState.sourceFilter === intentFilter ? intentState.selectedIntent : intentFilter;
@@ -97,16 +97,22 @@ export function CutSelectionScreen({
     onPreviewCutChange?.(nextProfile?.id ?? null);
   };
 
-  const visibleProfiles = useMemo(() => {
-    const animalCuts = selectedZone
+  const animalProfiles = useMemo(
+    () =>
+      selectedZone
       ? getCutsByAnimalAndCategory(selectedAnimal, selectedZone)
-      : getCutsByAnimal(selectedAnimal);
-    return filterCutsByIntent(animalCuts, selectedIntent);
-  }, [selectedAnimal, selectedIntent, selectedZone]);
+      : getCutsByAnimal(selectedAnimal),
+    [selectedAnimal, selectedZone],
+  );
+  const visibleProfiles = useMemo(
+    () => filterCutsByIntent(animalProfiles, selectedIntent),
+    [animalProfiles, selectedIntent],
+  );
+  const totalCutsByAnimal = useMemo(() => getCutsByAnimal(selectedAnimal).length, [selectedAnimal]);
 
   const groupedProfiles = useMemo(
-    () => getCategoryGroups(visibleProfiles, effectiveLang),
-    [effectiveLang, visibleProfiles],
+    () => getCategoryGroups(animalProfiles, effectiveLang),
+    [animalProfiles, effectiveLang],
   );
   const chipAnimalLabel = (animalId: GeneratedAnimalId) => {
     if (effectiveLang === "es" && animalId === "beef") return "Vaca";
@@ -120,10 +126,10 @@ export function CutSelectionScreen({
         : effectiveLang === "fi"
           ? "Kaikki tavoitteet"
           : "All goals";
-  const compactStatusLine = `${visibleProfiles.length} ${
+  const compactStatusLine = `${totalCutsByAnimal} ${
     effectiveLang === "es" ? "cortes" : effectiveLang === "fi" ? "leikkausta" : "cuts"
   } · ${activeFilterLabel}`;
-  const hasActiveFilters = Boolean(selectedIntent || selectedZone);
+  const hasActiveFilters = Boolean(selectedZone);
   const handleStartCooking = (profile: GeneratedCutProfile) => {
     if (onStartCooking) {
       onStartCooking(profile);
@@ -138,8 +144,19 @@ export function CutSelectionScreen({
   };
   const handleAnimalSelect = (nextAnimal: GeneratedAnimalId) => {
     if (!onAnimalChange || nextAnimal === selectedAnimal) return;
+    setCatalogExpanded(false);
+    setViewMode("list");
+    handleZoneChange(null);
     onAnimalChange(nextAnimal);
   };
+  const viewAllLabel =
+    effectiveLang === "es"
+      ? `Ver todos los cortes de ${chipAnimalLabel(selectedAnimal).toLowerCase()} (${totalCutsByAnimal})`
+      : effectiveLang === "fi"
+        ? `Näytä kaikki ${chipAnimalLabel(selectedAnimal).toLowerCase()} leikkaukset (${totalCutsByAnimal})`
+        : `View all ${chipAnimalLabel(selectedAnimal).toLowerCase()} cuts (${totalCutsByAnimal})`;
+  const hideAllLabel =
+    effectiveLang === "es" ? "Ocultar catálogo completo" : effectiveLang === "fi" ? "Piilota koko valikoima" : "Hide full catalog";
 
   return (
     <main className="relative min-h-full w-full max-w-full overflow-x-hidden bg-[#030201] text-white">
@@ -179,50 +196,92 @@ export function CutSelectionScreen({
 
         <div className="mt-3 space-y-3">
           <IntentSelector lang={effectiveLang} selectedIntent={selectedIntent} onIntentChange={handleIntentChange} />
-          <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
-            <CutViewToggle lang={effectiveLang} value={viewMode} onChange={setViewMode} />
-            {selectedZone && (
-              <button
-                type="button"
-                onClick={() => handleZoneChange(null)}
-                className="w-full rounded-2xl border border-orange-400/25 bg-orange-500/10 px-4 py-3 text-xs font-black text-orange-200 transition active:scale-[0.98] sm:w-auto"
-              >
-                {effectiveLang === "es"
-                  ? `Limpiar zona: ${getCategoryLabel(selectedZone, effectiveLang)}`
-                  : effectiveLang === "fi"
-                    ? `Tyhjennä alue: ${getCategoryLabel(selectedZone, effectiveLang)}`
-                    : `Clear zone: ${getCategoryLabel(selectedZone, effectiveLang)}`}
-              </button>
-            )}
-          </div>
         </div>
 
         <div className="mt-3 grid min-w-0 gap-4 lg:grid-cols-[1fr_300px]">
           <div className="min-w-0 space-y-4">
             <QuickPicks
-              animal={selectedAnimal}
+              profiles={animalProfiles}
               intent={selectedIntent}
               lang={effectiveLang}
+              limit={4}
               selectedCutId={selectedProfile?.id}
               onSelect={handleProfileChange}
             />
+            <button
+              type="button"
+              onClick={() => setCatalogExpanded((prev) => !prev)}
+              className="w-full rounded-2xl border border-white/15 bg-white/[0.04] px-4 py-3 text-left text-sm font-black text-zinc-100 transition hover:border-orange-300/45 hover:bg-orange-500/10 active:scale-[0.99]"
+              aria-expanded={catalogExpanded}
+            >
+              {catalogExpanded ? hideAllLabel : viewAllLabel}
+            </button>
 
-            {viewMode === "map" && (
-              <CutMap
-                animal={selectedAnimal}
-                lang={effectiveLang}
-                selectedZone={selectedZone}
-                onZoneChange={handleZoneChange}
-              />
+            {catalogExpanded && (
+              <div className="space-y-3">
+                <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                  <div className="w-full max-w-full rounded-[1.2rem] border border-white/10 bg-black/30 p-1.5 backdrop-blur-xl">
+                    <div className="grid w-full min-w-0 grid-cols-2 gap-1">
+                      {(["list", "map"] as const).map((mode) => (
+                        <button
+                          key={mode}
+                          type="button"
+                          onClick={() => setViewMode(mode)}
+                          className={`min-w-0 rounded-xl px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.14em] transition active:scale-[0.98] ${
+                            viewMode === mode
+                              ? "bg-white text-black"
+                              : "text-zinc-500 hover:bg-white/10 hover:text-zinc-200"
+                          }`}
+                          aria-pressed={viewMode === mode}
+                        >
+                          {mode === "list"
+                            ? effectiveLang === "es"
+                              ? "Lista"
+                              : effectiveLang === "fi"
+                                ? "Lista"
+                                : "List"
+                            : effectiveLang === "es"
+                              ? "Mapa"
+                              : effectiveLang === "fi"
+                                ? "Kartta"
+                                : "Map"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {selectedZone && (
+                    <button
+                      type="button"
+                      onClick={() => handleZoneChange(null)}
+                      className="w-full rounded-2xl border border-orange-400/25 bg-orange-500/10 px-4 py-3 text-xs font-black text-orange-200 transition active:scale-[0.98] sm:w-auto"
+                    >
+                      {effectiveLang === "es"
+                        ? `Limpiar zona: ${getCategoryLabel(selectedZone, effectiveLang)}`
+                        : effectiveLang === "fi"
+                          ? `Tyhjennä alue: ${getCategoryLabel(selectedZone, effectiveLang)}`
+                          : `Clear zone: ${getCategoryLabel(selectedZone, effectiveLang)}`}
+                    </button>
+                  )}
+                </div>
+
+                {viewMode === "map" && (
+                  <CutMap
+                    animal={selectedAnimal}
+                    lang={effectiveLang}
+                    selectedZone={selectedZone}
+                    onZoneChange={handleZoneChange}
+                  />
+                )}
+                <CutList
+                  groups={groupedProfiles}
+                  lang={effectiveLang}
+                  selectedCutId={selectedProfile?.id}
+                  hasActiveFilters={hasActiveFilters}
+                  onResetFilters={handleResetFilters}
+                  onSelect={handleProfileChange}
+                />
+              </div>
             )}
-            <CutList
-              groups={groupedProfiles}
-              lang={effectiveLang}
-              selectedCutId={selectedProfile?.id}
-              hasActiveFilters={hasActiveFilters}
-              onResetFilters={handleResetFilters}
-              onSelect={handleProfileChange}
-            />
           </div>
           <aside className="hidden min-w-0 max-w-full lg:sticky lg:top-4 lg:block lg:self-start">
             <div className="rounded-[1.3rem] border border-white/10 bg-white/[0.035] p-3 backdrop-blur-xl">
