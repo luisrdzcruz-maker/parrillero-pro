@@ -8,7 +8,12 @@ import { getInputProfileForCut } from "@/lib/cooking/inputProfiles";
 import { getCutById } from "@/lib/cookingRules";
 import { Badge, Button, Section } from "@/components/ui";
 import { ds } from "@/lib/design-system";
-import { getDetailsSetupLabels } from "@/lib/i18n/surfaceFallbacks";
+import {
+  getAnimalSurfaceLabel,
+  getDetailsSetupLabels,
+  getDonenessSurfaceLabel,
+  getEquipmentSurfaceLabel,
+} from "@/lib/i18n/surfaceFallbacks";
 import type { AppText, Lang } from "@/lib/i18n/texts";
 import type { Doneness } from "@/lib/types/domain";
 import {
@@ -294,7 +299,7 @@ function CookingAnimalStep({
           <FoodCard
             key={item}
             selected={animal === item}
-            title={item}
+            title={getAnimalSurfaceLabel(item, lang)}
             subtitle={getAnimalPreview(item, lang)}
             image={foodImages[item]}
             badge={undefined}
@@ -785,7 +790,7 @@ function CookingDetailsHero({
               {badge}
             </span>
             <span className="rounded-full border border-white/10 bg-black/45 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/55 backdrop-blur-md">
-              {animal}
+              {getAnimalSurfaceLabel(animal, lang)}
             </span>
           </div>
           <h1 className="max-w-2xl text-[1.7rem] font-black leading-none tracking-tight text-white drop-shadow-[0_3px_18px_rgba(0,0,0,0.85)] sm:text-4xl">
@@ -972,6 +977,18 @@ function CookingDetailsStep({
   });
   const measurementsTitle = lang === "es" ? "Tamano y peso" : lang === "fi" ? "Koko ja paino" : "Size and weight";
   const cookingTitle = lang === "es" ? "Punto y equipo" : lang === "fi" ? "Kypsyys ja valine" : "Doneness and gear";
+  const localizedDonenessOptions = currentDonenessOptions.map((option) =>
+    typeof option === "string"
+      ? option
+      : {
+          ...option,
+          label: lang === "fi" ? getDonenessSurfaceLabel(option.value, lang) : option.label,
+        },
+  );
+  const localizedCookingEquipmentOptions = cookingEquipmentOptions.map((value) => ({
+    value,
+    label: getEquipmentSurfaceLabel(value, lang),
+  }));
   const hasMeasurementFields =
     showSizePreset || showWeightRange || showWeightPreset || showVegetableFormat || showAdvancedExactThickness;
   const detailsSetupText = getDetailsSetupLabels(lang);
@@ -1075,14 +1092,14 @@ function CookingDetailsStep({
                 label={t.doneness}
                 value={doneness}
                 onChange={setDoneness}
-                options={currentDonenessOptions}
+                options={localizedDonenessOptions}
               />
             )}
             <DetailsSelect
               label={t.equipment}
               value={equipment}
               onChange={setEquipment}
-              options={cookingEquipmentOptions}
+              options={localizedCookingEquipmentOptions}
             />
           </DetailsFieldGroup>
         </div>
@@ -1142,7 +1159,7 @@ function CookingResultStep({
     const payload = createLiveCookingPayload({
       input: {
         animal,
-        cut,
+        cut: cutId ?? cut,
         equipment,
         doneness,
         thickness: showThickness ? thickness : "2",
@@ -1181,11 +1198,11 @@ function CookingResultStep({
   return (
     <div className="space-y-4">
       <ResultCards
-        animal={animal}
+        animal={getAnimalSurfaceLabel(animal, lang)}
         blocks={blocks}
-        context={`${animal} · ${equipment}`}
+        context={`${getAnimalSurfaceLabel(animal, lang)} · ${getEquipmentSurfaceLabel(equipment, lang)}`}
         cut={cut}
-        doneness={doneness}
+        doneness={getDonenessSurfaceLabel(doneness, lang)}
         equipment={equipment}
         lang={lang}
         loading={false}

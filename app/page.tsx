@@ -57,7 +57,7 @@ import {
   shouldShowThickness,
 } from "@/lib/cookingRules";
 import { ds } from "@/lib/design-system";
-import { sanitizeCriticalErrorCopy } from "@/lib/i18n/surfaceFallbacks";
+import { getAnimalSurfaceLabel, getDonenessSurfaceLabel, sanitizeCriticalErrorCopy } from "@/lib/i18n/surfaceFallbacks";
 import { texts, type Lang } from "@/lib/i18n/texts";
 import {
   buildLiveStepsFromPayload,
@@ -236,11 +236,9 @@ function getInitialDoneness(animal: AnimalLabel) {
 }
 
 function getDonenessSelectOptions(animal: AnimalLabel, lang: Lang): SelectOption[] {
-  const labelLang = lang === "fi" ? "en" : lang;
-
   return getDonenessOptions(animalIdsByLabel[animal]).map((option) => ({
     value: option.id,
-    label: option.names[labelLang],
+    label: lang === "fi" ? getDonenessSurfaceLabel(option.id, "fi") : option.names[lang],
   }));
 }
 
@@ -534,14 +532,15 @@ function parseCookingContext(params: URLSearchParams, mode: Mode): CookingNavCon
 
 function parseLiveUrlState(lang: Lang) {
   if (typeof window === "undefined") {
+    const defaultAnimal = "Vacuno" as AnimalLabel;
     return {
-      animal: "Vacuno" as AnimalLabel,
+      animal: defaultAnimal,
       cutId: null as string | null,
-      doneness: getInitialDoneness("Vacuno"),
+      doneness: getInitialDoneness(defaultAnimal),
       thickness: "2",
       donenessFromUrl: undefined as string | undefined,
       thicknessFromUrl: undefined as string | undefined,
-      context: undefined as string | undefined,
+      context: getAnimalSurfaceLabel(defaultAnimal, lang),
       lang,
     };
   }
@@ -561,7 +560,8 @@ function parseLiveUrlState(lang: Lang) {
   const doneness = donenessFromUrl ?? getInitialDoneness(liveAnimal);
   const thicknessFromUrl = parsePositiveNumberParam(rawThickness != null ? String(rawThickness) : null);
   const thickness = thicknessFromUrl ?? "2";
-  const context = liveCutMeta ? `${liveAnimal} · ${getCutName(liveCutMeta, lang)}` : liveAnimal;
+  const localizedAnimal = getAnimalSurfaceLabel(liveAnimal, lang);
+  const context = liveCutMeta ? `${localizedAnimal} · ${getCutName(liveCutMeta, lang)}` : localizedAnimal;
   const resolvedLang = rawLang ?? lang;
 
   return { animal: liveAnimal, cutId, doneness, thickness, donenessFromUrl, thicknessFromUrl, context, lang: resolvedLang };
@@ -1274,7 +1274,7 @@ function HomeContent() {
       if (payload && !payloadMatchesUrl) {
         window.sessionStorage.removeItem(LIVE_COOKING_STORAGE_KEY);
       }
-      const built = buildLiveStepsFromPayload(safePayload, MOCK_LIVE_STEPS);
+      const built = buildLiveStepsFromPayload(safePayload, MOCK_LIVE_STEPS, lang);
 
       if (!built.usedFallback && !hasDistinctLiveSteps(built.steps, MOCK_LIVE_STEPS)) {
         console.warn("[live-cooking] Live steps match mock signature unexpectedly", {

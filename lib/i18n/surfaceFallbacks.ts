@@ -14,6 +14,13 @@ function isLikelyEnglish(value: string) {
   );
 }
 
+function isLikelySpanish(value: string) {
+  const normalized = normalizeText(value);
+  return /\b(precalienta|parrilla|directo|indirecto|reposo|sellar|lado|paso|configuracion|error|critico|tiempo restante|no presiones)\b/.test(
+    normalized,
+  );
+}
+
 function isLikelyInternalDescriptor(value: string) {
   const normalized = normalizeText(value);
   return (
@@ -22,6 +29,74 @@ function isLikelyInternalDescriptor(value: string) {
       normalized,
     )
   );
+}
+
+const ANIMAL_LABELS: Record<string, Record<SurfaceLang, string>> = {
+  beef: { es: "Vacuno", en: "Beef", fi: "Nauta" },
+  vacuno: { es: "Vacuno", en: "Beef", fi: "Nauta" },
+  nauta: { es: "Vacuno", en: "Beef", fi: "Nauta" },
+  pork: { es: "Cerdo", en: "Pork", fi: "Sika" },
+  cerdo: { es: "Cerdo", en: "Pork", fi: "Sika" },
+  sika: { es: "Cerdo", en: "Pork", fi: "Sika" },
+  chicken: { es: "Pollo", en: "Chicken", fi: "Kana" },
+  pollo: { es: "Pollo", en: "Chicken", fi: "Kana" },
+  kana: { es: "Pollo", en: "Chicken", fi: "Kana" },
+  fish: { es: "Pescado", en: "Fish", fi: "Kala" },
+  pescado: { es: "Pescado", en: "Fish", fi: "Kala" },
+  kala: { es: "Pescado", en: "Fish", fi: "Kala" },
+  vegetables: { es: "Verduras", en: "Vegetables", fi: "Kasvikset" },
+  verduras: { es: "Verduras", en: "Vegetables", fi: "Kasvikset" },
+  kasvikset: { es: "Verduras", en: "Vegetables", fi: "Kasvikset" },
+};
+
+const DONENESS_LABELS: Record<string, Record<SurfaceLang, string>> = {
+  rare: { es: "Poco hecho", en: "Rare", fi: "Raaka" },
+  medium_rare: { es: "Al punto menos", en: "Medium rare", fi: "Puoliraaka" },
+  medium: { es: "Al punto", en: "Medium", fi: "Keskikypsa" },
+  medium_well: { es: "Tres cuartos", en: "Medium well", fi: "Melko kypsa" },
+  well_done: { es: "Bien hecho", en: "Well done", fi: "Kypsa" },
+  safe: { es: "Seguro", en: "Safe", fi: "Turvallinen" },
+};
+
+const EQUIPMENT_LABELS: Record<string, Record<SurfaceLang, string>> = {
+  "parrilla gas": { es: "Parrilla de gas", en: "Gas grill", fi: "Kaasugrilli" },
+  "parrilla carbon": { es: "Parrilla de carbon", en: "Charcoal grill", fi: "Hiiligrilli" },
+  kamado: { es: "Kamado", en: "Kamado", fi: "Kamado" },
+  "cocina interior": { es: "Cocina interior", en: "Indoor kitchen", fi: "Sisakeittio" },
+};
+
+const METHOD_LABELS: Record<string, Record<SurfaceLang, string>> = {
+  grill_direct: { es: "Parrilla directa", en: "Direct grill", fi: "Suora grillaus" },
+  grill_indirect: { es: "Parrilla indirecta", en: "Indirect grill", fi: "Epasuora grillaus" },
+  reverse_sear: { es: "Sellado inverso", en: "Reverse sear", fi: "Kaanteinen ruskistus" },
+  oven_pan: { es: "Sarten u horno", en: "Pan or oven", fi: "Pannu tai uuni" },
+  vegetables_grill: { es: "Verduras a la parrilla", en: "Grilled vegetables", fi: "Grillatut kasvikset" },
+};
+
+function resolveLookupKey(value: string) {
+  return normalizeText(value).replace(/\s+/g, " ").trim();
+}
+
+export function getAnimalSurfaceLabel(value: string, lang: SurfaceLang) {
+  const label = ANIMAL_LABELS[resolveLookupKey(value)];
+  return label?.[lang] ?? value;
+}
+
+export function getDonenessSurfaceLabel(value: string, lang: SurfaceLang) {
+  const label = DONENESS_LABELS[resolveLookupKey(value)];
+  return label?.[lang] ?? value;
+}
+
+export function getEquipmentSurfaceLabel(value: string, lang: SurfaceLang) {
+  const key = resolveLookupKey(value);
+  const label = EQUIPMENT_LABELS[key];
+  if (label) return label[lang];
+  return value;
+}
+
+export function getMethodSurfaceLabel(value: string, lang: SurfaceLang) {
+  const label = METHOD_LABELS[resolveLookupKey(value)];
+  return label?.[lang] ?? value;
 }
 
 export function getDetailsSetupLabels(lang: SurfaceLang) {
@@ -59,7 +134,7 @@ function extractEquipmentNameFromSetup(value: string) {
 
 export function sanitizeSetupSummaryCopy(value: string, lang: SurfaceLang, equipment?: string) {
   if (lang === "en") return value;
-  if (!isLikelyEnglish(value)) return value;
+  if (!isLikelyEnglish(value) && !(lang === "fi" && isLikelySpanish(value))) return value;
 
   const resolvedEquipment = equipment?.trim() || extractEquipmentNameFromSetup(value);
   if (lang === "es") {
@@ -77,19 +152,19 @@ export function localizeLiveStepEntry(entry: string, lang: SurfaceLang) {
   if (lang === "en") return entry;
 
   const normalized = normalizeText(entry);
-  if (!isLikelyEnglish(entry)) return entry;
+  if (!isLikelyEnglish(entry) && !(lang === "fi" && isLikelySpanish(entry))) return entry;
 
-  if (normalized.includes("preheat grill")) {
+  if (normalized.includes("preheat grill") || normalized.includes("precalienta parrilla")) {
     return lang === "es"
       ? "Precalentar parrilla: prepara zona directa y zona de seguridad."
       : "Esilamita grilli: rakenna suora alue ja viileampi varavyohyke.";
   }
 
-  if (/\bsear\s+side\s*1\b/.test(normalized)) {
+  if (/\bsear\s+side\s*1\b/.test(normalized) || /\bsellar?\s+lado\s*1\b/.test(normalized)) {
     return lang === "es" ? "Sellar lado 1: marca costra sin mover la pieza." : "Ruskista puoli 1: tee paistopinta liikuttamatta lihaa.";
   }
 
-  if (/\bsear\s+side\s*2\b/.test(normalized)) {
+  if (/\bsear\s+side\s*2\b/.test(normalized) || /\bsellar?\s+lado\s*2\b/.test(normalized)) {
     return lang === "es" ? "Sellar lado 2: iguala color y termina la costra." : "Ruskista puoli 2: tasaa vari ja viimeistele paistopinta.";
   }
 
@@ -105,43 +180,45 @@ export function localizeLiveStepName(name: string, lang: SurfaceLang) {
   if (lang === "en") return name;
   const normalized = normalizeText(name);
 
-  if (normalized.includes("preheat grill")) {
+  if (normalized.includes("preheat grill") || normalized.includes("precalienta parrilla")) {
     return lang === "es" ? "Precalentar parrilla" : "Esilamita grilli";
   }
-  if (/\bsear\s+side\s*1\b/.test(normalized)) {
+  if (/\bsear\s+side\s*1\b/.test(normalized) || /\bsellar?\s+lado\s*1\b/.test(normalized)) {
     return lang === "es" ? "Sellar lado 1" : "Ruskista puoli 1";
   }
-  if (/\bsear\s+side\s*2\b/.test(normalized)) {
+  if (/\bsear\s+side\s*2\b/.test(normalized) || /\bsellar?\s+lado\s*2\b/.test(normalized)) {
     return lang === "es" ? "Sellar lado 2" : "Ruskista puoli 2";
   }
-  if (normalized.includes("rest")) {
+  if (normalized.includes("rest") || normalized.includes("repos")) {
     return lang === "es" ? "Reposar" : "Lepuuta";
   }
-  if (!isLikelyEnglish(name)) return name;
+  if (!isLikelyEnglish(name) && !(lang === "fi" && isLikelySpanish(name))) return name;
   return lang === "es" ? "Paso de coccion" : "Kypsennysvaihe";
 }
 
 export function sanitizeLiveInstructionCopy(value: string, lang: SurfaceLang) {
   if (lang === "en") return value;
   const normalized = normalizeText(value);
-  if (!isLikelyEnglish(value) && !isLikelyInternalDescriptor(value)) return value;
+  if (!isLikelyEnglish(value) && !(lang === "fi" && isLikelySpanish(value)) && !isLikelyInternalDescriptor(value)) {
+    return value;
+  }
 
-  if (normalized.includes("do not press the meat")) {
+  if (normalized.includes("do not press the meat") || normalized.includes("no presiones la carne")) {
     return lang === "es"
       ? "No presiones la carne para mantener los jugos."
       : "Ala paina lihaa, jotta nesteet eivat karkaa.";
   }
-  if (normalized.includes("preheat grill")) {
+  if (normalized.includes("preheat grill") || normalized.includes("precalienta parrilla")) {
     return lang === "es"
       ? "Precalienta la parrilla y prepara una zona directa con zona de seguridad."
       : "Esilamita grilli ja valmistele suora alue seka viileampi varavyohyke.";
   }
-  if (/\bsear\s+side\s*1\b/.test(normalized)) {
+  if (/\bsear\s+side\s*1\b/.test(normalized) || /\bsellar?\s+lado\s*1\b/.test(normalized)) {
     return lang === "es"
       ? "Sella el lado 1 sin mover la pieza hasta formar costra."
       : "Ruskista puoli 1 liikuttamatta lihaa, kunnes paistopinta muodostuu.";
   }
-  if (/\bsear\s+side\s*2\b/.test(normalized)) {
+  if (/\bsear\s+side\s*2\b/.test(normalized) || /\bsellar?\s+lado\s*2\b/.test(normalized)) {
     return lang === "es"
       ? "Sella el lado 2 y equilibra el color exterior."
       : "Ruskista puoli 2 ja tasaa ulkopinnan vari.";
@@ -185,15 +262,31 @@ function localizeResultInlineTerms(value: string, lang: SurfaceLang) {
   let localized = value;
   localized = replaceInsensitive(localized, /\bpull\s+target\b/gi, pullTargetLabel);
   localized = replaceInsensitive(localized, /\bper\s+side\b/gi, perSideLabel);
+  localized = replaceInsensitive(localized, /\bpor\s+lado\b/gi, perSideLabel);
+  localized = replaceInsensitive(localized, /\bobjetivo\s+al\s+retirar\b/gi, pullTargetLabel);
+  localized = replaceInsensitive(localized, /\bobjetivo\s+de\s+retiro\b/gi, pullTargetLabel);
   localized = replaceInsensitive(localized, /\btime\s+remaining\b/gi, getLiveText(lang).timeRemaining);
+  localized = replaceInsensitive(localized, /\btiempo\s+restante\b/gi, getLiveText(lang).timeRemaining);
   localized = replaceInsensitive(localized, /\bnext\s+action\b/gi, getLiveText(lang).nextStep);
+  localized = replaceInsensitive(localized, /\bsiguiente\s+accion\b/gi, getLiveText(lang).nextStep);
   localized = replaceInsensitive(localized, /\bmanual\s+step\b/gi, getLiveText(lang).manualStep);
+  localized = replaceInsensitive(localized, /\bpaso\s+manual\b/gi, getLiveText(lang).manualStep);
   localized = replaceInsensitive(localized, /\bsetup\b/gi, setupLabel);
+  localized = replaceInsensitive(localized, /\bconfiguracion\b/gi, setupLabel);
   localized = replaceInsensitive(localized, /\btemp\b/gi, tempLabel);
   localized = replaceInsensitive(localized, /\btime\b/gi, timeLabel);
   localized = replaceInsensitive(localized, /\bindirect\b/gi, text.zoneIndirect);
+  localized = replaceInsensitive(localized, /\bindirecto\b/gi, text.zoneIndirect);
   localized = replaceInsensitive(localized, /\bdirect\b/gi, text.zoneDirect);
+  localized = replaceInsensitive(localized, /\bdirecto\b/gi, text.zoneDirect);
   localized = replaceInsensitive(localized, /\brest\b/gi, text.zoneRest);
+  localized = replaceInsensitive(localized, /\breposo\b/gi, text.zoneRest);
+  localized = replaceInsensitive(localized, /\bgrill[_\s-]?direct\b/gi, getMethodSurfaceLabel("grill_direct", lang));
+  localized = replaceInsensitive(localized, /\bgrill[_\s-]?indirect\b/gi, getMethodSurfaceLabel("grill_indirect", lang));
+  localized = replaceInsensitive(localized, /\breverse[_\s-]?sear\b/gi, getMethodSurfaceLabel("reverse_sear", lang));
+  localized = replaceInsensitive(localized, /\boven[_\s-]?pan\b/gi, getMethodSurfaceLabel("oven_pan", lang));
+  localized = replaceInsensitive(localized, /\bcritical\s+error\b/gi, lang === "es" ? "Error critico" : "Kriittinen virhe");
+  localized = replaceInsensitive(localized, /\berror\s+que\s+arruina\s+este\s+corte\b/gi, lang === "es" ? "Error que arruina este corte" : "Virhe joka pilaa taman leikkauksen");
   return localized;
 }
 

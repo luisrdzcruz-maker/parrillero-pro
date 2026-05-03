@@ -14,7 +14,7 @@ import LiveStepCard from "./LiveStepCard";
 import LiveTimeline from "./LiveTimeline";
 import LiveTimer from "./LiveTimer";
 import type { LivePhase } from "./TimerDial";
-import { getLiveText } from "@/lib/i18n/surfaceFallbacks";
+import { getAnimalSurfaceLabel, getDonenessSurfaceLabel, getLiveText } from "@/lib/i18n/surfaceFallbacks";
 
 export type { LiveCookingStepState, LiveStep, LiveZone } from "@/hooks/useLiveCooking";
 
@@ -126,6 +126,7 @@ export default function LiveCookingScreen({
   onEnableAlerts,
   onSaveCook,
 }: Props) {
+  const resolvedLang = lang ?? "es";
   const [hasStarted, setHasStarted] = useState(false);
   const reduceMotion = usePrefersReducedMotion();
   const liveUrlState = useMemo(() => {
@@ -169,19 +170,19 @@ export default function LiveCookingScreen({
     remaining,
     paused,
     started: hasStarted,
-    lang: lang ?? "en",
+    lang: resolvedLang,
   });
-  const liveText = getLiveText(lang ?? "en");
+  const liveText = getLiveText(resolvedLang);
   const fallbackContext = useMemo(() => {
-    const safeAnimal = liveUrlState.animal || "Vacuno";
+    const safeAnimal = getAnimalSurfaceLabel(liveUrlState.animal || "beef", resolvedLang);
     const parts = [
       safeAnimal,
       liveUrlState.cutId,
-      liveUrlState.doneness,
+      liveUrlState.doneness ? getDonenessSurfaceLabel(liveUrlState.doneness, resolvedLang) : null,
       liveUrlState.thickness ? `${liveUrlState.thickness}cm` : null,
     ].filter(Boolean) as string[];
     return parts.length > 0 ? parts.join(" · ") : undefined;
-  }, [liveUrlState]);
+  }, [liveUrlState, resolvedLang]);
   const resolvedContext = context ?? fallbackContext;
 
   const bgStyle = getBgStyle(phase, currentStep?.zone);
@@ -320,7 +321,7 @@ export default function LiveCookingScreen({
         currentIndex={currentStepIndex}
         currentStep={currentStep}
         dotClass={dotClass}
-        lang={lang ?? "en"}
+        lang={resolvedLang}
         onBack={onBack ? handleBack : undefined}
         onEnableAlerts={onEnableAlerts}
         overallProgressPct={overallProgressPct}
@@ -341,13 +342,13 @@ export default function LiveCookingScreen({
             remainingTime={currentStep.remainingTime}
             progress={currentStep.progress}
             phase={phase}
-            lang={lang ?? "en"}
+            lang={resolvedLang}
             reduceMotion={reduceMotion}
             urgency={urgency}
           >
             <LiveTimeline
               currentIndex={currentStepIndex}
-              lang={lang ?? "en"}
+              lang={resolvedLang}
               onGoToStep={handleGoToStep}
               phase={phase}
               steps={allSteps}
@@ -359,7 +360,7 @@ export default function LiveCookingScreen({
           <LiveStepCard
             currentStep={visualStep}
             feedback={feedback}
-            lang={lang}
+            lang={resolvedLang}
             reduceMotion={reduceMotion}
             transitionState={stepTransition}
             urgency={urgency}
@@ -368,7 +369,7 @@ export default function LiveCookingScreen({
 
         {!isComplete && nextStep && (
           <div className="shrink-0">
-            <LiveNextStepPreview nextStep={nextStep} lang={lang ?? "en"} />
+            <LiveNextStepPreview nextStep={nextStep} lang={resolvedLang} />
           </div>
         )}
 
