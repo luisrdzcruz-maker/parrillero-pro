@@ -157,15 +157,18 @@ export function CutSelectionScreen({
   };
   const viewAllLabel = getViewAllLabel(totalCutsByAnimal, selectedAnimal, effectiveLang);
   const hideAllLabel = getHideAllLabel(effectiveLang);
+  const sectionBottomPaddingClass = catalogExpanded
+    ? "pb-[calc(8rem+env(safe-area-inset-bottom))] sm:pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-8"
+    : "pb-4 sm:pb-5 lg:pb-4";
 
   return (
-    <main className="relative min-h-full w-full max-w-full overflow-x-clip overflow-y-visible bg-[#030201] text-white">
+    <main className="relative w-full max-w-full overflow-x-clip overflow-y-visible bg-[#030201] text-white">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -left-40 -top-40 h-[320px] w-[320px] rounded-full bg-orange-500/14 blur-[110px]" />
         <div className="absolute -right-16 top-16 h-[280px] w-[280px] rounded-full bg-red-600/10 blur-[120px]" />
       </div>
 
-      <section className="relative mx-auto flex min-h-full w-full max-w-[1000px] flex-col px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-2 sm:px-6 lg:pb-36">
+      <section className={`relative mx-auto flex w-full max-w-[1000px] flex-col px-4 pt-2 sm:px-6 ${sectionBottomPaddingClass}`}>
         <header className="rounded-[1.2rem] border border-orange-300/15 bg-white/[0.04] px-2.5 py-2 shadow-[0_14px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:px-3 sm:py-2.5">
           <div className="grid grid-cols-2 gap-1.5 touch-pan-y sm:grid-cols-3">
             {animalOptions.map(([animalId]) => {
