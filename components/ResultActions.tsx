@@ -192,7 +192,17 @@ export default function ResultActions({
             className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-white/20 to-transparent opacity-80"
           />
           <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-black/15 text-base font-black shadow-sm shadow-black/10 ring-1 ring-inset ring-black/10">
-            &gt;
+            <svg
+              aria-hidden="true"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M13 3 5.8 13.2h5.3L10 21l8.2-11.5h-5.5L13 3Z"
+                fill="currentColor"
+              />
+            </svg>
           </span>
 
           <span className="relative min-w-0 flex-1">
