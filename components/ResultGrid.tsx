@@ -12,7 +12,11 @@ import {
   type SetupType,
 } from "@/lib/setupVisualMap";
 import { formatTitle, getGrillManagerLineClass, getShoppingItems } from "@/lib/uiHelpers";
-import { sanitizeCriticalErrorCopy, sanitizeSetupSummaryCopy } from "@/lib/i18n/surfaceFallbacks";
+import {
+  localizeResultSurfaceCopy,
+  sanitizeCriticalErrorCopy,
+  sanitizeSetupSummaryCopy,
+} from "@/lib/i18n/surfaceFallbacks";
 import ResultCard from "@/components/ResultCard";
 import ResultTimeline from "./ResultTimeline";
 
@@ -297,21 +301,21 @@ export function buildResultSummary(blocks: Blocks, keys: string[], lang: "es" | 
   const errorKey = findBlockKey(keys, ["ERROR", "ERROR CLAVE", "KEY ERROR"]);
 
   return {
-    method: setupKey ? compactSummaryValue(blocks[setupKey]) : "",
-    time: timeKey ? compactSummaryValue(blocks[timeKey]) : "",
-    temperature: tempKey ? compactSummaryValue(blocks[tempKey]) : "",
-    doneness: extractDonenessValue(blocks, keys),
-    rest: extractMatchingLine(blocks, keys, [
+    method: setupKey ? compactSummaryValue(localizeResultSurfaceCopy(blocks[setupKey], lang)) : "",
+    time: timeKey ? compactSummaryValue(localizeResultSurfaceCopy(blocks[timeKey], lang)) : "",
+    temperature: tempKey ? compactSummaryValue(localizeResultSurfaceCopy(blocks[tempKey], lang)) : "",
+    doneness: localizeResultSurfaceCopy(extractDonenessValue(blocks, keys), lang),
+    rest: localizeResultSurfaceCopy(extractMatchingLine(blocks, keys, [
       /\b(reposo|reposar|descanso|rest|resting)\b/i,
-    ]),
-    cutting: extractMatchingLine(blocks, keys, [
+    ]), lang),
+    cutting: localizeResultSurfaceCopy(extractMatchingLine(blocks, keys, [
       /\b(cortar|corte|cortarlo|trinchar|slice|cutting|carve)\b/i,
       /\b(contra\s+(la\s+)?fibra|against\s+the\s+grain)\b/i,
-    ]),
-    safety: extractMatchingLine(blocks, keys, [
+    ]), lang),
+    safety: localizeResultSurfaceCopy(extractMatchingLine(blocks, keys, [
       /\b(seguridad|seguro|inocuo|safety|safe)\b/i,
       /\b(term[oó]metro|thermometer|no\s+servir|do\s+not\s+serve)\b/i,
-    ]),
+    ]), lang),
     criticalError: errorKey ? sanitizeUserFacingGuidance(compactDetailValue(blocks[errorKey]), lang) : "",
   };
 }
@@ -488,7 +492,7 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en"
     items.push({
       key: setupKey,
       title: getLocalizedBlockTitle(setupKey, lang),
-      content: sanitizeSetupSummaryCopy(blocks[setupKey], lang),
+      content: localizeResultSurfaceCopy(sanitizeSetupSummaryCopy(blocks[setupKey], lang), lang),
       setup: detectSetupFromText(blocks[setupKey]),
       type: "card",
       variant: "setup",
@@ -505,7 +509,10 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en"
     items.push({
       key: errorKey,
       title: useEnglish && lang === "en" ? "Error that ruins this cut" : errorTitle,
-      content: sanitizeCriticalErrorCopy(sanitizeUserFacingGuidance(blocks[errorKey], lang), lang),
+      content: localizeResultSurfaceCopy(
+        sanitizeCriticalErrorCopy(sanitizeUserFacingGuidance(blocks[errorKey], lang), lang),
+        lang,
+      ),
       type: "card",
       variant: "tip",
     });
@@ -515,7 +522,7 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en"
     items.push({
       key: stepsKey,
       title: getLocalizedBlockTitle(stepsKey, lang),
-      content: blocks[stepsKey],
+      content: localizeResultSurfaceCopy(blocks[stepsKey], lang),
       type: "card",
       variant: "primary",
     });
@@ -549,7 +556,12 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en"
       return;
     }
 
-    items.push({ key, title: getLocalizedBlockTitle(key, lang), content: blocks[key], type: "card" });
+    items.push({
+      key,
+      title: getLocalizedBlockTitle(key, lang),
+      content: localizeResultSurfaceCopy(blocks[key], lang),
+      type: "card",
+    });
   });
 
   return items;

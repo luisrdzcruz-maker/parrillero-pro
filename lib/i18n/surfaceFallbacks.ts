@@ -168,6 +168,60 @@ export function localizeLiveZoneLabel(value: string, lang: SurfaceLang) {
   return text.zoneDirect;
 }
 
+function replaceInsensitive(value: string, pattern: RegExp, replacement: string) {
+  return value.replace(pattern, replacement);
+}
+
+function localizeResultInlineTerms(value: string, lang: SurfaceLang) {
+  if (lang === "en") return value;
+
+  const text = getLiveText(lang);
+  const setupLabel = lang === "es" ? "configuracion" : "asetus";
+  const timeLabel = lang === "es" ? "tiempo" : "aika";
+  const tempLabel = lang === "es" ? "temperatura" : "lampotila";
+  const pullTargetLabel = lang === "es" ? "objetivo al retirar" : "nostolampotila";
+  const perSideLabel = lang === "es" ? "por lado" : "per puoli";
+
+  let localized = value;
+  localized = replaceInsensitive(localized, /\bpull\s+target\b/gi, pullTargetLabel);
+  localized = replaceInsensitive(localized, /\bper\s+side\b/gi, perSideLabel);
+  localized = replaceInsensitive(localized, /\btime\s+remaining\b/gi, getLiveText(lang).timeRemaining);
+  localized = replaceInsensitive(localized, /\bnext\s+action\b/gi, getLiveText(lang).nextStep);
+  localized = replaceInsensitive(localized, /\bmanual\s+step\b/gi, getLiveText(lang).manualStep);
+  localized = replaceInsensitive(localized, /\bsetup\b/gi, setupLabel);
+  localized = replaceInsensitive(localized, /\btemp\b/gi, tempLabel);
+  localized = replaceInsensitive(localized, /\btime\b/gi, timeLabel);
+  localized = replaceInsensitive(localized, /\bindirect\b/gi, text.zoneIndirect);
+  localized = replaceInsensitive(localized, /\bdirect\b/gi, text.zoneDirect);
+  localized = replaceInsensitive(localized, /\brest\b/gi, text.zoneRest);
+  return localized;
+}
+
+function localizeLinePreservingPrefix(value: string, lang: SurfaceLang) {
+  const match = value.match(/^(\s*(?:[-*]|\d+[.)])\s+)?(.*)$/);
+  const prefix = match?.[1] ?? "";
+  const rawCore = match?.[2] ?? value;
+  let core = localizeLiveStepEntry(rawCore, lang);
+  core = sanitizeLiveInstructionCopy(core, lang);
+  core = localizeResultInlineTerms(core, lang);
+  if (isLikelyInternalDescriptor(core)) {
+    core =
+      lang === "es"
+        ? "Evita sobrecocinar el centro antes de terminar el dorado."
+        : "Valta ylikypsentamasta keskiosaa ennen paistopinnan viimeistelya.";
+  }
+  return `${prefix}${core}`.trim();
+}
+
+export function localizeResultSurfaceCopy(value: string, lang: SurfaceLang) {
+  if (lang === "en") return value;
+  if (!value.trim()) return value;
+  return value
+    .split("\n")
+    .map((line) => (line.trim() ? localizeLinePreservingPrefix(line, lang) : line))
+    .join("\n");
+}
+
 export function getLiveText(lang: SurfaceLang) {
   if (lang === "es") {
     return {
