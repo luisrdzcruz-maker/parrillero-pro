@@ -1847,7 +1847,7 @@ ERROR
       />
     )}
     <main
-      className={`${ds.shell.page} relative mx-auto flex min-h-screen min-w-0 w-full max-w-[1280px] flex-col overflow-x-hidden px-3 pb-[calc(7.5rem+env(safe-area-inset-bottom))] pt-2 sm:px-4 sm:pt-5 lg:px-8 lg:pb-10 lg:pt-6`}
+      className={`${ds.shell.page} relative isolate mx-auto flex min-h-screen min-w-0 w-full max-w-none flex-col overflow-x-hidden px-3 pb-[calc(7.5rem+env(safe-area-inset-bottom))] pt-2 before:pointer-events-none before:fixed before:inset-x-0 before:bottom-0 before:z-0 before:h-40 before:bg-gradient-to-t before:from-[#030201] before:via-[#030201]/85 before:to-transparent sm:px-4 sm:pt-5 lg:px-8 lg:pb-10 lg:pt-6`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >

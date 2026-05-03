@@ -50,13 +50,13 @@ export const ds = {
   },
 
   shell: {
-    page: "min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.12),transparent_30%),linear-gradient(180deg,#020617,#0f172a_45%,#020617)] px-4 pb-28 pt-5 text-white",
-    container: "mx-auto max-w-6xl",
+    page: "min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_18%_0%,rgba(249,115,22,0.13),transparent_32%),radial-gradient(circle_at_82%_12%,rgba(120,53,15,0.10),transparent_30%),linear-gradient(180deg,#050301_0%,#090807_42%,#030201_100%)] px-4 pb-28 pt-5 text-white",
+    container: "relative z-10 mx-auto max-w-6xl",
   },
 
   panel: {
-    form: "space-y-4 rounded-3xl border border-white/10 bg-slate-900/75 p-5 shadow-2xl shadow-black/20 ring-1 ring-inset ring-white/[0.03] backdrop-blur",
-    card: "rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900/95 to-slate-900/65 shadow-lg shadow-black/20 ring-1 ring-inset ring-white/[0.03]",
+    form: "space-y-4 rounded-3xl border border-white/10 bg-white/[0.045] p-5 shadow-2xl shadow-black/20 ring-1 ring-inset ring-white/[0.035] backdrop-blur-xl",
+    card: "rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.07] to-white/[0.035] shadow-lg shadow-black/20 ring-1 ring-inset ring-white/[0.035] backdrop-blur",
     result:
       "relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/95 to-slate-900/65 shadow-lg shadow-black/20 ring-1 ring-inset ring-white/[0.03]",
     homeCard:
