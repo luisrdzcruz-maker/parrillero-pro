@@ -47,7 +47,7 @@ import { ONBOARDING_STORAGE_KEY } from "@/lib/storageKeys";
 import { PlanHub, type PlanMode } from "@/components/planning/PlanHub";
 import { Button, Grid } from "@/components/ui";
 import { track } from "@/lib/analytics";
-import type { ProductCut } from "@/lib/cookingCatalog";
+import type { DonenessId, ProductCut } from "@/lib/cookingCatalog";
 import {
   generateCookingPlan as generateLocalCookingPlan,
   generateCookingSteps as generateLocalCookingSteps,
@@ -90,7 +90,6 @@ import {
 import { parseLiveParams } from "@/lib/navigation/parseLiveParams";
 import { CutSelectionScreen } from "@/components/cuts/CutSelectionScreen";
 import type { GeneratedAnimalId, GeneratedCutProfile } from "@/lib/generated/cutProfiles";
-import type { Doneness } from "@/lib/types/domain";
 import { animalIdsByLabel, type AnimalLabel } from "@/lib/media/animalMedia";
 import { cutImages } from "@/lib/media/cutImages";
 import {
@@ -123,7 +122,17 @@ type SavedMenuActionMenu = {
   share_slug?: string | null;
 };
 
-const LIVE_DONENESS_VALUES: Doneness[] = ["rare", "medium_rare", "medium", "medium_well", "well_done", "safe"];
+const LIVE_DONENESS_VALUES: DonenessId[] = [
+  "rare",
+  "medium_rare",
+  "medium",
+  "medium_well",
+  "well_done",
+  "juicy_safe",
+  "medium_safe",
+  "safe",
+  "juicy",
+];
 const LANG_STORAGE_KEY = "parrillero_lang";
 
 function getPlanTextDefaults(lang: Lang) {
@@ -224,8 +233,8 @@ function parseSavedAnimal(value: unknown, fallback: AnimalLabel): AnimalLabel {
   return fallback;
 }
 
-function toLiveDoneness(value: string): Doneness | undefined {
-  return LIVE_DONENESS_VALUES.includes(value as Doneness) ? (value as Doneness) : undefined;
+function toLiveDoneness(value: string): DonenessId | undefined {
+  return LIVE_DONENESS_VALUES.includes(value as DonenessId) ? (value as DonenessId) : undefined;
 }
 
 function parseSavedCookConfig(
@@ -805,11 +814,11 @@ function HomeContent() {
     }
     const validDonenessIds = getDonenessOptions(animalIdsByLabel[sourceAnimal]).map((option) => option.id);
     const normalizedSource = sourceDoneness?.trim();
-    if (normalizedSource && validDonenessIds.includes(normalizedSource as Doneness)) {
+    if (normalizedSource && validDonenessIds.includes(normalizedSource as DonenessId)) {
       return { value: normalizedSource, source: "state" as const };
     }
     const normalizedFallback = fallbackDoneness?.trim();
-    if (normalizedFallback && validDonenessIds.includes(normalizedFallback as Doneness)) {
+    if (normalizedFallback && validDonenessIds.includes(normalizedFallback as DonenessId)) {
       return { value: normalizedFallback, source: "generated_context" as const };
     }
     return { value: getInitialDoneness(sourceAnimal), source: "animal_default" as const };
@@ -1266,7 +1275,9 @@ function HomeContent() {
       blocks: rebuilt.blocks,
     });
 
-    saveLiveCookingPayload(payload);
+    if (!saveLiveCookingPayload(payload)) {
+      return;
+    }
     const showThickness = shouldShowThickness(rebuilt.config.cut);
     const liveThicknessRaw = Number(rebuilt.config.thickness);
     const liveThickness =

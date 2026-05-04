@@ -108,6 +108,22 @@ function parseTempTargets(tempText: string) {
   };
 }
 
+function getLiveCookingPayloadIssues(payload: LiveCookingPlanPayload) {
+  const issues: string[] = [];
+  const input = payload.input;
+  const stepsText = block(payload.blocks, "PASOS", "STEPS");
+  const tempText = block(payload.blocks, "TEMPERATURA", "TEMPERATURE");
+
+  if (!asText(input.animal)) issues.push("missing animal");
+  if (!asText(input.cut)) issues.push("missing cut");
+  if (!asText(input.equipment)) issues.push("missing equipment");
+  if (!asText(input.doneness) && input.animal !== "Verduras") issues.push("missing doneness");
+  if (!stepsText) issues.push("missing steps");
+  if (!parseTempTargets(tempText).final && input.animal !== "Verduras") issues.push("missing target temperature");
+
+  return issues;
+}
+
 function splitPlanLines(text: string) {
   const lines = text
     .split("\n")
@@ -195,6 +211,17 @@ export function createLiveCookingPayload(params: {
 
 export function saveLiveCookingPayload(payload: LiveCookingPlanPayload) {
   if (typeof window === "undefined") return false;
+  const issues = getLiveCookingPayloadIssues(payload);
+  if (issues.length > 0 && process.env.NODE_ENV !== "production") {
+    console.warn("[live-cooking] incomplete live cooking payload", {
+      issues,
+      input: payload.input,
+      blockKeys: Object.keys(payload.blocks),
+    });
+  }
+  if (issues.some((issue) => issue === "missing animal" || issue === "missing cut" || issue === "missing steps")) {
+    return false;
+  }
   window.sessionStorage.setItem(LIVE_COOKING_STORAGE_KEY, JSON.stringify(payload));
   return true;
 }

@@ -19,7 +19,6 @@ import {
   sanitizeCriticalErrorCopy,
 } from "@/lib/i18n/surfaceFallbacks";
 import type { AppText, Lang } from "@/lib/i18n/texts";
-import type { Doneness } from "@/lib/types/domain";
 import {
   createLiveCookingPayload,
   readLiveCookingPayload,
@@ -28,7 +27,7 @@ import {
 } from "@/lib/liveCookingPlan";
 import { buildLiveUrl } from "@/lib/navigation/buildLiveUrl";
 import { animalIdsByLabel, animalOptions, type AnimalLabel } from "@/lib/media/animalMedia";
-import type { CookingStyle, ProductCut } from "@/lib/cookingCatalog";
+import type { CookingStyle, DonenessId, ProductCut } from "@/lib/cookingCatalog";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useLayoutEffect, useState } from "react";
@@ -54,14 +53,24 @@ export const equipmentOptions = [
 ];
 
 const cookingEquipmentOptions = ["parrilla gas", "parrilla carbón", "kamado", "cocina interior"];
-const LIVE_DONENESS_VALUES: Doneness[] = ["rare", "medium_rare", "medium", "medium_well", "well_done", "safe"];
+const LIVE_DONENESS_VALUES: DonenessId[] = [
+  "rare",
+  "medium_rare",
+  "medium",
+  "medium_well",
+  "well_done",
+  "juicy_safe",
+  "medium_safe",
+  "safe",
+  "juicy",
+];
 
 export type CookingSizePreset = "small" | "medium" | "large";
 export type CookingWeightRange = "light" | "medium" | "large";
 export type VegetableFormat = "whole" | "halved" | "slices";
 
-function toLiveDoneness(value: string): Doneness | undefined {
-  return LIVE_DONENESS_VALUES.includes(value as Doneness) ? (value as Doneness) : undefined;
+function toLiveDoneness(value: string): DonenessId | undefined {
+  return LIVE_DONENESS_VALUES.includes(value as DonenessId) ? (value as DonenessId) : undefined;
 }
 
 const foodImages: Record<AnimalLabel, string> = {
@@ -1313,7 +1322,9 @@ function CookingResultStep({
       console.info("[live-cooking] plan signature changed for same animal/cut");
     }
 
-    saveLiveCookingPayload(payload);
+    if (!saveLiveCookingPayload(payload)) {
+      return;
+    }
     const liveThicknessRaw = Number(thickness);
     const liveThickness =
       showThickness && Number.isFinite(liveThicknessRaw) && liveThicknessRaw > 0

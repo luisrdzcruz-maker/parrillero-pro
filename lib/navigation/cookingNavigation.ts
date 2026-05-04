@@ -1,4 +1,4 @@
-import type { Doneness } from "@/lib/types/domain";
+import type { DonenessId } from "@/lib/cookingCatalog";
 import { toAnimalId } from "@/lib/navigation/animalParam";
 import { canonicalizeCutId } from "@/lib/navigation/canonicalCutId";
 import type { Lang } from "@/lib/i18n/texts";
@@ -11,13 +11,16 @@ type CookingNavigationParams = {
   lang?: Lang;
 };
 
-const VALID_DONENESS: ReadonlySet<Doneness> = new Set([
+const VALID_DONENESS: ReadonlySet<DonenessId> = new Set([
   "rare",
   "medium_rare",
   "medium",
   "medium_well",
   "well_done",
+  "juicy_safe",
+  "medium_safe",
   "safe",
+  "juicy",
 ]);
 
 function normalizeCutId(value: string | undefined) {
@@ -27,7 +30,7 @@ function normalizeCutId(value: string | undefined) {
 function normalizeDoneness(value: string | undefined) {
   const trimmed = value?.trim();
   if (!trimmed) return undefined;
-  return VALID_DONENESS.has(trimmed as Doneness) ? trimmed : undefined;
+  return VALID_DONENESS.has(trimmed as DonenessId) ? trimmed : undefined;
 }
 
 function normalizeThickness(value: string | undefined) {
