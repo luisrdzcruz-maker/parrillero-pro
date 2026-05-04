@@ -56,7 +56,10 @@ const DONENESS_LABELS: Record<string, Record<SurfaceLang, string>> = {
   medium: { es: "Al punto", en: "Medium", fi: "Keskikypsa" },
   medium_well: { es: "Tres cuartos", en: "Medium well", fi: "Melko kypsa" },
   well_done: { es: "Bien hecho", en: "Well done", fi: "Kypsa" },
+  juicy_safe: { es: "Jugoso seguro", en: "Juicy safe", fi: "Meheva turvallinen" },
+  medium_safe: { es: "Al punto seguro", en: "Medium safe", fi: "Keskikypsa turvallinen" },
   safe: { es: "Seguro", en: "Safe", fi: "Turvallinen" },
+  juicy: { es: "Jugoso", en: "Juicy", fi: "Meheva" },
 };
 
 const EQUIPMENT_LABELS: Record<string, Record<SurfaceLang, string>> = {

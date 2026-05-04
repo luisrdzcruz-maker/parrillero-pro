@@ -1,13 +1,24 @@
-import type { Animal, Doneness } from "@/lib/types/domain";
+import type { Animal } from "@/lib/types/domain";
+import type { DonenessId } from "@/lib/cookingCatalog";
 import type { Lang } from "@/lib/i18n/texts";
 
 const VALID_ANIMALS: Animal[] = ["beef", "pork", "chicken", "fish", "vegetables"];
-const VALID_DONENESS: Doneness[] = ["rare", "medium_rare", "medium", "medium_well", "well_done", "safe"];
+const VALID_DONENESS: DonenessId[] = [
+  "rare",
+  "medium_rare",
+  "medium",
+  "medium_well",
+  "well_done",
+  "juicy_safe",
+  "medium_safe",
+  "safe",
+  "juicy",
+];
 
 export type LiveParams = {
   animal?: Animal;
   cutId?: string;
-  doneness?: Doneness;
+  doneness?: DonenessId;
   thickness?: number;
   lang?: Lang;
 };
