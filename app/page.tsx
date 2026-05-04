@@ -56,6 +56,7 @@ import {
   getDonenessOptions,
   shouldShowThickness,
 } from "@/lib/cookingRules";
+import { donenessTemperatureProfiles } from "@/lib/donenessProfiles";
 import {
   mapBeefLargeWeightPresetToKg,
   mapSizePresetToThickness,
@@ -260,15 +261,56 @@ function engineLang(lang: Lang): EngineLang {
   return lang === "es" ? "es" : "en";
 }
 
-function getInitialDoneness(animal: AnimalLabel) {
-  return getDonenessOptions(animalIdsByLabel[animal])[0]?.id ?? "";
+function getAllowedDonenessIds(animal: AnimalLabel, cutId?: string) {
+  if (isVegetableContextAnimal(animal)) return [];
+
+  const cutMeta = cutId ? getCutById(cutId) : undefined;
+  if (cutMeta && cutMeta.animalId === animalIdsByLabel[animal] && cutMeta.allowedDoneness.length > 0) {
+    return cutMeta.allowedDoneness;
+  }
+
+  return getDonenessOptions(animalIdsByLabel[animal]).map((option) => option.id);
 }
 
-function getDonenessSelectOptions(animal: AnimalLabel, lang: Lang): SelectOption[] {
-  return getDonenessOptions(animalIdsByLabel[animal]).map((option) => ({
-    value: option.id,
-    label: lang === "fi" ? getDonenessSurfaceLabel(option.id, "fi") : option.names[lang],
-  }));
+function getInitialDoneness(animal: AnimalLabel, cutId?: string) {
+  const allowedDonenessIds = getAllowedDonenessIds(animal, cutId);
+  const cutMeta = cutId ? getCutById(cutId) : undefined;
+  const profileRecommended = cutMeta?.donenessProfileId
+    ? donenessTemperatureProfiles[cutMeta.donenessProfileId].recommended
+    : undefined;
+  const preferred =
+    profileRecommended ??
+    (animal === "Vacuno"
+      ? "medium_rare"
+      : animal === "Cerdo"
+        ? "juicy_safe"
+        : animal === "Pollo"
+          ? "safe"
+          : animal === "Pescado"
+            ? "medium"
+            : "");
+
+  return allowedDonenessIds.find((id) => id === preferred) ?? allowedDonenessIds[0] ?? "";
+}
+
+function resolveValidDoneness(animal: AnimalLabel, cutId: string | undefined, selectedDoneness: string) {
+  const allowedDonenessIds = getAllowedDonenessIds(animal, cutId);
+  if (selectedDoneness && allowedDonenessIds.includes(selectedDoneness as (typeof allowedDonenessIds)[number])) {
+    return selectedDoneness;
+  }
+
+  return getInitialDoneness(animal, cutId);
+}
+
+function getDonenessSelectOptions(animal: AnimalLabel, lang: Lang, cutId?: string): SelectOption[] {
+  const allowedDonenessIds = new Set(getAllowedDonenessIds(animal, cutId));
+
+  return getDonenessOptions(animalIdsByLabel[animal])
+    .filter((option) => allowedDonenessIds.has(option.id))
+    .map((option) => ({
+      value: option.id,
+      label: lang === "fi" ? getDonenessSurfaceLabel(option.id, "fi") : option.names[lang],
+    }));
 }
 
 function catalogLang(lang: Lang) {
@@ -537,6 +579,14 @@ function HomeContent() {
     doneness,
     thickness,
   });
+  const navigationStateRef = useRef({
+    mode,
+    cookingStep,
+    animal,
+    cut,
+    doneness,
+    thickness,
+  });
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -564,7 +614,8 @@ function HomeContent() {
   }, [baseCuts, selectedCutFallback]);
   const selectedCut = cuts.find((item) => item.id === cut);
 
-  const currentDonenessOptions = getDonenessSelectOptions(animal, lang);
+  const currentDonenessOptions = getDonenessSelectOptions(animal, lang, cut);
+  const activeDoneness = resolveValidDoneness(animal, cut || undefined, doneness);
   const showThickness = cut ? shouldShowThickness(cut) : true;
   const isCutSelectionSheetOpen = mode === "coccion" && cookingStep === "cut" && Boolean(cut);
   const liveSession = useLiveCookingSession({
@@ -606,7 +657,7 @@ function HomeContent() {
     if (cookingContext.doneness) {
       setDoneness(cookingContext.doneness);
     } else if (cookingContext.animal) {
-      setDoneness(getInitialDoneness(cookingContext.animal));
+      setDoneness(getInitialDoneness(cookingContext.animal, cookingContext.cut));
     }
     if (cookingContext.thickness) {
       setThickness(cookingContext.thickness);
@@ -745,7 +796,7 @@ function HomeContent() {
     return {
       animal,
       ...(cut ? { cut } : {}),
-      ...(includeDoneness && doneness ? { doneness } : {}),
+      ...(includeDoneness && activeDoneness ? { doneness: activeDoneness } : {}),
       ...(includeThickness && thickness ? { thickness } : {}),
     };
   }
@@ -762,7 +813,7 @@ function HomeContent() {
     return {
       animal,
       cutId,
-      doneness: includeDoneness ? doneness.trim() || undefined : undefined,
+      doneness: includeDoneness ? activeDoneness.trim() || undefined : undefined,
       thickness: includeThickness ? parsePositiveNumberParam(thickness) : undefined,
     };
   }
@@ -925,17 +976,21 @@ function HomeContent() {
     if (isApplyingPopRef.current) return;
     if (typeof window === "undefined") return;
     const nav = parseNavFromSearch(window.location.search);
+    const currentState = navigationStateRef.current;
     const currentCookingContext: CookingNavContext = {
-      animal,
-      ...(cut ? { cut } : {}),
-      ...(doneness ? { doneness } : {}),
-      ...(thickness ? { thickness } : {}),
+      animal: currentState.animal,
+      ...(currentState.cut ? { cut: currentState.cut } : {}),
+      ...(currentState.doneness ? { doneness: currentState.doneness } : {}),
+      ...(currentState.thickness ? { thickness: currentState.thickness } : {}),
     };
     const shouldCompareCookingContext =
-      nav.mode === "coccion" || nav.mode === "cocina" || mode === "coccion" || mode === "cocina";
+      nav.mode === "coccion" ||
+      nav.mode === "cocina" ||
+      currentState.mode === "coccion" ||
+      currentState.mode === "cocina";
     const matchesCurrentCookingContext =
       !shouldCompareCookingContext || isSameCookingContext(nav.cookingContext, currentCookingContext);
-    if (nav.mode === mode && nav.cookingStep === cookingStep && matchesCurrentCookingContext) return;
+    if (nav.mode === currentState.mode && nav.cookingStep === currentState.cookingStep && matchesCurrentCookingContext) return;
 
     isApplyingPopRef.current = true;
     const frame = window.requestAnimationFrame(() => {
@@ -951,7 +1006,7 @@ function HomeContent() {
       window.cancelAnimationFrame(frame);
       isApplyingPopRef.current = false;
     };
-  }, [searchParams, mode, cookingStep, animal, cut, doneness, thickness, applyCookingNavContext]);
+  }, [searchParams, applyCookingNavContext]);
 
   useEffect(() => {
     if (process.env.NODE_ENV === "production") return;
@@ -974,10 +1029,18 @@ function HomeContent() {
     cookingContextRef.current = {
       animal,
       cut,
-      doneness,
+      doneness: activeDoneness,
       thickness,
     };
-  }, [animal, cut, doneness, thickness]);
+    navigationStateRef.current = {
+      mode,
+      cookingStep,
+      animal,
+      cut,
+      doneness: activeDoneness,
+      thickness,
+    };
+  }, [mode, cookingStep, animal, cut, activeDoneness, thickness]);
 
   useEffect(() => {
     if (!liveCookComplete || cookCompleteModalFiredRef.current || isPro()) return;
@@ -1049,7 +1112,7 @@ function HomeContent() {
               cutName,
               weight,
               thickness,
-              doneness,
+              doneness: activeDoneness,
               equipment,
             }
           : savedType === "parrillada_plan"
@@ -1371,18 +1434,38 @@ function HomeContent() {
   }
 
   function handleCutChange(selectedCutId: string) {
+    const selectedDoneness = getInitialDoneness(animal, selectedCutId);
     setCut(selectedCutId);
     resetAdaptiveDetailInputs();
+    setDoneness(selectedDoneness);
     setBlocks({});
     setCheckedItems({});
     resetSaveMenuState();
     commitNav("coccion", "details", "push", {
       animal,
       cut: selectedCutId,
-      doneness,
+      doneness: selectedDoneness,
       thickness,
     });
     track({ name: "cut_selected", animal, cutId: selectedCutId, lang });
+  }
+
+  function handleDonenessChange(selectedDoneness: string) {
+    const validDoneness = resolveValidDoneness(animal, cut || undefined, selectedDoneness);
+    setDoneness(validDoneness);
+    setBlocks({});
+    setCheckedItems({});
+    resetSaveMenuState();
+
+    if (mode === "coccion" && cut) {
+      const nextStep = cookingStep === "result" ? "details" : cookingStep;
+      commitNav("coccion", nextStep, "replace", {
+        animal,
+        cut,
+        ...(validDoneness ? { doneness: validDoneness } : {}),
+        ...(shouldShowThickness(cut) && thickness ? { thickness } : {}),
+      });
+    }
   }
 
   function handleCutSelectionPreviewChange(nextCutId: string | null) {
@@ -1401,7 +1484,11 @@ function HomeContent() {
 
   function handleCutSelectionStartCooking(profile: GeneratedCutProfile) {
     const selectedAnimal = animalLabelsById[profile.animalId] ?? animal;
-    const selectedDoneness = profile.defaultDoneness ?? getInitialDoneness(selectedAnimal);
+    const selectedDoneness = resolveValidDoneness(
+      selectedAnimal,
+      profile.id,
+      profile.defaultDoneness ?? "",
+    );
     const selectedThickness =
       profile.showThickness && Number.isFinite(profile.defaultThicknessCm)
         ? `${profile.defaultThicknessCm}`
@@ -1428,11 +1515,16 @@ function HomeContent() {
     const selectedAnimal = animalLabelsById[selection.animal] ?? animal;
     const selectedCutId = selection.cutId.trim();
     if (!selectedCutId) return;
+    const selectedDoneness = resolveValidDoneness(
+      selectedAnimal,
+      selectedCutId,
+      selection.doneness ?? "",
+    );
 
     setAnimal(selectedAnimal);
     setCut(selectedCutId);
-    if (selection.doneness && !isVegetableContextAnimal(selectedAnimal)) {
-      setDoneness(selection.doneness);
+    if (!isVegetableContextAnimal(selectedAnimal)) {
+      setDoneness(selectedDoneness);
     }
     if (selection.thickness && shouldShowThickness(selectedCutId)) {
       setThickness(selection.thickness);
@@ -1449,13 +1541,18 @@ function HomeContent() {
       commitNav("coccion", "cut", "push", {
         animal: selectedAnimal,
         cut: selectedCutId,
+        ...(selectedDoneness ? { doneness: selectedDoneness } : {}),
       });
       track({ name: "cut_selected", animal: selectedAnimal, cutId: selectedCutId, lang });
       return;
     }
 
     const baseContext: CookingNavContext = { animal: selectedAnimal };
-    const detailContext: CookingNavContext = { animal: selectedAnimal, cut: selectedCutId };
+    const detailContext: CookingNavContext = {
+      animal: selectedAnimal,
+      cut: selectedCutId,
+      ...(selectedDoneness ? { doneness: selectedDoneness } : {}),
+    };
     const baseSearch = buildSearchFromNav("coccion", "cut", baseContext, lang);
     const detailSearch = buildSearchFromNav("coccion", "cut", detailContext, lang);
     const baseUrl = `${window.location.pathname}${baseSearch}${window.location.hash}`;
@@ -1557,7 +1654,7 @@ function HomeContent() {
       weightKg: resolvedWeightKg,
       thicknessCm: resolvedThicknessCm,
       format: isVegetableCut ? vegetableFormat : undefined,
-      doneness,
+      doneness: activeDoneness,
       equipment,
       language: engineLang(lang),
     };
@@ -1587,7 +1684,7 @@ Cut: ${selectedCut?.name ?? cut}
 Weight: ${resolvedWeightKg} kg
 Thickness: ${resolvedThicknessCm} cm
 Format: ${isVegetableCut ? vegetableFormat : "not relevant"}
-Doneness: ${doneness}
+Doneness: ${activeDoneness}
 Equipment: ${equipment}
 
 Return exact block titles:
@@ -1971,10 +2068,7 @@ ERROR
                 setAdvancedThicknessEnabled(value);
                 resetSaveMenuState();
               }}
-              setDoneness={(value) => {
-                setDoneness(value);
-                resetSaveMenuState();
-              }}
+              setDoneness={handleDonenessChange}
               setEquipment={(value) => {
                 setEquipment(value);
                 resetSaveMenuState();
@@ -2004,7 +2098,7 @@ ERROR
               thickness={thickness}
               vegetableFormat={vegetableFormat}
               weightRange={weightRange}
-              doneness={doneness}
+              doneness={activeDoneness}
               blocks={blocks}
               checkedItems={checkedItems}
               setCheckedItems={setCheckedItems}
