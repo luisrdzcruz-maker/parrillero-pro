@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useRouter } from "next/navigation";
 import type { Mode } from "@/components/navigation/AppHeader";
 import { buildCookingDetailsUrl } from "@/lib/navigation/cookingNavigation";
@@ -52,7 +53,7 @@ function HeroSection({
 
       <div className="relative z-10 max-w-xl">
         <div className="inline-flex items-center gap-2 rounded-full border border-orange-300/20 bg-orange-500/10 px-3 py-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-orange-400 shadow-[0_0_8px_rgba(251,146,60,0.8)]" />
+          <BrandLogo variant="icon" size="sm" alt="" aria-hidden="true" />
           <span className="text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">
             {t.homeEyebrow}
           </span>
