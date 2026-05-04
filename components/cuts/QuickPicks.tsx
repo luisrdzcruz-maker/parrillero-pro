@@ -1,7 +1,6 @@
 "use client";
 
 import { BrandImageIcon } from "@/components/ui/BrandImageIcon";
-import { cutIconAssets } from "@/lib/brand/cutIconAssets";
 import type { GeneratedCutProfile } from "@/lib/generated/cutProfiles";
 import type { Lang } from "@/lib/i18n/texts";
 import {
@@ -10,6 +9,7 @@ import {
   getEstimatedTimeLabel,
   getRecommendedCuts,
 } from "./cutProfileSelectors";
+import { getCutSelectionIconPath } from "./cutSelectionIconResolver";
 import type { CutIntent } from "./cutSelectionTypes";
 
 type QuickPicksProps = {
@@ -27,10 +27,6 @@ function getDetailsLabel(lang: Lang) {
   if (lang === "es") return "Detalles";
   if (lang === "fi") return "Tiedot";
   return "Details";
-}
-
-function getCutIconAsset(cutId: string) {
-  return cutId in cutIconAssets ? cutIconAssets[cutId as keyof typeof cutIconAssets] : undefined;
 }
 
 export function QuickPicks({
@@ -68,7 +64,7 @@ export function QuickPicks({
       >
         {picks.map((profile) => {
           const isActive = selectedCutId === profile.id;
-          const cutIcon = getCutIconAsset(profile.id);
+          const cutIcon = getCutSelectionIconPath(profile);
           return (
             <article
               key={profile.id}
@@ -88,6 +84,7 @@ export function QuickPicks({
                       shape="plain"
                       aria-hidden="true"
                       className="h-8 w-8 rounded-lg"
+                      fallback={<span aria-hidden="true" className="h-2.5 w-2.5 rounded-full bg-orange-300/80 shadow-[0_0_16px_rgba(251,146,60,0.35)]" />}
                     />
                   ) : (
                     <span aria-hidden="true" className="h-2.5 w-2.5 rounded-full bg-orange-300/80 shadow-[0_0_16px_rgba(251,146,60,0.35)]" />

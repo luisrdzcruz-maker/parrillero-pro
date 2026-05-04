@@ -1,7 +1,6 @@
 "use client";
 
 import { BrandImageIcon } from "@/components/ui/BrandImageIcon";
-import { cutIconAssets } from "@/lib/brand/cutIconAssets";
 import type { GeneratedCutProfile } from "@/lib/generated/cutProfiles";
 import type { Lang } from "@/lib/i18n/texts";
 import {
@@ -12,6 +11,7 @@ import {
   getStyleLabel,
   getTemperatureLabel,
 } from "./cutProfileSelectors";
+import { getCutSelectionIconPath } from "./cutSelectionIconResolver";
 
 type CutCardProps = {
   profile: GeneratedCutProfile;
@@ -27,16 +27,12 @@ function getDetailsLabel(lang: Lang) {
   return "View details";
 }
 
-function getCutIconAsset(cutId: string) {
-  return cutId in cutIconAssets ? cutIconAssets[cutId as keyof typeof cutIconAssets] : undefined;
-}
-
 export function CutCard({ profile, lang, selected = false, onSelect, onViewDetails }: CutCardProps) {
   const temperature = getTemperatureLabel(profile);
   const metaSummary = [getEstimatedTimeLabel(profile, lang), getStyleLabel(profile, lang), temperature]
     .filter(Boolean)
     .join(" · ");
-  const cutIcon = getCutIconAsset(profile.id);
+  const cutIcon = getCutSelectionIconPath(profile);
 
   return (
     <article
@@ -58,6 +54,7 @@ export function CutCard({ profile, lang, selected = false, onSelect, onViewDetai
                   shape="plain"
                   aria-hidden="true"
                   className="h-7 w-7 rounded-lg"
+                  fallback={<span aria-hidden="true" className="h-2 w-2 rounded-full bg-orange-300/80 shadow-[0_0_14px_rgba(251,146,60,0.32)]" />}
                 />
               )}
               <h3 className="truncate text-[14px] font-black tracking-tight text-white">{getDisplayName(profile, lang)}</h3>
