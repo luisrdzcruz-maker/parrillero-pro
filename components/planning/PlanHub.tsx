@@ -2,6 +2,8 @@
 
 import { Button } from "@/components/ui";
 import { Select, type Blocks, type SaveMenuStatus } from "@/components/cooking/CookingWizard";
+import { getEquipmentSurfaceLabel } from "@/lib/i18n/surfaceFallbacks";
+import type { AppText, Lang } from "@/lib/i18n/texts";
 import { useMemo, useState } from "react";
 
 export type PlanMode = "rapido" | "completo" | "evento";
@@ -16,6 +18,7 @@ type PlanHubProps = {
   blocks: Blocks;
   difficulty: string;
   equipment: string;
+  lang: Lang;
   loading: boolean;
   menuMeats: string;
   onCopy: () => void;
@@ -45,15 +48,10 @@ type PlanHubProps = {
   setServeTime: (value: string) => void;
   setSides: (value: string) => void;
   sides: string;
+  t: AppText;
 };
 
-const planModes: Array<{ id: PlanMode; label: string }> = [
-  { id: "rapido", label: "Rápido" },
-  { id: "completo", label: "Completo" },
-  { id: "evento", label: "Evento" },
-];
-
-const equipmentOptions = [
+const equipmentOptionValues = [
   "parrilla gas",
   "parrilla carbón",
   "kamado",
@@ -61,60 +59,79 @@ const equipmentOptions = [
   "Napoleon Rogue 525-2",
 ];
 
-const difficultyOptions = ["fácil", "medio", "avanzado"];
+function getPlanModes(t: AppText): Array<{ id: PlanMode; label: string }> {
+  return [
+    { id: "rapido", label: t.planModeQuick },
+    { id: "completo", label: t.planModeComplete },
+    { id: "evento", label: t.planModeEvent },
+  ];
+}
 
-const modeCopy: Record<
+function getDifficultyOptions(t: AppText) {
+  return [
+    { value: "fácil", label: t.planDifficultyEasy },
+    { value: "medio", label: t.planDifficultyMedium },
+    { value: "avanzado", label: t.planDifficultyAdvanced },
+  ];
+}
+
+function getModeCopy(t: AppText): Record<
   PlanMode,
   {
     badge: string;
     cta: string;
     description: string;
   }
-> = {
-  rapido: {
-    badge: "Datos básicos",
-    cta: "Crear plan",
-    description: "Lo esencial para cocinar sin perder tiempo.",
-  },
-  completo: {
-    badge: "Parrillada completa",
-    cta: "Crear plan",
-    description: "Cantidades, acompañamientos, equipo y dificultad.",
-  },
-  evento: {
-    badge: "Evento",
-    cta: "Crear plan",
-    description: "Para grupos: hora objetivo, zonas de fuego y orden de cocción.",
-  },
-};
+> {
+  return {
+    rapido: {
+      badge: t.planModeQuickBadge,
+      cta: t.planCreateCta,
+      description: t.planModeQuickSub,
+    },
+    completo: {
+      badge: t.planModeCompleteBadge,
+      cta: t.planCreateCta,
+      description: t.planModeCompleteSub,
+    },
+    evento: {
+      badge: t.planModeEventBadge,
+      cta: t.planCreateCta,
+      description: t.planModeEventSub,
+    },
+  };
+}
 
-const resultCards = [
-  {
-    icon: "🔥",
-    keys: ["SETUP", "MENU", "GRILL_MANAGER"],
-    title: "Setup",
-  },
-  {
-    icon: "⏱️",
-    keys: ["TIEMPOS", "TEMPERATURA", "TIMING", "TIMELINE", "CANTIDADES"],
-    title: "Tiempos + Temperatura",
-  },
-  {
-    icon: "🧠",
-    keys: ["PASOS", "ORDEN", "COMPRA"],
-    title: "Pasos",
-  },
-  {
-    icon: "⚠️",
-    keys: ["ERROR"],
-    title: "Error clave",
-  },
-];
+function getResultCards(t: AppText) {
+  return [
+    {
+      icon: "🔥",
+      keys: ["SETUP", "MENU", "GRILL_MANAGER"],
+      title: t.planResultSetupTitle,
+    },
+    {
+      icon: "⏱️",
+      keys: ["TIEMPOS", "TEMPERATURA", "TIMING", "TIMELINE", "CANTIDADES"],
+      title: t.planResultTimingTitle,
+    },
+    {
+      icon: "🧠",
+      keys: ["PASOS", "ORDEN", "COMPRA"],
+      title: t.planResultStepsTitle,
+    },
+    {
+      icon: "⚠️",
+      keys: ["ERROR"],
+      title: t.planResultErrorTitle,
+    },
+  ];
+}
 
 export function PlanHub({
   blocks,
   difficulty,
   equipment,
+  lang,
   loading,
   menuMeats,
   onCopy,
@@ -144,14 +161,26 @@ export function PlanHub({
   setServeTime,
   setSides,
   sides,
+  t,
 }: PlanHubProps) {
   const [visualOpen, setVisualOpen] = useState(false);
-  const copy = modeCopy[planMode];
+  const copy = getModeCopy(t)[planMode];
+  const planModes = getPlanModes(t);
+  const difficultyOptions = getDifficultyOptions(t);
+  const equipmentOptions = equipmentOptionValues.map((value) => ({
+    value,
+    label: getEquipmentSurfaceLabel(value, lang),
+  }));
+  const peopleUnit = Number(people) === 1 ? t.planPersonSingular : t.planPersonPlural;
+  const eventPeopleUnit = Number(parrilladaPeople) === 1 ? t.planPersonSingular : t.planPersonPlural;
   const subtitle = useMemo(() => {
-    if (planMode === "evento") return `${parrilladaPeople} personas · ${equipment}`;
-    if (planMode === "rapido") return `${people} personas · ${planProduct || "Producto"} · ${equipment}`;
-    return `${people} personas · ${menuMeats || "Productos"} · ${equipment}`;
-  }, [equipment, menuMeats, parrilladaPeople, people, planMode, planProduct]);
+    const equipmentLabel = getEquipmentSurfaceLabel(equipment, lang);
+    if (planMode === "evento") return `${parrilladaPeople} ${eventPeopleUnit} · ${equipmentLabel}`;
+    if (planMode === "rapido") {
+      return `${people} ${peopleUnit} · ${planProduct || t.planProductFallback} · ${equipmentLabel}`;
+    }
+    return `${people} ${peopleUnit} · ${menuMeats || t.planProductsFallback} · ${equipmentLabel}`;
+  }, [equipment, eventPeopleUnit, lang, menuMeats, parrilladaPeople, people, peopleUnit, planMode, planProduct, t.planProductFallback, t.planProductsFallback]);
 
   if (planGenerated) {
     return (
@@ -167,6 +196,7 @@ export function PlanHub({
         subtitle={subtitle}
         visualOpen={visualOpen}
         onCloseVisual={() => setVisualOpen(false)}
+        t={t}
       />
     );
   }
@@ -178,10 +208,10 @@ export function PlanHub({
         <div className="relative z-10 flex h-full flex-col justify-between gap-8">
           <div>
             <h1 className="max-w-xl text-[clamp(1.8rem,8vw,3.25rem)] font-black leading-[0.98] tracking-[-0.055em] text-white lg:text-5xl">
-              Organiza tu parrillada
+              {t.planHubTitle}
             </h1>
             <p className="mt-2 max-w-md text-sm font-medium leading-6 text-slate-300 sm:text-base">
-              Calcula cantidades, tiempos y orden de cocción.
+              {t.planHubSubtitle}
             </p>
           </div>
 
@@ -216,20 +246,20 @@ export function PlanHub({
           {planMode === "rapido" && (
             <>
               <PlanInput
-                label="Carnes / productos"
-                placeholder="Ej: chuletón, verduras, costillas"
+                label={t.meats}
+                placeholder={t.planPlaceholderProductsQuick}
                 value={planProduct}
                 onChange={setPlanProduct}
               />
               <PlanInput
                 inputMode="numeric"
-                label="Número de personas"
-                placeholder="Ej. 6"
+                label={t.people}
+                placeholder={t.planPlaceholderPeople}
                 type="number"
                 value={people}
                 onChange={setPeople}
               />
-              <Select label="Equipo" value={equipment} onChange={setEquipment} options={equipmentOptions} />
+              <Select label={t.equipment} value={equipment} onChange={setEquipment} options={equipmentOptions} />
             </>
           )}
 
@@ -237,56 +267,56 @@ export function PlanHub({
             <>
               <PlanInput
                 inputMode="numeric"
-                label="Número de personas"
-                placeholder="Ej. 6"
+                label={t.people}
+                placeholder={t.planPlaceholderPeople}
                 type="number"
                 value={people}
                 onChange={setPeople}
               />
               <PlanInput
-                label="Carnes / productos"
-                placeholder="Ej: chuletón, secreto, maíz"
+                label={t.meats}
+                placeholder={t.planPlaceholderProductsComplete}
                 value={menuMeats}
                 onChange={setMenuMeats}
               />
               <PlanInput
-                label="Acompañamientos"
-                placeholder="Ej: patatas, ensalada, chimichurri"
+                label={t.sides}
+                placeholder={t.planPlaceholderSides}
                 value={sides}
                 onChange={setSides}
               />
-              <Select label="Equipo" value={equipment} onChange={setEquipment} options={equipmentOptions} />
-              <Select label="Dificultad" value={difficulty} onChange={setDifficulty} options={difficultyOptions} />
+              <Select label={t.equipment} value={equipment} onChange={setEquipment} options={equipmentOptions} />
+              <Select label={t.difficulty} value={difficulty} onChange={setDifficulty} options={difficultyOptions} />
             </>
           )}
 
           {planMode === "evento" && (
             <>
               <PlanInput
-                label="Número de personas"
-                placeholder="Ej: 8"
+                label={t.people}
+                placeholder={t.planPlaceholderEventPeople}
                 value={parrilladaPeople}
                 onChange={setParrilladaPeople}
               />
               <PlanInput
-                label="Hora objetivo"
-                placeholder="Ej: 18:00"
+                label={t.serveTime}
+                placeholder={t.planPlaceholderServeTime}
                 value={serveTime}
                 onChange={setServeTime}
               />
               <PlanInput
-                label="Productos"
-                placeholder="Ej: costillas, chuletón, secreto"
+                label={t.products}
+                placeholder={t.planPlaceholderEventProducts}
                 value={parrilladaProducts}
                 onChange={setParrilladaProducts}
               />
               <PlanInput
-                label="Acompañamientos"
-                placeholder="Ej: patatas, ensalada, chimichurri"
+                label={t.sides}
+                placeholder={t.planPlaceholderSides}
                 value={parrilladaSides}
                 onChange={setParrilladaSides}
               />
-              <Select label="Equipo" value={equipment} onChange={setEquipment} options={equipmentOptions} />
+              <Select label={t.equipment} value={equipment} onChange={setEquipment} options={equipmentOptions} />
             </>
           )}
 
@@ -296,7 +326,7 @@ export function PlanHub({
             fullWidth
             onClick={onGenerate}
           >
-            {loading ? "Generando..." : copy.cta}
+            {loading ? t.generating : copy.cta}
           </Button>
         </div>
       </div>
@@ -348,6 +378,7 @@ function PlanResultView({
   saveMenuStatus,
   subtitle,
   visualOpen,
+  t,
 }: {
   blocks: Blocks;
   onCloseVisual: () => void;
@@ -360,22 +391,25 @@ function PlanResultView({
   saveMenuStatus: SaveMenuStatus;
   subtitle: string;
   visualOpen: boolean;
+  t: AppText;
 }) {
+  const resultCards = getResultCards(t);
+
   return (
     <section className="w-full max-w-full overflow-x-hidden">
       <div className="animate-[fadeIn_260ms_ease-out] rounded-[2rem] border border-orange-400/20 bg-[radial-gradient(circle_at_85%_0%,rgba(249,115,22,0.22),transparent_30%),linear-gradient(145deg,rgba(15,23,42,0.98),rgba(2,6,23,0.96))] p-5 shadow-2xl shadow-orange-950/20 sm:p-7">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.22em] text-orange-300">
-              Resultado
+              {t.result}
             </p>
             <h1 className="mt-2 text-4xl font-black tracking-tight text-white sm:text-5xl">
-              Resultado listo 🔥
+              {t.planResultReadyTitle}
             </h1>
             <p className="mt-2 text-sm font-semibold text-slate-300">{subtitle}</p>
           </div>
           <Button className="min-h-[48px] px-5 font-black" onClick={onEdit} variant="secondary">
-            Editar
+            {t.resultHeroEdit}
           </Button>
         </div>
 
@@ -387,10 +421,10 @@ function PlanResultView({
             onClick={onSave}
           >
             {saveMenuStatus === "success"
-              ? "Guardado ✓"
+              ? t.resultActionsSaveSuccess
               : saveMenuStatus === "saving"
-                ? "Guardando..."
-                : "Guardar"}
+                ? t.resultActionsSaveSaving
+                : t.resultActionsSaveIdle}
           </Button>
           <Button
             className="min-h-[54px] rounded-2xl font-black active:scale-[0.98]"
@@ -398,7 +432,7 @@ function PlanResultView({
             onClick={onShare}
             variant="outlineAccent"
           >
-            Compartir
+            {t.resultActionsShareIdle}
           </Button>
           <Button
             className="min-h-[54px] rounded-2xl font-black active:scale-[0.98]"
@@ -406,7 +440,7 @@ function PlanResultView({
             onClick={onCopy}
             variant="secondary"
           >
-            Copiar
+            {t.copy}
           </Button>
         </div>
 
@@ -431,13 +465,14 @@ function PlanResultView({
             icon={card.icon}
             index={index}
             keys={card.keys}
-            onShowVisual={card.title === "Setup" ? onShowVisual : undefined}
+            onShowVisual={card.keys.includes("SETUP") ? onShowVisual : undefined}
             title={card.title}
+            t={t}
           />
         ))}
       </div>
 
-      {visualOpen && <VisualSetupModal onClose={onCloseVisual} />}
+      {visualOpen && <VisualSetupModal onClose={onCloseVisual} t={t} />}
     </section>
   );
 }
@@ -449,15 +484,17 @@ function PlanResultCard({
   keys,
   onShowVisual,
   title,
+  t,
 }: {
   blocks: Blocks;
   icon: string;
   index: number;
   keys: string[];
   onShowVisual?: () => void;
+  t: AppText;
   title: string;
 }) {
-  const content = getCardContent(blocks, keys);
+  const content = getCardContent(blocks, keys, t.planResultEmpty);
   const lines = content.split("\n").filter((line) => line.trim()).length || 1;
 
   return (
@@ -474,7 +511,7 @@ function PlanResultCard({
             <h2 className="text-lg font-black text-white">{title}</h2>
           </div>
           <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-bold text-slate-300">
-            {lines} líneas
+            {lines} {lines === 1 ? t.planResultLineSingular : t.planResultLinePlural}
           </span>
         </div>
         <p className="mt-4 whitespace-pre-line text-sm font-medium leading-6 text-slate-300">
@@ -482,7 +519,7 @@ function PlanResultCard({
         </p>
         {onShowVisual && (
           <Button className="mt-5 min-h-[46px] font-black" fullWidth onClick={onShowVisual} variant="outlineAccent">
-            Ver visual
+            {t.planResultViewVisual}
           </Button>
         )}
       </div>
@@ -490,19 +527,19 @@ function PlanResultCard({
   );
 }
 
-function VisualSetupModal({ onClose }: { onClose: () => void }) {
+function VisualSetupModal({ onClose, t }: { onClose: () => void; t: AppText }) {
   return (
     <div className="fixed inset-0 z-[80] flex items-end bg-black/70 p-3 backdrop-blur-sm sm:items-center sm:justify-center">
       <div className="w-full max-w-xl rounded-[2rem] border border-white/10 bg-slate-950 p-5 shadow-2xl shadow-black/50">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-300">
-              Setup visual
+              {t.planVisualKicker}
             </p>
-            <h2 className="mt-2 text-2xl font-black text-white">Zonas directa / indirecta</h2>
+            <h2 className="mt-2 text-2xl font-black text-white">{t.planVisualTitle}</h2>
           </div>
           <Button onClick={onClose} variant="secondary">
-            Cerrar
+            {t.proClose}
           </Button>
         </div>
 
@@ -510,17 +547,17 @@ function VisualSetupModal({ onClose }: { onClose: () => void }) {
           <div className="grid min-h-[260px] grid-cols-2 gap-3">
             <div className="flex flex-col justify-end rounded-2xl border border-orange-400/30 bg-orange-500/15 p-4">
               <span className="text-3xl">🔥</span>
-              <p className="mt-2 text-lg font-black text-white">Zona directa</p>
-              <p className="mt-1 text-sm text-orange-100">Sellar y dorar.</p>
+              <p className="mt-2 text-lg font-black text-white">{t.planVisualDirectTitle}</p>
+              <p className="mt-1 text-sm text-orange-100">{t.planVisualDirectSub}</p>
             </div>
             <div className="flex flex-col justify-end rounded-2xl border border-blue-300/20 bg-blue-400/10 p-4">
               <span className="text-3xl">🌡️</span>
-              <p className="mt-2 text-lg font-black text-white">Zona indirecta</p>
-              <p className="mt-1 text-sm text-blue-100">Cocción suave y control.</p>
+              <p className="mt-2 text-lg font-black text-white">{t.planVisualIndirectTitle}</p>
+              <p className="mt-1 text-sm text-blue-100">{t.planVisualIndirectSub}</p>
             </div>
           </div>
           <div className="mt-3 rounded-2xl border border-dashed border-white/15 bg-white/[0.04] p-4 text-center text-sm font-bold text-slate-300">
-            Placeholder visual: imagen de parrilla y distribución de zonas.
+            {t.planVisualPlaceholder}
           </div>
         </div>
       </div>
@@ -528,10 +565,10 @@ function VisualSetupModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-function getCardContent(blocks: Blocks, keys: string[]) {
+function getCardContent(blocks: Blocks, keys: string[], fallback: string) {
   const parts = keys
     .map((key) => blocks[key])
     .filter((value): value is string => Boolean(value?.trim()));
 
-  return parts.length > 0 ? parts.join("\n\n") : "Información lista para completar según el plan generado.";
+  return parts.length > 0 ? parts.join("\n\n") : fallback;
 }

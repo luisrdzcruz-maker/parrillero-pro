@@ -46,8 +46,10 @@ function HeroSection({
   onStartCooking: (e: MouseEvent<HTMLButtonElement>) => void;
   onPlanBbq: () => void;
 }) {
+  const proofPoints = [t.homeHeroProofPlan, t.homeHeroProofZones, t.homeHeroProofLive];
+
   return (
-    <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#090909] px-5 py-6 shadow-[0_20px_56px_rgba(0,0,0,0.55)] sm:px-7 sm:py-8">
+    <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.15),transparent_34%),linear-gradient(145deg,rgba(12,12,12,0.98),rgba(3,3,3,0.96))] px-5 py-6 shadow-[0_20px_56px_rgba(0,0,0,0.55)] sm:px-7 sm:py-8">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-300/60 to-transparent" />
 
       <div className="relative z-10 max-w-xl">
@@ -66,10 +68,16 @@ function HeroSection({
           {t.homeSubtitle}
         </p>
 
-        <p className="mt-3 text-xs font-semibold uppercase tracking-[0.11em] text-slate-400">
-          {t.homeHowItWorks}
-        </p>
-        <p className="mt-1 text-sm leading-relaxed text-slate-300">{t.homeHowItWorksFlow}</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {proofPoints.map((point) => (
+            <span
+              key={point}
+              className="rounded-full border border-white/10 bg-black/28 px-3 py-1.5 text-[11px] font-bold text-stone-200"
+            >
+              {point}
+            </span>
+          ))}
+        </div>
 
         <div className="mt-6 flex flex-col gap-2.5 sm:flex-row">
           <button
@@ -105,10 +113,12 @@ type PopularCut = {
 function PopularCuts({
   cuts,
   title,
+  subtitle,
   onSelect,
 }: {
   cuts: PopularCut[];
   title: string;
+  subtitle: string;
   onSelect: (cut: PopularCut, e: MouseEvent<HTMLButtonElement>) => void;
 }) {
   return (
@@ -116,6 +126,7 @@ function PopularCuts({
       <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/32">
         {title}
       </p>
+      <p className="mt-1 text-xs leading-relaxed text-slate-400">{subtitle}</p>
       <div className="mt-3 flex flex-wrap gap-2">
         {cuts.map((cut) => (
           <button
@@ -126,6 +137,38 @@ function PopularCuts({
           >
             {cut.label}
           </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function HomeHowItWorksStrip({ t }: { t: AppText }) {
+  const steps = [
+    { number: "1", title: t.homeStepChooseCut, description: t.homeStepChooseCutSub },
+    { number: "2", title: t.homeStepGetPlan, description: t.homeStepGetPlanSub },
+    { number: "3", title: t.homeStepCookLive, description: t.homeStepCookLiveSub },
+  ];
+
+  return (
+    <section className="rounded-[1.65rem] border border-white/[0.07] bg-white/[0.025] p-4">
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.24em] text-orange-200/70">{t.homeHowItWorks}</p>
+          <p className="mt-1 text-sm font-semibold leading-relaxed text-slate-200">{t.homeHowItWorksFlow}</p>
+        </div>
+      </div>
+      <div className="mt-3 grid gap-2.5 sm:grid-cols-3">
+        {steps.map((step) => (
+          <div key={step.number} className="rounded-2xl border border-white/10 bg-black/25 p-3">
+            <div className="flex items-center gap-2">
+              <span className="grid h-6 w-6 place-items-center rounded-full bg-orange-500 text-[11px] font-black text-black">
+                {step.number}
+              </span>
+              <p className="text-sm font-black text-white">{step.title}</p>
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-slate-300/90">{step.description}</p>
+          </div>
         ))}
       </div>
     </section>
@@ -198,6 +241,16 @@ function HomeValueCards({ t }: { t: AppText }) {
           </div>
         ))}
       </div>
+    </section>
+  );
+}
+
+function HomeRecipePositioning({ t }: { t: AppText }) {
+  return (
+    <section className="rounded-[1.65rem] border border-orange-300/12 bg-orange-500/[0.045] p-4">
+      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-orange-200/75">{t.homeNotRecipeKicker}</p>
+      <h2 className="mt-2 text-lg font-black tracking-[-0.02em] text-white">{t.homeNotRecipeTitle}</h2>
+      <p className="mt-1.5 text-sm leading-relaxed text-slate-300">{t.homeNotRecipeSub}</p>
     </section>
   );
 }
@@ -362,14 +415,6 @@ export function HomeScreen({
   const quickActions = useMemo<QuickAction[]>(() => {
     const actions: QuickAction[] = [
       {
-        id: "start-cooking",
-        icon: "🥩",
-        title: t.homeGuidedCooking,
-        description: t.homeGuidedCookingSub,
-        emphasized: true,
-        onClick: () => onModeChange("coccion"),
-      },
-      {
         id: "plan-bbq",
         icon: "🧭",
         title: t.homeParrillada,
@@ -389,11 +434,12 @@ export function HomeScreen({
     }
 
     if (hasActiveLivePlan) {
-      actions.push({
+      actions.unshift({
         id: "continue-live",
         icon: "⏱️",
         title: t.homeLiveCooking,
         description: t.homeLiveCookingSub,
+        emphasized: true,
         onClick: () => router.push(buildLiveUrl({ lang })),
       });
     }
@@ -406,8 +452,6 @@ export function HomeScreen({
     router,
     savedMenusCount,
     savedPlansLabel,
-    t.homeGuidedCooking,
-    t.homeGuidedCookingSub,
     t.homeLiveCooking,
     t.homeLiveCookingSub,
     t.homeParrillada,
@@ -470,28 +514,37 @@ export function HomeScreen({
       </FadeIn>
 
       <FadeIn delay={40}>
+        <HomeHowItWorksStrip t={t} />
+      </FadeIn>
+
+      <FadeIn delay={70}>
         <HomeQuickActions title={t.homeActionsTitle} actions={quickActions} />
       </FadeIn>
 
       {/* ── Popular cuts ───────────────────────────────────────────────────── */}
-      <FadeIn delay={80}>
+      <FadeIn delay={100}>
         <PopularCuts
           cuts={popularCuts}
           title={t.homePopularCutsTitle}
+          subtitle={t.homePopularCutsSub}
           onSelect={(cut, e) => fireRipple(e.clientX, e.clientY, () => openPopularCut(cut))}
         />
       </FadeIn>
 
-      <FadeIn delay={110}>
+      <FadeIn delay={130}>
+        <HomeRecipePositioning t={t} />
+      </FadeIn>
+
+      <FadeIn delay={160}>
         <HomeValueCards t={t} />
       </FadeIn>
 
-      <FadeIn delay={140}>
+      <FadeIn delay={190}>
         <HomeTrustStrip t={t} />
       </FadeIn>
 
       {/* ── Settings strip ─────────────────────────────────────────────────── */}
-      <FadeIn delay={170}>
+      <FadeIn delay={220}>
         <HomeSettingsStrip t={t} lang={lang} onLangChange={onLangChange} />
       </FadeIn>
     </div>

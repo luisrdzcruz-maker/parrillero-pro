@@ -126,6 +126,39 @@ type SavedMenuActionMenu = {
 const LIVE_DONENESS_VALUES: Doneness[] = ["rare", "medium_rare", "medium", "medium_well", "well_done", "safe"];
 const LANG_STORAGE_KEY = "parrillero_lang";
 
+const PLANNING_DEFAULTS: Record<
+  Lang,
+  {
+    menuMeats: string;
+    sides: string;
+    planProduct: string;
+    parrilladaProducts: string;
+    parrilladaSides: string;
+  }
+> = {
+  es: {
+    menuMeats: "chuletón, secreto ibérico",
+    sides: "patatas, ensalada, chimichurri",
+    planProduct: "chuletón",
+    parrilladaProducts: "costillas, chuletón, secreto ibérico, maíz",
+    parrilladaSides: "patatas, ensalada, chimichurri",
+  },
+  en: {
+    menuMeats: "ribeye, pork secreto",
+    sides: "potatoes, salad, chimichurri",
+    planProduct: "ribeye",
+    parrilladaProducts: "ribs, ribeye, pork secreto, corn",
+    parrilladaSides: "potatoes, salad, chimichurri",
+  },
+  fi: {
+    menuMeats: "ribeye, porsaan secreto",
+    sides: "perunat, salaatti, chimichurri",
+    planProduct: "ribeye",
+    parrilladaProducts: "ribsit, ribeye, porsaan secreto, maissi",
+    parrilladaSides: "perunat, salaatti, chimichurri",
+  },
+};
+
 type SaveGeneratedMenuResponse =
   | { ok: true; menu: SavedMenuActionMenu }
   | { ok: false; error?: string }
@@ -470,21 +503,21 @@ function HomeContent() {
 
   const [people, setPeople] = useState("4");
   const [eventType, setEventType] = useState("cena con amigos");
-  const [menuMeats, setMenuMeats] = useState("chuletón, secreto ibérico");
-  const [sides, setSides] = useState("patatas, ensalada, chimichurri");
+  const [menuMeats, setMenuMeats] = useState(() => PLANNING_DEFAULTS[lang].menuMeats);
+  const [sides, setSides] = useState(() => PLANNING_DEFAULTS[lang].sides);
   const [budget, setBudget] = useState("200");
   const [difficulty, setDifficulty] = useState("medio");
   const [planMode, setPlanMode] = useState<PlanMode>("rapido");
   const [guardadosTab, setGuardadosTab] = useState<"plans" | "cooks">("plans");
-  const [planProduct, setPlanProduct] = useState("chuletón");
+  const [planProduct, setPlanProduct] = useState(() => PLANNING_DEFAULTS[lang].planProduct);
   const [planGenerated, setPlanGenerated] = useState(false);
 
   const [parrilladaPeople, setParrilladaPeople] = useState("6");
   const [serveTime, setServeTime] = useState("18:00");
   const [parrilladaProducts, setParrilladaProducts] = useState(
-    "costillas, chuletón, secreto ibérico, maíz",
+    () => PLANNING_DEFAULTS[lang].parrilladaProducts,
   );
-  const [parrilladaSides, setParrilladaSides] = useState("patatas, ensalada, chimichurri");
+  const [parrilladaSides, setParrilladaSides] = useState(() => PLANNING_DEFAULTS[lang].parrilladaSides);
 
   const [blocks, setBlocks] = useState<Blocks>({});
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
@@ -1690,6 +1723,8 @@ ERROR
   }
 
   function handleLanguageChange(nextLang: Lang) {
+    const currentPlanningDefaults = PLANNING_DEFAULTS[lang];
+    const nextPlanningDefaults = PLANNING_DEFAULTS[nextLang];
     setLang(nextLang);
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -1700,6 +1735,15 @@ ERROR
     setBlocks({});
     setCheckedItems({});
     setPlanGenerated(false);
+    setMenuMeats((value) => (value === currentPlanningDefaults.menuMeats ? nextPlanningDefaults.menuMeats : value));
+    setSides((value) => (value === currentPlanningDefaults.sides ? nextPlanningDefaults.sides : value));
+    setPlanProduct((value) => (value === currentPlanningDefaults.planProduct ? nextPlanningDefaults.planProduct : value));
+    setParrilladaProducts((value) =>
+      value === currentPlanningDefaults.parrilladaProducts ? nextPlanningDefaults.parrilladaProducts : value,
+    );
+    setParrilladaSides((value) =>
+      value === currentPlanningDefaults.parrilladaSides ? nextPlanningDefaults.parrilladaSides : value,
+    );
     resetSaveMenuState();
   }
 
@@ -1806,6 +1850,7 @@ ERROR
         {showCookCompleteProModal && (
           <ProModal
             trigger="cook_complete"
+            t={t}
             onUpgrade={() => setShowCookCompleteProModal(false)}
             onDismiss={() => setShowCookCompleteProModal(false)}
           />
@@ -1842,6 +1887,7 @@ ERROR
     {showProModal && (
       <ProModal
         trigger={showProModal}
+        t={t}
         onUpgrade={() => setShowProModal(false)}
         onDismiss={() => setShowProModal(false)}
       />
@@ -1871,6 +1917,7 @@ ERROR
             blocks={blocks}
             difficulty={difficulty}
             equipment={equipment}
+            lang={lang}
             loading={loading}
             menuMeats={menuMeats}
             onCopy={copyCurrentPlan}
@@ -1902,6 +1949,7 @@ ERROR
             setServeTime={setServeTime}
             setSides={setSides}
             sides={sides}
+            t={t}
           />
         )}
 

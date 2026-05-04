@@ -1,31 +1,34 @@
 "use client";
 
 import { activatePro } from "@/lib/proStatus";
+import type { AppText } from "@/lib/i18n/texts";
 
 // ─── Benefit rows ─────────────────────────────────────────────────────────────
 
-const BENEFITS = [
-  {
-    icon: "⏱️",
-    title: "Timeline inteligente",
-    sub: "Ajuste automático de tiempos en tiempo real",
-  },
-  {
-    icon: "🔔",
-    title: "Alertas de paso",
-    sub: "Notificaciones cuando es momento de actuar",
-  },
-  {
-    icon: "🗂️",
-    title: "Planificador multi-pieza",
-    sub: "Coordina varios cortes en una sola parrillada",
-  },
-  {
-    icon: "📊",
-    title: "Historial completo",
-    sub: "Analiza tus cocciones y mejora cada vez",
-  },
-];
+function getBenefits(t: AppText) {
+  return [
+    {
+      icon: "⏱️",
+      title: t.proBenefitTimelineTitle,
+      sub: t.proBenefitTimelineSub,
+    },
+    {
+      icon: "🔔",
+      title: t.proBenefitAlertsTitle,
+      sub: t.proBenefitAlertsSub,
+    },
+    {
+      icon: "🗂️",
+      title: t.proBenefitPlannerTitle,
+      sub: t.proBenefitPlannerSub,
+    },
+    {
+      icon: "📊",
+      title: t.proBenefitHistoryTitle,
+      sub: t.proBenefitHistorySub,
+    },
+  ];
+}
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -33,22 +36,25 @@ export type ProTrigger = "cook_complete" | "planning" | "alerts";
 
 type Props = {
   trigger?: ProTrigger;
+  t: AppText;
   onUpgrade: () => void;
   onDismiss: () => void;
 };
 
 // ─── Trigger-specific copy ────────────────────────────────────────────────────
 
-function getSubtitle(trigger?: ProTrigger): string {
-  if (trigger === "cook_complete") return "Has completado tu primera cocción. Llévalo al siguiente nivel.";
-  if (trigger === "planning") return "La planificación avanzada es una función Pro.";
-  if (trigger === "alerts") return "Las alertas en tiempo real son una función Pro.";
-  return "Desbloquea las herramientas que los mejores parrilleros usan.";
+function getSubtitle(t: AppText, trigger?: ProTrigger): string {
+  if (trigger === "cook_complete") return t.proSubtitleCookComplete;
+  if (trigger === "planning") return t.proSubtitlePlanning;
+  if (trigger === "alerts") return t.proSubtitleAlerts;
+  return t.proSubtitleDefault;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function ProModal({ trigger, onUpgrade, onDismiss }: Props) {
+export function ProModal({ trigger, t, onUpgrade, onDismiss }: Props) {
+  const benefits = getBenefits(t);
+
   function handleUpgrade() {
     activatePro();
     onUpgrade();
@@ -66,7 +72,7 @@ export function ProModal({ trigger, onUpgrade, onDismiss }: Props) {
         type="button"
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onDismiss}
-        aria-label="Cerrar"
+        aria-label={t.proClose}
       />
 
       {/* Card — slides up on mobile, centered on desktop */}
@@ -85,7 +91,7 @@ export function ProModal({ trigger, onUpgrade, onDismiss }: Props) {
           type="button"
           onClick={onDismiss}
           className="absolute right-5 top-5 rounded-full border border-white/10 bg-white/[0.06] p-1.5 text-[10px] font-bold text-white/40 transition hover:text-white/65 active:scale-[0.96]"
-          aria-label="Cerrar"
+          aria-label={t.proClose}
         >
           ✕
         </button>
@@ -104,16 +110,16 @@ export function ProModal({ trigger, onUpgrade, onDismiss }: Props) {
             <span className="relative text-[42px]">🔥</span>
           </div>
           <h2 className="text-[22px] font-black leading-tight text-white">
-            Cook like a pro
+            {t.proTitle}
           </h2>
           <p className="mt-2 text-[13px] font-semibold leading-relaxed text-white/50">
-            {getSubtitle(trigger)}
+            {getSubtitle(t, trigger)}
           </p>
         </div>
 
         {/* Benefits */}
         <ul className="mb-7 space-y-3">
-          {BENEFITS.map((b) => (
+          {benefits.map((b) => (
             <li key={b.title} className="flex items-start gap-3">
               {/* Icon chip */}
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10 text-base">
@@ -135,7 +141,7 @@ export function ProModal({ trigger, onUpgrade, onDismiss }: Props) {
           onClick={handleUpgrade}
           className="w-full min-h-[3.25rem] rounded-2xl bg-orange-500 text-[15px] font-black text-black shadow-[0_6px_32px_rgba(249,115,22,0.45)] transition active:scale-[0.97] active:bg-orange-600 hover:bg-orange-400"
         >
-          Empezar Pro — Gratis
+          {t.proUpgradeCta}
         </button>
 
         <button
@@ -143,7 +149,7 @@ export function ProModal({ trigger, onUpgrade, onDismiss }: Props) {
           onClick={onDismiss}
           className="mt-3 w-full py-2.5 text-[13px] font-semibold text-white/35 transition hover:text-white/55 active:scale-[0.98]"
         >
-          Quizás más tarde
+          {t.proDismissCta}
         </button>
       </div>
     </div>
