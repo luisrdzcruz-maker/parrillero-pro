@@ -448,6 +448,7 @@ export default function ResultGrid({
           <div
             key={item.key}
             className={item.variant === "primary" ? "col-span-full" : undefined}
+            id={item.variant === "primary" ? "result-steps" : undefined}
           >
             <ResultCard
               title={item.title}

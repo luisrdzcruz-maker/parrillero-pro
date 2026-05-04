@@ -158,6 +158,32 @@ function compactTemperatureMetric(value?: string, doneness?: string, lang: Resul
   return "";
 }
 
+function extractTemperaturePair(value?: string) {
+  const clean = normalizeMetricText(value);
+  const temperatures = Array.from(clean.matchAll(/(\d{2,3})\s*(?:\u00b0)?\s*c\b/gi), (match) => ({
+    label: `${match[1]}\u00b0C`,
+    index: match.index ?? 0,
+  }));
+
+  if (temperatures.length === 0) return { pull: "", target: "" };
+
+  const pullTemperature =
+    temperatures.find(({ index }) =>
+      /\b(salida|retirar|sacar|pull|remove)\b/i.test(clean.slice(Math.max(0, index - 36), index + 36)),
+    ) ?? temperatures[0];
+  const targetTemperature =
+    temperatures.find(({ index }) =>
+      /\b(final|servir|serve|ready|valmis)\b/i.test(
+        clean.slice(Math.max(0, index - 36), index + 56),
+      ),
+    ) ?? temperatures.find((temperature) => temperature.label !== pullTemperature.label);
+
+  return {
+    pull: pullTemperature.label,
+    target: targetTemperature?.label ?? "",
+  };
+}
+
 function compactRestMetric(value?: string) {
   const clean = normalizeMetricText(value);
   if (!clean) return "";
@@ -188,14 +214,15 @@ export function buildResultHeroMetrics({
 }) {
   const copy = texts[lang];
   const restMetric = compactRestMetric(summary?.rest);
-  const target = compactTemperatureMetric(summary?.temperature, summary?.doneness || doneness, lang);
+  const temperaturePair = extractTemperaturePair(summary?.temperature);
+  const fallbackTarget = compactTemperatureMetric(summary?.temperature, summary?.doneness || doneness, lang);
   const timeMetric = compactTimeMetric(summary?.time, restMetric) || compactTimeMetric(timeFallback, restMetric);
   const usedMetricValues = new Set<string>();
 
   const rawMetrics: ResultHeroRawMetricItem[] = [
     { label: copy.resultHeroMetricTime, value: timeMetric, tone: "orange" },
-    { label: copy.resultHeroMetricTarget, value: target, tone: "red" },
-    { label: copy.resultHeroMetricRest, value: restMetric, tone: "sky" },
+    { label: copy.resultHeroMetricTargetTemp, value: temperaturePair.target || fallbackTarget, tone: "red" },
+    { label: copy.resultHeroMetricPullTemp, value: temperaturePair.pull, tone: "sky" },
   ];
 
   return rawMetrics.filter((item): item is ResultHeroMetricItem => {

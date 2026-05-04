@@ -1,8 +1,7 @@
 "use client";
 
-import ResultActions from "@/components/ResultActions";
 import ResultHeader from "@/components/ResultHeader";
-import { Panel } from "@/components/ui";
+import { Button, Panel } from "@/components/ui";
 import { buildResultHeroMetrics, type MetricTone } from "@/lib/results/resultMetrics";
 import { getResultStepDurationTotal, type ResultSummary } from "@/lib/results/resultSummary";
 import { texts } from "@/lib/i18n/texts";
@@ -19,6 +18,25 @@ function getDirectStepDurationTotal(blocks?: Record<string, string>) {
   return totalMinutes > 0 ? `${totalMinutes} min` : "";
 }
 
+function getCompactMethod(value = "") {
+  const firstSentence = value.split(/[.;]/).map((part) => part.trim()).find(Boolean) ?? "";
+  return firstSentence.length > 42 ? `${firstSentence.slice(0, 39).trim()}...` : firstSentence;
+}
+
+function getFireSetupItems(value: string | undefined, lang: "es" | "en" | "fi") {
+  const copy = texts[lang];
+  const normalized = value?.toLowerCase() ?? "";
+  const items: string[] = [];
+
+  if (/\b(direct|directo|directa|suora)\b/.test(normalized)) items.push(copy.resultHeroFireDirect);
+  if (/\b(indirect|indirecto|indirecta|epasuora)\b/.test(normalized)) items.push(copy.resultHeroFireIndirect);
+  if (/\b(low|bajo|baja|matala)\b/.test(normalized)) items.push(copy.resultHeroFireLow);
+  if (/\b(medium|medio|media|keskitaso)\b/.test(normalized)) items.push(copy.resultHeroFireMedium);
+  if (/\b(high|alto|alta|korkea)\b/.test(normalized)) items.push(copy.resultHeroFireHigh);
+
+  return Array.from(new Set(items));
+}
+
 export default function ResultHero({
   actions,
   animal,
@@ -27,10 +45,8 @@ export default function ResultHero({
   doneness,
   resultBlocks,
   resultKeys,
-  hasResult,
   lang = "es",
   onEdit,
-  saveMenuStatus,
   summary,
   t,
 }: {
@@ -62,22 +78,25 @@ export default function ResultHero({
   const copy = texts[lang];
   const eyebrow = animal || context || copy.resultHeroEyebrowFallback;
   const title = cut || copy.resultHeroTitleFallback;
-  const method = summary?.method || "";
+  const method = getCompactMethod(summary?.method);
+  const equipmentLabel = context?.split("·").slice(1).join(" / ").trim() ?? "";
   const timeFallback =
     resultBlocks && resultKeys
       ? getResultStepDurationTotal(resultBlocks, resultKeys) || getDirectStepDurationTotal(resultBlocks)
       : getDirectStepDurationTotal(resultBlocks);
   const heroMetrics = buildResultHeroMetrics({ doneness, lang, summary, timeFallback });
-  const liveFeatures = [
-    copy.resultHeroLiveFeatureTimers,
-    copy.resultHeroLiveFeatureCheckpoints,
-    copy.resultHeroLiveFeatureSteps,
-  ];
+  const fireSetupItems = getFireSetupItems(summary?.method, lang);
+  const canViewSteps = Boolean(resultBlocks?.PASOS || resultBlocks?.STEPS);
 
   function getMetricClass(tone: MetricTone) {
     if (tone === "red") return "border-red-300/25 bg-red-500/[0.08] text-red-50 ring-red-200/[0.04]";
     if (tone === "sky") return "border-sky-300/20 bg-sky-500/[0.07] text-sky-50 ring-sky-200/[0.04]";
     return "border-orange-300/25 bg-orange-500/[0.09] text-orange-50 ring-orange-200/[0.05]";
+  }
+
+  function handleViewSteps() {
+    if (typeof document === "undefined") return;
+    document.getElementById("result-steps")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   return (
@@ -86,32 +105,32 @@ export default function ResultHero({
       <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-orange-500/10 blur-3xl" />
       <div className="pointer-events-none absolute -left-8 bottom-0 h-28 w-28 rounded-full bg-orange-500/[0.06] blur-2xl" />
 
-      <div className="relative z-10 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-start">
-        <div className="min-w-0 space-y-4">
+      <div className="relative z-10 grid gap-4">
+        <div className="min-w-0 space-y-3">
           <ResultHeader
+            doneness={summary?.doneness || doneness}
+            equipment={equipmentLabel}
             eyebrow={eyebrow}
             method={method}
             onEdit={onEdit}
-            safety={summary?.safety}
             title={title}
             t={{
               edit: copy.resultHeroEdit,
               fallbackSummary: copy.resultHeroFallbackSummary,
-              safety: copy.resultHeroSafety,
             }}
           />
 
           {heroMetrics.length > 0 && (
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid grid-cols-3 gap-2">
               {heroMetrics.map((item) => (
                 <div
                   key={item.label}
                   className={`rounded-2xl border p-3 shadow-lg shadow-black/10 ring-1 ring-inset ${getMetricClass(item.tone)}`}
                 >
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-current/70">
+                  <p className="text-[9px] font-black uppercase tracking-[0.18em] text-current/70 sm:text-[10px]">
                     {item.label}
                   </p>
-                  <p className="mt-1 line-clamp-2 text-sm font-black leading-snug text-white sm:min-h-9">
+                  <p className="mt-1 text-2xl font-black leading-none tracking-[-0.04em] text-white sm:text-3xl">
                     {item.value}
                   </p>
                 </div>
@@ -120,42 +139,56 @@ export default function ResultHero({
           )}
         </div>
 
-        <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/55 p-3 shadow-2xl shadow-black/20 ring-1 ring-inset ring-white/[0.04] sm:p-4">
-          {actions.onStartCooking && (
-            <div className="mb-3">
-              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300/90">
-                {copy.resultHeroLiveTitle}
+        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] sm:items-end">
+          {fireSetupItems.length > 0 && (
+            <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-3 ring-1 ring-inset ring-white/[0.03]">
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
+                {copy.resultHeroFireSetup}
               </p>
-              <p className="mt-1 text-sm font-medium leading-6 text-slate-300">
-                {copy.resultHeroLiveSupport}
-              </p>
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {liveFeatures.map((feature) => (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {fireSetupItems.map((item) => (
                   <span
-                    key={feature}
-                    className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-bold text-slate-200"
+                    key={item}
+                    className="rounded-full border border-orange-300/20 bg-orange-500/[0.08] px-3 py-1.5 text-xs font-black text-orange-100"
                   >
-                    {feature}
+                    {item}
                   </span>
                 ))}
               </div>
             </div>
           )}
-          <ResultActions
-            actions={actions}
-            compact
-            hasResult={hasResult}
-            lang={lang}
-            secondary
-            status={saveMenuStatus}
-            t={{
-              copy: t.copy,
-              save: t.save,
-              saving: t.saving,
-              share: t.share,
-              startCooking: copy.resultActionsLiveCta || t.startCooking,
-            }}
-          />
+
+          <div className="grid gap-2">
+            {actions.onStartCooking && (
+              <button
+                type="button"
+                onClick={actions.onStartCooking}
+                className="group relative flex min-h-[58px] w-full items-center justify-between overflow-hidden rounded-[1.5rem] border border-orange-300/45 bg-orange-500 px-5 py-4 text-left text-slate-950 shadow-2xl shadow-orange-950/25 ring-1 ring-inset ring-white/20 transition-all duration-200 hover:bg-orange-400 active:scale-[0.99]"
+              >
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-white/20 to-transparent opacity-80"
+                />
+                <span className="relative text-base font-black leading-tight">
+                  {copy.resultActionsLiveCta || t.startCooking}
+                </span>
+                <span className="relative text-xl font-black" aria-hidden="true">
+                  -&gt;
+                </span>
+              </button>
+            )}
+
+            {canViewSteps && (
+              <Button
+                className="min-h-[46px] rounded-[1.25rem] text-sm font-black"
+                fullWidth
+                onClick={handleViewSteps}
+                variant="secondary"
+              >
+                {copy.resultHeroViewSteps}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </Panel>
