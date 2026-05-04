@@ -43,11 +43,9 @@ function FadeIn({ children, delay = 0 }: { children: ReactNode; delay?: number }
 function HeroSection({
   t,
   onStartCooking,
-  onPlanBbq,
 }: {
   t: AppText;
   onStartCooking: (e: MouseEvent<HTMLButtonElement>) => void;
-  onPlanBbq: () => void;
 }) {
   return (
     <section className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#090909] px-4 py-5 shadow-[0_20px_56px_rgba(0,0,0,0.55)] sm:rounded-[2rem] sm:px-7 sm:py-8">
@@ -80,20 +78,13 @@ function HeroSection({
           <p className="mt-1 text-sm leading-relaxed text-slate-300">{t.homeHowItWorksFlow}</p>
         </div>
 
-        <div className="mt-5 flex flex-col gap-2 sm:mt-6 sm:flex-row sm:gap-2.5">
+        <div className="mt-5 flex flex-col gap-2 sm:mt-6 sm:max-w-sm">
           <button
             type="button"
             onClick={onStartCooking}
             className="min-h-[50px] flex-1 touch-manipulation rounded-2xl bg-orange-500 px-5 py-3 text-sm font-black text-black shadow-[0_10px_36px_rgba(234,88,12,0.42)] transition-all duration-200 hover:bg-orange-400 active:scale-[0.98] sm:min-h-[56px] sm:px-6 sm:py-4 sm:text-base"
           >
             {t.homePrimaryCta} <span aria-hidden className="ml-1.5">→</span>
-          </button>
-          <button
-            type="button"
-            onClick={onPlanBbq}
-            className="min-h-[50px] touch-manipulation rounded-2xl border border-white/12 bg-white/[0.05] px-4 py-3 text-sm font-black text-white transition-all duration-200 hover:border-orange-300/35 hover:bg-white/[0.08] active:scale-[0.98] sm:min-h-[56px] sm:py-4"
-          >
-            {t.homeSecondaryCta}
           </button>
         </div>
       </div>
@@ -169,7 +160,7 @@ function HomeQuickActions({
             onClick={action.onClick}
             className={`w-full touch-manipulation rounded-[1.1rem] border px-3 py-2.5 text-left transition-all duration-200 active:scale-[0.98] sm:rounded-2xl sm:px-3.5 sm:py-3 ${
               action.emphasized
-                ? "border-orange-300/30 bg-orange-500/8 hover:border-orange-300/45 hover:bg-orange-500/12"
+                ? "border-orange-300/28 bg-orange-500/8 hover:border-orange-300/45 hover:bg-orange-500/12"
                 : "border-white/10 bg-black/25 hover:border-white/20 hover:bg-white/[0.05]"
             }`}
           >
@@ -490,7 +481,6 @@ export function HomeScreen({
           onStartCooking={(e) =>
             fireRipple(e.clientX, e.clientY, () => (onPrimaryCtaClick ? onPrimaryCtaClick() : onModeChange("coccion")))
           }
-          onPlanBbq={() => onModeChange("plan")}
         />
       </FadeIn>
 
