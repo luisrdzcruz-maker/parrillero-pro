@@ -24,7 +24,7 @@ type NavIconConfig = {
 const navIcons = {
   home: { src: brandIconAssets.navHome, fallback: "🏠" },
   cooking: { src: brandIconAssets.navCooking, fallback: "🥩" },
-  menu: { fallback: "🧭" },
+  menu: { src: brandIconAssets.navMenu, fallback: "🧭" },
   live: { src: brandIconAssets.navLive, fallback: "⏱️" },
   saved: { src: brandIconAssets.navSaved, fallback: "⭐" },
 } satisfies Record<string, NavIconConfig>;

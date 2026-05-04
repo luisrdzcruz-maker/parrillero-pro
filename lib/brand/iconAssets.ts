@@ -2,6 +2,7 @@ export const brandIconAssets = {
   appFlameProbe: "/brand/icons/flame_and_probe_emblem_logo.png",
   navHome: "/brand/icons/glowing_home_icon_in_dark_theme.webp",
   navCooking: "/brand/icons/grill_icon_with_glowing_accents.webp",
+  navMenu: "/brand/icons/nav-menu-plan.webp",
   navLive: "/brand/icons/thermometer_and_pot_sensor_icon.webp",
   navSaved: "/brand/icons/glowing_bookmark_icon_on_dark_tile.webp",
   categoryBeef: "/brand/icons/glowing_bull_emblem_on_black_background.png",
