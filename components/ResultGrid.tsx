@@ -121,7 +121,13 @@ function SetupVisualAnchor({
 }
 
 export function buildResultSummary(blocks: Blocks, keys: string[], lang: ResultLang = "es"): ResultSummary {
-  return buildResultSummaryHelper(blocks, keys, lang);
+  const summary = buildResultSummaryHelper(blocks, keys, lang);
+  const stepDurationTotal = getStepDurationTotal(blocks, keys);
+
+  return {
+    ...summary,
+    time: stepDurationTotal || summary.time,
+  };
 }
 
 function ShoppingListCard({
@@ -260,6 +266,18 @@ function findBlockKey(keys: string[], candidates: string[]) {
   return keys.find((key) => candidates.includes(key.toUpperCase()));
 }
 
+function getStepDurationTotal(blocks: Blocks, keys: string[]) {
+  const stepsKey = findBlockKey(keys, ["PASOS", "STEPS"]);
+  if (!stepsKey) return "";
+
+  const totalMinutes = Array.from(blocks[stepsKey].matchAll(/(\d{1,3})\s*min\b/gi)).reduce(
+    (total, match) => total + Number(match[1] ?? 0),
+    0,
+  );
+
+  return totalMinutes > 0 ? `${totalMinutes} min` : "";
+}
+
 function getLocalizedBlockTitle(key: string, lang: "es" | "en" | "fi") {
   const upperKey = key.toUpperCase();
   if (upperKey === "SETUP" || upperKey === "CONFIGURACION" || upperKey === "CONFIGURACIÓN") {
@@ -288,6 +306,9 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en"
   const errorKey = findBlockKey(keys, ["ERROR", "ERROR CLAVE", "KEY ERROR"]);
   const usedKeys = new Set([setupKey, timeKey, tempKey, stepsKey, errorKey].filter(Boolean));
   const coreItems: ResultItem[] = [];
+  const timelineItems: ResultItem[] = [];
+  const grillManagerItems: ResultItem[] = [];
+  const shoppingItems: ResultItem[] = [];
   const secondaryItems: ResultItem[] = [];
 
   if (errorKey) {
@@ -325,7 +346,7 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en"
     if (key === "TIMELINE") {
       const timelineTitle =
         lang === "es" ? "⏱️ Timeline Parrillada" : lang === "fi" ? "⏱️ BBQ-aikajana" : "⏱️ BBQ Timeline";
-      secondaryItems.push({
+      timelineItems.push({
         key,
         title: timelineTitle,
         content: blocks[key],
@@ -337,7 +358,7 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en"
     if (key === "GRILL_MANAGER") {
       const grillManagerTitle =
         lang === "es" ? "🔥 Grill Manager Pro" : lang === "fi" ? "🔥 Grill Manager Pro" : "🔥 Grill Manager Pro";
-      secondaryItems.push({
+      grillManagerItems.push({
         key,
         title: grillManagerTitle,
         content: blocks[key],
@@ -347,7 +368,7 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en"
     }
 
     if (key === "COMPRA" || key === "SHOPPING") {
-      secondaryItems.push({
+      shoppingItems.push({
         key,
         title: getLocalizedBlockTitle(key, lang),
         content: blocks[key],
@@ -364,7 +385,7 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en"
     });
   });
 
-  return [...coreItems, ...secondaryItems];
+  return [...coreItems, ...timelineItems, ...grillManagerItems, ...shoppingItems, ...secondaryItems];
 }
 
 export default function ResultGrid({

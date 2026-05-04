@@ -1286,6 +1286,8 @@ export function ResultCards({
         context={context}
         cut={cut}
         doneness={doneness}
+        resultBlocks={blocks}
+        resultKeys={keys}
         hasResult={hasResult}
         lang={lang}
         onEdit={onEdit}
