@@ -6,7 +6,7 @@ import type { HTMLAttributes } from "react";
 const BRAND_LOGO_SRC = "/brand/parrillero-logo-original.png";
 
 type BrandLogoVariant = "icon" | "wordmark" | "compact";
-type BrandLogoSize = "sm" | "md" | "lg";
+type BrandLogoSize = "sm" | "eyebrow" | "md" | "lg";
 
 type BrandLogoProps = HTMLAttributes<HTMLSpanElement> & {
   variant?: BrandLogoVariant;
@@ -16,12 +16,14 @@ type BrandLogoProps = HTMLAttributes<HTMLSpanElement> & {
 
 const markSizes: Record<BrandLogoSize, string> = {
   sm: "h-5 w-5",
+  eyebrow: "h-6 w-6",
   md: "h-7 w-7",
   lg: "h-10 w-10",
 };
 
 const textSizes: Record<BrandLogoSize, string> = {
   sm: "text-[11px]",
+  eyebrow: "text-[11px]",
   md: "text-sm",
   lg: "text-base",
 };
@@ -39,7 +41,7 @@ export function BrandLogo({
         src={BRAND_LOGO_SRC}
         alt={alt}
         fill
-        sizes={size === "lg" ? "40px" : size === "md" ? "28px" : "20px"}
+        sizes={size === "lg" ? "40px" : size === "md" ? "28px" : size === "eyebrow" ? "24px" : "20px"}
         className="object-contain"
       />
     </span>

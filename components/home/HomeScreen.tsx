@@ -52,8 +52,8 @@ function HeroSection({
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-300/60 to-transparent" />
 
       <div className="relative z-10 max-w-xl">
-        <div className="inline-flex items-center gap-2 rounded-full border border-orange-300/20 bg-orange-500/10 px-3 py-1.5">
-          <BrandLogo variant="icon" size="sm" alt="" aria-hidden="true" />
+        <div className="inline-flex items-center gap-2 rounded-full border border-orange-300/20 bg-orange-500/10 px-3 py-[5px]">
+          <BrandLogo variant="icon" size="eyebrow" alt="" aria-hidden="true" />
           <span className="text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">
             {t.homeEyebrow}
           </span>
