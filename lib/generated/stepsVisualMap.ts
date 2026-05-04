@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE. DO NOT EDIT MANUALLY.
-// Source: data\assets\steps-prompts.json
+// Source: data/assets/steps-prompts.json
 
 export const stepsVisualMap: Record<string, string> = {
   "step_preheat_grill": "/steps/step_preheat_grill.webp",
