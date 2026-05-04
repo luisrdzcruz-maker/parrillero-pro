@@ -1,10 +1,15 @@
 export function validateMenuBlocks(blocks: Record<string, string>) {
-  const required = ["MENU", "CANTIDADES", "TIMING", "ORDEN", "COMPRA"];
+  const requiredGroups = [
+    ["MENU"],
+    ["CANTIDADES", "QUANTITIES", "quantities"],
+    ["TIMING", "TIMELINE"],
+    ["ORDEN", "ORDER", "order"],
+    ["COMPRA", "SHOPPING", "shopping"],
+  ];
 
-  for (const key of required) {
-    if (!blocks[key] || blocks[key].length < 5) {
-      return false;
-    }
+  for (const group of requiredGroups) {
+    const hasGroup = group.some((key) => typeof blocks[key] === "string" && blocks[key].trim().length >= 5);
+    if (!hasGroup) return false;
   }
 
   return true;

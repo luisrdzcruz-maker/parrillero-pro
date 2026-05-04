@@ -15,6 +15,7 @@ import {
   type CookingStep,
 } from "../lib/cookingCatalog";
 import { generateCookingPlan, generateCookingSteps, getCutById } from "../lib/cookingEngine";
+import { normalizeCookingOutput } from "../lib/normalization/normalizeCookingOutput";
 
 const LANGUAGE = "es" as const;
 const WEIGHT_KG = "1";
@@ -77,13 +78,15 @@ function buildInput(
 function checkPlanStructure(plan: CookingPlan | null): string[] {
   const r: string[] = [];
   if (plan == null) return ["plan is null"];
+  const normalized = normalizeCookingOutput(plan) as CookingPlan;
+  // Guardrail: after normalization, read canonical keys only.
   if (!String(plan.SETUP ?? "").trim()) r.push("empty SETUP");
-  const t = plan.TIEMPOS ?? plan.TIMES;
-  if (!String(t ?? "").trim()) r.push("empty TIEMPOS/TIMES");
-  const temp = plan.TEMPERATURA ?? plan.TEMPERATURE;
-  if (!String(temp ?? "").trim()) r.push("empty TEMPERATURA/TEMPERATURE");
-  const p = plan.PASOS ?? plan.STEPS;
-  if (!String(p ?? "").trim()) r.push("empty PASOS/STEPS");
+  const t = normalized.times ?? plan.TIMES;
+  if (!String(t ?? "").trim()) r.push("empty times/TIMES");
+  const temp = normalized.temperature ?? plan.TEMPERATURE;
+  if (!String(temp ?? "").trim()) r.push("empty temperature/TEMPERATURE");
+  const p = normalized.steps ?? plan.STEPS;
+  if (!String(p ?? "").trim()) r.push("empty steps/STEPS");
   return r;
 }
 

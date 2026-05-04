@@ -1,12 +1,12 @@
 import type { AnimalId } from "@/lib/cookingCatalog";
 
-export type Animal = "Vacuno" | "Cerdo" | "Pollo" | "Pescado" | "Verduras";
+export type AnimalLabel = "Vacuno" | "Cerdo" | "Pollo" | "Pescado" | "Verduras";
 
 export type AnimalMedia = {
   image: string;
 };
 
-export const animalIdsByLabel: Record<Animal, AnimalId> = {
+export const animalIdsByLabel: Record<AnimalLabel, AnimalId> = {
   Vacuno: "beef",
   Cerdo: "pork",
   Pollo: "chicken",
@@ -14,9 +14,9 @@ export const animalIdsByLabel: Record<Animal, AnimalId> = {
   Verduras: "vegetables",
 };
 
-export const animalOptions: Animal[] = ["Vacuno", "Cerdo", "Pollo", "Pescado", "Verduras"];
+export const animalOptions: AnimalLabel[] = ["Vacuno", "Cerdo", "Pollo", "Pescado", "Verduras"];
 
-export const animalMedia: Record<Animal, AnimalMedia> = {
+export const animalMedia: Record<AnimalLabel, AnimalMedia> = {
   Vacuno: { image: "/animals/vacuno.jpg" },
   Cerdo: { image: "/animals/cerdo.jpg" },
   Pollo: { image: "/animals/pollo.jpg" },

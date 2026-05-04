@@ -1,0 +1,517 @@
+---
+description: Parrillero Pro project rules, agent boundaries, visual system standards, and implementation constraints.
+alwaysApply: true
+---
+
+# Parrillero Pro — Cursor Project Rules
+
+Parrillero Pro is not a generic recipe app.
+It is a premium mobile-first cooking decision engine and real-time grilling assistant.
+
+The product must feel:
+- premium
+- fast
+- trustworthy
+- practical
+- easy to understand
+- focused on cooking execution
+
+Default priorities:
+1. Help the user decide.
+2. Help the user understand.
+3. Help the user execute.
+4. Remove anything that only decorates.
+
+---
+
+## Non-Negotiable Rules
+
+Always:
+- Return full files when editing code.
+- Do not modify unrelated files.
+- Preserve mobile-first layout.
+- Keep the dark premium UI direction.
+- Keep cooking logic deterministic first.
+- Use AI only as an enhancement, not as the core cooking engine.
+- Prefer small, incremental, verifiable changes.
+- Keep existing flows working unless the task explicitly asks to change them.
+- Separate UI, layout, data, and engine logic.
+- Read relevant local Next.js docs in `node_modules/next/dist/docs/` before using APIs that may have changed.
+
+Never:
+- Delete files without explicit permission.
+- Touch `.env` or secrets.
+- Push directly to `main`.
+- Refactor the whole app when the task asks for a focused change.
+- Add decorative visuals that do not improve decision, confidence, learning, or execution.
+- Hardcode new cut-specific heuristics when a data-driven profile/config can solve it.
+
+---
+
+## Approved Visual Direction — Hybrid Premium
+
+Approved base direction:
+- Concept D — Hybrid Premium Winner
+
+Supporting influences:
+- Concept A: clean premium minimalism, low density, strong hierarchy.
+- Concept B: guided visual learning, only where it improves confidence.
+- Concept C: Cut Map as optional discovery/learning mode, never mandatory for the core cooking flow.
+
+Implementation must be modular, not screen-hardcoded.
+
+Use:
+- design tokens
+- reusable components
+- controlled component variants
+- screen-specific image rules
+- shared icon language
+- layout components separated from cooking logic
+- data-driven profiles/configuration where possible
+
+Core visual rule:
+
+> Every visual must help the user decide, understand, or execute. If it only decorates, remove it.
+
+---
+
+## Screen-Specific Visual Rules
+
+### Home
+
+Goal:
+- Conversion-focused entry point.
+- Fast start, low cognitive load.
+
+Rules:
+- No large hero photo at the top.
+- Use icons, clean cards, and one strong CTA.
+- Keep top area uncluttered.
+- Avoid repeating brand/header elements unnecessarily.
+- Visuals should guide the user to start a cook, plan a parrillada, or continue a saved flow.
+
+Preferred components:
+- Home action card
+- Protein/category cards
+- Quick access cards
+- Clean bottom navigation
+
+Avoid:
+- Large decorative food image before the first CTA.
+- Dense educational content on first screen.
+- Multiple competing CTAs.
+
+---
+
+### Cut Selection
+
+Goal:
+- Low-friction selection.
+- Fast scanning.
+- Easy comparison.
+
+Rules:
+- Icons and tags by default.
+- Thumbnails only for featured, premium, unfamiliar, or visually important cuts.
+- Keep list/grid scannable.
+- Use clear categories and filters.
+- Avoid heavy image density.
+
+Preferred components:
+- CutCard
+- FeaturedCutCard
+- CategoryChips
+- DifficultyTag
+- MethodTag
+- Optional thumbnail slot
+
+Avoid:
+- Photo thumbnail on every single cut by default.
+- Long descriptions inside dense lists.
+- Hardcoded visual variants per cut.
+
+---
+
+### Cut Map
+
+Goal:
+- Optional discovery and education.
+- Help users understand anatomy and cut relationships.
+
+Rules:
+- Cut Map is optional, not required to get a result.
+- Use vector/zone-based visuals.
+- Do not use heavy photographic backgrounds.
+- Use short labels, info dots, and zone chips.
+- Provide fallback list mode.
+- Validate labels across ES/EN/FI.
+
+Preferred components:
+- AnimalCutMap
+- ZoneHighlight
+- ZoneInfoCard
+- CutMapLegend
+- ShowCutsInZone action
+
+Avoid:
+- Making map navigation mandatory.
+- Complex interactions before the user can generate a plan.
+- Overloading the map with too many labels at once.
+
+---
+
+### Result Screen
+
+Goal:
+- Build confidence before cooking.
+- Make the plan scannable in seconds.
+
+Rules:
+- Result is the best place for one strong setup visual or food image.
+- Place the visual after the premium summary and before the detailed steps when it reinforces confidence.
+- Prioritize summary, timing, temperature, rest, setup, and critical mistakes.
+- Use clear hierarchy: Hero/Summary → Setup Visual → Avoid Mistake/Error → Steps → Timeline/Live Preview.
+
+Preferred order:
+1. ResultHero / Premium summary
+2. Setup visual anchor
+3. Critical mistake / warning card
+4. Steps card
+5. Timeline / Grill Manager / Shopping / optional blocks
+
+Preferred components:
+- ResultHero
+- ResultCard
+- SetupVisualCard
+- AvoidMistakeCard
+- ResultSteps
+- ResultTimeline
+- LiveCookingPreview
+
+Avoid:
+- Repeating the same information in multiple cards.
+- Multiple large images in the result.
+- Decorative imagery that does not clarify setup, doneness, fire zone, or execution.
+
+---
+
+### Live Cooking
+
+Goal:
+- Real-time execution support.
+- Compact, functional, thumb-friendly controls.
+
+Rules:
+- Functional icons only.
+- No decorative images.
+- Prioritize timers, temperature, grill zones, step state, and next action.
+- High contrast and quick recognition.
+- Controls must be mobile-friendly.
+
+Preferred components:
+- LiveCookingHeader
+- TimerPanel
+- TemperatureGauge
+- GrillZoneStrip
+- CurrentActionCard
+- StepChecklist
+- AdjustmentControls
+
+Avoid:
+- Large photos.
+- Educational distractions during active cooking.
+- Dense text while the user is executing.
+
+---
+
+### Errors, Warnings, and Safety
+
+Goal:
+- Make critical guidance obvious and trustworthy.
+
+Rules:
+- Use clear micro-icons.
+- Use severity levels consistently.
+- Critical warnings should stop or redirect the action.
+- Warnings should tell the user what to check.
+- Info should help without blocking.
+- Success should confirm completion.
+
+Recommended severity language:
+- Critical: stops the action.
+- Warning: check before continuing.
+- Info: helpful information.
+- Success: action completed.
+
+Avoid:
+- Decorative warning cards.
+- Ambiguous colors or icons.
+- Hiding food-safety logic inside long text.
+
+---
+
+## Architecture Standards
+
+### UI Architecture
+
+Prefer:
+- components in `/components`
+- reusable UI primitives in `/components/ui`
+- product-specific components grouped by domain
+- tokens and constants in `/lib/design-system` or equivalent
+- simple, readable component APIs
+- controlled variants instead of duplicated components
+
+Avoid:
+- giant components with mixed responsibilities
+- inline one-off styles when a token/component should exist
+- duplicated cards with slightly different markup
+- UI code that directly embeds engine rules
+
+When adding a new visual pattern, ask:
+1. Is this reusable?
+2. Is this a variant of an existing component?
+3. Should this be controlled by tokens/config?
+4. Does it help decide, understand, or execute?
+
+---
+
+### Engine and Data Architecture
+
+Cooking logic should be deterministic first.
+
+Prefer:
+- local rules engine
+- data-driven profiles
+- typed configuration
+- explicit constraints
+- warnings instead of silent assumptions
+- scalable `inputProfile` style models
+
+Avoid:
+- hardcoded logic by `cutId`
+- scattered heuristics inside React components
+- mixing UI language with engine keys
+- making AI required for normal cooking plan generation
+
+When adding new cuts, animals, equipment, or cooking methods:
+- update data/config first
+- update profile mappings second
+- update UI only if needed
+- run QA/snapshot checks when available
+
+---
+
+## Agent Boundaries
+
+### UI_AGENT
+
+Allowed:
+- React components
+- layout
+- styling
+- design system
+- cards
+- icons
+- visual hierarchy
+- responsive/mobile improvements
+
+Not allowed:
+- cooking engine logic
+- scripts
+- data migrations
+- `.env`
+- unrelated refactors
+
+Must follow:
+- Hybrid Premium visual direction
+- mobile-first layout
+- image-density rules by screen
+- reusable components and variants
+
+---
+
+### ENGINE_AGENT
+
+Allowed:
+- cooking logic
+- rules engine
+- planning types
+- profile/config files
+- QA scripts
+- snapshots
+- deterministic calculations
+
+Not allowed:
+- UI redesign
+- visual styling
+- decorative changes
+- `.env`
+
+Must follow:
+- deterministic engine first
+- data-driven configuration
+- no cut-specific hardcoded heuristics when avoidable
+- safe temperature/doneness logic
+
+---
+
+### IMAGE_AGENT
+
+Allowed:
+- image prompts
+- asset metadata
+- setup/cut/vegetable/step visual pipelines
+- asset processing scripts
+- generated asset maps
+
+Not allowed:
+- core engine logic
+- major UI redesign unless explicitly asked
+- `.env`
+
+Must follow:
+- screen-specific image rules
+- selective image density
+- premium realistic food/setup direction
+- no humans, no text inside generated images unless explicitly requested
+- avoid generating assets that are decorative only
+
+---
+
+### ARCHITECTURE_AGENT
+
+Allowed:
+- folder structure improvements
+- shared types
+- design-system architecture
+- separation of concerns
+- scalable interfaces
+- technical debt reduction
+
+Not allowed:
+- large risky rewrites without proposal
+- behavior changes without verification
+- `.env`
+
+Must follow:
+- propose before large changes
+- preserve existing flows
+- keep changes incremental and reversible
+
+---
+
+## Current Product Roadmap Coupling
+
+Current approved implementation route:
+
+1. Stabilize and improve ResultHero / ResultCards.
+2. Improve Home conversion and reduce top clutter.
+3. Improve individual Live Cooking flow.
+4. Improve Cut Selection with Hybrid Premium rules.
+5. Integrate Setup Visual in the correct Result position.
+6. Add Cut Map as optional learning/discovery module.
+7. Add guided visual education modules only after core flow is stable.
+8. Prepare Multi-Cut Engine Foundation later, after single-cut flow is stable.
+
+Do not prioritize a full Cut Map system or heavy education layer before:
+- Result experience is strong
+- Home conversion is clean
+- Live Cooking individual is useful
+- core single-cut flow is stable
+
+---
+
+## Development Workflow
+
+Default workflow:
+1. Analyze the requested change.
+2. Identify impacted files.
+3. Propose the smallest safe implementation.
+4. Implement focused changes.
+5. Verify with available commands.
+6. Report what changed and what to test manually.
+
+Recommended verification when relevant:
+- `npm run lint`
+- `npm run build`
+- `npm run check`
+- cooking QA scripts if engine logic changed
+- snapshot update only when intentionally changing expected outputs
+
+Do not claim verification passed unless it was actually run.
+
+---
+
+## Command Safety Rules
+
+Agents may run these commands without asking:
+- `npm run lint`
+- `npm run build`
+- `npm run qa:cooking`
+- `npm run check`
+- `npx tsc --noEmit`
+- `git status`
+- `git diff`
+- `git log --oneline -5`
+- `git branch --show-current`
+
+Agents must ask before running:
+- `git add`
+- `git commit`
+- `git push`
+- `git checkout`
+- `git merge`
+- `git rebase`
+- `git reset`
+- `git clean`
+- `npm install`
+- `npm update`
+- `npm audit fix`
+- `npx shadcn`
+- `vercel`
+- `supabase`
+- `rm`
+- `del`
+- `Remove-Item`
+
+Rules:
+- Never run destructive commands without explicit approval.
+- Do not modify dependencies unless explicitly requested.
+- Do not modify database schema or migrations unless explicitly requested.
+- Do not deploy unless explicitly requested.
+- Do not change branches, merge, rebase, reset, or clean without approval.
+- Validation commands are allowed.
+- Git inspection commands are allowed.
+- Git write commands require approval.
+
+---
+
+## Git and Safety
+
+Always:
+- work in a branch
+- keep commits focused
+- avoid unrelated file changes
+- explain risky changes before applying them
+
+Never:
+- push directly to `main`
+- delete files without permission
+- edit secrets
+- rewrite history unless explicitly instructed
+
+---
+
+## Final Quality Bar
+
+A change is good only if it improves at least one of these:
+- faster user decision
+- clearer cooking plan
+- better execution confidence
+- safer cooking outcome
+- more premium perception
+- more scalable architecture
+- lower future maintenance cost
+
+If a change adds visual complexity without improving one of those, do not add it.

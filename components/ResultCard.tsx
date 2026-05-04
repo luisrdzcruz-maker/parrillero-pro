@@ -1,14 +1,24 @@
 "use client";
 
-import { useState, type SyntheticEvent } from "react";
+import Image from "next/image";
+import { useState } from "react";
 import { getResultCardAccent, getResultCardIcon, getResultCardTitle } from "@/lib/uiHelpers";
-import { getSetupImage, SETUP_PLACEHOLDER_IMAGE } from "@/lib/setupVisuals";
-import { Badge, Button, Panel } from "@/components/ui";
+import {
+  detectSetupFromText,
+  getSetupVisual,
+  SETUP_VISUAL_FALLBACK,
+  type SetupEquipment,
+  type SetupType,
+} from "@/lib/setupVisualMap";
+import { Panel } from "@/components/ui";
 import { ds } from "@/lib/design-system";
 
 type ResultCardProps = {
   title: string;
   content?: string;
+  equipment?: string;
+  setup?: SetupType;
+  lang?: "es" | "en" | "fi";
   variant?: "default" | "primary" | "summary" | "tip" | "setup";
 };
 
@@ -18,53 +28,81 @@ const cardClassName =
 const inlineFallbackImage =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='700' viewBox='0 0 1200 700'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='30%25' r='70%25'%3E%3Cstop offset='0%25' stop-color='%23f97316' stop-opacity='.45'/%3E%3Cstop offset='60%25' stop-color='%230f172a'/%3E%3Cstop offset='100%25' stop-color='%23020617'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='1200' height='700' fill='url(%23g)'/%3E%3Cpath d='M280 470h640' stroke='%23fb923c' stroke-width='18' stroke-linecap='round' opacity='.55'/%3E%3Cpath d='M340 405h520' stroke='%23fed7aa' stroke-width='10' stroke-linecap='round' opacity='.38'/%3E%3Ccircle cx='600' cy='300' r='105' fill='%23f97316' opacity='.18'/%3E%3C/svg%3E";
 
+// ─── Variant semantic label ───────────────────────────────────────────────────
+
+function getVariantLabel(
+  variant: NonNullable<ResultCardProps["variant"]>,
+  lang: "es" | "en" | "fi",
+): string {
+  const isEs = lang === "es";
+  const isFi = lang === "fi";
+  switch (variant) {
+    case "primary":
+      return isEs ? "Pasos de coccion" : isFi ? "Kypsennysvaiheet" : "Cooking steps";
+    case "tip":
+      return isEs ? "Error critico" : isFi ? "Kriittinen virhe" : "Critical error";
+    case "summary":
+      return isEs ? "Tiempos · Temperatura" : isFi ? "Ajat · Lampotila" : "Times · Temperature";
+    case "setup":
+      return isEs ? "Configuración del fuego" : isFi ? "Tuliasetus" : "Fire setup";
+    default:
+      return isFi ? "Suunnitelma" : "Plan";
+  }
+}
+
+// ─── Numbered step parser ─────────────────────────────────────────────────────
+
+function parseStepLine(line: string): { number: string; text: string } | null {
+  const match = line.match(/^(\d+)[.)]\s+(.+)/);
+  return match ? { number: match[1], text: match[2] } : null;
+}
+
+// ─── ResultCardHeader ─────────────────────────────────────────────────────────
+
 function ResultCardHeader({
   accent,
   icon,
+  lang,
   title,
-  lineCount,
   variant,
 }: {
   accent: string;
   icon: string;
+  lang: "es" | "en" | "fi";
   title: string;
-  lineCount: number;
   variant: NonNullable<ResultCardProps["variant"]>;
 }) {
   const isPrimary = variant === "primary";
   const isTip = variant === "tip";
+  const labelClassName = isTip ? "text-red-200" : "text-orange-300/90";
+  const iconClassName = isTip
+    ? "border-red-300/25 bg-red-500/15 text-red-100 ring-red-200/[0.05]"
+    : "bg-white/[0.06] text-white ring-white/[0.04]";
 
   return (
-    <div className="flex items-start justify-between gap-4">
-      <div className="flex min-w-0 items-start gap-3">
-        <div
-          className={`${ds.media.iconBox} ${isPrimary ? "h-12 w-12 text-xl" : "h-10 w-10 text-base"} rounded-2xl bg-white/[0.06] ring-1 ring-inset ring-white/[0.04]`}
-        >
-          {icon}
-        </div>
-
-        <div className="min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300/90">
-            {isTip ? "Consejo clave" : isPrimary ? "Siguiente acción" : "Plan"}
-          </p>
-          <h3
-            className={`${isPrimary ? "text-xl sm:text-2xl" : "text-base"} mt-1 truncate font-black tracking-tight text-white`}
-          >
-            {title}
-          </h3>
-          <div className={`mt-2 h-0.5 w-12 rounded-full ${accent}`} />
-        </div>
+    <div className="flex items-start gap-3.5">
+      <div
+        className={`${ds.media.iconBox} ${isPrimary ? "h-12 w-12 text-xl" : "h-10 w-10 text-base"} ${iconClassName} rounded-2xl ring-1 ring-inset`}
+      >
+        {icon}
       </div>
 
-      <Badge
-        className="shrink-0 border-white/10 bg-black/35 text-[11px] font-bold"
-        tone={isTip ? "danger" : "glass"}
-      >
-        {lineCount} {lineCount === 1 ? "línea" : "líneas"}
-      </Badge>
+      <div className="min-w-0 flex-1">
+        <p className={`text-[10px] font-black uppercase tracking-[0.22em] ${labelClassName}`}>
+          {getVariantLabel(variant, lang)}
+        </p>
+        <h3
+          className={`${isPrimary ? "text-xl sm:text-2xl" : "text-lg"} mt-1 font-black tracking-tight text-white`}
+        >
+          {title}
+        </h3>
+        <div className={`mt-2 h-0.5 w-12 rounded-full ${isTip ? "bg-red-400/80" : accent}`} />
+      </div>
     </div>
   );
 }
+
+// ─── ResultCardContent ────────────────────────────────────────────────────────
 
 function ResultCardContent({
   lines,
@@ -76,10 +114,48 @@ function ResultCardContent({
   const isPrimary = variant === "primary";
   const isTip = variant === "tip";
 
+  // For the PASOS/STEPS card: detect numbered steps and give each its own row
+  if (isPrimary && lines.some((l) => parseStepLine(l) !== null)) {
+    return (
+      <div className="mt-5 space-y-2.5 border-t border-white/5 pt-4">
+        {lines.map((line, index) => {
+          const step = parseStepLine(line);
+
+          if (step) {
+            return (
+              <div
+                key={`${line}-${index}`}
+                className="flex items-start gap-3 rounded-2xl border border-white/[0.07] bg-black/20 px-4 py-3.5 shadow-inner shadow-black/10 ring-1 ring-inset ring-white/[0.03]"
+              >
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-500/25 text-[11px] font-black text-orange-300 ring-1 ring-inset ring-orange-400/20">
+                  {step.number}
+                </span>
+                <p className="flex-1 text-base leading-relaxed text-slate-100">{step.text}</p>
+              </div>
+            );
+          }
+
+          return (
+            <p key={`${line}-${index}`} className="px-1 text-sm leading-relaxed text-slate-400">
+              {line}
+            </p>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // Default: single scrollable block
   return (
-    <div className={`${isTip ? "mt-3" : "mt-5 border-t border-white/5 pt-4"}`}>
+    <div className={isTip ? "mt-4" : "mt-5 border-t border-white/5 pt-4"}>
       <div
-        className={`${isPrimary ? "p-4 text-base leading-7 text-slate-100" : isTip ? "border-orange-400/15 bg-orange-500/[0.04] p-3 text-sm leading-6 text-orange-100" : "p-3.5 text-sm leading-relaxed text-slate-300"} space-y-2.5 rounded-2xl border border-white/[0.06] bg-black/15 shadow-inner shadow-black/10 ring-1 ring-inset ring-white/[0.03]`}
+        className={`space-y-2.5 rounded-2xl border border-white/[0.06] bg-black/15 shadow-inner shadow-black/10 ring-1 ring-inset ring-white/[0.03] ${
+          isPrimary
+            ? "p-4 text-base leading-7 text-slate-100"
+            : isTip
+              ? "border-red-300/35 bg-[radial-gradient(circle_at_0%_0%,rgba(248,113,113,0.16),transparent_34%),rgba(127,29,29,0.18)] p-4 text-sm font-bold leading-6 text-red-50 ring-red-200/[0.06]"
+              : "p-4 text-sm leading-relaxed text-slate-300"
+        }`}
       >
         {lines.map((line, index) => (
           <p key={`${line}-${index}`} className="whitespace-pre-wrap">
@@ -91,6 +167,8 @@ function ResultCardContent({
   );
 }
 
+// ─── Setup Visual ─────────────────────────────────────────────────────────────
+
 function isSetupCard(title: string) {
   const normalizedTitle = title.toUpperCase();
   return (
@@ -100,43 +178,184 @@ function isSetupCard(title: string) {
   );
 }
 
-function SetupVisualToggle({ content, title }: { content: string; title: string }) {
-  const [open, setOpen] = useState(false);
-  const setupImage = getSetupImage({ equipment: content, heatType: content, method: content });
+function normalizeSetupText(value = "") {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
 
-  if (!isSetupCard(title)) return null;
+function resolveSetupEquipment(value = ""): SetupEquipment | undefined {
+  const normalized = normalizeSetupText(value);
 
-  function handleImageError(event: SyntheticEvent<HTMLImageElement>) {
-    if (event.currentTarget.getAttribute("src") === SETUP_PLACEHOLDER_IMAGE) {
-      event.currentTarget.onerror = null;
-      event.currentTarget.src = inlineFallbackImage;
-      return;
-    }
+  if (normalized.includes("kamado")) return "kamado";
+  if (
+    normalized.includes("interior") ||
+    normalized.includes("indoor") ||
+    normalized.includes("cocina") ||
+    normalized.includes("sarten") ||
+    normalized.includes("horno") ||
+    normalized.includes("oven")
+  ) {
+    return "indoor";
+  }
+  if (normalized.includes("carbon") || normalized.includes("charcoal")) return "charcoal";
+  if (normalized.includes("gas") || normalized.includes("napoleon") || normalized.includes("rogue")) {
+    return "gas";
+  }
 
-    event.currentTarget.src = SETUP_PLACEHOLDER_IMAGE;
+  return undefined;
+}
+
+type SetupOverlayChip = {
+  label: string;
+  tone: "direct" | "indirect" | "neutral";
+};
+
+function getSetupOverlayChips(setup: SetupType | undefined, lang: "es" | "en" | "fi"): SetupOverlayChip[] {
+  const normalizedSetup = normalizeSetupText(setup).replace(/[_\s]+/g, "-");
+  const labels = {
+    indirect: lang === "es" ? "❄️ Indirecto" : lang === "fi" ? "❄️ Epasuora" : "❄️ Indirect",
+    finalSear: lang === "es" ? "Sellado final" : lang === "fi" ? "Lopullinen ruskistus" : "Final sear",
+    lowHeat: lang === "es" ? "Baja temperatura" : lang === "fi" ? "Matala lampo" : "Low heat",
+    twoZones: lang === "es" ? "2 zonas" : lang === "fi" ? "2 vyohyketta" : "2 zones",
+    mixZone: lang === "es" ? "🔥 Directo + ❄️ Indirecto" : lang === "fi" ? "🔥 Suora + ❄️ Epasuora" : "🔥 Direct + ❄️ Indirect",
+    direct: lang === "es" ? "🔥 Directo" : lang === "fi" ? "🔥 Suora" : "🔥 Direct",
+  };
+
+  if (normalizedSetup === "reverse-sear") {
+    return [
+      { label: labels.indirect, tone: "indirect" },
+      { label: labels.finalSear, tone: "direct" },
+    ];
+  }
+
+  if (normalizedSetup === "low-slow" || normalizedSetup === "low-and-slow") {
+    return [
+      { label: labels.indirect, tone: "indirect" },
+      { label: labels.lowHeat, tone: "neutral" },
+    ];
+  }
+
+  if (normalizedSetup === "two-zone") {
+    return [
+      { label: labels.mixZone, tone: "neutral" },
+      { label: labels.twoZones, tone: "neutral" },
+    ];
+  }
+
+  if (normalizedSetup === "indirect" || normalizedSetup === "indirecto") {
+    return [{ label: labels.indirect, tone: "indirect" }];
+  }
+
+  if (normalizedSetup === "direct" || normalizedSetup === "direct-heat" || normalizedSetup === "directo") {
+    return [{ label: labels.direct, tone: "direct" }];
+  }
+
+  return [
+    { label: labels.mixZone, tone: "neutral" },
+    { label: labels.twoZones, tone: "neutral" },
+  ];
+}
+
+function getSetupOverlayChipClass(tone: SetupOverlayChip["tone"]) {
+  const base =
+    "rounded-full border border-white/15 bg-black/40 px-3 py-1 text-xs font-black uppercase leading-none tracking-[0.08em] shadow-lg backdrop-blur-md ring-1 ring-inset ring-white/10";
+
+  if (tone === "direct") {
+    return `${base} text-orange-200 shadow-orange-950/40`;
+  }
+
+  if (tone === "indirect") {
+    return `${base} text-sky-200 shadow-sky-950/40`;
+  }
+
+  return `${base} text-white shadow-black/30`;
+}
+
+function SetupVisualImage({ src }: { src: string }) {
+  const [fallbackStep, setFallbackStep] = useState<"none" | "asset" | "inline">("none");
+  const imageSrc =
+    fallbackStep === "inline"
+      ? inlineFallbackImage
+      : fallbackStep === "asset"
+        ? SETUP_VISUAL_FALLBACK
+        : src;
+
+  function handleImageError() {
+    setFallbackStep((current) =>
+      current === "none" && src !== SETUP_VISUAL_FALLBACK ? "asset" : "inline",
+    );
   }
 
   return (
-    <div className="mt-4 rounded-2xl border border-orange-400/15 bg-orange-500/[0.04] p-3 ring-1 ring-inset ring-orange-300/[0.03]">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-300">
-            Setup visual
-          </p>
-          <p className="mt-1 line-clamp-1 text-sm text-slate-400">
-            Zonas de calor y flujo recomendado
-          </p>
+    <Image
+      src={imageSrc}
+      alt=""
+      fill
+      sizes="(min-width: 640px) 640px, 100vw"
+      className="object-cover"
+      onError={handleImageError}
+    />
+  );
+}
+
+function SetupVisualToggle({
+  content,
+  equipment,
+  lang,
+  setup,
+  title,
+}: {
+  content: string;
+  equipment?: string;
+  lang: "es" | "en" | "fi";
+  setup?: SetupType;
+  title: string;
+}) {
+  const [open, setOpen] = useState(true);
+  const setupEquipment = resolveSetupEquipment(equipment) ?? resolveSetupEquipment(content);
+  const detectedSetup = setup ?? detectSetupFromText(content);
+  const setupImage = getSetupVisual(setupEquipment, detectedSetup);
+  const setupTitle = lang === "es" ? "Visual de configuración" : lang === "fi" ? "Asetuskuva" : "Setup visual";
+  const setupSubtitle =
+    lang === "es"
+      ? "Zonas de calor y flujo recomendado"
+      : lang === "fi"
+        ? "Lampoalueet ja suositeltu jarjestys"
+        : "Heat zones and suggested flow";
+  const hideLabel = lang === "es" ? "Ocultar" : lang === "fi" ? "Piilota" : "Hide";
+  const viewLabel = lang === "es" ? "Ver →" : lang === "fi" ? "Nayta →" : "View →";
+  const overlayChips = getSetupOverlayChips(detectedSetup, lang);
+
+  if (!isSetupCard(title)) return null;
+
+  return (
+    <div className="mt-4 rounded-[1.5rem] border border-orange-300/25 bg-[radial-gradient(circle_at_16%_0%,rgba(251,146,60,0.18),transparent_34%),rgba(249,115,22,0.055)] p-3 shadow-xl shadow-orange-950/10 ring-1 ring-inset ring-orange-200/[0.05]">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-3 text-left"
+      >
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="text-base" aria-hidden>
+            🗺️
+          </span>
+          <div className="min-w-0">
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-orange-300">
+              {setupTitle}
+            </p>
+            <p className="mt-0.5 line-clamp-1 text-[11px] text-slate-400">
+              {setupSubtitle}
+            </p>
+          </div>
         </div>
 
-        <Button
-          aria-expanded={open}
-          className="shrink-0 rounded-full px-3 py-2 text-xs"
-          onClick={() => setOpen((current) => !current)}
-          variant="outlineAccent"
-        >
-          {open ? "Ocultar" : "Ver setup"}
-        </Button>
-      </div>
+        <span className="shrink-0 rounded-full border border-orange-400/30 bg-orange-500/15 px-3 py-1.5 text-xs font-black text-orange-200 shadow-lg shadow-orange-950/10 transition-colors hover:bg-orange-500/25 active:scale-[0.97]">
+          {open ? hideLabel : viewLabel}
+        </span>
+      </button>
 
       <div
         className={
@@ -153,26 +372,21 @@ function SetupVisualToggle({ content, title }: { content: string; title: string 
                 : "mt-4 translate-y-2 transition-transform duration-300 ease-out"
             }
           >
-            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950 shadow-2xl shadow-black/25">
-              <img
-                src={setupImage || SETUP_PLACEHOLDER_IMAGE}
-                alt="Visual grill setup"
-                loading="lazy"
-                className="h-44 w-full object-cover sm:h-56"
-                onError={handleImageError}
-              />
+            <div className="relative overflow-hidden rounded-[1.25rem] border border-orange-200/15 bg-slate-950 shadow-2xl shadow-black/30 ring-1 ring-inset ring-white/[0.04]">
+              <div className="relative h-52 w-full sm:h-64">
+                <SetupVisualImage key={setupImage} src={setupImage} />
+              </div>
 
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(251,146,60,0.28),transparent_34%),linear-gradient(to_top,rgba(2,6,23,0.9)_0%,rgba(2,6,23,0.38)_54%,rgba(255,255,255,0.08)_100%)]" />
-              <div className="pointer-events-none absolute bottom-0 left-0 right-0 p-4">
-                <Badge
-                  className="border-orange-400/30 bg-black/45 text-orange-200"
-                  tone="glass"
-                >
-                  Setup del fuego
-                </Badge>
-                <p className="mt-2 text-sm font-semibold text-white">
-                  Visualiza zonas antes de cocinar
-                </p>
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_4%,rgba(251,146,60,0.2),transparent_28%),radial-gradient(circle_at_28%_0%,rgba(56,189,248,0.13),transparent_24%),linear-gradient(135deg,rgba(2,6,23,0.88)_0%,rgba(2,6,23,0.5)_26%,rgba(2,6,23,0.12)_48%,transparent_68%)]"
+              />
+              <div className="pointer-events-none absolute left-0 top-0 flex max-w-[82%] flex-wrap items-start gap-2 p-3 sm:max-w-[70%] sm:p-4">
+                {overlayChips.map((chip) => (
+                  <span key={`${chip.tone}-${chip.label}`} className={getSetupOverlayChipClass(chip.tone)}>
+                    {chip.label}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
@@ -182,13 +396,15 @@ function SetupVisualToggle({ content, title }: { content: string; title: string 
   );
 }
 
+// ─── Card tone ────────────────────────────────────────────────────────────────
+
 function getCardTone(variant: NonNullable<ResultCardProps["variant"]>) {
   if (variant === "primary") {
     return "border-orange-400/35 bg-gradient-to-br from-orange-500/12 via-slate-900/95 to-slate-950 shadow-orange-500/10";
   }
 
   if (variant === "tip") {
-    return "border-orange-400/20 bg-gradient-to-br from-slate-900/95 to-orange-950/20";
+    return "border-red-300/40 bg-gradient-to-br from-slate-900/98 via-red-950/28 to-slate-950 shadow-red-950/20";
   }
 
   if (variant === "summary") {
@@ -198,7 +414,16 @@ function getCardTone(variant: NonNullable<ResultCardProps["variant"]>) {
   return "";
 }
 
-export default function ResultCard({ title, content, variant = "default" }: ResultCardProps) {
+// ─── ResultCard ───────────────────────────────────────────────────────────────
+
+export default function ResultCard({
+  title,
+  content,
+  equipment,
+  lang = "es",
+  setup,
+  variant = "default",
+}: ResultCardProps) {
   if (!content?.trim()) return null;
 
   const icon = getResultCardIcon(title);
@@ -221,12 +446,12 @@ export default function ResultCard({ title, content, variant = "default" }: Resu
         <ResultCardHeader
           accent={accent}
           icon={icon}
+          lang={lang}
           title={cleanTitle}
-          lineCount={contentLines.length}
           variant={variant}
         />
         <ResultCardContent lines={contentLines} variant={variant} />
-        <SetupVisualToggle content={content} title={title} />
+        <SetupVisualToggle content={content} equipment={equipment} lang={lang} setup={setup} title={title} />
       </div>
     </Panel>
   );

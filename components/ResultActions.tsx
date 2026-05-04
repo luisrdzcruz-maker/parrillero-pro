@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Badge, Button } from "@/components/ui";
+import { texts } from "@/lib/i18n/texts";
 
 type SaveMenuStatus = "idle" | "saving" | "success" | "error";
 
@@ -9,6 +10,7 @@ export default function ResultActions({
   actions,
   compact = false,
   hasResult,
+  lang = "es",
   secondary = false,
   status: rawStatus,
   t,
@@ -21,6 +23,7 @@ export default function ResultActions({
   };
   compact?: boolean;
   hasResult: boolean;
+  lang?: "es" | "en" | "fi";
   secondary?: boolean;
   status?: SaveMenuStatus;
   t: {
@@ -31,47 +34,50 @@ export default function ResultActions({
     startCooking: string;
   };
 }) {
+  const copy = texts[lang];
   const [localSaveStatus, setLocalSaveStatus] = useState<SaveMenuStatus>("idle");
   const status = rawStatus ?? localSaveStatus;
   const [shareStatus, setShareStatus] = useState<"idle" | "sharing" | "shared" | "copied">("idle");
-  const isEnglish = t.copy.toLowerCase().includes("copy");
+  const labels = {
+    live: {
+      eyebrow: copy.resultActionsLiveEyebrow,
+      helper: copy.resultActionsLiveHelper,
+      status: copy.resultActionsLiveStatus,
+    },
+    save: {
+      idle: copy.resultActionsSaveIdle,
+      saving: copy.resultActionsSaveSaving,
+      success: copy.resultActionsSaveSuccess,
+      error: copy.resultActionsSaveError,
+    },
+    share: {
+      idle: copy.resultActionsShareIdle,
+      sharing: copy.resultActionsShareSharing,
+      shared: copy.resultActionsShareShared,
+      copied: copy.resultActionsShareCopied,
+      sharedFeedback: copy.resultActionsShareFeedbackShared,
+      copiedFeedback: copy.resultActionsShareFeedbackCopied,
+    },
+  } as const;
   const saveLabel =
     status === "saving"
-      ? isEnglish
-        ? "Saving..."
-        : "Guardando..."
+      ? labels.save.saving
       : status === "success"
-        ? isEnglish
-          ? "Saved"
-          : "Guardado"
-        : isEnglish
-          ? "Save"
-          : "Guardar";
+        ? labels.save.success
+        : labels.save.idle;
   const shareLabel =
     shareStatus === "sharing"
-      ? isEnglish
-        ? "Sharing..."
-        : "Compartiendo..."
+      ? labels.share.sharing
       : shareStatus === "shared"
-        ? isEnglish
-          ? "Shared"
-          : "Compartido"
+        ? labels.share.shared
         : shareStatus === "copied"
-          ? isEnglish
-            ? "Copied"
-            : "Copiado"
-          : isEnglish
-            ? "Share"
-            : "Compartir";
+          ? labels.share.copied
+          : labels.share.idle;
   const shareFeedback =
     shareStatus === "shared"
-      ? isEnglish
-        ? "Shared with your device share sheet"
-        : "Compartido desde el menú nativo"
+      ? labels.share.sharedFeedback
       : shareStatus === "copied"
-        ? isEnglish
-          ? "Copied to clipboard"
-          : "Copiado al portapapeles"
+        ? labels.share.copiedFeedback
         : "";
 
   if (!hasResult) return null;
@@ -93,9 +99,7 @@ export default function ResultActions({
   }
 
   function getShareText() {
-    return isEnglish
-      ? "Parrillero Pro cooking result. Open the app to review the full plan."
-      : "Resultado de cocción de Parrillero Pro. Abre la app para revisar el plan completo.";
+    return copy.resultActionsShareBody;
   }
 
   async function handleNativeShare() {
@@ -130,9 +134,63 @@ export default function ResultActions({
     }
   }
 
+  async function handleShare() {
+    if (actions.onShare) {
+      actions.onShare();
+      return;
+    }
+
+    await handleNativeShare();
+  }
+
   return (
     <div className={compact ? "flex flex-col gap-2" : "flex flex-col gap-3"}>
-      <div className={compact ? "grid grid-cols-3 gap-2" : "flex flex-wrap items-center gap-2"}>
+      {actions.onStartCooking && (
+        <button
+          type="button"
+          onClick={actions.onStartCooking}
+          className="group relative flex w-full items-center gap-4 overflow-hidden rounded-[1.5rem] border border-orange-300/45 bg-orange-500 px-4 py-4 text-left text-slate-950 shadow-2xl shadow-orange-950/25 ring-1 ring-inset ring-white/20 transition-all duration-200 hover:bg-orange-400 active:scale-[0.99] sm:px-5"
+        >
+          <span
+            aria-hidden="true"
+            className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-white/20 to-transparent opacity-80"
+          />
+          <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-black/15 text-base font-black shadow-sm shadow-black/10 ring-1 ring-inset ring-black/10">
+            <svg
+              aria-hidden="true"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M13 3 5.8 13.2h5.3L10 21l8.2-11.5h-5.5L13 3Z"
+                fill="currentColor"
+              />
+            </svg>
+          </span>
+
+          <span className="relative min-w-0 flex-1">
+            <span className="block text-[10px] font-black uppercase tracking-[0.22em] text-slate-900/70">
+              {labels.live.eyebrow}
+            </span>
+            <span className="mt-0.5 block text-base font-black leading-tight text-slate-950">
+              {t.startCooking}
+            </span>
+            <span className="mt-1 block text-xs font-bold leading-snug text-slate-950/70">
+              {labels.live.helper}
+            </span>
+          </span>
+
+          <span className="relative flex shrink-0 items-center gap-1.5 rounded-full border border-black/10 bg-black/10 px-2.5 py-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-slate-950" />
+            <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-950">
+              {labels.live.status}
+            </span>
+          </span>
+        </button>
+      )}
+
+      <div className={compact || secondary ? "grid grid-cols-3 gap-2" : "flex flex-wrap items-center gap-2"}>
         {actions.onSave && (
           <Button
             aria-busy={status === "saving"}
@@ -157,17 +215,15 @@ export default function ResultActions({
           </Button>
         )}
 
-        {actions.onShare && (
-          <Button
-            aria-busy={shareStatus === "sharing"}
-            className={compact ? "px-3 py-2 text-xs" : undefined}
-            onClick={handleNativeShare}
-            disabled={shareStatus === "sharing"}
-            variant="secondary"
-          >
-            {shareLabel}
-          </Button>
-        )}
+        <Button
+          aria-busy={shareStatus === "sharing"}
+          className={compact ? "px-3 py-2 text-xs" : undefined}
+          onClick={handleShare}
+          disabled={shareStatus === "sharing"}
+          variant="secondary"
+        >
+          {shareLabel}
+        </Button>
       </div>
 
       <div className={compact ? "flex min-h-0 items-center" : "flex min-h-5 items-center"}>
@@ -180,14 +236,14 @@ export default function ResultActions({
               className="inline-block h-3 w-3 shrink-0 animate-spin rounded-full border-2 border-orange-400/35 border-t-orange-200 motion-reduce:animate-none"
               aria-hidden
             />
-            {isEnglish ? "Saving..." : "Guardando..."}
+            {labels.save.saving}
           </Badge>
         )}
 
-        {status === "success" && <Badge tone="success">{isEnglish ? "Saved" : "Guardado"}</Badge>}
+        {status === "success" && <Badge tone="success">{labels.save.success}</Badge>}
 
         {status === "error" && (
-          <Badge tone="danger">{isEnglish ? "Could not save" : "No se pudo guardar"}</Badge>
+          <Badge tone="danger">{labels.save.error}</Badge>
         )}
 
         {!compact &&
@@ -200,19 +256,6 @@ export default function ResultActions({
             </Badge>
           )}
       </div>
-
-      {!compact && actions.onStartCooking && (
-        <div className="pt-3 border-t border-white/5">
-          <Button
-            className="py-3 font-black"
-            fullWidth
-            onClick={actions.onStartCooking}
-            variant="outlineAccent"
-          >
-            {t.startCooking}
-          </Button>
-        </div>
-      )}
     </div>
   );
 }

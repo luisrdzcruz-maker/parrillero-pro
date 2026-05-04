@@ -1,0 +1,44 @@
+[
+  {
+    "id": "step_preheat_grill",
+    "category": "steps",
+    "name": "Preheat Grill",
+    "step": "preheat",
+    "prompt": "empty cast iron grill grates heating up with no food, grates glowing orange-red with intense heat, heat shimmer rising visibly above the bars, subtle white smoke wisps, orange fire glow from below the grates, ready-to-cook premium atmosphere, ultra realistic food photography, premium steakhouse style, pure dark background, dramatic side lighting, high contrast, cinematic shadows, shallow depth of field, 85mm lens, f1.8, warm amber tones, professional cooking photography, no humans, no hands, no food, no text, no labels, centered composition, vertical mobile app card image, clean negative space for UI overlay"
+  },
+  {
+    "id": "step_sear_side_a",
+    "category": "steps",
+    "name": "Sear Side A",
+    "step": "sear_a",
+    "prompt": "thick steak placed on searing hot grill grates, first side searing intensely, dark grill marks just beginning to form, flames licking around the edges of the meat, aggressive smoke billowing upward, fat sizzling and dripping onto coals below, intense heat glow, ultra realistic food photography, premium steakhouse style, pure dark background, dramatic side lighting, high contrast, cinematic shadows, shallow depth of field, 85mm lens, f1.8, detailed texture, warm fire tones, professional food styling, no humans, no hands, no text, no labels, centered composition, vertical mobile app card image, clean negative space for UI overlay"
+  },
+  {
+    "id": "step_flip_steak",
+    "category": "steps",
+    "name": "Flip Steak",
+    "step": "flip",
+    "prompt": "steak on grill just flipped to its second side, seared side now facing up with deep dark grill marks and caramelized crust clearly visible, raw second side now touching hot grates, smoke rising, fire glow from below, juicy surface glistening, no hands visible, no utensils, ultra realistic food photography, premium steakhouse style, pure dark background, dramatic side lighting, high contrast, cinematic shadows, shallow depth of field, 85mm lens, f1.8, detailed texture, warm amber tones, professional food styling, no humans, no hands, no utensils, no text, no labels, centered composition, vertical mobile app card image, clean negative space for UI overlay"
+  },
+  {
+    "id": "step_indirect_cooking",
+    "category": "steps",
+    "name": "Indirect Cooking",
+    "step": "indirect",
+    "prompt": "steak positioned on the cooler indirect zone of an open grill, fire and glowing coals blazing on the far opposite side, the steak bathed in gentle warm ambient heat, calm and controlled premium BBQ cooking, subtle smoke drifting, clear visual contrast between the hot fire zone and the calm indirect zone where the steak rests, ultra realistic food photography, premium steakhouse style, pure dark background, dramatic side lighting, high contrast, cinematic shadows, shallow depth of field, 85mm lens, f1.8, warm tones, professional food styling, no humans, no hands, no text, no labels, centered composition, vertical mobile app card image, clean negative space for UI overlay"
+  },
+  {
+    "id": "step_rest_board",
+    "category": "steps",
+    "name": "Rest on Board",
+    "step": "rest",
+    "prompt": "grilled steak resting undisturbed on a dark aged wooden cutting board, juices slowly redistributing and pooling subtly at the base, coarse salt crystals scattered, warm calm dramatic side lighting, light wisps of steam rising, premium steakhouse style plating moment, ultra realistic food photography, pure dark background, high contrast, cinematic shadows, shallow depth of field, 85mm lens, f1.8, detailed texture, warm amber tones, professional food styling, no humans, no hands, no knife, no text, no labels, centered composition, vertical mobile app card image, clean negative space for UI overlay"
+  },
+  {
+    "id": "step_slice_serve",
+    "category": "steps",
+    "name": "Slice and Serve",
+    "step": "serve",
+    "prompt": "grilled steak sliced revealing a perfectly cooked pink and juicy center, thick slices fanned open on a dark wooden board, juices flowing between slices, coarse salt crystals scattered on surface, light knife marks visible on board but no knife present, warm dramatic side lighting, steam rising gently, premium restaurant serving moment, ultra realistic food photography, premium steakhouse style, pure dark background, high contrast, cinematic shadows, shallow depth of field, 85mm lens, f1.8, detailed texture, warm amber tones, professional food styling, no humans, no hands, no knife, no text, no labels, centered composition, vertical mobile app card image, clean negative space for UI overlay"
+  }
+]

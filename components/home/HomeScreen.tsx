@@ -1,339 +1,553 @@
 "use client";
 
-import { Badge, Button, Panel } from "@/components/ui";
+import { useRouter } from "next/navigation";
 import type { Mode } from "@/components/navigation/AppHeader";
-import { ds } from "@/lib/design-system";
+import { buildCookingDetailsUrl } from "@/lib/navigation/cookingNavigation";
+import { buildLiveUrl } from "@/lib/navigation/buildLiveUrl";
+import { readLiveCookingPayload } from "@/lib/liveCookingPlan";
+import type { Animal } from "@/lib/types/domain";
 import type { AppText, Lang } from "@/lib/i18n/texts";
-import Image from "next/image";
-import { type ReactNode, useLayoutEffect, useState } from "react";
+import { type MouseEvent, type ReactNode, useLayoutEffect, useMemo, useState } from "react";
 
-function FadeInSection({ children }: { children: ReactNode }) {
+// ─── Entrance animation ───────────────────────────────────────────────────────
+
+function FadeIn({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
   const [entered, setEntered] = useState(false);
 
   useLayoutEffect(() => {
-    const id = requestAnimationFrame(() => {
-      requestAnimationFrame(() => setEntered(true));
+    const raf = requestAnimationFrame(() => {
+      const id = delay
+        ? window.setTimeout(() => requestAnimationFrame(() => setEntered(true)), delay)
+        : requestAnimationFrame(() => setEntered(true));
+      return () => (delay ? window.clearTimeout(id as unknown as number) : cancelAnimationFrame(id as unknown as number));
     });
-    return () => cancelAnimationFrame(id);
-  }, []);
+    return () => cancelAnimationFrame(raf);
+  }, [delay]);
 
   return (
     <div
-      className={`motion-reduce:transition-none motion-reduce:translate-y-0 motion-reduce:opacity-100 ${
-        entered ? "translate-y-0 opacity-100" : "translate-y-1.5 opacity-0"
-      } transition-[opacity,transform] duration-300 ease-out`}
+      className={`transition-[opacity,transform] duration-700 ease-out motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none ${
+        entered ? "translate-y-0 opacity-100" : "translate-y-5 opacity-0"
+      }`}
     >
       {children}
     </div>
   );
 }
 
+// ─── Hero section ─────────────────────────────────────────────────────────────
+
+function HeroSection({
+  t,
+  onStartCooking,
+  onPlanBbq,
+}: {
+  t: AppText;
+  onStartCooking: (e: MouseEvent<HTMLButtonElement>) => void;
+  onPlanBbq: () => void;
+}) {
+  const proofPoints = [t.homeHeroProofPlan, t.homeHeroProofZones, t.homeHeroProofLive];
+
+  return (
+    <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.15),transparent_34%),linear-gradient(145deg,rgba(12,12,12,0.98),rgba(3,3,3,0.96))] px-5 py-6 shadow-[0_20px_56px_rgba(0,0,0,0.55)] sm:px-7 sm:py-8">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-300/60 to-transparent" />
+
+      <div className="relative z-10 max-w-xl">
+        <div className="inline-flex items-center gap-2 rounded-full border border-orange-300/20 bg-orange-500/10 px-3 py-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-orange-400 shadow-[0_0_8px_rgba(251,146,60,0.8)]" />
+          <span className="text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">
+            {t.homeEyebrow}
+          </span>
+        </div>
+
+        <h1 className="mt-4 text-[clamp(2rem,8.2vw,3.3rem)] font-black leading-[0.96] tracking-[-0.04em] text-white">
+          {t.homeTitle}
+        </h1>
+
+        <p className="mt-3 max-w-[34rem] text-[14px] font-medium leading-[1.52] text-stone-300/82 sm:text-base">
+          {t.homeSubtitle}
+        </p>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          {proofPoints.map((point) => (
+            <span
+              key={point}
+              className="rounded-full border border-white/10 bg-black/28 px-3 py-1.5 text-[11px] font-bold text-stone-200"
+            >
+              {point}
+            </span>
+          ))}
+        </div>
+
+        <div className="mt-6 flex flex-col gap-2.5 sm:flex-row">
+          <button
+            type="button"
+            onClick={onStartCooking}
+            className="min-h-[56px] flex-1 touch-manipulation rounded-2xl bg-orange-500 px-6 py-4 text-sm font-black text-black shadow-[0_10px_36px_rgba(234,88,12,0.42)] transition-all duration-200 hover:bg-orange-400 active:scale-[0.98] sm:text-base"
+          >
+            {t.homePrimaryCta} <span aria-hidden className="ml-1.5">→</span>
+          </button>
+          <button
+            type="button"
+            onClick={onPlanBbq}
+            className="min-h-[56px] touch-manipulation rounded-2xl border border-white/12 bg-white/[0.05] px-4 py-4 text-sm font-black text-white transition-all duration-200 hover:border-orange-300/35 hover:bg-white/[0.08] active:scale-[0.98]"
+          >
+            {t.homeSecondaryCta}
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Popular cuts ─────────────────────────────────────────────────────────────
+
+type PopularCut = {
+  label: string;
+  animal: Animal;
+  cutId: string;
+  doneness?: string;
+  thickness?: string;
+};
+
+function PopularCuts({
+  cuts,
+  title,
+  subtitle,
+  onSelect,
+}: {
+  cuts: PopularCut[];
+  title: string;
+  subtitle: string;
+  onSelect: (cut: PopularCut, e: MouseEvent<HTMLButtonElement>) => void;
+}) {
+  return (
+    <section className="rounded-[1.65rem] border border-white/[0.07] bg-white/[0.03] p-4 backdrop-blur">
+      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/32">
+        {title}
+      </p>
+      <p className="mt-1 text-xs leading-relaxed text-slate-400">{subtitle}</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {cuts.map((cut) => (
+          <button
+            key={cut.cutId}
+            type="button"
+            onClick={(e) => onSelect(cut, e)}
+            className="min-h-10 touch-manipulation rounded-full border border-white/10 bg-black/35 px-4 py-2 text-sm font-black text-stone-100 transition-all duration-200 hover:border-orange-300/40 hover:bg-orange-500/12 active:scale-[0.97]"
+          >
+            {cut.label}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function HomeHowItWorksStrip({ t }: { t: AppText }) {
+  const steps = [
+    { number: "1", title: t.homeStepChooseCut, description: t.homeStepChooseCutSub },
+    { number: "2", title: t.homeStepGetPlan, description: t.homeStepGetPlanSub },
+    { number: "3", title: t.homeStepCookLive, description: t.homeStepCookLiveSub },
+  ];
+
+  return (
+    <section className="rounded-[1.65rem] border border-white/[0.07] bg-white/[0.025] p-4">
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.24em] text-orange-200/70">{t.homeHowItWorks}</p>
+          <p className="mt-1 text-sm font-semibold leading-relaxed text-slate-200">{t.homeHowItWorksFlow}</p>
+        </div>
+      </div>
+      <div className="mt-3 grid gap-2.5 sm:grid-cols-3">
+        {steps.map((step) => (
+          <div key={step.number} className="rounded-2xl border border-white/10 bg-black/25 p-3">
+            <div className="flex items-center gap-2">
+              <span className="grid h-6 w-6 place-items-center rounded-full bg-orange-500 text-[11px] font-black text-black">
+                {step.number}
+              </span>
+              <p className="text-sm font-black text-white">{step.title}</p>
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-slate-300/90">{step.description}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+type QuickAction = {
+  id: string;
+  icon: string;
+  title: string;
+  description: string;
+  emphasized?: boolean;
+  onClick: () => void;
+};
+
+function HomeQuickActions({
+  title,
+  actions,
+}: {
+  title: string;
+  actions: QuickAction[];
+}) {
+  return (
+    <section className="rounded-[1.65rem] border border-white/[0.07] bg-white/[0.03] p-4 backdrop-blur">
+      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/32">{title}</p>
+      <div className="mt-3 grid gap-2.5">
+        {actions.map((action) => (
+          <button
+            key={action.id}
+            type="button"
+            onClick={action.onClick}
+            className={`w-full touch-manipulation rounded-2xl border px-3.5 py-3 text-left transition-all duration-200 active:scale-[0.98] ${
+              action.emphasized
+                ? "border-orange-300/30 bg-orange-500/8 hover:border-orange-300/45 hover:bg-orange-500/12"
+                : "border-white/10 bg-black/25 hover:border-white/20 hover:bg-white/[0.05]"
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              <span className="pt-0.5 text-lg" aria-hidden>{action.icon}</span>
+              <div className="min-w-0">
+                <p className="text-sm font-black text-white">{action.title}</p>
+                <p className="mt-0.5 text-xs leading-relaxed text-slate-300/90">{action.description}</p>
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function HomeValueCards({ t }: { t: AppText }) {
+  const cards = [
+    { icon: "⏱️", title: t.homeChipTiming, description: t.homeValueTimingSub },
+    { icon: "🔥", title: t.homeValueZonesTitle, description: t.homeValueZonesSub },
+    { icon: "🛡️", title: t.homeValueMistakesTitle, description: t.homeValueMistakesSub },
+    { icon: "📋", title: t.homeLiveCooking, description: t.homeValueLiveSub },
+  ];
+
+  return (
+    <section className="rounded-[1.65rem] border border-white/[0.07] bg-white/[0.025] p-4">
+      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/35">{t.homeValueTitle}</p>
+      <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+        {cards.map((card) => (
+          <div key={card.title} className="rounded-2xl border border-white/10 bg-black/25 px-3.5 py-3">
+            <p className="text-[11px] font-black uppercase tracking-[0.14em] text-orange-200/90">
+              <span aria-hidden>{card.icon}</span> {card.title}
+            </p>
+            <p className="mt-1.5 text-xs leading-relaxed text-slate-300/90">{card.description}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function HomeRecipePositioning({ t }: { t: AppText }) {
+  return (
+    <section className="rounded-[1.65rem] border border-orange-300/12 bg-orange-500/[0.045] p-4">
+      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-orange-200/75">{t.homeNotRecipeKicker}</p>
+      <h2 className="mt-2 text-lg font-black tracking-[-0.02em] text-white">{t.homeNotRecipeTitle}</h2>
+      <p className="mt-1.5 text-sm leading-relaxed text-slate-300">{t.homeNotRecipeSub}</p>
+    </section>
+  );
+}
+
+function HomeTrustStrip({ t }: { t: AppText }) {
+  const claims = [t.homeTrustClaimLocal, t.homeTrustClaimLive, t.homeTrustClaimNoGuesswork];
+
+  return (
+    <section className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+      <div className="flex flex-wrap gap-2">
+        {claims.map((claim) => (
+          <span
+            key={claim}
+            className="rounded-full border border-white/12 bg-black/30 px-3 py-1 text-[11px] font-semibold text-slate-300"
+          >
+            {claim}
+          </span>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ─── Settings strip ───────────────────────────────────────────────────────────
+
+function HomeSettingsStrip({
+  t,
+  lang,
+  onLangChange,
+}: {
+  t: AppText;
+  lang: Lang;
+  onLangChange: (lang: Lang) => void;
+}) {
+  return (
+    <section className="flex items-center justify-between gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 sm:px-5">
+      <div className="min-w-0">
+        <p className="truncate text-[10px] font-black uppercase tracking-[0.18em] text-white/62">
+          {t.homeSettingsKicker}
+        </p>
+        <p className="mt-0.5 truncate text-[11px] font-medium text-slate-500">
+          {t.homeSettingsSub}
+        </p>
+      </div>
+
+      <select
+        value={lang}
+        onChange={(e) => onLangChange(e.target.value as Lang)}
+        className="min-h-9 shrink-0 rounded-xl border border-white/10 bg-black/40 px-2.5 text-xs font-bold text-slate-200 outline-none transition focus:border-orange-400/60"
+      >
+        <option value="es">🇪🇸 {t.homeLangSpanish}</option>
+        <option value="en">🇬🇧 {t.homeLangEnglish}</option>
+        <option value="fi">🇫🇮 {t.homeLangFinnish}</option>
+      </select>
+    </section>
+  );
+}
+
+// ─── HomeScreen ───────────────────────────────────────────────────────────────
+
+// ─── Ripple transition state ──────────────────────────────────────────────────
+
+type RippleState = { x: number; y: number; id: number } | null;
+
 export function HomeScreen({
   lang,
   onLangChange,
   savedMenusCount,
   onModeChange,
+  onPrimaryCtaClick,
+  onPopularCutSelect,
   t,
 }: {
   lang: Lang;
   onLangChange: (lang: Lang) => void;
   savedMenusCount: number;
   onModeChange: (mode: Mode) => void;
+  onPrimaryCtaClick?: () => void;
+  onPopularCutSelect?: (cut: {
+    animal: Animal;
+    cutId: string;
+    doneness?: string;
+    thickness?: string;
+  }) => void;
   t: AppText;
 }) {
-  const [heroImageFailed, setHeroImageFailed] = useState(false);
+  const router = useRouter();
 
-  const featureCards = [
+  // Radial ripple that plays on tap then resolves into the cooking screen
+  const [ripple, setRipple] = useState<RippleState>(null);
+  const [hasActiveLivePlan] = useState(() => Boolean(readLiveCookingPayload()));
+
+  function fireRipple(x: number, y: number, action: () => void) {
+    setRipple({ x, y, id: Date.now() });
+    // Fire the action mid-animation (feels instant to the user)
+    setTimeout(action, 150);
+  }
+
+  const popularCuts: PopularCut[] = [
     {
-      description: "Un paso cada vez, con avisos y temporizadores.",
-      emoji: "⏱️",
-      image: "/images/pescado/salmon-cooked.webp",
-      mode: "coccion" as const,
-      priority: "GUÍA EN VIVO",
-      stat: "Sin pensar",
-      title: "Live Cooking",
+      label: t.homePopularRibeye,
+      animal: "beef",
+      cutId: "ribeye",
+      doneness: "medium_rare",
+      thickness: "2",
     },
     {
-      description: "Organiza tiempos para varias piezas.",
-      emoji: "🔥",
-      image: "/images/verduras/pimientos.webp",
-      mode: "plan" as const,
-      priority: "PARRILLADAS",
-      stat: "Timing claro",
-      title: "Parrilladas",
+      label: t.homePopularPicanha,
+      animal: "beef",
+      cutId: "picanha",
+      doneness: "medium_rare",
+      thickness: "2",
+    },
+    {
+      label: t.homePopularChickenBreast,
+      animal: "chicken",
+      cutId: "chicken_breast",
+      doneness: "safe",
+      thickness: "2",
+    },
+    {
+      label: t.homePopularSalmon,
+      animal: "fish",
+      cutId: "salmon_fillet",
+      doneness: "medium",
+      thickness: "2",
+    },
+    {
+      label: t.homePopularAsparagus,
+      animal: "vegetables",
+      cutId: "asparagus",
     },
   ];
 
+  function openPopularCut(cut: PopularCut) {
+    if (onPopularCutSelect) {
+      onPopularCutSelect({
+        animal: cut.animal,
+        cutId: cut.cutId,
+        doneness: cut.doneness,
+        thickness: cut.thickness,
+      });
+      return;
+    }
+
+    router.push(
+      buildCookingDetailsUrl({
+        animal: cut.animal,
+        cutId: cut.cutId,
+        doneness: cut.doneness,
+        thickness: cut.thickness,
+        lang,
+      }),
+    );
+  }
+
+  const savedPlansLabel = useMemo(() => {
+    if (savedMenusCount === 1) return `1 ${t.homeSavedPlanSingular}`;
+    return `${savedMenusCount} ${t.homeSavedPlanPlural}`;
+  }, [savedMenusCount, t.homeSavedPlanPlural, t.homeSavedPlanSingular]);
+
+  const quickActions = useMemo<QuickAction[]>(() => {
+    const actions: QuickAction[] = [
+      {
+        id: "plan-bbq",
+        icon: "🧭",
+        title: t.homeParrillada,
+        description: t.homeParrilladaSub,
+        onClick: () => onModeChange("plan"),
+      },
+    ];
+
+    if (savedMenusCount > 0) {
+      actions.push({
+        id: "saved-plans",
+        icon: "⭐",
+        title: t.homeSaved,
+        description: savedPlansLabel,
+        onClick: () => onModeChange("guardados"),
+      });
+    }
+
+    if (hasActiveLivePlan) {
+      actions.unshift({
+        id: "continue-live",
+        icon: "⏱️",
+        title: t.homeLiveCooking,
+        description: t.homeLiveCookingSub,
+        emphasized: true,
+        onClick: () => router.push(buildLiveUrl({ lang })),
+      });
+    }
+
+    return actions;
+  }, [
+    hasActiveLivePlan,
+    lang,
+    onModeChange,
+    router,
+    savedMenusCount,
+    savedPlansLabel,
+    t.homeLiveCooking,
+    t.homeLiveCookingSub,
+    t.homeParrillada,
+    t.homeParrilladaSub,
+    t.homeSaved,
+  ]);
+
   return (
-    <div className="mx-auto w-full max-w-none overflow-x-hidden space-y-4 sm:space-y-6 lg:space-y-7 xl:space-y-8">
-      <section className="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:items-stretch lg:gap-6 xl:gap-8">
-        <Panel
-          className="relative min-h-[340px] overflow-hidden p-5 shadow-2xl shadow-orange-950/20 sm:min-h-[380px] sm:p-7 lg:col-span-7 lg:min-h-[520px] lg:p-8 xl:min-h-[580px]"
-          tone="hero"
+    <>
+      {/* ── Ignition transition overlay ────────────────────────────────────────
+          Two layers anchored at tap origin:
+            · spark  — bright white/amber inner flash (180ms, fast)
+            · bloom  — warm orange fire spread  (280ms, slower)
+          pointer-events-none: never blocks navigation or re-taps.
+          onAnimationEnd on the bloom (longer layer) clears the state.      */}
+      {ripple && (
+        <div
+          key={ripple.id}
+          className="pointer-events-none fixed inset-0 z-[60] overflow-hidden"
+          aria-hidden
         >
-          {!heroImageFailed && (
-            <Image
-              src="/images/vacuno/ribeye-cooked.webp"
-              alt=""
-              fill
-              priority
-              sizes="(min-width: 1024px) 50vw, 100vw"
-              className="object-cover"
-              onError={() => setHeroImageFailed(true)}
-            />
-          )}
-          {heroImageFailed && (
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_15%,rgba(255,106,0,0.26),transparent_34%),linear-gradient(145deg,#18181b,#020202)]" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/68 to-black/10" />
-          <div className="pointer-events-none absolute -left-16 -top-20 h-52 w-52 rounded-full bg-orange-500/18 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-28 right-8 h-56 w-56 rounded-full bg-red-500/12 blur-3xl" />
-
-          <FadeInSection>
-            <div className="relative z-10 flex min-h-[300px] flex-col justify-end gap-5 sm:min-h-[330px] lg:min-h-[456px] xl:min-h-[512px]">
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge className="uppercase tracking-[0.16em] sm:tracking-[0.2em]">
-                    Parrillero Pro
-                  </Badge>
-                </div>
-
-                <h1 className="mt-4 max-w-2xl text-[clamp(2.1rem,10vw,4.2rem)] font-black leading-[0.94] tracking-[-0.065em] text-white sm:mt-5 sm:text-5xl lg:text-6xl xl:text-7xl">
-                  <span className="block">Cocina mejor,</span>
-                  <span className="block text-orange-300">sin improvisar</span>
-                </h1>
-                <p className="mt-3 max-w-md text-[15px] font-medium leading-6 text-slate-200 sm:max-w-lg sm:text-base sm:leading-7">
-                  Parrillero Pro te guía con cortes, fuego y tiempos claros.
-                </p>
-
-                <div className="mt-5 flex flex-wrap gap-3">
-                  <Button
-                    className="min-h-[46px] touch-manipulation rounded-2xl px-5 py-3 text-sm font-black shadow-xl shadow-orange-500/25 transition-all duration-200 active:scale-[0.97] active:brightness-95 sm:min-h-[50px] sm:px-6 sm:text-base"
-                    onClick={() => onModeChange("coccion")}
-                  >
-                    Empezar <span aria-hidden="true">→</span>
-                  </Button>
-                  {savedMenusCount > 0 && (
-                    <Button
-                      className="min-h-[46px] rounded-2xl px-5 py-3 text-sm font-black"
-                      onClick={() => onModeChange("guardados")}
-                      variant="secondary"
-                    >
-                      Ver guardados
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </FadeInSection>
-        </Panel>
-
-        <div className="hidden lg:col-span-5 lg:block">
-          <HomePreviewPanel
-            onOpenSaved={() => onModeChange("guardados")}
-            savedMenusCount={savedMenusCount}
-            t={t}
+          {/* Inner spark — white/amber flash */}
+          <div
+            className="animate-ignition-spark absolute rounded-full"
+            style={{
+              left: ripple.x,
+              top: ripple.y,
+              width: 8,
+              height: 8,
+              background:
+                "radial-gradient(circle, rgba(255,255,200,0.98) 0%, rgba(255,190,50,0.85) 35%, rgba(255,120,0,0.40) 70%, transparent 100%)",
+            }}
+          />
+          {/* Outer bloom — orange fire spread */}
+          <div
+            className="animate-ignition-bloom absolute rounded-full"
+            style={{
+              left: ripple.x,
+              top: ripple.y,
+              width: 8,
+              height: 8,
+              background:
+                "radial-gradient(circle, rgba(255,140,0,0.88) 0%, rgba(249,115,22,0.65) 30%, rgba(234,88,12,0.28) 65%, transparent 100%)",
+            }}
+            onAnimationEnd={() => setRipple(null)}
           />
         </div>
-      </section>
-
-      <section className="space-y-3 sm:space-y-4">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-12 lg:gap-6 xl:gap-8">
-          {featureCards.map((card) => (
-            <HomeCard
-              key={card.mode}
-              description={card.description}
-              emoji={card.emoji}
-              image={card.image}
-              onClick={() => onModeChange(card.mode)}
-              priority={card.priority}
-              stat={card.stat}
-              title={card.title}
-            />
-          ))}
-        </div>
-      </section>
-
-      <HomeSettingsStrip lang={lang} onLangChange={onLangChange} />
-    </div>
-  );
-}
-
-function HomeSettingsStrip({
-  lang,
-  onLangChange,
-}: {
-  lang: Lang;
-  onLangChange: (lang: Lang) => void;
-}) {
-  return (
-    <section className="mb-24 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.05] px-3.5 py-3 shadow-lg shadow-black/10 backdrop-blur sm:px-4 lg:mb-0">
-      <div className="min-w-0">
-        <p className="truncate text-[11px] font-black uppercase tracking-[0.16em] text-white/85">
-          IA Parrillero Pro
-        </p>
-        <p className="mt-0.5 truncate text-xs font-medium text-slate-400">
-          Como un chef profesional, pero sin pensar.
-        </p>
-      </div>
-
-      <select
-        value={lang}
-        onChange={(event) => onLangChange(event.target.value as Lang)}
-        className="min-h-9 shrink-0 rounded-xl border border-white/10 bg-black/35 px-2.5 text-xs font-bold text-slate-200 outline-none transition focus:border-orange-400/60"
-      >
-        <option value="es">🇪🇸 Español</option>
-        <option value="en">🇬🇧 English</option>
-        <option value="fi">🇫🇮 Suomi</option>
-      </select>
-    </section>
-  );
-}
-
-function HomePreviewPanel({
-  onOpenSaved,
-  savedMenusCount,
-  t,
-}: {
-  onOpenSaved: () => void;
-  savedMenusCount: number;
-  t: AppText;
-}) {
-  const timeline = [
-    { time: "17:10", title: "Sellado fuerte", zone: "Directo" },
-    { time: "17:22", title: "Indirecto controlado", zone: "Zona media" },
-    { time: "17:45", title: "Reposo y servicio", zone: "Mesa" },
-  ];
-
-  return (
-    <Panel className="relative h-full min-h-[420px] overflow-hidden p-5 sm:p-6 lg:min-h-[520px] xl:min-h-[580px]" tone="result">
-      <div className="pointer-events-none absolute right-0 top-0 h-40 w-40 rounded-full bg-orange-500/10 blur-3xl" />
-
-      <div className="relative z-10">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <Badge>Plan inteligente</Badge>
-            <h2 className="mt-4 text-2xl font-black tracking-tight text-white">
-              Vista previa del servicio
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-slate-400">
-              Un plan accionable con tiempos, zonas y próximos pasos antes de encender la parrilla.
-            </p>
-          </div>
-          <div className={ds.media.iconBox}>🔥</div>
-        </div>
-
-        <div className="mt-6 space-y-3">
-          {timeline.map((item, index) => (
-            <div
-              key={item.time}
-              className="relative flex gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3"
-            >
-              <div className="flex h-12 w-14 shrink-0 items-center justify-center rounded-xl bg-orange-500/10 text-sm font-bold text-orange-200">
-                {item.time}
-              </div>
-              <div className="min-w-0">
-                <p className="font-semibold text-white">{item.title}</p>
-                <p className="mt-1 text-sm text-slate-400">{item.zone}</p>
-              </div>
-              {index === 0 && (
-                <Badge className="ml-auto h-fit" tone="success">
-                  Ahora
-                </Badge>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-            <p className="text-3xl font-black text-white">{savedMenusCount}</p>
-            <p className="mt-1 text-sm text-slate-400">{t.savedMenus}</p>
-          </div>
-          <button
-            onClick={onOpenSaved}
-            className="rounded-2xl border border-orange-500/30 bg-orange-500/10 p-4 text-left transition hover:bg-orange-500/15 active:scale-[0.99]"
-          >
-            <p className="font-semibold text-orange-200">{t.savedMenus}</p>
-            <p className="mt-1 text-sm text-slate-400">Abrir biblioteca</p>
-          </button>
-        </div>
-      </div>
-    </Panel>
-  );
-}
-
-function HomeCard({
-  description,
-  emoji,
-  image,
-  onClick,
-  priority,
-  stat,
-  title,
-}: {
-  description: string;
-  emoji: string;
-  image: string;
-  onClick: () => void;
-  priority: string;
-  stat: string;
-  title: string;
-}) {
-  const [imageFailed, setImageFailed] = useState(false);
-  const showImage = Boolean(image) && !imageFailed;
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="group relative min-h-[156px] touch-manipulation overflow-hidden rounded-3xl border border-white/10 bg-zinc-950 p-4 text-left shadow-2xl shadow-black/30 transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-300/35 active:scale-[0.98] active:brightness-[0.98] sm:min-h-[178px] sm:p-5 lg:col-span-6 lg:min-h-[280px] xl:min-h-[320px]"
-    >
-      {!showImage && (
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_12%,rgba(255,106,0,0.26),transparent_34%),linear-gradient(145deg,#18181b,#020202)]" />
       )}
-      {showImage && (
-        <Image
-          src={image}
-          alt=""
-          fill
-          sizes="(min-width: 640px) 50vw, 100vw"
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
-          onError={() => setImageFailed(true)}
+
+    <div className="mx-auto min-w-0 w-full max-w-2xl space-y-3 overflow-x-hidden pb-4 sm:space-y-4 sm:pb-6 lg:max-w-3xl lg:pb-6">
+      {/* ── Hero ──────────────────────────────────────────────────────────── */}
+      <FadeIn>
+        <HeroSection
+          t={t}
+          onStartCooking={(e) =>
+            fireRipple(e.clientX, e.clientY, () => (onPrimaryCtaClick ? onPrimaryCtaClick() : onModeChange("coccion")))
+          }
+          onPlanBbq={() => onModeChange("plan")}
         />
-      )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/10" />
-      <div className="pointer-events-none absolute -right-12 -top-14 h-36 w-36 rounded-full bg-orange-400/20 blur-3xl" />
+      </FadeIn>
 
-      <div className="relative z-10 flex h-full min-h-[124px] flex-col justify-between sm:min-h-[138px] lg:min-h-[240px] xl:min-h-[278px]">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-orange-400/25 bg-black/35 text-2xl shadow-lg shadow-black/30 backdrop-blur">
-          {emoji}
-          </div>
-          <Badge className="max-w-[145px] shrink-0 truncate bg-black/35 backdrop-blur" tone="accent">
-            {stat}
-          </Badge>
-        </div>
+      <FadeIn delay={40}>
+        <HomeHowItWorksStrip t={t} />
+      </FadeIn>
 
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-300/95 sm:text-[11px]">
-            {priority}
-          </p>
-          <h2 className="mt-1 text-2xl font-black leading-tight tracking-tight text-white sm:text-3xl">
-            {title}
-          </h2>
-          <p className="mt-1.5 line-clamp-2 max-w-xl text-sm font-medium leading-5 text-slate-200">
-            {description}
-          </p>
+      <FadeIn delay={70}>
+        <HomeQuickActions title={t.homeActionsTitle} actions={quickActions} />
+      </FadeIn>
 
-          <div className="mt-3 flex items-center justify-between text-sm font-black text-orange-200">
-            <span>Abrir</span>
-            <span className="flex h-8 w-8 items-center justify-center rounded-full border border-orange-300/25 bg-orange-500/20 shadow-lg shadow-orange-500/20 transition-all duration-200 group-hover:translate-x-1 group-hover:bg-orange-500/25">
-              →
-            </span>
-          </div>
-        </div>
-      </div>
-    </button>
+      {/* ── Popular cuts ───────────────────────────────────────────────────── */}
+      <FadeIn delay={100}>
+        <PopularCuts
+          cuts={popularCuts}
+          title={t.homePopularCutsTitle}
+          subtitle={t.homePopularCutsSub}
+          onSelect={(cut, e) => fireRipple(e.clientX, e.clientY, () => openPopularCut(cut))}
+        />
+      </FadeIn>
+
+      <FadeIn delay={130}>
+        <HomeRecipePositioning t={t} />
+      </FadeIn>
+
+      <FadeIn delay={160}>
+        <HomeValueCards t={t} />
+      </FadeIn>
+
+      <FadeIn delay={190}>
+        <HomeTrustStrip t={t} />
+      </FadeIn>
+
+      {/* ── Settings strip ─────────────────────────────────────────────────── */}
+      <FadeIn delay={220}>
+        <HomeSettingsStrip t={t} lang={lang} onLangChange={onLangChange} />
+      </FadeIn>
+    </div>
+    </>
   );
 }

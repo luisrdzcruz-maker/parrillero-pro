@@ -8,6 +8,7 @@ export function formatTitle(title: string) {
     PASOS: "🧠 Pasos",
     STEPS: "🧠 Steps",
     ERROR: "⚠️ Error clave",
+    "KEY ERROR": "⚠️ Key error",
     MENU: "🍽️ Menú",
     CANTIDADES: "📊 Cantidades",
     QUANTITIES: "📊 Quantities",

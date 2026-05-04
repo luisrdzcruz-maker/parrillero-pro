@@ -16,6 +16,7 @@ import {
   getCutsByAnimal,
   getDonenessOptions,
 } from "../lib/cookingEngine";
+import { normalizeCookingOutput } from "../lib/normalization/normalizeCookingOutput";
 
 const THICKNESS_CM = {
   thin: "2",
@@ -44,22 +45,23 @@ type Failure = {
 
 function validatePlan(plan: CookingPlan | null): string | null {
   if (plan == null) return "plan is null";
+  const normalized = normalizeCookingOutput(plan);
 
-  if (!("SETUP" in plan) || !String(plan.SETUP).trim()) {
+  if (!("SETUP" in normalized) || !String(normalized.SETUP).trim()) {
     return "missing or empty SETUP";
   }
 
-  const times = plan.TIEMPOS ?? plan.TIMES;
+  const times = normalized.TIEMPOS ?? normalized.TIMES ?? normalized.times;
   if (!times || !String(times).trim()) {
     return "missing or empty TIEMPOS/TIMES";
   }
 
-  const temp = plan.TEMPERATURA ?? plan.TEMPERATURE;
+  const temp = normalized.TEMPERATURA ?? normalized.TEMPERATURE ?? normalized.temperature;
   if (!temp || !String(temp).trim()) {
     return "missing or empty TEMPERATURA/TEMPERATURE";
   }
 
-  const stepsText = plan.PASOS ?? plan.STEPS;
+  const stepsText = normalized.PASOS ?? normalized.STEPS ?? normalized.steps;
   if (!stepsText || !String(stepsText).trim()) {
     return "missing or empty PASOS/STEPS";
   }
@@ -104,10 +106,51 @@ function donenessListForAnimal(animalId: AnimalId): string[] {
   return ["medium"];
 }
 
+function validateLanguageRegression(): string | null {
+  const esInput: CookingInput = {
+    animal: "Vacuno",
+    cut: "entrecote",
+    weightKg: WEIGHT_KG,
+    thicknessCm: THICKNESS_CM.medium,
+    doneness: "medium_rare",
+    equipment: "parrilla gas",
+    language: "es",
+  };
+  const enInput: CookingInput = {
+    ...esInput,
+    animal: "Beef",
+    language: "en",
+  };
+
+  const esPlan = generateCookingPlan(esInput);
+  const enPlan = generateCookingPlan(enInput);
+
+  if (!esPlan) return "language regression: Spanish plan is null";
+  if (!enPlan) return "language regression: English plan is null";
+
+  if (!esPlan.TIEMPOS || !esPlan.TEMPERATURA || !esPlan.PASOS) {
+    return "language regression: Spanish plan is missing TIEMPOS/TEMPERATURA/PASOS";
+  }
+
+  if (!enPlan.TIMES || !enPlan.TEMPERATURE || !enPlan.STEPS) {
+    return "language regression: English plan is missing TIMES/TEMPERATURE/STEPS";
+  }
+
+  const englishJoined = Object.keys(enPlan).join(" ").toUpperCase();
+  const bannedSpanishHeadings = ["PASOS", "TIEMPOS", "TEMPERATURA", "COMPRA"];
+  const leakedHeading = bannedSpanishHeadings.find((heading) => englishJoined.includes(heading));
+  if (leakedHeading) {
+    return `language regression: English plan leaked Spanish heading "${leakedHeading}"`;
+  }
+
+  return null;
+}
+
 function main() {
   const failures: Failure[] = [];
   let total = 0;
   let passed = 0;
+  const languageRegressionError = validateLanguageRegression();
 
   for (const animal of animalCatalog) {
     const animalLabel = animal.names.es;
@@ -174,6 +217,12 @@ function main() {
       );
     }
 
+    process.exitCode = 1;
+  }
+
+  if (languageRegressionError) {
+    console.log("Language regression:");
+    console.log(`- ${languageRegressionError}`);
     process.exitCode = 1;
   }
 }

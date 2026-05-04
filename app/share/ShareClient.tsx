@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { detectSetupFromText, getSetupVisual } from "@/lib/setupVisualMap";
 
 type ResultBlock = {
   title: string;
@@ -86,207 +88,247 @@ function getResultBlocks(searchParams: URLSearchParams) {
     .filter((block) => block.content.length > 0);
 }
 
-function SummaryItem({ label, value }: { label: string; value: string }) {
+function normalizeTitle(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function compactText(value: string, maxLength = 72) {
+  const clean = value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join(" · ");
+
+  return clean.length > maxLength ? `${clean.slice(0, maxLength - 3).trim()}...` : clean;
+}
+
+function findBlock(blocks: ResultBlock[], titles: string[]) {
+  return blocks.find((block) => {
+    const title = normalizeTitle(block.title);
+    return titles.some((candidate) => title.includes(candidate));
+  });
+}
+
+function getBlockMetric(blocks: ResultBlock[], titles: string[], maxLength = 64) {
+  const block = findBlock(blocks, titles);
+  return block ? compactText(block.content, maxLength) : "";
+}
+
+function getShareHighlights(blocks: ResultBlock[]) {
+  const priority = [
+    "setup",
+    "configuracion",
+    "tiempos",
+    "times",
+    "temperatura",
+    "temperature",
+    "pasos",
+    "steps",
+    "consejo",
+    "error",
+  ];
+
+  return blocks
+    .filter((block) => {
+      const title = normalizeTitle(block.title);
+      return priority.some((candidate) => title.includes(candidate));
+    })
+    .slice(0, 3);
+}
+
+function hasSetupSignal(value: string) {
+  return /(reverse sear|reverse-sear|sellado inverso|two zone|two-zone|dos zonas|directo|direct heat|indirecto|indirect|low and slow|ahumado|sarten|horno|oven|pan)/i.test(
+    value,
+  );
+}
+
+function MetricPill({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/10">
-      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-300">{label}</p>
-      <p className="mt-2 text-sm font-semibold text-white">{value || "No especificado"}</p>
+    <div className="rounded-2xl border border-white/10 bg-white/[0.055] p-3 shadow-lg shadow-black/15 ring-1 ring-inset ring-white/[0.03]">
+      <p className="text-[9px] font-black uppercase tracking-[0.22em] text-orange-300/90">{label}</p>
+      <p className="mt-1.5 line-clamp-2 text-sm font-black leading-snug text-white">{value}</p>
     </div>
   );
 }
 
-function ResultBlockCard({ block }: { block: ResultBlock }) {
-  const lines = block.content
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
+function HighlightCard({ block }: { block: ResultBlock }) {
+  const text = compactText(block.content, 150);
 
   return (
-    <article className="overflow-hidden rounded-[1.5rem] border border-white/10 bg-slate-900/80 shadow-xl shadow-black/20">
-      <div className="border-b border-white/5 bg-white/[0.03] px-4 py-3">
-        <h2 className="text-sm font-black tracking-wide text-white">{block.title}</h2>
-      </div>
-      <div className="space-y-2 p-4 text-sm leading-6 text-slate-300">
-        {lines.length > 0 ? lines.map((line) => <p key={line}>{line}</p>) : <p>{block.content}</p>}
-      </div>
+    <article className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 shadow-lg shadow-black/15">
+      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300">
+        {block.title}
+      </p>
+      <p className="mt-2 text-sm font-medium leading-6 text-slate-200">{text}</p>
     </article>
   );
 }
 
 export default function ShareClient() {
   const searchParams = useSearchParams();
-  const [shareStatus, setShareStatus] = useState<"idle" | "sharing" | "shared" | "copied">("idle");
 
   const animal = getFirstParam(searchParams, ["animal", "animalId"]);
   const cut = getFirstParam(searchParams, ["cut", "cutId"]);
   const method = getFirstParam(searchParams, ["method", "setup"]);
   const people = getFirstParam(searchParams, ["people", "personas"]);
-  const language = getFirstParam(searchParams, ["lang", "language"]);
   const doneness = getFirstParam(searchParams, ["doneness", "point", "punto"]);
   const thickness = getFirstParam(searchParams, ["thickness", "grosor"]);
+  const equipment = getFirstParam(searchParams, ["equipment", "grill", "parrilla"]);
   const blocks = useMemo(() => getResultBlocks(searchParams), [searchParams]);
   const hasAnyContent = Boolean(
-    animal || cut || method || people || language || doneness || thickness || blocks.length,
+    animal || cut || method || people || doneness || thickness || equipment || blocks.length,
   );
+  const setupBlock = findBlock(blocks, ["setup", "configuracion"]);
+  const setupText = [method, setupBlock?.content].filter(Boolean).join("\n");
+  const shouldShowSetupVisual = hasSetupSignal(setupText);
+  const setupVisual = shouldShowSetupVisual
+    ? getSetupVisual(equipment || undefined, detectSetupFromText(setupText))
+    : "";
+  const heroTitle = [animal, cut].filter(Boolean).join(" · ") || "Plan de parrilla";
+  const heroSubtitle = method || getBlockMetric(blocks, ["setup", "configuracion"], 82);
+  const time = getFirstParam(searchParams, ["time", "cookTime", "totalTime"]) || getBlockMetric(blocks, ["tiempos", "times"]);
+  const temperature =
+    getFirstParam(searchParams, ["targetTemp", "temp", "temperature", "temperatura"]) ||
+    getBlockMetric(blocks, ["temperatura", "temperature"]);
+  const highlights = getShareHighlights(blocks);
+  const currentUrl = typeof window !== "undefined" ? window.location.href : "";
 
   const shareText = [
     "Parrillero Pro",
-    "Plan de parrilla compartido",
-    animal || cut ? `${animal || "Producto"}${cut ? ` · ${cut}` : ""}` : "",
+    heroTitle,
+    heroSubtitle,
+    time ? `Tiempo: ${time}` : "",
+    temperature ? `Temperatura: ${temperature}` : "",
   ]
     .filter(Boolean)
     .join("\n");
 
-  async function copyCurrentUrl() {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      setShareStatus("copied");
-      window.setTimeout(() => setShareStatus("idle"), 2200);
-    } catch {
-      // Clipboard failures should not block reading the shared plan.
-    }
-  }
-
-  async function nativeShare() {
-    setShareStatus("sharing");
-
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: "Parrillero Pro",
-          text: shareText,
-          url: window.location.href,
-        });
-        setShareStatus("shared");
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        setShareStatus("copied");
-      }
-
-      window.setTimeout(() => setShareStatus("idle"), 2200);
-    } catch {
-      setShareStatus("idle");
-    }
-  }
-
-  const whatsAppUrl = `https://wa.me/?text=${encodeURIComponent(`${shareText}\n\n${typeof window !== "undefined" ? window.location.href : ""}`)}`;
+  const whatsAppUrl = `https://wa.me/?text=${encodeURIComponent(`${shareText}${currentUrl ? `\n\n${currentUrl}` : ""}`)}`;
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(249,115,22,0.2),transparent_32%),#020617] px-4 py-6 text-slate-100 sm:py-10">
-      <div className="mx-auto max-w-3xl">
-        <section className="overflow-hidden rounded-[2rem] border border-orange-400/20 bg-slate-950/80 shadow-[0_30px_100px_rgba(249,115,22,0.12)]">
-          <div className="relative min-h-72 p-5 sm:p-7">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(251,146,60,0.28),transparent_34%),linear-gradient(to_top,rgba(2,6,23,0.98),rgba(15,23,42,0.72),rgba(255,255,255,0.06))]" />
-            <div className="relative">
-              <p className="inline-flex rounded-full border border-orange-400/25 bg-orange-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">
-                Plan compartido
-              </p>
-              <h1 className="mt-5 text-4xl font-black tracking-tight text-white sm:text-5xl">
-                Parrillero Pro
-              </h1>
-              <p className="mt-3 text-lg font-semibold text-orange-100">
-                Plan de parrilla compartido
-              </p>
-              <p className="mt-3 max-w-xl text-sm leading-6 text-slate-300">
-                Abre este plan, revisa el setup y crea tu propia versión para la próxima parrilla.
-              </p>
-
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href="/"
-                  className="rounded-2xl bg-orange-500 px-5 py-3 text-center text-sm font-black text-black shadow-lg shadow-orange-500/20 transition active:scale-[0.98]"
-                >
-                  Crear mi propio plan
-                </Link>
-                <button
-                  onClick={nativeShare}
-                  disabled={shareStatus === "sharing"}
-                  className="rounded-2xl border border-white/10 bg-white/10 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/15 active:scale-[0.98] disabled:opacity-60"
-                >
-                  {shareStatus === "sharing" ? "Compartiendo..." : "Compartir"}
-                </button>
-              </div>
-
-              {shareStatus !== "idle" && shareStatus !== "sharing" && (
-                <p className="mt-3 text-sm font-semibold text-emerald-300">
-                  {shareStatus === "shared" ? "Compartido correctamente." : "Enlace copiado."}
-                </p>
-              )}
-            </div>
-          </div>
-        </section>
-
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(249,115,22,0.22),transparent_30%),linear-gradient(180deg,#020617_0%,#0f172a_48%,#020617_100%)] px-4 py-5 text-slate-100 sm:py-8">
+      <div className="mx-auto max-w-[560px]">
         {!hasAnyContent ? (
-          <section className="mt-5 rounded-[2rem] border border-dashed border-white/15 bg-white/[0.03] p-6 text-center">
-            <h2 className="text-xl font-black text-white">No encontramos datos del plan</h2>
+          <section className="rounded-[2rem] border border-dashed border-white/15 bg-slate-950/85 p-7 text-center shadow-[0_30px_100px_rgba(0,0,0,0.35)]">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl border border-orange-400/20 bg-orange-500/12 text-2xl shadow-lg shadow-orange-500/10">
+              P
+            </div>
+            <h1 className="mt-5 text-3xl font-black tracking-tight text-white">Plan no disponible</h1>
             <p className="mt-2 text-sm leading-6 text-slate-400">
-              El enlace puede estar incompleto o haber sido modificado. Puedes crear un plan nuevo
-              en segundos.
+              El enlace puede estar incompleto. Puedes abrir Parrillero Pro y crear uno nuevo en segundos.
             </p>
             <Link
               href="/"
-              className="mt-5 inline-flex rounded-2xl bg-orange-500 px-5 py-3 text-sm font-black text-black"
+              className="mt-6 inline-flex min-h-[52px] items-center rounded-2xl bg-gradient-to-r from-orange-400 to-orange-600 px-6 text-sm font-black text-black shadow-lg shadow-orange-500/25 transition active:scale-[0.98]"
             >
-              Crear mi propio plan
+              Open Parrillero Pro
             </Link>
           </section>
         ) : (
           <>
-            <section className="mt-5 grid gap-3 sm:grid-cols-2">
-              <SummaryItem
-                label="Animal / corte"
-                value={[animal, cut].filter(Boolean).join(" · ")}
-              />
-              <SummaryItem label="Personas" value={people} />
-              <SummaryItem label="Método" value={method} />
-              <SummaryItem label="Idioma" value={language} />
-              <SummaryItem label="Punto" value={doneness} />
-              <SummaryItem label="Grosor" value={thickness ? `${thickness} cm` : ""} />
+            <section className="overflow-hidden rounded-[2.25rem] border border-orange-300/25 bg-[radial-gradient(circle_at_14%_0%,rgba(251,146,60,0.34),transparent_33%),linear-gradient(145deg,rgba(15,23,42,0.98),rgba(2,6,23,0.98)_58%,rgba(67,20,7,0.78))] shadow-[0_34px_120px_rgba(249,115,22,0.16)] ring-1 ring-inset ring-white/[0.05]">
+              <div className="relative p-5 sm:p-7">
+                <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-orange-400/20 blur-3xl" />
+                <div className="pointer-events-none absolute -bottom-20 left-1/3 h-36 w-36 rounded-full bg-amber-300/10 blur-3xl" />
+
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-orange-400/25 bg-orange-500/15 text-xl font-black text-orange-100 shadow-lg shadow-orange-950/20">
+                        P
+                      </div>
+                      <div>
+                        <p className="text-sm font-black text-white">Parrillero Pro</p>
+                        <p className="text-[11px] font-semibold text-slate-400">
+                          Premium cooking card
+                        </p>
+                      </div>
+                    </div>
+                    <p className="rounded-full border border-orange-300/25 bg-orange-500/15 px-3 py-1 text-[9px] font-black uppercase tracking-[0.22em] text-orange-200">
+                      Shared
+                    </p>
+                  </div>
+
+                  <div className="mt-7">
+                    <p className="text-[10px] font-black uppercase tracking-[0.26em] text-orange-300">
+                      Resultado de cocción
+                    </p>
+                    <h1 className="mt-3 text-[clamp(2.4rem,12vw,4.4rem)] font-black leading-[0.92] tracking-[-0.07em] text-white">
+                      {heroTitle}
+                    </h1>
+                    {heroSubtitle && (
+                      <p className="mt-4 text-lg font-bold leading-7 text-orange-100">
+                        {compactText(heroSubtitle, 96)}
+                      </p>
+                    )}
+                  </div>
+
+                  {setupVisual && (
+                    <div className="mt-6 overflow-hidden rounded-[1.75rem] border border-orange-200/20 bg-slate-950 shadow-2xl shadow-black/35 ring-1 ring-inset ring-white/[0.04]">
+                      <div className="relative h-48 sm:h-56">
+                        <Image
+                          src={setupVisual}
+                          alt=""
+                          fill
+                          sizes="(min-width: 640px) 560px, 100vw"
+                          className="h-full w-full object-cover"
+                          priority
+                        />
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_0%,rgba(251,146,60,0.24),transparent_31%),linear-gradient(135deg,rgba(2,6,23,0.84)_0%,rgba(2,6,23,0.38)_42%,rgba(2,6,23,0.1)_100%)]" />
+                        <p className="absolute left-3 top-3 rounded-full border border-white/15 bg-black/45 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-orange-100 backdrop-blur-md">
+                          Setup visual
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="mt-6 grid grid-cols-2 gap-3">
+                    <MetricPill label="Corte" value={compactText([animal, cut].filter(Boolean).join(" · ") || "Personalizado", 54)} />
+                    <MetricPill label="Método" value={compactText(method || heroSubtitle || "Según plan", 54)} />
+                    <MetricPill label="Tiempo" value={compactText(time || "Ver plan", 54)} />
+                    <MetricPill label="Temp" value={compactText(temperature || "Según corte", 54)} />
+                  </div>
+
+                  {(people || doneness || thickness) && (
+                    <p className="mt-5 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm font-bold leading-6 text-slate-200">
+                      {[people ? `${people} personas` : "", doneness, thickness ? `${thickness} cm` : ""]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  )}
+                </div>
+              </div>
             </section>
 
-            <section className="mt-5 grid gap-4">
-              {blocks.length > 0 ? (
-                blocks.map((block) => (
-                  <ResultBlockCard
-                    key={`${block.title}-${block.content.slice(0, 12)}`}
-                    block={block}
-                  />
-                ))
-              ) : (
-                <ResultBlockCard
-                  block={{
-                    title: "Resumen",
-                    content:
-                      "Este enlace contiene la configuración básica del plan. Crea tu propia versión para ver tiempos, setup y pasos completos.",
-                  }}
-                />
-              )}
+            <section className="mt-4 grid grid-cols-2 gap-3">
+              <Link
+                href="/"
+                className="min-h-[54px] rounded-2xl bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 px-4 py-4 text-center text-sm font-black text-black shadow-xl shadow-orange-500/25 transition hover:brightness-110 active:scale-[0.98]"
+              >
+                Open Parrillero Pro
+              </Link>
+              <a
+                href={whatsAppUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="min-h-[54px] rounded-2xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-4 text-center text-sm font-black text-emerald-200 shadow-xl shadow-emerald-950/20 transition hover:bg-emerald-500/15 active:scale-[0.98]"
+              >
+                Share via WhatsApp
+              </a>
             </section>
+
+            {highlights.length > 0 && (
+              <section className="mt-5 grid gap-3">
+                {highlights.map((block) => (
+                  <HighlightCard key={`${block.title}-${block.content.slice(0, 12)}`} block={block} />
+                ))}
+              </section>
+            )}
           </>
         )}
-
-        <section className="mt-5 grid gap-3 rounded-[2rem] border border-white/10 bg-slate-900/70 p-4 sm:grid-cols-3">
-          <button
-            onClick={nativeShare}
-            className="rounded-2xl bg-orange-500 px-4 py-3 text-sm font-black text-black transition active:scale-[0.98]"
-          >
-            Compartir
-          </button>
-          <button
-            onClick={copyCurrentUrl}
-            className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-bold text-white transition hover:bg-white/[0.08] active:scale-[0.98]"
-          >
-            Copiar enlace
-          </button>
-          <a
-            href={whatsAppUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-center text-sm font-bold text-emerald-200 transition hover:bg-emerald-500/15 active:scale-[0.98]"
-          >
-            WhatsApp
-          </a>
-        </section>
       </div>
     </main>
   );

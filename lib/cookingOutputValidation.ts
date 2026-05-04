@@ -1,5 +1,6 @@
 import type { AnimalId, CookingInput, CookingPlan, CookingStep } from "./cookingCatalog";
 import { getCutForInput } from "./cookingRules";
+import { normalizeCookingOutput } from "./normalization/normalizeCookingOutput";
 
 export const COOKING_WARNING_CODES = [
   "plan_null",
@@ -7,6 +8,8 @@ export const COOKING_WARNING_CODES = [
   "plan_section_empty",
   "steps_null",
   "steps_empty",
+  "step_empty_text",
+  "step_duplicate",
   "step_invalid_duration",
   "temperature_missing_numeric",
   "temperature_invalid_pair",
@@ -37,21 +40,51 @@ function emptyFlags(): Record<CookingWarningCode, boolean> {
 }
 
 function sectionKeys(lang: "es" | "en"): {
-  setup: string;
-  times: string;
-  temp: string;
-  steps: string;
+  setup: string[];
+  times: string[];
+  temp: string[];
+  steps: string[];
 } {
   if (lang === "en") {
-    return { setup: "SETUP", times: "TIMES", temp: "TEMPERATURE", steps: "STEPS" };
+    return {
+      setup: ["SETUP"],
+      times: ["TIMES", "times"],
+      temp: ["TEMPERATURE", "temperature"],
+      steps: ["STEPS", "steps"],
+    };
   }
-  return { setup: "SETUP", times: "TIEMPOS", temp: "TEMPERATURA", steps: "PASOS" };
+  return {
+    setup: ["SETUP"],
+    times: ["TIEMPOS", "times"],
+    temp: ["TEMPERATURA", "temperature"],
+    steps: ["PASOS", "steps"],
+  };
 }
 
 function inferLangFromPlan(plan: CookingPlan): "es" | "en" {
   if ("TIEMPOS" in plan || "TEMPERATURA" in plan || "PASOS" in plan) return "es";
   if ("TIMES" in plan || "TEMPERATURE" in plan) return "en";
+  if ("times" in plan || "temperature" in plan || "steps" in plan) return "en";
   return "es";
+}
+
+function findFirstSectionValue(plan: CookingPlan, keys: string[]) {
+  for (const key of keys) {
+    if (key in plan) {
+      return { key, value: String(plan[key] ?? "") };
+    }
+  }
+  return null;
+}
+
+function findFirstNonEmptySectionValue(plan: CookingPlan, keys: string[]) {
+  for (const key of keys) {
+    const value = String(plan[key] ?? "");
+    if (value.trim()) {
+      return { key, value };
+    }
+  }
+  return null;
 }
 
 function extractCelsiusValues(text: string): number[] {
@@ -120,23 +153,29 @@ export function validateCookingEngineOutput(
   if (plan == null) {
     push({ code: "plan_null", message: "Cooking plan is null" });
   } else {
-    for (const [label, key] of Object.entries(keys) as [string, string][]) {
-      if (!(key in plan)) {
+    const normalizedPlan = normalizeCookingOutput(plan);
+
+    for (const [label, keyGroup] of Object.entries(keys) as [string, string[]][]) {
+      const found = findFirstSectionValue(normalizedPlan, keyGroup);
+      if (!found) {
         push({
           code: "plan_section_missing",
-          message: `Plan section "${key}" is missing`,
+          message: `Plan section "${keyGroup[0]}" is missing`,
           detail: label,
         });
-      } else if (!String(plan[key] ?? "").trim()) {
+      } else if (!found.value.trim()) {
         push({
           code: "plan_section_empty",
-          message: `Plan section "${key}" is empty`,
+          message: `Plan section "${found.key}" is empty`,
           detail: label,
         });
       }
     }
 
-    const tempText = String(plan[keys.temp] ?? "");
+    const tempText =
+      findFirstNonEmptySectionValue(normalizedPlan, keys.temp)?.value ??
+      findFirstSectionValue(normalizedPlan, keys.temp)?.value ??
+      "";
     const nums = extractCelsiusValues(tempText);
     const vegStyle = cut?.style === "vegetable";
 
@@ -173,7 +212,29 @@ export function validateCookingEngineOutput(
   } else if (steps.length === 0) {
     push({ code: "steps_empty", message: "Cooking steps array is empty" });
   } else {
+    const seen = new Set<string>();
     steps.forEach((s, i) => {
+      const title = String(s.title ?? "").trim();
+      const description = String(s.description ?? "").trim();
+      if (!title || !description) {
+        push({
+          code: "step_empty_text",
+          message: `Step ${i} has empty title or description`,
+          detail: `title=${title.slice(0, 40)} description=${description.slice(0, 60)}`,
+        });
+      }
+
+      const dedupeKey = `${title.toLowerCase()}|${description.toLowerCase()}`;
+      if (seen.has(dedupeKey)) {
+        push({
+          code: "step_duplicate",
+          message: `Step ${i} duplicates a previous step`,
+          detail: title.slice(0, 60),
+        });
+      } else {
+        seen.add(dedupeKey);
+      }
+
       if (typeof s.duration !== "number" || !Number.isFinite(s.duration) || s.duration <= 0) {
         push({
           code: "step_invalid_duration",

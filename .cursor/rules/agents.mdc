@@ -1,0 +1,21 @@
+---
+alwaysApply: false
+---
+# Agent Execution Rule
+
+Agents must follow strict boundaries.
+
+NEVER:
+- Modify unrelated files
+- Mix UI + engine + data changes in one task
+- Refactor large parts of the system without request
+- Commit automatically
+
+ALWAYS:
+- Work in the specified files only
+- Respect task scope
+- Prefer small, safe changes
+- Stop if unexpected issues appear
+
+If task scope is unclear:
+- Ask before proceeding
