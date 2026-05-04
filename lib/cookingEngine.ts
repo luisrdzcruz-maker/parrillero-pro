@@ -42,6 +42,15 @@ export {
   resolveLegacyDonenessId,
 } from "./legacyCookingInputAdapter";
 export { resolveCookingProfile, resolveProductCut } from "./resolveCookingProfile";
+export {
+  donenessTemperatureProfiles,
+  getTargetTempsForProfile,
+  resolveDonenessProfileId,
+} from "./donenessProfiles";
+export type {
+  DonenessTemperatureProfile,
+  DonenessTemperatureProfileId,
+} from "./donenessProfiles";
 export { validateCookingEngineOutput, COOKING_WARNING_CODES } from "./cookingOutputValidation";
 export type {
   CookingOutputWarning,

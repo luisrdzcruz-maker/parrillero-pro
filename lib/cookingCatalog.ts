@@ -1,4 +1,5 @@
 import type { Animal } from "@/lib/types/domain";
+import { getTargetTempsForProfile, type DonenessTemperatureProfileId } from "./donenessProfiles";
 
 export type CookingInput = {
   animal: string;
@@ -72,6 +73,7 @@ export type ProductCut = {
   id: string;
   animalId: AnimalId;
   inputProfileId?: string;
+  donenessProfileId?: DonenessTemperatureProfileId;
   names: Record<Language, string>;
   defaultThicknessCm: number;
   showThickness: boolean;
@@ -128,42 +130,17 @@ export const animalDoneness: Record<AnimalId, DonenessId[]> = {
   vegetables: [],
 };
 
-export const beefTemps: Record<DonenessId, TargetTemp> = {
-  blue: { pull: 44, final: 46 },
-  rare: { pull: 48, final: 50 },
-  medium_rare: { pull: 52, final: 54 },
-  medium: { pull: 56, final: 58 },
-  medium_well: { pull: 62, final: 64 },
-  well_done: { pull: 68, final: 71 },
-  juicy_safe: { pull: 52, final: 54 },
-  medium_safe: { pull: 56, final: 58 },
-  safe: { pull: 68, final: 71 },
-  juicy: { pull: 52, final: 54 },
-};
+export const beefTemps = getTargetTempsForProfile("beefSteakCuts") as Record<DonenessId, TargetTemp>;
 
-export const porkTemps: Record<DonenessId, TargetTemp> = {
-  blue: { pull: 60, final: 63 },
-  rare: { pull: 60, final: 63 },
-  medium_rare: { pull: 60, final: 63 },
-  medium: { pull: 63, final: 66 },
-  medium_well: { pull: 68, final: 72 },
-  well_done: { pull: 68, final: 72 },
-  juicy_safe: { pull: 60, final: 63 },
-  medium_safe: { pull: 63, final: 66 },
-  safe: { pull: 68, final: 72 },
-  juicy: { pull: 60, final: 63 },
-};
+export const porkTemps = getTargetTempsForProfile("porkSafeCuts") as Record<DonenessId, TargetTemp>;
 
-export const chickenTemps: Partial<Record<DonenessId, TargetTemp>> = {
-  safe: { pull: 72, final: 74 },
-  well_done: { pull: 75, final: 77 },
-};
+export const chickenTemps = getTargetTempsForProfile("chickenSafeCuts") as Partial<
+  Record<DonenessId, TargetTemp>
+>;
 
-export const fishTemps: Partial<Record<DonenessId, TargetTemp>> = {
-  juicy: { pull: 46, final: 48 },
-  medium: { pull: 50, final: 52 },
-  well_done: { pull: 56, final: 58 },
-};
+export const fishTemps = getTargetTempsForProfile("fishCuts") as Partial<
+  Record<DonenessId, TargetTemp>
+>;
 
 export const productCatalog: ProductCut[] = [
   {
