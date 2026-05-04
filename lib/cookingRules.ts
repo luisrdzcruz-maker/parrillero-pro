@@ -123,6 +123,112 @@ function getMethodText(method: CookingMethod, language: "es" | "en") {
   return labels[method][language];
 }
 
+type OvenPhase = "after_sear" | "before_sear" | "finish" | "low_slow";
+
+type OvenMode = "convection" | "top-bottom heat" | "grill";
+
+type OvenGuidance = {
+  mode: Record<"es" | "en", string>;
+  temperatureC: number;
+  phase: Record<"es" | "en", string>;
+  rack: Record<"es" | "en", string>;
+  transition: Record<"es" | "en", string>;
+};
+
+const ovenGuidanceByStyle: Record<CookingStyle, { temperatureC: number; phase: OvenPhase; mode: "convection" | "top_bottom" | "grill" }> = {
+  fast: { temperatureC: 160, phase: "after_sear", mode: "convection" },
+  thick: { temperatureC: 160, phase: "after_sear", mode: "convection" },
+  reverse: { temperatureC: 120, phase: "before_sear", mode: "convection" },
+  fatcap: { temperatureC: 160, phase: "after_sear", mode: "top_bottom" },
+  lowSlow: { temperatureC: 120, phase: "low_slow", mode: "top_bottom" },
+  crispy: { temperatureC: 200, phase: "finish", mode: "grill" },
+  poultry: { temperatureC: 180, phase: "before_sear", mode: "top_bottom" },
+  fish: { temperatureC: 160, phase: "after_sear", mode: "convection" },
+  vegetable: { temperatureC: 200, phase: "finish", mode: "convection" },
+};
+
+function getOvenModeLabel(mode: OvenMode, language: "es" | "en") {
+  const labels: Record<OvenMode, Record<"es" | "en", string>> = {
+    convection: { es: "conveccion", en: "convection" },
+    "top-bottom heat": { es: "calor arriba y abajo", en: "top-bottom heat" },
+    grill: { es: "grill", en: "grill" },
+  };
+
+  return labels[mode][language];
+}
+
+function getOvenPhaseLabel(phase: OvenPhase, language: "es" | "en") {
+  const labels: Record<OvenPhase, Record<"es" | "en", string>> = {
+    after_sear: { es: "despues del sellado", en: "after sear" },
+    before_sear: { es: "antes del sellado", en: "before sear" },
+    finish: { es: "acabado final", en: "finish" },
+    low_slow: { es: "coccion principal lenta", en: "main low cook" },
+  };
+
+  return labels[phase][language];
+}
+
+function getOvenTransition(phase: OvenPhase, language: "es" | "en") {
+  const labels: Record<OvenPhase, Record<"es" | "en", string>> = {
+    after_sear: {
+      es: "sella primero, pasa al horno si hace falta y reposa despues del horno",
+      en: "sear first, move to oven if needed, then rest after oven",
+    },
+    before_sear: {
+      es: "horno primero, sellado final y reposo",
+      en: "oven first, then final sear and rest",
+    },
+    finish: {
+      es: "termina bajo grill y reposa despues",
+      en: "finish under grill, then rest",
+    },
+    low_slow: {
+      es: "horno suave primero, acabado final si hace falta y reposo",
+      en: "gentle oven first, finish if needed, then rest",
+    },
+  };
+
+  return labels[phase][language];
+}
+
+function getIndoorOvenGuidance(cut: ProductCut, method: CookingMethod): OvenGuidance | null {
+  if (method !== "oven_pan") return null;
+
+  const config = ovenGuidanceByStyle[cut.style];
+  const mode = config.mode === "top_bottom" ? "top-bottom heat" : config.mode;
+
+  return {
+    mode: {
+      es: getOvenModeLabel(mode, "es"),
+      en: getOvenModeLabel(mode, "en"),
+    },
+    temperatureC: config.temperatureC,
+    phase: {
+      es: getOvenPhaseLabel(config.phase, "es"),
+      en: getOvenPhaseLabel(config.phase, "en"),
+    },
+    rack: {
+      es: config.mode === "grill" ? "rejilla alta" : "rejilla central",
+      en: config.mode === "grill" ? "upper rack" : "middle rack",
+    },
+    transition: {
+      es: getOvenTransition(config.phase, "es"),
+      en: getOvenTransition(config.phase, "en"),
+    },
+  };
+}
+
+function formatOvenGuidance(guidance: OvenGuidance, language: "es" | "en") {
+  return language === "en"
+    ? `Oven mode: ${guidance.mode.en}. Oven temp: ${guidance.temperatureC}°C. Phase: ${guidance.phase.en}. Rack: ${guidance.rack.en}. Transition: ${guidance.transition.en}.`
+    : `Modo horno: ${guidance.mode.es}. Temperatura horno: ${guidance.temperatureC}°C. Fase: ${guidance.phase.es}. Posicion: ${guidance.rack.es}. Transicion: ${guidance.transition.es}.`;
+}
+
+function appendOvenGuidance(text: string, guidance: OvenGuidance | null, language: "es" | "en") {
+  if (!guidance) return text;
+  return `${text} ${formatOvenGuidance(guidance, language)}`;
+}
+
 type EquipmentProfile = "indoor" | "gas" | "charcoal" | "kamado" | "generic";
 
 function getEquipmentProfile(equipment: string): EquipmentProfile {
@@ -414,6 +520,8 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
   const rest = getRestSeconds(cut);
   const equipmentProfile = getEquipmentProfile(input.equipment);
   const indoor = equipmentProfile === "indoor";
+  const selectedMethod = getMethod(cut, input.equipment);
+  const ovenGuidance = indoor ? getIndoorOvenGuidance(cut, selectedMethod) : null;
   const thicknessBand = thickness >= 6 ? "thick" : thickness <= 3 ? "thin" : "medium";
   const donenessBias = getDonenessBias(doneness);
   const phraseSeed = Math.round(thickness * 10) + doneness.length + normalizeKey(input.equipment).length;
@@ -429,7 +537,7 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
             title: indoor ? "Preheat oven low" : "Preheat indirect",
             duration: 600,
             description: indoor
-              ? "Set oven to low temperature."
+              ? appendOvenGuidance("Set oven to low temperature.", ovenGuidance, input.language)
               : "Set the grill for low indirect heat.",
             image: "/visuals/preheat.jpg",
             tips: ["Low heat", "Stable temperature", "Do not rush"],
@@ -461,7 +569,7 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
             title: indoor ? "Precalentar horno bajo" : "Precalentar indirecto",
             duration: 600,
             description: indoor
-              ? "Prepara el horno a temperatura baja."
+              ? appendOvenGuidance("Prepara el horno a temperatura baja.", ovenGuidance, input.language)
               : "Prepara la parrilla para calor indirecto bajo.",
             image: "/visuals/preheat.jpg",
             tips: ["Fuego bajo", "Temperatura estable", "No tener prisa"],
@@ -499,7 +607,9 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
           {
             title: indoor ? "Preheat oven" : "Preheat indirect",
             duration: 600,
-            description: indoor ? "Use oven to render fat slowly." : "Create indirect medium heat.",
+            description: indoor
+              ? appendOvenGuidance("Use oven to render fat slowly.", ovenGuidance, input.language)
+              : "Create indirect medium heat.",
             image: "/visuals/preheat.jpg",
             tips: ["Avoid strong flames", "Use lid", "Control fat"],
           },
@@ -532,7 +642,7 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
             title: indoor ? "Precalentar horno" : "Precalentar indirecto",
             duration: 600,
             description: indoor
-              ? "Usa horno para fundir la grasa despacio."
+              ? appendOvenGuidance("Usa horno para fundir la grasa despacio.", ovenGuidance, input.language)
               : "Crea calor medio indirecto.",
             image: "/visuals/preheat.jpg",
             tips: ["Evita llama fuerte", "Usa tapa", "Controla la grasa"],
@@ -573,7 +683,7 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
             title: indoor ? "Preheat oven or pan" : "Preheat indirect",
             duration: 600,
             description: indoor
-              ? "Use a moderate oven or pan with space between pieces."
+              ? appendOvenGuidance("Use a moderate oven or pan with space between pieces.", ovenGuidance, input.language)
               : "Set up indirect heat with a direct zone for browning.",
             image: "/visuals/preheat.jpg",
             tips: ["Moderate heat", "Avoid raw centers", "Use thermometer"],
@@ -605,7 +715,7 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
             title: indoor ? "Precalentar horno o sartén" : "Precalentar indirecto",
             duration: 600,
             description: indoor
-              ? "Usa horno moderado o sartén con espacio entre piezas."
+              ? appendOvenGuidance("Usa horno moderado o sartén con espacio entre piezas.", ovenGuidance, input.language)
               : "Prepara calor indirecto con zona directa para dorar.",
             image: "/visuals/preheat.jpg",
             tips: ["Calor moderado", "Evitar interior crudo", "Usa termómetro"],
@@ -662,14 +772,14 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
 
   const preheatDescription = isEnglish
     ? indoor
-      ? "Use a hot pan and keep space between pieces."
+      ? appendOvenGuidance("Use a hot pan and keep space between pieces.", ovenGuidance, input.language)
       : equipmentProfile === "kamado"
         ? "Stabilize dome temperature and define direct/indirect zones."
         : equipmentProfile === "charcoal"
           ? "Build a strong direct zone and a cooler safety side."
           : "Create direct heat and a cooler safety zone."
     : indoor
-      ? "Usa sartén caliente y deja espacio entre piezas."
+      ? appendOvenGuidance("Usa sartén caliente y deja espacio entre piezas.", ovenGuidance, input.language)
       : equipmentProfile === "kamado"
         ? "Estabiliza temperatura de cúpula y define zonas directa/indirecta."
         : equipmentProfile === "charcoal"
@@ -788,7 +898,7 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
             title: indoor ? "Oven finish if needed" : "Indirect finish",
             duration: deepCookNeedsCoreFirst ? clamp(Math.round(indirect * 0.25), 60, 900) : indirect,
             description: indoor
-              ? `Use oven only if the piece is thick. Pull close to ${pull}°C.`
+              ? appendOvenGuidance(`Use oven only if the piece is thick. Pull close to ${pull}°C.`, ovenGuidance, input.language)
               : `Move indirect until close to ${pull}°C.`,
             image: "/visuals/indirect.jpg",
             tips: ["Use thermometer", "Do not dry it", "Pull before final target"],
@@ -797,7 +907,7 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
             title: indoor ? "Terminar en horno si hace falta" : "Terminar indirecto",
             duration: indirect,
             description: indoor
-              ? `Usa horno solo si la pieza es gruesa. Saca cerca de ${pull}°C.`
+              ? appendOvenGuidance(`Usa horno solo si la pieza es gruesa. Saca cerca de ${pull}°C.`, ovenGuidance, input.language)
               : `Pasa a indirecto hasta acercarte a ${pull}°C.`,
             image: "/visuals/indirect.jpg",
             tips: ["Usa termómetro", "No secar", "Saca antes del objetivo final"],
@@ -868,17 +978,20 @@ export function generateCookingPlan(input: CookingInput): CookingPlan | null {
   const doneness = getDonenessId(engineInput.doneness, cut.animalId, cut.allowedDoneness);
   const temp = getTargetTemp(cut, doneness);
   const times = estimateTimes(engineInput, cut, doneness);
-  const method = getMethodText(getMethod(cut, engineInput.equipment), engineInput.language);
+  const selectedMethod = getMethod(cut, engineInput.equipment);
+  const method = getMethodText(selectedMethod, engineInput.language);
+  const ovenGuidance = isIndoor(engineInput.equipment) ? getIndoorOvenGuidance(cut, selectedMethod) : null;
+  const ovenText = ovenGuidance ? ` ${formatOvenGuidance(ovenGuidance, engineInput.language)}` : "";
   const note = getLocalized(cut.notes, engineInput.language);
   const planSteps = buildPlanStepsText(makeStandardSteps(engineInput, cut, temp), engineInput.language);
 
   if (engineInput.language === "en") {
     return {
-      SETUP: `${method}. Use ${engineInput.equipment}.`,
+      SETUP: `${method}. Use ${engineInput.equipment}.${ovenText}`,
       TIMES: times,
       TEMPERATURE: temp
-        ? `Pull target: ${temp.pull}°C. Expected final temperature after rest: ${temp.final}°C.`
-        : "Cook to tender texture and browned edges.",
+        ? `Pull target: ${temp.pull}°C. Expected final temperature after rest: ${temp.final}°C.${ovenText}`
+        : `Cook to tender texture and browned edges.${ovenText}`,
       STEPS: planSteps,
       ...(note ? { TIPS: note } : {}),
       ERROR: cut.error.en,
@@ -886,11 +999,11 @@ export function generateCookingPlan(input: CookingInput): CookingPlan | null {
   }
 
   return {
-    SETUP: `${method}. Equipo: ${engineInput.equipment}.`,
+    SETUP: `${method}. Equipo: ${engineInput.equipment}.${ovenText}`,
     TIEMPOS: times,
     TEMPERATURA: temp
-      ? `Temperatura de salida: ${temp.pull}°C. Temperatura final esperada tras reposo: ${temp.final}°C.`
-      : "Cocina hasta textura tierna y bordes dorados.",
+      ? `Temperatura de salida: ${temp.pull}°C. Temperatura final esperada tras reposo: ${temp.final}°C.${ovenText}`
+      : `Cocina hasta textura tierna y bordes dorados.${ovenText}`,
     PASOS: planSteps,
     ...(note ? { CONSEJOS: note } : {}),
     ERROR: cut.error.es,

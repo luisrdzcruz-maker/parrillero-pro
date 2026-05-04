@@ -13,6 +13,7 @@ import {
   getDetailsSetupLabels,
   getDonenessSurfaceLabel,
   getEquipmentSurfaceLabel,
+  sanitizeCriticalErrorCopy,
 } from "@/lib/i18n/surfaceFallbacks";
 import type { AppText, Lang } from "@/lib/i18n/texts";
 import type { Doneness } from "@/lib/types/domain";
@@ -24,6 +25,7 @@ import {
 } from "@/lib/liveCookingPlan";
 import { buildLiveUrl } from "@/lib/navigation/buildLiveUrl";
 import { animalIdsByLabel, animalOptions, type AnimalLabel } from "@/lib/media/animalMedia";
+import type { CookingMethod, CookingStyle, ProductCut } from "@/lib/cookingCatalog";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useLayoutEffect, useState } from "react";
@@ -740,6 +742,170 @@ function getDetailsHeroBadge({
   return lang === "es" ? "Control fino" : lang === "fi" ? "Tarkka hallinta" : "Fine control";
 }
 
+function getCutPositioningLine(style: CookingStyle | undefined, lang: Lang) {
+  const positioningByStyle: Record<CookingStyle, Record<Lang, string>> = {
+    fast: {
+      es: "Tierno / rapido / sensible al punto",
+      en: "Tender / fast / point-sensitive",
+      fi: "Murea / nopea / kypsyysherkka",
+    },
+    thick: {
+      es: "Grueso / controlado / necesita centro estable",
+      en: "Thick / controlled / needs a stable center",
+      fi: "Paksu / hallittu / tarvitsee tasaisen keskustan",
+    },
+    reverse: {
+      es: "Grueso / sellado inverso / temperatura primero",
+      en: "Thick / reverse sear / temperature first",
+      fi: "Paksu / kaanteinen paisto / lampotila ensin",
+    },
+    fatcap: {
+      es: "Grasa / render lento / costra al final",
+      en: "Fat cap / slow render / crust at the end",
+      fi: "Rasvakerros / hidas sulatus / paistopinta lopuksi",
+    },
+    lowSlow: {
+      es: "Lento / tierno / calor estable",
+      en: "Slow / tender / stable heat",
+      fi: "Hidas / murea / vakaa lampo",
+    },
+    crispy: {
+      es: "Crujiente / grasa controlada / final fuerte",
+      en: "Crispy / controlled fat / strong finish",
+      fi: "Rapea / hallittu rasva / vahva viimeistely",
+    },
+    poultry: {
+      es: "Seguro / jugoso / medir centro",
+      en: "Safe / juicy / check the center",
+      fi: "Turvallinen / mehukas / mittaa keskusta",
+    },
+    fish: {
+      es: "Delicado / rapido / no sobrecocinar",
+      en: "Delicate / fast / do not overcook",
+      fi: "Herkkä / nopea / ala ylikypsenna",
+    },
+    vegetable: {
+      es: "Vegetal / directo / textura visible",
+      en: "Vegetable / direct / visual texture",
+      fi: "Kasvis / suora lampo / nakyva rakenne",
+    },
+  };
+
+  return style ? positioningByStyle[style][lang] : positioningByStyle.fast[lang];
+}
+
+function getMethodHint(method: CookingMethod, lang: Lang) {
+  const labels: Record<CookingMethod, Record<Lang, string>> = {
+    grill_direct: {
+      es: "parrilla directa",
+      en: "direct grill",
+      fi: "suora grillaus",
+    },
+    grill_indirect: {
+      es: "parrilla indirecta",
+      en: "indirect grill",
+      fi: "epasuora grillaus",
+    },
+    reverse_sear: {
+      es: "sellado inverso",
+      en: "reverse sear",
+      fi: "kaanteinen paisto",
+    },
+    oven_pan: {
+      es: "sarten + horno",
+      en: "pan + oven",
+      fi: "pannu + uuni",
+    },
+    vegetables_grill: {
+      es: "verduras a la parrilla",
+      en: "grilled vegetables",
+      fi: "grillatut kasvikset",
+    },
+  };
+
+  return labels[method][lang];
+}
+
+function getCutGuidanceLabels(lang: Lang) {
+  if (lang === "es") {
+    return {
+      eyebrow: "Guia del corte",
+      bestMethods: "Mejor setup",
+      warning: "Evita",
+      fallbackWarning: "Controla temperatura interna y evita calor excesivo.",
+    };
+  }
+  if (lang === "fi") {
+    return {
+      eyebrow: "Leikkauksen ohje",
+      bestMethods: "Paras valmistelu",
+      warning: "Valta",
+      fallbackWarning: "Tarkista sisalampotila ja valta liian kovaa lampoa.",
+    };
+  }
+  return {
+    eyebrow: "Cut guidance",
+    bestMethods: "Best setup",
+    warning: "Avoid",
+    fallbackWarning: "Check internal temperature and avoid excessive heat.",
+  };
+}
+
+function getCutWarning(cutMeta: ProductCut | undefined, lang: Lang) {
+  const labels = getCutGuidanceLabels(lang);
+  if (!cutMeta) return labels.fallbackWarning;
+  if (lang === "es") return sanitizeCriticalErrorCopy(cutMeta.error.es, lang);
+  if (lang === "en") return sanitizeCriticalErrorCopy(cutMeta.error.en, lang);
+  return labels.fallbackWarning;
+}
+
+function CutContextCard({
+  cutMeta,
+  lang,
+  selectedCut,
+}: {
+  cutMeta?: ProductCut;
+  lang: Lang;
+  selectedCut: CutItem;
+}) {
+  const labels = getCutGuidanceLabels(lang);
+  const methodHints =
+    cutMeta?.allowedMethods
+      .slice(0, 3)
+      .map((method) => getMethodHint(method, lang))
+      .join(" · ") ||
+    (lang === "es" ? "setup ajustado al corte" : lang === "fi" ? "leikkaukselle sovitettu setup" : "setup tuned to the cut");
+  const positioningLine = getCutPositioningLine(cutMeta?.style, lang);
+  const warning = getCutWarning(cutMeta, lang);
+
+  return (
+    <aside className="animate-live-enter rounded-[1.35rem] border border-white/[0.08] bg-[radial-gradient(circle_at_12%_0%,rgba(251,146,60,0.12),transparent_34%),rgba(255,255,255,0.035)] p-3 shadow-[0_14px_44px_rgba(0,0,0,0.24)] ring-1 ring-inset ring-orange-300/[0.04] [animation-delay:35ms] sm:p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-200/75">
+            {labels.eyebrow}
+          </p>
+          <h2 className="mt-1 truncate text-lg font-black tracking-tight text-white">{selectedCut.name}</h2>
+          <p className="mt-1 text-xs font-semibold leading-5 text-zinc-400">{positioningLine}</p>
+        </div>
+        <span className="shrink-0 rounded-full border border-orange-300/20 bg-orange-500/10 px-2.5 py-1 text-[10px] font-black text-orange-200">
+          {cutMeta?.restingMinutes ? `${cutMeta.restingMinutes} min` : "OK"}
+        </span>
+      </div>
+      <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_1.2fr]">
+        <div className="rounded-2xl border border-white/[0.07] bg-black/18 px-3 py-2">
+          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-zinc-500">{labels.bestMethods}</p>
+          <p className="mt-1 text-xs font-bold leading-5 text-zinc-100">{methodHints}</p>
+        </div>
+        <div className="rounded-2xl border border-red-300/15 bg-red-500/[0.07] px-3 py-2">
+          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-red-200/75">{labels.warning}</p>
+          <p className="mt-1 line-clamp-2 text-xs font-bold leading-5 text-zinc-100">{warning}</p>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
 function CookingDetailsHero({
   animal,
   badge,
@@ -1003,6 +1169,8 @@ function CookingDetailsStep({
         lang={lang}
         selectedCut={selectedCut}
       />
+
+      <CutContextCard cutMeta={cutMeta} lang={lang} selectedCut={selectedCut} />
 
       <div className="animate-live-enter relative overflow-hidden rounded-[1.75rem] border border-orange-300/18 bg-[radial-gradient(circle_at_18%_0%,rgba(255,106,0,0.20),transparent_34%),linear-gradient(145deg,rgba(24,24,27,0.99),rgba(3,7,18,0.97)_58%,rgba(0,0,0,0.98))] p-[1px] shadow-[0_22px_70px_rgba(0,0,0,0.46),0_0_34px_rgba(255,106,0,0.09)] ring-1 ring-inset ring-white/[0.055] [animation-delay:70ms] sm:rounded-[2rem]">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(251,146,60,0.14),transparent_42%)]" />
