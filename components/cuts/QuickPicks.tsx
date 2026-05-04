@@ -1,5 +1,7 @@
 "use client";
 
+import { BrandImageIcon } from "@/components/ui/BrandImageIcon";
+import { cutIconAssets } from "@/lib/brand/cutIconAssets";
 import type { GeneratedCutProfile } from "@/lib/generated/cutProfiles";
 import type { Lang } from "@/lib/i18n/texts";
 import {
@@ -24,6 +26,10 @@ function getDetailsLabel(lang: Lang) {
   if (lang === "es") return "Detalles";
   if (lang === "fi") return "Tiedot";
   return "Details";
+}
+
+function getCutIconAsset(cutId: string) {
+  return cutId in cutIconAssets ? cutIconAssets[cutId as keyof typeof cutIconAssets] : undefined;
 }
 
 export function QuickPicks({
@@ -52,6 +58,7 @@ export function QuickPicks({
       <div className="grid max-w-full min-w-0 grid-cols-2 gap-1.5 px-1 pb-0.5 touch-pan-y">
         {picks.map((profile) => {
           const isActive = selectedCutId === profile.id;
+          const cutIcon = getCutIconAsset(profile.id);
           return (
             <article
               key={profile.id}
@@ -62,7 +69,19 @@ export function QuickPicks({
               }`}
             >
               <button type="button" onClick={() => onSelect(profile)} className="block min-w-0 text-left">
-                <span className="block truncate text-[13px] font-black text-white">{getDisplayName(profile, lang)}</span>
+                <span className="flex min-w-0 items-center gap-2">
+                  {cutIcon && (
+                    <BrandImageIcon
+                      src={cutIcon}
+                      alt=""
+                      size="sm"
+                      shape="plain"
+                      aria-hidden="true"
+                      className="h-7 w-7 rounded-lg"
+                    />
+                  )}
+                  <span className="block truncate text-[13px] font-black text-white">{getDisplayName(profile, lang)}</span>
+                </span>
                 <span className="mt-1 block truncate text-[10px] text-zinc-500">{getCutDescriptor(profile, lang)}</span>
                 <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-black text-orange-300">
                   <span className="inline-flex rounded-full bg-orange-500/10 px-2 py-0.5">{getEstimatedTimeLabel(profile, lang)}</span>

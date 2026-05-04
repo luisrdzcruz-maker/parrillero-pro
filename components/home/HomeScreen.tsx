@@ -1,6 +1,8 @@
 "use client";
 
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { BrandImageIcon } from "@/components/ui/BrandImageIcon";
+import { brandIconAssets } from "@/lib/brand/iconAssets";
 import { useRouter } from "next/navigation";
 import type { Mode } from "@/components/navigation/AppHeader";
 import { buildCookingDetailsUrl } from "@/lib/navigation/cookingNavigation";
@@ -52,8 +54,8 @@ function HeroSection({
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-300/60 to-transparent" />
 
       <div className="relative z-10 max-w-xl">
-        <div className="inline-flex items-center gap-2 rounded-full border border-orange-300/20 bg-orange-500/10 px-3 py-1.5">
-          <BrandLogo variant="icon" size="sm" alt="" aria-hidden="true" />
+        <div className="inline-flex items-center gap-2 rounded-full border border-orange-300/20 bg-orange-500/10 px-3 py-[5px]">
+          <BrandLogo variant="icon" size="eyebrow" alt="" aria-hidden="true" />
           <span className="text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">
             {t.homeEyebrow}
           </span>
@@ -142,6 +144,7 @@ function PopularCuts({
 type QuickAction = {
   id: string;
   icon: string;
+  iconAsset?: string;
   title: string;
   description: string;
   emphasized?: boolean;
@@ -171,7 +174,18 @@ function HomeQuickActions({
             }`}
           >
             <div className="flex items-center gap-3 sm:items-start">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-base sm:h-auto sm:w-auto sm:border-0 sm:bg-transparent sm:pt-0.5 sm:text-lg" aria-hidden>{action.icon}</span>
+              {action.iconAsset ? (
+                <BrandImageIcon
+                  src={action.iconAsset}
+                  alt=""
+                  size="md"
+                  shape="plain"
+                  aria-hidden="true"
+                  className="h-9 w-9 rounded-xl"
+                />
+              ) : (
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-base sm:h-auto sm:w-auto sm:border-0 sm:bg-transparent sm:pt-0.5 sm:text-lg" aria-hidden>{action.icon}</span>
+              )}
               <div className="min-w-0">
                 <p className="text-sm font-black text-white">{action.title}</p>
                 <p className="mt-0.5 line-clamp-1 text-xs leading-snug text-slate-300/80 sm:leading-relaxed sm:text-slate-300/90">{action.description}</p>
@@ -371,6 +385,7 @@ export function HomeScreen({
       {
         id: "start-cooking",
         icon: "🥩",
+        iconAsset: brandIconAssets.navCooking,
         title: t.homeGuidedCooking,
         description: t.homeGuidedCookingSub,
         emphasized: true,
@@ -379,6 +394,7 @@ export function HomeScreen({
       {
         id: "plan-bbq",
         icon: "🧭",
+        iconAsset: brandIconAssets.appFlameProbe,
         title: t.homeParrillada,
         description: t.homeParrilladaSub,
         onClick: () => onModeChange("plan"),
@@ -389,6 +405,7 @@ export function HomeScreen({
       actions.push({
         id: "saved-plans",
         icon: "⭐",
+        iconAsset: brandIconAssets.navSaved,
         title: t.homeSaved,
         description: savedPlansLabel,
         onClick: () => onModeChange("guardados"),
@@ -399,6 +416,7 @@ export function HomeScreen({
       actions.push({
         id: "continue-live",
         icon: "⏱️",
+        iconAsset: brandIconAssets.navLive,
         title: t.homeLiveCooking,
         description: t.homeLiveCookingSub,
         onClick: () => router.push(buildLiveUrl({ lang })),

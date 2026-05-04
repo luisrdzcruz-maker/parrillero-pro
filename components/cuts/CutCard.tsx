@@ -1,5 +1,7 @@
 "use client";
 
+import { BrandImageIcon } from "@/components/ui/BrandImageIcon";
+import { cutIconAssets } from "@/lib/brand/cutIconAssets";
 import type { GeneratedCutProfile } from "@/lib/generated/cutProfiles";
 import type { Lang } from "@/lib/i18n/texts";
 import {
@@ -25,11 +27,16 @@ function getDetailsLabel(lang: Lang) {
   return "View details";
 }
 
+function getCutIconAsset(cutId: string) {
+  return cutId in cutIconAssets ? cutIconAssets[cutId as keyof typeof cutIconAssets] : undefined;
+}
+
 export function CutCard({ profile, lang, selected = false, onSelect, onViewDetails }: CutCardProps) {
   const temperature = getTemperatureLabel(profile);
   const metaSummary = [getEstimatedTimeLabel(profile, lang), getStyleLabel(profile, lang), temperature]
     .filter(Boolean)
     .join(" · ");
+  const cutIcon = getCutIconAsset(profile.id);
 
   return (
     <article
@@ -42,7 +49,19 @@ export function CutCard({ profile, lang, selected = false, onSelect, onViewDetai
       <div className="flex min-w-0 flex-col gap-2">
         <button type="button" onClick={() => onSelect(profile)} className="min-w-0 text-left">
           <div className="flex min-w-0 items-start justify-between gap-2">
-            <h3 className="truncate text-[14px] font-black tracking-tight text-white">{getDisplayName(profile, lang)}</h3>
+            <div className="flex min-w-0 items-center gap-2">
+              {cutIcon && (
+                <BrandImageIcon
+                  src={cutIcon}
+                  alt=""
+                  size="sm"
+                  shape="plain"
+                  aria-hidden="true"
+                  className="h-7 w-7 rounded-lg"
+                />
+              )}
+              <h3 className="truncate text-[14px] font-black tracking-tight text-white">{getDisplayName(profile, lang)}</h3>
+            </div>
             <span className="shrink-0 rounded-full border border-orange-400/20 bg-orange-500/10 px-2 py-0.5 text-[10px] font-black text-orange-300">
               {getDifficultyLabel(profile, lang)}
             </span>

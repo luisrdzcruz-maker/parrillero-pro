@@ -4,6 +4,9 @@ import ResultGrid, { buildResultSummary } from "@/components/ResultGrid";
 import ResultHero from "@/components/ResultHero";
 import FoodCard from "@/components/FoodCard";
 import { CookingLoadingScreen } from "@/components/cooking/CookingLoadingScreen";
+import { BrandImageIcon } from "@/components/ui/BrandImageIcon";
+import { categoryIconAssets } from "@/lib/brand/categoryIconAssets";
+import { cutIconAssets } from "@/lib/brand/cutIconAssets";
 import { getInputProfileForCut } from "@/lib/cooking/inputProfiles";
 import { getCutById } from "@/lib/cookingRules";
 import { Badge, Button, Section } from "@/components/ui";
@@ -68,6 +71,17 @@ const foodImages: Record<AnimalLabel, string> = {
   Pescado: "/images/pescado/salmon-cooked.webp",
   Verduras: "/images/verduras/verduras-asadas.webp",
 };
+
+function getCategoryIconForAnimalLabel(label: AnimalLabel) {
+  const animalId = animalIdsByLabel[label];
+  return animalId in categoryIconAssets
+    ? categoryIconAssets[animalId as keyof typeof categoryIconAssets]
+    : undefined;
+}
+
+function getCutIconAsset(cutId: string) {
+  return cutId in cutIconAssets ? cutIconAssets[cutId as keyof typeof cutIconAssets] : undefined;
+}
 
 function buildText(blocks: Blocks) {
   return Object.keys(blocks)
@@ -297,18 +311,23 @@ function CookingAnimalStep({
         Elige el ingrediente principal y Parrillero Pro ajusta cortes, fuego y tiempos.
       </p>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6 xl:grid-cols-3 xl:gap-8 2xl:grid-cols-5">
-        {animalOptions.map((item) => (
-          <FoodCard
-            key={item}
-            selected={animal === item}
-            title={getAnimalSurfaceLabel(item, lang)}
-            subtitle={getAnimalPreview(item, lang)}
-            image={foodImages[item]}
-            badge={undefined}
-            selectedLabel={t.selected}
-            onClick={() => onSelectAnimal(item)}
-          />
-        ))}
+        {animalOptions.map((item) => {
+          const title = getAnimalSurfaceLabel(item, lang);
+          return (
+            <FoodCard
+              key={item}
+              selected={animal === item}
+              title={title}
+              subtitle={getAnimalPreview(item, lang)}
+              image={foodImages[item]}
+              iconSrc={getCategoryIconForAnimalLabel(item)}
+              iconAlt={title}
+              badge={undefined}
+              selectedLabel={t.selected}
+              onClick={() => onSelectAnimal(item)}
+            />
+          );
+        })}
       </div>
     </Section>
   );
@@ -448,6 +467,7 @@ function FeaturedCutCard({
 }) {
   const [imageFailed, setImageFailed] = useState(false);
   const showImage = Boolean(cut.image) && !imageFailed;
+  const cutIcon = getCutIconAsset(cut.id);
   const tags = deriveCutTags(cut.name);
 
   return (
@@ -501,6 +521,16 @@ function FeaturedCutCard({
           >
             ✓
           </span>
+        )}
+
+        {cutIcon && (
+          <BrandImageIcon
+            src={cutIcon}
+            alt={cut.name}
+            size="xl"
+            shape="soft"
+            className="absolute left-3 top-3 z-10 h-16 w-16 rounded-[1.25rem] bg-black/45 shadow-lg shadow-black/30 backdrop-blur-sm sm:h-20 sm:w-20"
+          />
         )}
 
         {/* Content */}
@@ -558,6 +588,7 @@ function CutCard({
 }) {
   const [imageFailed, setImageFailed] = useState(false);
   const showImage = Boolean(cut.image) && !imageFailed;
+  const cutIcon = getCutIconAsset(cut.id);
 
   return (
     <button
@@ -607,6 +638,16 @@ function CutCard({
           >
             {badge}
           </Badge>
+        )}
+
+        {!badge && cutIcon && (
+          <BrandImageIcon
+            src={cutIcon}
+            alt={cut.name}
+            size="lg"
+            shape="soft"
+            className="absolute left-2 top-2 z-10 h-12 w-12 rounded-[1.05rem] bg-black/45 shadow-lg shadow-black/30 backdrop-blur-sm sm:left-3 sm:top-3 sm:h-14 sm:w-14"
+          />
         )}
 
         {/* Active checkmark */}

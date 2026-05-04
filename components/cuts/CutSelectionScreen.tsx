@@ -1,5 +1,7 @@
 ﻿"use client";
 
+import { BrandImageIcon } from "@/components/ui/BrandImageIcon";
+import { categoryIconAssets } from "@/lib/brand/categoryIconAssets";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { GeneratedAnimalId, GeneratedCutProfile } from "@/lib/generated/cutProfiles";
@@ -56,6 +58,31 @@ function buildCookingWizardHref(profile: GeneratedCutProfile, lang?: "es" | "en"
   }
 
   return `/?${params.toString()}`;
+}
+
+function getCategoryIcon(animalId: GeneratedAnimalId) {
+  return animalId in categoryIconAssets
+    ? categoryIconAssets[animalId as keyof typeof categoryIconAssets]
+    : undefined;
+}
+
+function FishFallbackIcon() {
+  return (
+    <span
+      aria-hidden="true"
+      className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-orange-300/16 bg-black/35 shadow-[0_8px_22px_rgba(249,115,22,0.12)] ring-1 ring-inset ring-white/[0.035] sm:h-12 sm:w-12"
+    >
+      <svg viewBox="0 0 48 48" className="h-8 w-8 text-orange-300 drop-shadow-[0_0_10px_rgba(249,115,22,0.45)]">
+        <path
+          d="M6 24c5.8-7.4 13.2-11.1 22.1-11.1 5.2 0 9.7 2.4 13.5 7.1l4.4-4.3v16.6L41.6 28c-3.8 4.7-8.3 7.1-13.5 7.1C19.2 35.1 11.8 31.4 6 24Z"
+          fill="currentColor"
+          opacity="0.92"
+        />
+        <circle cx="30" cy="21" r="1.8" fill="#090604" />
+        <path d="M16 17.5c2.5 3.5 2.5 9.5 0 13" fill="none" stroke="#090604" strokeWidth="2.4" strokeLinecap="round" />
+      </svg>
+    </span>
+  );
 }
 
 export function CutSelectionScreen({
@@ -155,7 +182,8 @@ export function CutSelectionScreen({
     selectedIntent
       ? getIntentLabel(selectedIntent, effectiveLang)
       : getAllGoalsLabel(effectiveLang);
-  const compactStatusLine = `${totalCutsByAnimal} ${getCutsUnitLabel(effectiveLang)} · ${activeFilterLabel}`;
+  const selectedAnimalLabel = getAnimalLabel(selectedAnimal, effectiveLang);
+  const compactStatusLine = `${selectedAnimalLabel} · ${totalCutsByAnimal} ${getCutsUnitLabel(effectiveLang)} · ${activeFilterLabel}`;
   const hasActiveFilters = Boolean(selectedZone);
   const handleStartCooking = (profile: GeneratedCutProfile) => {
     if (onStartCooking) {
@@ -207,21 +235,36 @@ export function CutSelectionScreen({
 
       <section className={`relative mx-auto flex w-full max-w-[1000px] flex-col px-0 pt-1 sm:px-2 sm:pt-2 ${sectionBottomPaddingClass}`}>
         <header className="rounded-[1.2rem] border border-orange-300/14 bg-white/[0.035] px-2.5 py-2 shadow-[0_12px_34px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:px-3 sm:py-2.5">
-          <div className="grid grid-cols-2 gap-1.5 touch-pan-y sm:grid-cols-3">
+          <div className="grid grid-cols-5 gap-1.5 touch-pan-y sm:gap-2">
             {animalOptions.map(([animalId]) => {
               const selected = animalId === selectedAnimal;
+              const iconSrc = getCategoryIcon(animalId);
+              const label = chipAnimalLabel(animalId);
               return (
                 <button
                   key={animalId}
                   type="button"
+                  aria-label={label}
+                  title={label}
                   onClick={() => handleAnimalSelect(animalId)}
-                  className={`min-w-0 rounded-full border px-2.5 py-1.5 text-center text-[11px] font-black leading-none transition active:scale-[0.98] sm:px-3 sm:text-xs ${
+                  className={`flex min-h-[58px] min-w-0 items-center justify-center rounded-[1.15rem] border p-1.5 transition active:scale-[0.98] sm:min-h-[66px] sm:rounded-[1.35rem] sm:p-2 ${
                     selected
-                      ? "border-orange-300/80 bg-orange-500/25 text-orange-100 shadow-[0_0_0_1px_rgba(251,146,60,0.25)]"
-                      : "border-white/15 bg-white/5 text-zinc-200 hover:border-orange-300/40 hover:bg-orange-500/10"
+                      ? "border-orange-300/85 bg-orange-500/18 shadow-[0_0_0_1px_rgba(251,146,60,0.28),0_12px_30px_rgba(249,115,22,0.18)]"
+                      : "border-white/12 bg-black/25 hover:border-orange-300/35 hover:bg-orange-500/8"
                   }`}
                 >
-                  <span className="block truncate">{chipAnimalLabel(animalId)}</span>
+                  {iconSrc ? (
+                    <BrandImageIcon
+                      src={iconSrc}
+                      alt=""
+                      size="lg"
+                      shape="plain"
+                      aria-hidden="true"
+                      className={selected ? "h-11 w-11 rounded-2xl sm:h-12 sm:w-12" : "h-10 w-10 rounded-2xl opacity-86 sm:h-12 sm:w-12"}
+                    />
+                  ) : (
+                    <FishFallbackIcon />
+                  )}
                 </button>
               );
             })}
