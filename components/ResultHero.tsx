@@ -163,17 +163,24 @@ export default function ResultHero({
               <button
                 type="button"
                 onClick={actions.onStartCooking}
-                className="group relative flex min-h-[58px] w-full items-center justify-between overflow-hidden rounded-[1.5rem] border border-orange-300/45 bg-orange-500 px-5 py-4 text-left text-slate-950 shadow-2xl shadow-orange-950/25 ring-1 ring-inset ring-white/20 transition-all duration-200 hover:bg-orange-400 active:scale-[0.99]"
+                className="group flex min-h-[52px] w-full items-center justify-between gap-3 rounded-[1.25rem] border border-orange-300/35 bg-orange-500 px-4 py-3 text-left text-slate-950 shadow-lg shadow-orange-950/20 ring-1 ring-inset ring-white/15 transition-all duration-200 hover:border-orange-200/60 hover:bg-orange-400 active:scale-[0.99]"
               >
-                <span
-                  aria-hidden="true"
-                  className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-white/20 to-transparent opacity-80"
-                />
-                <span className="relative text-base font-black leading-tight">
+                <span className="min-w-0 text-[15px] font-black leading-tight sm:text-base">
                   {copy.resultActionsLiveCta || t.startCooking}
                 </span>
-                <span className="relative text-xl font-black" aria-hidden="true">
-                  -&gt;
+                <span
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-950/10 text-slate-950 ring-1 ring-inset ring-slate-950/10 transition-transform duration-200 group-hover:translate-x-0.5"
+                  aria-hidden="true"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none">
+                    <path
+                      d="M7.5 4.75L12.75 10L7.5 15.25"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                    />
+                  </svg>
                 </span>
               </button>
             )}

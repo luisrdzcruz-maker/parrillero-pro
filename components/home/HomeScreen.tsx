@@ -47,7 +47,7 @@ function HeroSection({
   onPlanBbq: () => void;
 }) {
   return (
-    <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#090909] px-5 py-6 shadow-[0_20px_56px_rgba(0,0,0,0.55)] sm:px-7 sm:py-8">
+    <section className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#090909] px-4 py-5 shadow-[0_20px_56px_rgba(0,0,0,0.55)] sm:rounded-[2rem] sm:px-7 sm:py-8">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-300/60 to-transparent" />
 
       <div className="relative z-10 max-w-xl">
@@ -58,31 +58,37 @@ function HeroSection({
           </span>
         </div>
 
-        <h1 className="mt-4 text-[clamp(2rem,8.2vw,3.3rem)] font-black leading-[0.96] tracking-[-0.04em] text-white">
+        <h1 className="mt-4 text-[clamp(1.9rem,7.6vw,3.3rem)] font-black leading-[0.96] tracking-[-0.04em] text-white">
           {t.homeTitle}
         </h1>
 
-        <p className="mt-3 max-w-[34rem] text-[14px] font-medium leading-[1.52] text-stone-300/82 sm:text-base">
+        <p className="mt-2 max-w-[24rem] text-[13px] font-medium leading-[1.42] text-stone-300/82 sm:hidden">
+          {t.homeSubtitleShort}
+        </p>
+
+        <p className="mt-3 hidden max-w-[34rem] text-base font-medium leading-[1.52] text-stone-300/82 sm:block">
           {t.homeSubtitle}
         </p>
 
-        <p className="mt-3 text-xs font-semibold uppercase tracking-[0.11em] text-slate-400">
-          {t.homeHowItWorks}
-        </p>
-        <p className="mt-1 text-sm leading-relaxed text-slate-300">{t.homeHowItWorksFlow}</p>
+        <div className="mt-4 hidden sm:block">
+          <p className="text-xs font-semibold uppercase tracking-[0.11em] text-slate-400">
+            {t.homeHowItWorks}
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-slate-300">{t.homeHowItWorksFlow}</p>
+        </div>
 
-        <div className="mt-6 flex flex-col gap-2.5 sm:flex-row">
+        <div className="mt-5 flex flex-col gap-2 sm:mt-6 sm:flex-row sm:gap-2.5">
           <button
             type="button"
             onClick={onStartCooking}
-            className="min-h-[56px] flex-1 touch-manipulation rounded-2xl bg-orange-500 px-6 py-4 text-sm font-black text-black shadow-[0_10px_36px_rgba(234,88,12,0.42)] transition-all duration-200 hover:bg-orange-400 active:scale-[0.98] sm:text-base"
+            className="min-h-[50px] flex-1 touch-manipulation rounded-2xl bg-orange-500 px-5 py-3 text-sm font-black text-black shadow-[0_10px_36px_rgba(234,88,12,0.42)] transition-all duration-200 hover:bg-orange-400 active:scale-[0.98] sm:min-h-[56px] sm:px-6 sm:py-4 sm:text-base"
           >
             {t.homePrimaryCta} <span aria-hidden className="ml-1.5">→</span>
           </button>
           <button
             type="button"
             onClick={onPlanBbq}
-            className="min-h-[56px] touch-manipulation rounded-2xl border border-white/12 bg-white/[0.05] px-4 py-4 text-sm font-black text-white transition-all duration-200 hover:border-orange-300/35 hover:bg-white/[0.08] active:scale-[0.98]"
+            className="min-h-[50px] touch-manipulation rounded-2xl border border-white/12 bg-white/[0.05] px-4 py-3 text-sm font-black text-white transition-all duration-200 hover:border-orange-300/35 hover:bg-white/[0.08] active:scale-[0.98] sm:min-h-[56px] sm:py-4"
           >
             {t.homeSecondaryCta}
           </button>
@@ -149,25 +155,25 @@ function HomeQuickActions({
   actions: QuickAction[];
 }) {
   return (
-    <section className="rounded-[1.65rem] border border-white/[0.07] bg-white/[0.03] p-4 backdrop-blur">
-      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/32">{title}</p>
-      <div className="mt-3 grid gap-2.5">
+    <section className="rounded-[1.4rem] border border-white/[0.07] bg-white/[0.03] p-3 backdrop-blur sm:rounded-[1.65rem] sm:p-4">
+      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/32 sm:tracking-[0.24em]">{title}</p>
+      <div className="mt-2.5 grid gap-2 sm:mt-3 sm:gap-2.5">
         {actions.map((action) => (
           <button
             key={action.id}
             type="button"
             onClick={action.onClick}
-            className={`w-full touch-manipulation rounded-2xl border px-3.5 py-3 text-left transition-all duration-200 active:scale-[0.98] ${
+            className={`w-full touch-manipulation rounded-[1.1rem] border px-3 py-2.5 text-left transition-all duration-200 active:scale-[0.98] sm:rounded-2xl sm:px-3.5 sm:py-3 ${
               action.emphasized
                 ? "border-orange-300/30 bg-orange-500/8 hover:border-orange-300/45 hover:bg-orange-500/12"
                 : "border-white/10 bg-black/25 hover:border-white/20 hover:bg-white/[0.05]"
             }`}
           >
-            <div className="flex items-start gap-3">
-              <span className="pt-0.5 text-lg" aria-hidden>{action.icon}</span>
+            <div className="flex items-center gap-3 sm:items-start">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-base sm:h-auto sm:w-auto sm:border-0 sm:bg-transparent sm:pt-0.5 sm:text-lg" aria-hidden>{action.icon}</span>
               <div className="min-w-0">
                 <p className="text-sm font-black text-white">{action.title}</p>
-                <p className="mt-0.5 text-xs leading-relaxed text-slate-300/90">{action.description}</p>
+                <p className="mt-0.5 line-clamp-1 text-xs leading-snug text-slate-300/80 sm:leading-relaxed sm:text-slate-300/90">{action.description}</p>
               </div>
             </div>
           </button>
@@ -457,7 +463,7 @@ export function HomeScreen({
         </div>
       )}
 
-    <div className="mx-auto min-w-0 w-full max-w-2xl space-y-3 overflow-x-hidden pb-4 sm:space-y-4 sm:pb-6 lg:max-w-3xl lg:pb-6">
+    <div className="mx-auto min-w-0 w-full max-w-2xl space-y-2.5 overflow-x-hidden pb-4 sm:space-y-4 sm:pb-6 lg:max-w-3xl lg:pb-6">
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <FadeIn>
         <HeroSection
@@ -482,13 +488,17 @@ export function HomeScreen({
         />
       </FadeIn>
 
-      <FadeIn delay={110}>
-        <HomeValueCards t={t} />
-      </FadeIn>
+      <div className="hidden sm:block">
+        <FadeIn delay={110}>
+          <HomeValueCards t={t} />
+        </FadeIn>
+      </div>
 
-      <FadeIn delay={140}>
-        <HomeTrustStrip t={t} />
-      </FadeIn>
+      <div className="hidden sm:block">
+        <FadeIn delay={140}>
+          <HomeTrustStrip t={t} />
+        </FadeIn>
+      </div>
 
       {/* ── Settings strip ─────────────────────────────────────────────────── */}
       <FadeIn delay={170}>
