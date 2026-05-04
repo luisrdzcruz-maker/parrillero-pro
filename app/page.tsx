@@ -454,6 +454,7 @@ function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlLang = parseLangParam(searchParams.get("lang"));
+  const searchParamsKey = searchParams.toString();
 
   // ── Onboarding gate ─────────────────────────────────────────────────────────
   // null  = not yet resolved (server render + first paint — avoids hydration mismatch)
@@ -537,6 +538,10 @@ function HomeContent() {
     doneness,
     thickness,
   });
+  const navStateRef = useRef({
+    mode,
+    cookingStep,
+  });
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -570,7 +575,7 @@ function HomeContent() {
   const liveSession = useLiveCookingSession({
     mode,
     lang,
-    searchParamsKey: searchParams.toString(),
+    searchParamsKey,
     mockSteps: MOCK_LIVE_STEPS,
   });
   const {
@@ -586,12 +591,33 @@ function HomeContent() {
     jumpToStep,
   } = liveSession;
 
-  function resetAdaptiveDetailInputs() {
+  const getAdaptiveDetailDefaults = useCallback((selectedCutId: string | undefined, selectedAnimal: AnimalLabel) => {
+    const cutMeta = selectedCutId ? getCutById(selectedCutId) : undefined;
+    const inputProfile = cutMeta
+      ? getInputProfileForCut({
+          cutId: cutMeta.id,
+          animalId: cutMeta.animalId,
+          style: cutMeta.style,
+          inputProfileId: cutMeta.inputProfileId,
+        })
+      : getInputProfileForCut({
+          cutId: selectedCutId ?? "",
+          animalId: animalIdsByLabel[selectedAnimal],
+          style: "fast",
+        });
+
+    return inputProfile.defaults;
+  }, []);
+
+  const resetAdaptiveDetailInputs = useCallback((selectedCutId: string | undefined, selectedAnimal: AnimalLabel) => {
+    const defaults = getAdaptiveDetailDefaults(selectedCutId, selectedAnimal);
+
     setAdvancedThicknessEnabled(false);
-    setSizePreset("medium");
-    setWeightRange("medium");
-    setVegetableFormat("halved");
-  }
+    setSizePreset(defaults.sizePreset);
+    setThickness(mapSizePresetToThickness(defaults.sizePreset));
+    setWeightRange(defaults.weightRange);
+    setVegetableFormat(defaults.vegetableFormat);
+  }, [getAdaptiveDetailDefaults]);
 
   const applyCookingNavContext = useCallback((cookingContext: CookingNavContext) => {
     const hasContext =
@@ -600,9 +626,14 @@ function HomeContent() {
 
     const currentContext = cookingContextRef.current;
     const contextChanged = !isSameCookingContext(cookingContext, currentContext);
+    const nextAnimal = cookingContext.animal ?? currentContext.animal;
+    const cutChanged = Boolean(cookingContext.cut && cookingContext.cut !== currentContext.cut);
 
     if (cookingContext.animal) setAnimal(cookingContext.animal);
     if (cookingContext.cut) setCut(cookingContext.cut);
+    if (cutChanged) {
+      resetAdaptiveDetailInputs(cookingContext.cut, nextAnimal);
+    }
     if (cookingContext.doneness) {
       setDoneness(cookingContext.doneness);
     } else if (cookingContext.animal) {
@@ -612,9 +643,6 @@ function HomeContent() {
       setThickness(cookingContext.thickness);
       setSizePreset(mapThicknessToSizePreset(cookingContext.thickness));
     }
-    setAdvancedThicknessEnabled(false);
-    setWeightRange("medium");
-    setVegetableFormat("halved");
     if (contextChanged) {
       setBlocks({});
       setCheckedItems({});
@@ -624,7 +652,7 @@ function HomeContent() {
       setShareMessage("");
       setShareMessageMenuId(null);
     }
-  }, []);
+  }, [resetAdaptiveDetailInputs]);
 
   const commitNav = useCallback((
     requestedMode: Mode,
@@ -925,17 +953,22 @@ function HomeContent() {
     if (isApplyingPopRef.current) return;
     if (typeof window === "undefined") return;
     const nav = parseNavFromSearch(window.location.search);
-    const currentCookingContext: CookingNavContext = {
-      animal,
-      ...(cut ? { cut } : {}),
-      ...(doneness ? { doneness } : {}),
-      ...(thickness ? { thickness } : {}),
-    };
+    const currentNavState = navStateRef.current;
+    const currentCookingContext = cookingContextRef.current;
     const shouldCompareCookingContext =
-      nav.mode === "coccion" || nav.mode === "cocina" || mode === "coccion" || mode === "cocina";
+      nav.mode === "coccion" ||
+      nav.mode === "cocina" ||
+      currentNavState.mode === "coccion" ||
+      currentNavState.mode === "cocina";
     const matchesCurrentCookingContext =
       !shouldCompareCookingContext || isSameCookingContext(nav.cookingContext, currentCookingContext);
-    if (nav.mode === mode && nav.cookingStep === cookingStep && matchesCurrentCookingContext) return;
+    if (
+      nav.mode === currentNavState.mode &&
+      nav.cookingStep === currentNavState.cookingStep &&
+      matchesCurrentCookingContext
+    ) {
+      return;
+    }
 
     isApplyingPopRef.current = true;
     const frame = window.requestAnimationFrame(() => {
@@ -951,13 +984,12 @@ function HomeContent() {
       window.cancelAnimationFrame(frame);
       isApplyingPopRef.current = false;
     };
-  }, [searchParams, mode, cookingStep, animal, cut, doneness, thickness, applyCookingNavContext]);
+  }, [searchParamsKey, applyCookingNavContext]);
 
   useEffect(() => {
     if (process.env.NODE_ENV === "production") return;
 
-    const query = searchParams.toString();
-    const nav = parseNavFromSearch(query ? `?${query}` : "");
+    const nav = parseNavFromSearch(searchParamsKey ? `?${searchParamsKey}` : "");
     if (nav.mode !== "coccion" && nav.mode !== "cocina") return;
     const urlCutId = nav.cookingContext.cut;
     if (!urlCutId) return;
@@ -968,7 +1000,7 @@ function HomeContent() {
         activeCutId: cut,
       });
     }
-  }, [searchParams, cut]);
+  }, [searchParamsKey, cut]);
 
   useEffect(() => {
     cookingContextRef.current = {
@@ -977,7 +1009,11 @@ function HomeContent() {
       doneness,
       thickness,
     };
-  }, [animal, cut, doneness, thickness]);
+    navStateRef.current = {
+      mode,
+      cookingStep,
+    };
+  }, [animal, cut, doneness, thickness, mode, cookingStep]);
 
   useEffect(() => {
     if (!liveCookComplete || cookCompleteModalFiredRef.current || isPro()) return;
@@ -1194,8 +1230,9 @@ function HomeContent() {
     setAnimal(rebuilt.config.animal);
     setCut(rebuilt.config.cut);
     setWeight(rebuilt.config.weight);
+    resetAdaptiveDetailInputs(rebuilt.config.cut, rebuilt.config.animal);
     setThickness(rebuilt.config.thickness);
-    resetAdaptiveDetailInputs();
+    setSizePreset(mapThicknessToSizePreset(rebuilt.config.thickness));
     setDoneness(rebuilt.config.doneness);
     setEquipment(rebuilt.config.equipment);
     setBlocks(rebuilt.blocks);
@@ -1340,7 +1377,7 @@ function HomeContent() {
   function handleAnimalChange(selectedAnimal: AnimalLabel) {
     setAnimal(selectedAnimal);
     setCut("");
-    resetAdaptiveDetailInputs();
+    resetAdaptiveDetailInputs(undefined, selectedAnimal);
     setDoneness(getInitialDoneness(selectedAnimal));
     setBlocks({});
     setCheckedItems({});
@@ -1361,7 +1398,7 @@ function HomeContent() {
 
     setAnimal(selectedAnimal);
     setCut("");
-    resetAdaptiveDetailInputs();
+    resetAdaptiveDetailInputs(undefined, selectedAnimal);
     setDoneness(getInitialDoneness(selectedAnimal));
     setBlocks({});
     setCheckedItems({});
@@ -1371,8 +1408,11 @@ function HomeContent() {
   }
 
   function handleCutChange(selectedCutId: string) {
+    const defaults = getAdaptiveDetailDefaults(selectedCutId, animal);
+    const defaultThickness = mapSizePresetToThickness(defaults.sizePreset);
+
     setCut(selectedCutId);
-    resetAdaptiveDetailInputs();
+    resetAdaptiveDetailInputs(selectedCutId, animal);
     setBlocks({});
     setCheckedItems({});
     resetSaveMenuState();
@@ -1380,7 +1420,7 @@ function HomeContent() {
       animal,
       cut: selectedCutId,
       doneness,
-      thickness,
+      thickness: defaultThickness,
     });
     track({ name: "cut_selected", animal, cutId: selectedCutId, lang });
   }
@@ -1409,9 +1449,10 @@ function HomeContent() {
 
     setAnimal(selectedAnimal);
     setCut(profile.id);
-    resetAdaptiveDetailInputs();
+    resetAdaptiveDetailInputs(profile.id, selectedAnimal);
     setDoneness(selectedDoneness);
     setThickness(selectedThickness);
+    setSizePreset(mapThicknessToSizePreset(selectedThickness));
     setBlocks({});
     setCheckedItems({});
     resetSaveMenuState();
@@ -1431,13 +1472,14 @@ function HomeContent() {
 
     setAnimal(selectedAnimal);
     setCut(selectedCutId);
+    resetAdaptiveDetailInputs(selectedCutId, selectedAnimal);
     if (selection.doneness && !isVegetableContextAnimal(selectedAnimal)) {
       setDoneness(selection.doneness);
     }
     if (selection.thickness && shouldShowThickness(selectedCutId)) {
       setThickness(selection.thickness);
+      setSizePreset(mapThicknessToSizePreset(selection.thickness));
     }
-    resetAdaptiveDetailInputs();
     setBlocks({});
     setCheckedItems({});
     resetSaveMenuState();
@@ -1981,10 +2023,12 @@ ERROR
               }}
               setSizePreset={(value) => {
                 setSizePreset(value);
+                setThickness(mapSizePresetToThickness(value));
                 resetSaveMenuState();
               }}
               setThickness={(value) => {
                 setThickness(value);
+                setSizePreset(mapThicknessToSizePreset(value));
                 resetSaveMenuState();
               }}
               setVegetableFormat={(value) => {
