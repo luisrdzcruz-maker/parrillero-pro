@@ -36,7 +36,7 @@ export function getFirstUsefulLine(value = "") {
   return (
     value
       .split("\n")
-      .map((line) => line.trim().replace(/^[-•]\s*/, ""))
+      .map((line) => line.trim().replace(/^(?:[-•*]\s+|\d+[.)]\s+)/, ""))
       .find(Boolean) ?? ""
   );
 }
@@ -58,7 +58,7 @@ function findBlockKey(keys: string[], candidates: string[]) {
 function getSearchableLines(blocks: ResultBlocks, keys: string[]) {
   return keys
     .flatMap((key) => blocks[key]?.split("\n") ?? [])
-    .map((line) => line.trim().replace(/^[-•*\d.)\s]+/, ""))
+    .map((line) => line.trim().replace(/^(?:[-•*]\s+|\d+[.)]\s+)/, ""))
     .filter(Boolean);
 }
 
@@ -66,6 +66,24 @@ function extractMatchingLine(blocks: ResultBlocks, keys: string[], patterns: Reg
   const lines = getSearchableLines(blocks, keys);
   const match = lines.find((line) => patterns.some((pattern) => pattern.test(line)));
   return match ? compactDetailValue(match) : "";
+}
+
+export function getResultStepDurationTotal(blocks: ResultBlocks, keys: string[]) {
+  const stepsKey = findBlockKey(keys, ["PASOS", "STEPS"]);
+  if (!stepsKey) return "";
+
+  const totalMinutes = Array.from(blocks[stepsKey].matchAll(/(\d{1,3})\s*min\b/gi)).reduce(
+    (total, match) => total + Number(match[1] ?? 0),
+    0,
+  );
+
+  return totalMinutes > 0 ? `${totalMinutes} min` : "";
+}
+
+function hasExplicitTotalTime(value = "") {
+  return /\b(total|aprox(?:\.|imado)?|aproximado|approx(?:\.|imate)?|estimated|yhteensa|arvio)\b/i.test(
+    value,
+  );
 }
 
 function extractDonenessValue(blocks: ResultBlocks, keys: string[]) {
@@ -98,10 +116,12 @@ export function buildResultSummary(
   const timeKey = findBlockKey(keys, ["TIEMPOS", "TIMES"]);
   const tempKey = findBlockKey(keys, ["TEMPERATURA", "TEMPERATURE"]);
   const errorKey = findBlockKey(keys, ["ERROR", "ERROR CLAVE", "KEY ERROR"]);
+  const timeSummary = timeKey ? compactSummaryValue(localizeResultSurfaceCopy(blocks[timeKey], lang)) : "";
+  const stepDurationTotal = getResultStepDurationTotal(blocks, keys);
 
   return {
     method: setupKey ? compactSummaryValue(localizeResultSurfaceCopy(blocks[setupKey], lang)) : "",
-    time: timeKey ? compactSummaryValue(localizeResultSurfaceCopy(blocks[timeKey], lang)) : "",
+    time: hasExplicitTotalTime(timeSummary) ? timeSummary : stepDurationTotal || timeSummary,
     temperature: tempKey ? compactSummaryValue(localizeResultSurfaceCopy(blocks[tempKey], lang)) : "",
     doneness: localizeResultSurfaceCopy(extractDonenessValue(blocks, keys), lang),
     rest: localizeResultSurfaceCopy(

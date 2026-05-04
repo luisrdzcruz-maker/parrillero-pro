@@ -20,7 +20,7 @@ function normalizeMetricText(value = "") {
   return (
     value
       .split("\n")
-      .map((line) => line.trim().replace(/^[-•*\d.)\s]+/, ""))
+      .map((line) => line.trim().replace(/^(?:[-•*]\s+|\d+[.)]\s+)/, ""))
       .find(Boolean)
       ?.replace(/\s+/g, " ")
       .replace(/\s+([.,;:])/g, "$1")
@@ -67,6 +67,26 @@ function extractMinuteValues(
   });
 }
 
+function compactSegmentTotalTime(value: string) {
+  const segments = normalizeMetricText(value)
+    .split(/\s*(?:\+|,|;|\/|\||\by\b|\band\b|\bja\b)\s*/i)
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+
+  if (segments.length < 2) return "";
+
+  const totalMinutes = segments.reduce((total, segment) => {
+    const match = segment.match(/(\d{1,3})\s*(?:min\.?|mins?|minutos?|minutes?)/i);
+    if (!match?.[1]) return total;
+
+    const minutes = Number(match[1]);
+    const multiplier = /\b(per\s+side|por\s+lado|por\s+cara|per\s+puoli)\b/i.test(segment) ? 2 : 1;
+    return total + minutes * multiplier;
+  }, 0);
+
+  return totalMinutes > 0 ? formatMinuteValue(String(totalMinutes)) : "";
+}
+
 function compactTotalTime(value: string) {
   const clean = normalizeMetricText(value);
   const totalMatch = clean.match(
@@ -86,6 +106,9 @@ function compactTimeMetric(value?: string, restValue?: string) {
 
   const total = compactTotalTime(clean);
   if (total && !restPattern.test(clean)) return total;
+
+  const segmentTotal = compactSegmentTotalTime(clean);
+  if (segmentTotal) return segmentTotal;
 
   const restMinutes = new Set(extractMinuteValues(restValue ?? "", { excludeRest: false }));
   const minuteValues = extractMinuteValues(clean, { excludeRest: true, ignoreEllipsisSegments: true }).filter(
@@ -156,18 +179,21 @@ export function buildResultHeroMetrics({
   doneness,
   lang = "es",
   summary,
+  timeFallback,
 }: {
   doneness?: string;
   lang?: ResultLang;
   summary?: ResultSummary;
+  timeFallback?: string;
 }) {
   const copy = texts[lang];
   const restMetric = compactRestMetric(summary?.rest);
   const target = compactTemperatureMetric(summary?.temperature, summary?.doneness || doneness, lang);
+  const timeMetric = compactTimeMetric(summary?.time, restMetric) || compactTimeMetric(timeFallback, restMetric);
   const usedMetricValues = new Set<string>();
 
   const rawMetrics: ResultHeroRawMetricItem[] = [
-    { label: copy.resultHeroMetricTime, value: compactTimeMetric(summary?.time, restMetric), tone: "orange" },
+    { label: copy.resultHeroMetricTime, value: timeMetric, tone: "orange" },
     { label: copy.resultHeroMetricTarget, value: target, tone: "red" },
     { label: copy.resultHeroMetricRest, value: restMetric, tone: "sky" },
   ];
