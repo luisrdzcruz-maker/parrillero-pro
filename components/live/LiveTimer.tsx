@@ -55,18 +55,25 @@ export default function LiveTimer({
 
   if (!hasTimer) {
     return (
-      <section className="rounded-[1.35rem] border border-white/[0.07] bg-white/[0.035] px-4 py-3.5 text-center">
-        <p className="text-[9px] font-black uppercase tracking-[0.24em] text-white/30">{liveText.manualStep}</p>
-        <p className="mt-1 text-[clamp(1.8rem,9vw,2.7rem)] font-black leading-none text-white">{liveText.followAction}</p>
-        <p className="mt-1 text-xs font-semibold text-white/42">{liveText.advanceWhenDone}</p>
-        {children && <div className="mt-2.5">{children}</div>}
+      <section className="rounded-[1.15rem] border border-white/[0.07] bg-white/[0.032] px-3.5 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[9px] font-black uppercase tracking-[0.22em] text-white/30">{liveText.manualStep}</p>
+            <p className="mt-0.5 truncate text-lg font-black leading-none text-white">{liveText.followAction}</p>
+          </div>
+          <p className="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-black text-white/45">
+            {liveText.noTimer}
+          </p>
+        </div>
+        <p className="mt-2 text-xs font-semibold text-white/42">{liveText.advanceWhenDone}</p>
+        {children && <div className="mt-2">{children}</div>}
       </section>
     );
   }
 
   return (
     <section
-      className={`rounded-[1.35rem] border px-4 py-3.5 text-center transition-all duration-500 ${
+      className={`rounded-[1.15rem] border px-3.5 py-3 transition-all duration-500 ${
         urgency === "critical"
           ? "border-yellow-200/75 bg-yellow-300/[0.11] shadow-[0_0_52px_rgba(250,204,21,0.30)]"
           : urgency === "attention"
@@ -74,16 +81,26 @@ export default function LiveTimer({
             : "border-white/[0.07] bg-white/[0.035]"
       } ${isAttention && !reduceMotion ? "animate-pulse" : ""}`}
     >
-      <p className="text-[9px] font-black uppercase tracking-[0.24em] text-white/32">
-        {phase === "complete" ? liveText.done : liveText.timeRemaining}
-      </p>
-      <p
-        className={`mt-1 font-mono font-black leading-none tabular-nums tracking-[-0.08em] transition-all duration-200 ${
-          isCritical ? "text-[clamp(4.25rem,20vw,5.6rem)]" : "text-[clamp(3.8rem,18vw,5.15rem)]"
-        } ${TIMER_COLOR[phase]}`}
-      >
-        {formatTime(remainingTime)}
-      </p>
+      <div className="flex items-end justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[9px] font-black uppercase tracking-[0.22em] text-white/32">
+            {phase === "complete" ? liveText.done : liveText.timeRemaining}
+          </p>
+          <p
+            className={`mt-0.5 font-mono font-black leading-none tabular-nums tracking-[-0.08em] transition-all duration-200 ${
+              isCritical ? "text-[2.85rem]" : "text-[2.45rem]"
+            } ${TIMER_COLOR[phase]}`}
+          >
+            {formatTime(remainingTime)}
+          </p>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-white/28">
+            {liveText.stepDuration}
+          </p>
+          <p className="mt-1 text-sm font-black tabular-nums text-white/65">{formatTime(duration)}</p>
+        </div>
+      </div>
       <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-white/[0.08]">
         <div
           className={`h-full rounded-full transition-[width,background-color] duration-700 ease-linear ${BAR_COLOR[phase]}`}
@@ -91,10 +108,10 @@ export default function LiveTimer({
         />
       </div>
       <div className="mt-1.5 flex items-center justify-between text-[9px] font-bold text-white/30">
-        <span>{`${liveText.stepDuration}: ${formatTime(duration)}`}</span>
+        <span>{liveText.timeRemaining}</span>
         <span>{Math.round(Math.max(0, Math.min(1, progress)) * 100)}%</span>
       </div>
-      {children && <div className="mt-2.5">{children}</div>}
+      {children && <div className="mt-2">{children}</div>}
     </section>
   );
 }

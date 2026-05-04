@@ -8,6 +8,7 @@ import {
   type UrgencyLevel,
 } from "@/hooks/useLiveCooking";
 import { parseLiveParams } from "@/lib/navigation/parseLiveParams";
+import LiveExecutionGuide from "./LiveExecutionGuide";
 import LiveHeader from "./LiveHeader";
 import LiveNextStepPreview from "./LiveNextStepPreview";
 import LiveStepCard from "./LiveStepCard";
@@ -150,9 +151,6 @@ export default function LiveCookingScreen({
 
   const touchRef = useRef<TouchPoint | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saved">("idle");
-  const [displayedStepId, setDisplayedStepId] = useState<string | null>(null);
-  const displayedStepIdRef = useRef<string | null>(null);
-  const [stepTransition, setStepTransition] = useState<"idle" | "exit" | "enter">("idle");
   const {
     allSteps,
     currentStep,
@@ -187,9 +185,6 @@ export default function LiveCookingScreen({
   const bgStyle = getBgStyle(phase, currentStep?.zone);
   const isFirst = currentStepIndex === 0;
   const isLast = currentStepIndex === allSteps.length - 1;
-  const displayedIndex = allSteps.findIndex((step) => step.id === displayedStepId);
-  const visualStepIndex = displayedIndex >= 0 ? displayedIndex : currentStepIndex;
-  const visualStep = allSteps[visualStepIndex] ?? currentStep;
   const overallProgress = isComplete
     ? 1
     : allSteps.length > 0
@@ -199,54 +194,6 @@ export default function LiveCookingScreen({
   const ctaUrgency = ctaLabel === liveText.markDone && urgency === "normal" ? "normal" : urgency;
   const shouldPulseCta = !reduceMotion && (urgency === "attention" || urgency === "critical");
   const dotClass = reduceMotion ? DOT_CLASS[phase].replace("animate-pulse ", "") : DOT_CLASS[phase];
-
-  useEffect(() => {
-    if (!currentStep) return;
-
-    let frameId: number | undefined;
-    let exitTimer: number | undefined;
-    let enterTimer: number | undefined;
-
-    const displayed = displayedStepIdRef.current;
-    if (displayed === null) {
-      displayedStepIdRef.current = currentStep.id;
-      frameId = window.requestAnimationFrame(() => {
-        setDisplayedStepId(currentStep.id);
-      });
-      return () => {
-        if (frameId !== undefined) window.cancelAnimationFrame(frameId);
-      };
-    }
-
-    if (displayed === currentStep.id) return;
-
-    if (reduceMotion) {
-      displayedStepIdRef.current = currentStep.id;
-      frameId = window.requestAnimationFrame(() => {
-        setDisplayedStepId(currentStep.id);
-        setStepTransition("idle");
-      });
-      return () => {
-        if (frameId !== undefined) window.cancelAnimationFrame(frameId);
-      };
-    }
-
-    frameId = window.requestAnimationFrame(() => {
-      setStepTransition("exit");
-      exitTimer = window.setTimeout(() => {
-        displayedStepIdRef.current = currentStep.id;
-        setDisplayedStepId(currentStep.id);
-        setStepTransition("enter");
-        enterTimer = window.setTimeout(() => setStepTransition("idle"), 25);
-      }, 100);
-    });
-
-    return () => {
-      if (frameId !== undefined) window.cancelAnimationFrame(frameId);
-      if (exitTimer !== undefined) window.clearTimeout(exitTimer);
-      if (enterTimer !== undefined) window.clearTimeout(enterTimer);
-    };
-  }, [currentStep, reduceMotion]);
 
   function handleBack() {
     if (hasStarted && hasTimer && !paused && !isComplete && !window.confirm(liveText.leaveConfirm)) {
@@ -357,33 +304,31 @@ export default function LiveCookingScreen({
           </div>
         )}
 
-        <div className="shrink-0">
-          <LiveTimer
-            duration={currentStep.duration}
-            remainingTime={currentStep.remainingTime}
-            progress={currentStep.progress}
-            phase={phase}
+        <div className="shrink-0 rounded-[1.15rem] border border-white/[0.06] bg-black/20 px-3 py-2">
+          <LiveTimeline
+            currentIndex={currentStepIndex}
             lang={resolvedLang}
-            reduceMotion={reduceMotion}
-            urgency={urgency}
-          >
-            <LiveTimeline
-              currentIndex={currentStepIndex}
-              lang={resolvedLang}
-              onGoToStep={handleGoToStep}
-              phase={phase}
-              steps={allSteps}
-            />
-          </LiveTimer>
+            onGoToStep={handleGoToStep}
+            phase={phase}
+            steps={allSteps}
+          />
         </div>
 
         <div className="min-h-0 shrink">
           <LiveStepCard
-            currentStep={visualStep}
+            currentStep={currentStep}
             feedback={feedback}
             lang={resolvedLang}
             reduceMotion={reduceMotion}
-            transitionState={stepTransition}
+            transitionState="idle"
+            urgency={urgency}
+          />
+        </div>
+
+        <div className="shrink-0">
+          <LiveExecutionGuide
+            currentStep={currentStep}
+            lang={resolvedLang}
             urgency={urgency}
           />
         </div>
@@ -424,6 +369,20 @@ export default function LiveCookingScreen({
                   : liveText.saveCook}
               </button>
             )}
+          </div>
+        )}
+
+        {!isComplete && (
+          <div className="shrink-0">
+            <LiveTimer
+              duration={currentStep.duration}
+              remainingTime={currentStep.remainingTime}
+              progress={currentStep.progress}
+              phase={phase}
+              lang={resolvedLang}
+              reduceMotion={reduceMotion}
+              urgency={urgency}
+            />
           </div>
         )}
 

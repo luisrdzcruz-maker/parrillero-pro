@@ -1,11 +1,9 @@
 import type { LiveStep } from "@/components/live/LiveCookingScreen";
 import {
   getAnimalSurfaceLabel,
-  getDonenessSurfaceLabel,
   getEquipmentSurfaceLabel,
   localizeLiveStepEntry,
   localizeResultSurfaceCopy,
-  sanitizeSetupSummaryCopy,
 } from "@/lib/i18n/surfaceFallbacks";
 
 export const LIVE_COOKING_STORAGE_KEY = "parrillero_live_cooking_plan_v1";
@@ -61,8 +59,8 @@ function block(blocks: LiveCookingBlocks, ...keys: string[]) {
 function inferZone(text: string) {
   const line = text.toLowerCase();
   if (/rest|reposo/.test(line)) return "Rest";
-  if (/serve|servir|finish|terminar|listo/.test(line)) return "Serve";
   if (/indirect|indirecto|oven|horno|core|centro/.test(line)) return "Indirect";
+  if (/serve|servir/.test(line)) return "Serve";
   if (/preheat|precalent|stabilize|estabiliza|setup|zona/.test(line)) return "Direct";
   if (/sear|sellad|dorar|browning|crisp/.test(line)) return "Direct";
   return "Direct";
@@ -150,24 +148,11 @@ function pickLabel(entry: string) {
   return base.length > 72 ? `${base.slice(0, 69)}...` : base;
 }
 
-function buildStepNotes(
-  input: LiveCookingInputSnapshot,
-  setupText: string,
-  timelineText: string,
-  surfaceLang: "es" | "en" | "fi",
-) {
-  const details = [
-    `${getAnimalSurfaceLabel(input.animal, surfaceLang)} · ${input.cut}`,
-    getEquipmentSurfaceLabel(input.equipment, surfaceLang),
-    `${getDonenessSurfaceLabel(input.doneness, surfaceLang)} · ${input.thickness} cm`,
-  ].join(" | ");
-
-  const setupLabel = input.lang === "es" ? "Configuracion" : input.lang === "fi" ? "Asetus" : "Setup";
-  const timelineLabel = input.lang === "es" ? "Cronograma" : input.lang === "fi" ? "Aikajana" : "Timeline";
-  const setup = setupText ? `${setupLabel}: ${setupText}` : "";
-  const timeline = timelineText ? `${timelineLabel}: ${timelineText}` : "";
-
-  return [details, setup, timeline].filter(Boolean).join(" | ");
+function pickStepInstruction(entry: string, surfaceLang: "es" | "en" | "fi") {
+  const [, ...bodyParts] = entry.split(":");
+  const body = bodyParts.join(":").trim();
+  const instruction = body || entry.trim();
+  return localizeResultSurfaceCopy(instruction, surfaceLang);
 }
 
 export function buildLiveStepsSignature(steps: LiveStep[]) {
@@ -248,15 +233,10 @@ export function buildLiveStepsFromPayload(
     };
   }
 
-  const setupText = block(payload.blocks, "SETUP");
   const tempText = block(payload.blocks, "TEMPERATURA", "TEMPERATURE");
   const stepsText = block(payload.blocks, "PASOS", "STEPS");
-  const timelineText = block(payload.blocks, "TIMELINE", "TIMING");
   const entries = parsePlanSteps(stepsText).map((entry) => localizeLiveStepEntry(entry, surfaceLang));
   const targets = parseTempTargets(tempText);
-  const setupSummary = sanitizeSetupSummaryCopy(setupText, surfaceLang, payload.input.equipment);
-  const localizedTimeline = localizeResultSurfaceCopy(timelineText, surfaceLang);
-  const sharedNotes = buildStepNotes(payload.input, setupSummary, localizedTimeline, surfaceLang);
 
   if (entries.length === 0) {
     return {
@@ -283,7 +263,7 @@ export function buildLiveStepsFromPayload(
       zone,
       duration,
       tempTarget,
-      notes: index === 0 ? sharedNotes : entry,
+      notes: pickStepInstruction(entry, surfaceLang),
     };
   });
 
