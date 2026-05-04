@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import type { HTMLAttributes } from "react";
+import { useState, type HTMLAttributes, type ReactNode } from "react";
 
 type BrandImageIconSize = "sm" | "md" | "lg" | "xl";
 type BrandImageIconShape = "plain" | "tile" | "soft";
@@ -12,6 +12,7 @@ type BrandImageIconProps = Omit<HTMLAttributes<HTMLSpanElement>, "children"> & {
   size?: BrandImageIconSize;
   shape?: BrandImageIconShape;
   priority?: boolean;
+  fallback?: ReactNode;
 };
 
 const sizeClasses: Record<BrandImageIconSize, string> = {
@@ -40,10 +41,13 @@ export function BrandImageIcon({
   size = "md",
   shape = "plain",
   priority = false,
+  fallback,
   className,
   ...props
 }: BrandImageIconProps) {
   const pixels = pixelSizes[size];
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const hasImageError = failedSrc === src;
 
   return (
     <span
@@ -57,15 +61,20 @@ export function BrandImageIcon({
         .join(" ")}
       {...props}
     >
-      <Image
-        src={src}
-        alt={alt}
-        width={pixels}
-        height={pixels}
-        sizes={`${pixels}px`}
-        priority={priority}
-        className="h-full w-full object-contain"
-      />
+      {hasImageError && fallback ? (
+        fallback
+      ) : (
+        <Image
+          src={src}
+          alt={alt}
+          width={pixels}
+          height={pixels}
+          sizes={`${pixels}px`}
+          priority={priority}
+          className="h-full w-full object-contain"
+          onError={() => setFailedSrc(src)}
+        />
+      )}
     </span>
   );
 }
