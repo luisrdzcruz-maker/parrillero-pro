@@ -17,9 +17,24 @@ type QuickPicksProps = {
   limit?: number;
   selectedCutId?: string;
   onSelect: (profile: GeneratedCutProfile) => void;
+  onViewDetails?: (profile: GeneratedCutProfile) => void;
 };
 
-export function QuickPicks({ profiles, intent, lang, limit = 4, selectedCutId, onSelect }: QuickPicksProps) {
+function getDetailsLabel(lang: Lang) {
+  if (lang === "es") return "Detalles";
+  if (lang === "fi") return "Tiedot";
+  return "Details";
+}
+
+export function QuickPicks({
+  profiles,
+  intent,
+  lang,
+  limit = 4,
+  selectedCutId,
+  onSelect,
+  onViewDetails,
+}: QuickPicksProps) {
   const picks = getRecommendedCuts(profiles, intent, limit);
 
   if (picks.length === 0) return null;
@@ -38,22 +53,31 @@ export function QuickPicks({ profiles, intent, lang, limit = 4, selectedCutId, o
         {picks.map((profile) => {
           const isActive = selectedCutId === profile.id;
           return (
-            <button
+            <article
               key={profile.id}
-              type="button"
-              onClick={() => onSelect(profile)}
               className={`min-w-0 rounded-xl border p-2 text-left transition active:scale-[0.97] ${
                 isActive
                   ? "border-orange-400 bg-orange-500/20"
                   : "border-white/10 bg-black/25 hover:border-orange-400/45 hover:bg-white/[0.07]"
               }`}
             >
-              <span className="block truncate text-[13px] font-black text-white">{getDisplayName(profile, lang)}</span>
-              <span className="mt-1 block truncate text-[10px] text-zinc-500">{getCutDescriptor(profile, lang)}</span>
-              <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-black text-orange-300">
-                <span className="inline-flex rounded-full bg-orange-500/10 px-2 py-0.5">{getEstimatedTimeLabel(profile, lang)}</span>
-              </span>
-            </button>
+              <button type="button" onClick={() => onSelect(profile)} className="block min-w-0 text-left">
+                <span className="block truncate text-[13px] font-black text-white">{getDisplayName(profile, lang)}</span>
+                <span className="mt-1 block truncate text-[10px] text-zinc-500">{getCutDescriptor(profile, lang)}</span>
+                <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-black text-orange-300">
+                  <span className="inline-flex rounded-full bg-orange-500/10 px-2 py-0.5">{getEstimatedTimeLabel(profile, lang)}</span>
+                </span>
+              </button>
+              {onViewDetails && (
+                <button
+                  type="button"
+                  onClick={() => onViewDetails(profile)}
+                  className="mt-2 rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-black text-zinc-400 transition hover:border-orange-300/35 hover:text-orange-200 active:scale-[0.97]"
+                >
+                  {getDetailsLabel(lang)}
+                </button>
+              )}
+            </article>
           );
         })}
       </div>

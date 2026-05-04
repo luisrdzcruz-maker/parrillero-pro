@@ -18,6 +18,7 @@ type CutListProps = {
   hasActiveFilters?: boolean;
   onResetFilters?: () => void;
   onSelect: (profile: GeneratedCutProfile) => void;
+  onViewDetails?: (profile: GeneratedCutProfile) => void;
 };
 
 export function CutList({
@@ -27,6 +28,7 @@ export function CutList({
   hasActiveFilters = false,
   onResetFilters,
   onSelect,
+  onViewDetails,
 }: CutListProps) {
   if (groups.length === 0) {
     return (
@@ -76,6 +78,7 @@ export function CutList({
                 lang={lang}
                 selected={selectedCutId === profile.id}
                 onSelect={onSelect}
+                onViewDetails={onViewDetails}
               />
             ))}
           </div>

@@ -1469,45 +1469,28 @@ function HomeContent() {
     const selectedAnimal = animalLabelsById[selection.animal] ?? animal;
     const selectedCutId = selection.cutId.trim();
     if (!selectedCutId) return;
+    const selectedDoneness = selection.doneness ?? getInitialDoneness(selectedAnimal);
+    const selectedThickness = selection.thickness ?? (shouldShowThickness(selectedCutId) ? "2" : undefined);
 
     setAnimal(selectedAnimal);
     setCut(selectedCutId);
     resetAdaptiveDetailInputs(selectedCutId, selectedAnimal);
-    if (selection.doneness && !isVegetableContextAnimal(selectedAnimal)) {
-      setDoneness(selection.doneness);
+    if (!isVegetableContextAnimal(selectedAnimal)) {
+      setDoneness(selectedDoneness);
     }
-    if (selection.thickness && shouldShowThickness(selectedCutId)) {
-      setThickness(selection.thickness);
-      setSizePreset(mapThicknessToSizePreset(selection.thickness));
+    if (selectedThickness && shouldShowThickness(selectedCutId)) {
+      setThickness(selectedThickness);
+      setSizePreset(mapThicknessToSizePreset(selectedThickness));
     }
     setBlocks({});
     setCheckedItems({});
     resetSaveMenuState();
-
-    if (typeof window === "undefined") {
-      commitNav("coccion", "cut", "push", {
-        animal: selectedAnimal,
-      });
-      commitNav("coccion", "cut", "push", {
-        animal: selectedAnimal,
-        cut: selectedCutId,
-      });
-      track({ name: "cut_selected", animal: selectedAnimal, cutId: selectedCutId, lang });
-      return;
-    }
-
-    const baseContext: CookingNavContext = { animal: selectedAnimal };
-    const detailContext: CookingNavContext = { animal: selectedAnimal, cut: selectedCutId };
-    const baseSearch = buildSearchFromNav("coccion", "cut", baseContext, lang);
-    const detailSearch = buildSearchFromNav("coccion", "cut", detailContext, lang);
-    const baseUrl = `${window.location.pathname}${baseSearch}${window.location.hash}`;
-    const detailUrl = `${window.location.pathname}${detailSearch}${window.location.hash}`;
-
-    setMode("coccion");
-    setCookingStep("cut");
-    window.history.pushState(window.history.state, "", baseUrl);
-    router.push(detailUrl);
-    hasCutSelectionPreviewHistoryRef.current = true;
+    commitNav("coccion", "details", "push", {
+      animal: selectedAnimal,
+      cut: selectedCutId,
+      ...(!isVegetableContextAnimal(selectedAnimal) ? { doneness: selectedDoneness } : {}),
+      ...(selectedThickness && shouldShowThickness(selectedCutId) ? { thickness: selectedThickness } : {}),
+    });
     track({ name: "cut_selected", animal: selectedAnimal, cutId: selectedCutId, lang });
   }
 

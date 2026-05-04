@@ -244,7 +244,8 @@ export function CutSelectionScreen({
               lang={effectiveLang}
               limit={4}
               selectedCutId={selectedProfile?.id}
-              onSelect={handleProfileChange}
+              onSelect={handleStartCooking}
+              onViewDetails={handleProfileChange}
             />
             <button
               type="button"
@@ -320,7 +321,8 @@ export function CutSelectionScreen({
                     selectedCutId={selectedProfile?.id}
                     hasActiveFilters={hasActiveFilters && !isSearchActive}
                     onResetFilters={handleResetFilters}
-                    onSelect={handleProfileChange}
+                    onSelect={handleStartCooking}
+                    onViewDetails={handleProfileChange}
                   />
                 )}
               </div>
