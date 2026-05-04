@@ -48,7 +48,6 @@ type UseLiveCookingParams = {
 
 type CtaParams = {
   currentStep: LiveCookingStepState | null;
-  nextStep: LiveCookingStepState | null;
   started: boolean;
   isComplete: boolean;
   lang: SurfaceLang;
@@ -194,7 +193,6 @@ function getUrgency(
 
 export function getCurrentCTA({
   currentStep,
-  nextStep,
   started,
   isComplete,
   lang,
@@ -204,25 +202,26 @@ export function getCurrentCTA({
   if (isComplete) return text.cookingCompleteCta;
   if (!currentStep) return text.nextStep;
 
-  const combinedText = `${currentStep.name} ${currentStep.instructions} ${nextStep?.name ?? ""} ${nextStep?.instructions ?? ""}`;
+  const currentText = `${currentStep.name} ${currentStep.instructions}`;
 
-  if (includesAny(combinedText, ["flip", "turn", "side 2", "lado 2", "voltea", "dar vuelta"])) {
+  if (includesAny(currentText, ["flip", "turn", "side 2", "lado 2", "voltea", "dar vuelta"])) {
     return text.flipNow;
   }
 
-  if (includesAny(combinedText, ["remove", "pull", "off heat", "retira", "saca"])) {
-    return nextStep?.zone === "rest" ? text.restNow : text.markDone;
+  if (currentStep.zone === "rest") return text.restNow;
+
+  if (includesAny(currentText, ["remove", "pull", "off heat", "retira", "saca", "rest", "repos"])) {
+    return text.restNow;
   }
 
-  if (nextStep?.zone === "indirect" && currentStep.zone !== "indirect") {
+  if (includesAny(currentText, ["move indirect", "move to indirect", "shift indirect", "mover a indirecto", "mueve a indirecto", "siirra epasuor"])) {
     return text.moveIndirect;
   }
 
-  if (nextStep?.zone === "direct" && currentStep.zone !== "direct") {
+  if (includesAny(currentText, ["move direct", "move to direct", "shift direct", "mover a directo", "mueve a directo", "siirra suor"])) {
     return text.moveDirect;
   }
 
-  if (nextStep?.zone === "rest") return text.restNow;
   return text.markDone;
 }
 
@@ -277,7 +276,7 @@ export function useLiveCooking({
   );
   const urgency = getUrgency(currentStep, nextStep);
   const phase = getPhase({ currentStep, isComplete, paused, started, urgency });
-  const ctaLabel = getCurrentCTA({ currentStep, nextStep, started, isComplete, lang });
+  const ctaLabel = getCurrentCTA({ currentStep, started, isComplete, lang });
   const [feedback, setFeedback] = useState<string | null>(null);
   const previousIndexRef = useRef(currentStepIndex);
 

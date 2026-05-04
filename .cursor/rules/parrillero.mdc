@@ -443,6 +443,50 @@ Do not claim verification passed unless it was actually run.
 
 ---
 
+## Command Safety Rules
+
+Agents may run these commands without asking:
+- `npm run lint`
+- `npm run build`
+- `npm run qa:cooking`
+- `npm run check`
+- `npx tsc --noEmit`
+- `git status`
+- `git diff`
+- `git log --oneline -5`
+- `git branch --show-current`
+
+Agents must ask before running:
+- `git add`
+- `git commit`
+- `git push`
+- `git checkout`
+- `git merge`
+- `git rebase`
+- `git reset`
+- `git clean`
+- `npm install`
+- `npm update`
+- `npm audit fix`
+- `npx shadcn`
+- `vercel`
+- `supabase`
+- `rm`
+- `del`
+- `Remove-Item`
+
+Rules:
+- Never run destructive commands without explicit approval.
+- Do not modify dependencies unless explicitly requested.
+- Do not modify database schema or migrations unless explicitly requested.
+- Do not deploy unless explicitly requested.
+- Do not change branches, merge, rebase, reset, or clean without approval.
+- Validation commands are allowed.
+- Git inspection commands are allowed.
+- Git write commands require approval.
+
+---
+
 ## Git and Safety
 
 Always:
