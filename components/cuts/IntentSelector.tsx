@@ -28,7 +28,7 @@ export function IntentSelector({ lang, selectedIntent, onIntentChange }: IntentS
               key={intent}
               type="button"
               onClick={() => onIntentChange(isActive ? null : intent)}
-              className={`min-w-0 rounded-full border px-2.5 py-1.5 text-[11px] font-black transition active:scale-[0.97] ${
+              className={`min-w-0 rounded-full border px-2.5 py-1.5 text-[13px] font-black leading-tight tracking-[-0.01em] transition active:scale-[0.97] sm:text-sm ${
                 isActive
                   ? "border-orange-400 bg-orange-500 text-black shadow-[0_8px_24px_rgba(249,115,22,0.22)]"
                   : "border-white/10 bg-black/25 text-zinc-300 hover:border-orange-400/45 hover:bg-white/[0.07]"

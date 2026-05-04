@@ -40,15 +40,9 @@ function FadeIn({ children, delay = 0 }: { children: ReactNode; delay?: number }
 
 // ─── Hero section ─────────────────────────────────────────────────────────────
 
-function HeroSection({
-  t,
-  onStartCooking,
-}: {
-  t: AppText;
-  onStartCooking: (e: MouseEvent<HTMLButtonElement>) => void;
-}) {
+function HeroSection({ t }: { t: AppText }) {
   return (
-    <section className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#090909] px-4 py-5 shadow-[0_20px_56px_rgba(0,0,0,0.55)] sm:rounded-[2rem] sm:px-7 sm:py-8">
+    <section className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#090909] px-4 py-5 shadow-[0_20px_56px_rgba(0,0,0,0.55)] sm:rounded-[2rem] sm:px-7 sm:py-7">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-300/60 to-transparent" />
 
       <div className="relative z-10 max-w-xl">
@@ -76,16 +70,6 @@ function HeroSection({
             {t.homeHowItWorks}
           </p>
           <p className="mt-1 text-sm leading-relaxed text-slate-300">{t.homeHowItWorksFlow}</p>
-        </div>
-
-        <div className="mt-5 flex flex-col gap-2 sm:mt-6 sm:max-w-sm">
-          <button
-            type="button"
-            onClick={onStartCooking}
-            className="min-h-[50px] flex-1 touch-manipulation rounded-2xl bg-orange-500 px-5 py-3 text-sm font-black text-black shadow-[0_10px_36px_rgba(234,88,12,0.42)] transition-all duration-200 hover:bg-orange-400 active:scale-[0.98] sm:min-h-[56px] sm:px-6 sm:py-4 sm:text-base"
-          >
-            {t.homePrimaryCta} <span aria-hidden className="ml-1.5">→</span>
-          </button>
         </div>
       </div>
     </section>
@@ -139,7 +123,7 @@ type QuickAction = {
   title: string;
   description: string;
   emphasized?: boolean;
-  onClick: () => void;
+  onClick: (e: MouseEvent<HTMLButtonElement>) => void;
 };
 
 function HomeQuickActions({
@@ -157,10 +141,10 @@ function HomeQuickActions({
           <button
             key={action.id}
             type="button"
-            onClick={action.onClick}
+            onClick={(e) => action.onClick(e)}
             className={`w-full touch-manipulation rounded-[1.1rem] border px-3 py-2.5 text-left transition-all duration-200 active:scale-[0.98] sm:rounded-2xl sm:px-3.5 sm:py-3 ${
               action.emphasized
-                ? "border-orange-300/28 bg-orange-500/8 hover:border-orange-300/45 hover:bg-orange-500/12"
+                ? "border-orange-300/32 bg-orange-500/[0.09] shadow-[0_10px_28px_rgba(249,115,22,0.08)] hover:border-orange-300/50 hover:bg-orange-500/[0.13]"
                 : "border-white/10 bg-black/25 hover:border-white/20 hover:bg-white/[0.05]"
             }`}
           >
@@ -170,12 +154,12 @@ function HomeQuickActions({
                   src={action.iconAsset}
                   alt=""
                   size="md"
-                  shape="plain"
+                  shape={action.emphasized ? "tile" : "soft"}
                   aria-hidden="true"
-                  className="h-9 w-9 rounded-xl"
+                  className="h-12 w-12 rounded-2xl"
                 />
               ) : (
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-base sm:h-auto sm:w-auto sm:border-0 sm:bg-transparent sm:pt-0.5 sm:text-lg" aria-hidden>{action.icon}</span>
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-xl sm:h-auto sm:w-auto sm:border-0 sm:bg-transparent sm:pt-0.5 sm:text-lg" aria-hidden>{action.icon}</span>
               )}
               <div className="min-w-0">
                 <p className="text-sm font-black text-white">{action.title}</p>
@@ -371,65 +355,48 @@ export function HomeScreen({
     return `${savedMenusCount} ${t.homeSavedPlanPlural}`;
   }, [savedMenusCount, t.homeSavedPlanPlural, t.homeSavedPlanSingular]);
 
-  const quickActions = useMemo<QuickAction[]>(() => {
-    const actions: QuickAction[] = [
-      {
-        id: "start-cooking",
-        icon: "🥩",
-        iconAsset: brandIconAssets.navCooking,
-        title: t.homeGuidedCooking,
-        description: t.homeGuidedCookingSub,
-        emphasized: true,
-        onClick: () => onModeChange("coccion"),
-      },
-      {
-        id: "plan-bbq",
-        icon: "🧭",
-        iconAsset: brandIconAssets.appFlameProbe,
-        title: t.homeParrillada,
-        description: t.homeParrilladaSub,
-        onClick: () => onModeChange("plan"),
-      },
-    ];
+  const quickActions: QuickAction[] = [
+    {
+      id: "start-cooking",
+      icon: "🥩",
+      iconAsset: brandIconAssets.navCooking,
+      title: t.homePrimaryCta,
+      description: t.homeGuidedCookingSub,
+      emphasized: true,
+      onClick: (e) =>
+        fireRipple(e.clientX, e.clientY, () => (onPrimaryCtaClick ? onPrimaryCtaClick() : onModeChange("coccion"))),
+    },
+    {
+      id: "plan-bbq",
+      icon: "🧭",
+      iconAsset: brandIconAssets.appFlameProbe,
+      title: t.homeParrillada,
+      description: t.homeParrilladaSub,
+      onClick: () => onModeChange("plan"),
+    },
+  ];
 
-    if (savedMenusCount > 0) {
-      actions.push({
-        id: "saved-plans",
-        icon: "⭐",
-        iconAsset: brandIconAssets.navSaved,
-        title: t.homeSaved,
-        description: savedPlansLabel,
-        onClick: () => onModeChange("guardados"),
-      });
-    }
+  if (savedMenusCount > 0) {
+    quickActions.push({
+      id: "saved-plans",
+      icon: "⭐",
+      iconAsset: brandIconAssets.navSaved,
+      title: t.homeSaved,
+      description: savedPlansLabel,
+      onClick: () => onModeChange("guardados"),
+    });
+  }
 
-    if (hasActiveLivePlan) {
-      actions.push({
-        id: "continue-live",
-        icon: "⏱️",
-        iconAsset: brandIconAssets.navLive,
-        title: t.homeLiveCooking,
-        description: t.homeLiveCookingSub,
-        onClick: () => router.push(buildLiveUrl({ lang })),
-      });
-    }
-
-    return actions;
-  }, [
-    hasActiveLivePlan,
-    lang,
-    onModeChange,
-    router,
-    savedMenusCount,
-    savedPlansLabel,
-    t.homeGuidedCooking,
-    t.homeGuidedCookingSub,
-    t.homeLiveCooking,
-    t.homeLiveCookingSub,
-    t.homeParrillada,
-    t.homeParrilladaSub,
-    t.homeSaved,
-  ]);
+  if (hasActiveLivePlan) {
+    quickActions.push({
+      id: "continue-live",
+      icon: "⏱️",
+      iconAsset: brandIconAssets.navLive,
+      title: t.homeLiveCooking,
+      description: t.homeLiveCookingSub,
+      onClick: () => router.push(buildLiveUrl({ lang })),
+    });
+  }
 
   return (
     <>
@@ -476,12 +443,7 @@ export function HomeScreen({
     <div className="mx-auto min-w-0 w-full max-w-2xl space-y-2.5 overflow-x-hidden pb-4 sm:space-y-4 sm:pb-6 lg:max-w-3xl lg:pb-6">
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <FadeIn>
-        <HeroSection
-          t={t}
-          onStartCooking={(e) =>
-            fireRipple(e.clientX, e.clientY, () => (onPrimaryCtaClick ? onPrimaryCtaClick() : onModeChange("coccion")))
-          }
-        />
+        <HeroSection t={t} />
       </FadeIn>
 
       <FadeIn delay={40}>
