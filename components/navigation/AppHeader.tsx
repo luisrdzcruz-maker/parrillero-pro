@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui";
+import { Badge, BrandImageIcon } from "@/components/ui";
+import { brandIconAssets } from "@/lib/brand/iconAssets";
 import { ds } from "@/lib/design-system";
 import type { AppText, Lang } from "@/lib/i18n/texts";
 import { buildLiveUrl } from "@/lib/navigation/buildLiveUrl";
@@ -14,6 +15,19 @@ export type Mode =
   | "parrillada"
   | "cocina"
   | "guardados";
+
+type NavIconConfig = {
+  src?: string;
+  fallback: string;
+};
+
+const navIcons = {
+  home: { src: brandIconAssets.navHome, fallback: "🏠" },
+  cooking: { src: brandIconAssets.navCooking, fallback: "🥩" },
+  menu: { fallback: "🧭" },
+  live: { src: brandIconAssets.navLive, fallback: "⏱️" },
+  saved: { src: brandIconAssets.navSaved, fallback: "⭐" },
+} satisfies Record<string, NavIconConfig>;
 
 export function AppHeader({
   lang,
@@ -69,25 +83,25 @@ export function DesktopModeTabs({
         <DesktopTab
           active={mode === "inicio"}
           label={t.start}
-          emoji="🏠"
+          icon={navIcons.home}
           onClick={() => onModeChange("inicio")}
         />
         <DesktopTab
           active={mode === "coccion"}
           label={t.cooking}
-          emoji="🥩"
+          icon={navIcons.cooking}
           onClick={() => onModeChange("coccion")}
         />
         <DesktopTab
           active={mode === "plan" || mode === "menu" || mode === "parrillada"}
           label={t.menu}
-          emoji="🧭"
+          icon={navIcons.menu}
           onClick={() => onModeChange("plan")}
         />
         <DesktopTab
           active={mode === "cocina"}
           label={t.live}
-          emoji="⏱️"
+          icon={navIcons.live}
           onClick={() => {
             router.push(buildLiveUrl({ lang }));
           }}
@@ -95,7 +109,7 @@ export function DesktopModeTabs({
         <DesktopTab
           active={mode === "guardados"}
           label={t.saved}
-          emoji="⭐"
+          icon={navIcons.saved}
           onClick={() => onModeChange("guardados")}
         />
       </div>
@@ -105,25 +119,34 @@ export function DesktopModeTabs({
 
 function DesktopTab({
   active,
-  emoji,
+  icon,
   label,
   onClick,
 }: {
   active: boolean;
-  emoji: string;
+  icon: NavIconConfig;
   label: string;
   onClick: () => void;
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
+      aria-current={active ? "page" : undefined}
+      aria-label={label}
+      title={label}
       className={
         active
-          ? "pointer-events-auto rounded-full bg-orange-500 px-3 py-2.5 text-sm font-black text-black shadow-lg shadow-orange-500/30 transition-all duration-200 active:scale-[0.98]"
-          : "pointer-events-auto rounded-full px-3 py-2.5 text-sm font-bold text-slate-300/80 transition-all duration-200 hover:bg-white/7 hover:text-slate-100 active:scale-[0.98]"
+          ? "pointer-events-auto inline-flex items-center justify-center rounded-full bg-orange-500 px-3 py-2.5 text-sm font-black text-black shadow-lg shadow-orange-500/30 transition-all duration-200 active:scale-[0.98]"
+          : "pointer-events-auto inline-flex items-center justify-center rounded-full px-3 py-2.5 text-sm font-bold text-slate-300/80 transition-all duration-200 hover:bg-white/7 hover:text-slate-100 active:scale-[0.98]"
       }
     >
-      <span className="mr-1.5 text-base">{emoji}</span>
+      <NavIcon
+        icon={icon}
+        active={active}
+        className="mr-1.5 h-5 w-5"
+        fallbackClassName="text-sm"
+      />
       {label}
     </button>
   );
@@ -155,25 +178,25 @@ export function BottomNavigation({
         <Tab
           active={mode === "inicio"}
           label={t.start}
-          emoji="🏠"
+          icon={navIcons.home}
           onClick={() => onModeChange("inicio")}
         />
         <Tab
           active={mode === "coccion"}
           label={t.cooking}
-          emoji="🥩"
+          icon={navIcons.cooking}
           onClick={() => onModeChange("coccion")}
         />
         <Tab
           active={mode === "plan" || mode === "menu" || mode === "parrillada"}
           label={t.menu}
-          emoji="🧭"
+          icon={navIcons.menu}
           onClick={() => onModeChange("plan")}
         />
         <Tab
           active={mode === "cocina"}
           label={t.live}
-          emoji="⏱️"
+          icon={navIcons.live}
           onClick={() => {
             router.push(buildLiveUrl({ lang }));
           }}
@@ -181,7 +204,7 @@ export function BottomNavigation({
         <Tab
           active={mode === "guardados"}
           label={t.saved}
-          emoji="⭐"
+          icon={navIcons.saved}
           onClick={() => onModeChange("guardados")}
         />
       </div>
@@ -192,12 +215,12 @@ export function BottomNavigation({
 function Tab({
   active,
   label,
-  emoji,
+  icon,
   onClick,
 }: {
   active: boolean;
   label: string;
-  emoji: string;
+  icon: NavIconConfig;
   onClick: () => void;
 }) {
   return (
@@ -205,14 +228,62 @@ function Tab({
       type="button"
       onClick={onClick}
       aria-current={active ? "page" : undefined}
+      aria-label={label}
+      title={label}
       className={
         active
-          ? "pointer-events-auto flex min-h-[58px] min-w-0 touch-manipulation flex-col items-center justify-center overflow-hidden rounded-[1.35rem] bg-gradient-to-br from-orange-300 via-orange-500 to-orange-600 px-0.5 py-1.5 text-[9.5px] font-black leading-tight text-black shadow-lg shadow-orange-500/45 ring-1 ring-orange-200/45 transition-all duration-200 motion-reduce:transition-none active:scale-[0.96] motion-reduce:active:scale-100 active:brightness-95 min-[390px]:text-[10px]"
-          : "pointer-events-auto flex min-h-[58px] min-w-0 touch-manipulation flex-col items-center justify-center overflow-hidden rounded-[1.35rem] px-0.5 py-1.5 text-[9.5px] font-bold leading-tight text-slate-300/80 transition-all duration-200 motion-reduce:transition-none hover:bg-white/[0.06] hover:text-slate-100 active:scale-[0.96] motion-reduce:active:scale-100 active:bg-white/10 min-[390px]:text-[10px]"
+          ? "pointer-events-auto flex min-h-[54px] min-w-0 touch-manipulation items-center justify-center overflow-hidden rounded-[1.35rem] bg-gradient-to-br from-orange-300 via-orange-500 to-orange-600 px-0.5 py-1.5 text-black shadow-lg shadow-orange-500/45 ring-1 ring-orange-200/55 transition-all duration-200 motion-reduce:transition-none active:scale-[0.96] motion-reduce:active:scale-100 active:brightness-95"
+          : "pointer-events-auto flex min-h-[54px] min-w-0 touch-manipulation items-center justify-center overflow-hidden rounded-[1.35rem] px-0.5 py-1.5 text-slate-300/80 transition-all duration-200 motion-reduce:transition-none hover:bg-white/[0.06] hover:text-slate-100 active:scale-[0.96] motion-reduce:active:scale-100 active:bg-white/10"
       }
     >
-      <div className="text-center text-[19px] leading-none">{emoji}</div>
-      <div className="mt-1 w-full truncate text-center tracking-[-0.03em]">{label}</div>
+      <NavIcon
+        icon={icon}
+        active={active}
+        className="h-6 w-6"
+        fallbackClassName="text-[20px]"
+      />
+      <span className="sr-only">{label}</span>
     </button>
+  );
+}
+
+function NavIcon({
+  active,
+  className,
+  fallbackClassName,
+  icon,
+}: {
+  active: boolean;
+  className: string;
+  fallbackClassName: string;
+  icon: NavIconConfig;
+}) {
+  const fallback = (
+    <span
+      className={`${className} inline-flex shrink-0 items-center justify-center rounded-md leading-none ${
+        active ? "opacity-100" : "opacity-75"
+      }`}
+      aria-hidden="true"
+    >
+      <span className={fallbackClassName}>{icon.fallback}</span>
+    </span>
+  );
+
+  if (!icon.src) {
+    return fallback;
+  }
+
+  return (
+    <BrandImageIcon
+      src={icon.src}
+      alt=""
+      size="sm"
+      shape="plain"
+      aria-hidden="true"
+      fallback={fallback}
+      className={`${className} rounded-md ${
+        active ? "opacity-100 drop-shadow-[0_0_10px_rgba(0,0,0,0.28)]" : "opacity-70 saturate-75"
+      } transition duration-200`}
+    />
   );
 }
