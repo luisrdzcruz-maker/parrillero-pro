@@ -170,11 +170,11 @@ export function BottomNavigation({
   return (
     <nav
       aria-hidden={disabled}
-      className={`fixed inset-x-0 bottom-0 z-[70] w-full max-w-full overflow-x-hidden px-2 pb-[max(0.7rem,env(safe-area-inset-bottom))] pt-1.5 transition-opacity before:pointer-events-none before:absolute before:inset-x-0 before:bottom-0 before:h-28 before:bg-gradient-to-t before:from-[#030201] before:via-[#030201]/82 before:to-transparent lg:hidden ${
+      className={`fixed inset-x-0 bottom-[max(0.5rem,env(safe-area-inset-bottom))] z-[70] w-full max-w-full overflow-x-hidden px-2.5 pb-0 pt-1.5 transition-opacity [transform:translateZ(0)] before:pointer-events-none before:absolute before:inset-x-0 before:-bottom-[max(0.5rem,env(safe-area-inset-bottom))] before:h-32 before:bg-gradient-to-t before:from-[#030201] before:via-[#030201]/84 before:to-transparent sm:px-3 lg:hidden ${
         disabled ? "pointer-events-none opacity-0" : "pointer-events-none opacity-100"
       }`}
     >
-      <div className="pointer-events-auto relative mx-auto grid w-full max-w-[448px] min-w-0 grid-cols-5 items-center gap-0.5 overflow-hidden rounded-[2rem] border border-white/10 bg-[#080604]/82 p-1.5 shadow-[0_18px_60px_rgba(0,0,0,0.62),0_0_34px_rgba(249,115,22,0.08)] ring-1 ring-inset ring-white/[0.035] backdrop-blur-xl">
+      <div className="pointer-events-auto relative mx-auto grid w-full max-w-[448px] min-w-0 grid-cols-5 items-center gap-0.5 overflow-hidden rounded-[2.1rem] border border-white/12 bg-[#080604]/88 p-1.5 shadow-[0_18px_60px_rgba(0,0,0,0.66),0_0_34px_rgba(249,115,22,0.1)] ring-1 ring-inset ring-white/[0.045] backdrop-blur-xl">
         <Tab
           active={mode === "inicio"}
           label={t.start}
@@ -232,15 +232,15 @@ function Tab({
       title={label}
       className={
         active
-          ? "pointer-events-auto flex min-h-[54px] min-w-0 touch-manipulation items-center justify-center overflow-hidden rounded-[1.35rem] bg-gradient-to-br from-orange-300 via-orange-500 to-orange-600 px-0.5 py-1.5 text-black shadow-lg shadow-orange-500/45 ring-1 ring-orange-200/55 transition-all duration-200 motion-reduce:transition-none active:scale-[0.96] motion-reduce:active:scale-100 active:brightness-95"
-          : "pointer-events-auto flex min-h-[54px] min-w-0 touch-manipulation items-center justify-center overflow-hidden rounded-[1.35rem] px-0.5 py-1.5 text-slate-300/80 transition-all duration-200 motion-reduce:transition-none hover:bg-white/[0.06] hover:text-slate-100 active:scale-[0.96] motion-reduce:active:scale-100 active:bg-white/10"
+          ? "pointer-events-auto flex min-h-[58px] min-w-0 touch-manipulation items-center justify-center overflow-hidden rounded-[1.55rem] bg-gradient-to-br from-orange-200 via-orange-500 to-orange-600 px-0.5 py-2 text-black shadow-lg shadow-orange-500/50 ring-1 ring-orange-100/65 transition-all duration-200 motion-reduce:transition-none active:scale-[0.96] motion-reduce:active:scale-100 active:brightness-95"
+          : "pointer-events-auto flex min-h-[58px] min-w-0 touch-manipulation items-center justify-center overflow-hidden rounded-[1.55rem] px-0.5 py-2 text-slate-200/85 transition-all duration-200 motion-reduce:transition-none hover:bg-white/[0.06] hover:text-slate-100 active:scale-[0.96] motion-reduce:active:scale-100 active:bg-white/10"
       }
     >
       <NavIcon
         icon={icon}
         active={active}
-        className="h-6 w-6"
-        fallbackClassName="text-[20px]"
+        className={active ? "h-10 w-10" : "h-8 w-8"}
+        fallbackClassName={active ? "text-[32px]" : "text-[26px]"}
       />
       <span className="sr-only">{label}</span>
     </button>
@@ -277,12 +277,12 @@ function NavIcon({
     <BrandImageIcon
       src={icon.src}
       alt=""
-      size="sm"
+      size="md"
       shape="plain"
       aria-hidden="true"
       fallback={fallback}
       className={`${className} rounded-md ${
-        active ? "opacity-100 drop-shadow-[0_0_10px_rgba(0,0,0,0.28)]" : "opacity-70 saturate-75"
+        active ? "opacity-100 drop-shadow-[0_0_10px_rgba(0,0,0,0.3)]" : "opacity-82 saturate-90"
       } transition duration-200`}
     />
   );

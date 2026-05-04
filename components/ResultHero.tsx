@@ -1,7 +1,8 @@
 "use client";
 
 import ResultHeader from "@/components/ResultHeader";
-import { Button, Panel } from "@/components/ui";
+import { Button, BrandImageIcon, Panel } from "@/components/ui";
+import { brandIconAssets } from "@/lib/brand/iconAssets";
 import { buildResultHeroMetrics, type MetricTone } from "@/lib/results/resultMetrics";
 import { getResultStepDurationTotal, type ResultSummary } from "@/lib/results/resultSummary";
 import { texts } from "@/lib/i18n/texts";
@@ -86,6 +87,16 @@ export default function ResultHero({
       : getDirectStepDurationTotal(resultBlocks);
   const heroMetrics = buildResultHeroMetrics({ doneness, lang, summary, timeFallback });
   const fireSetupItems = getFireSetupItems(summary?.method, lang);
+  const heroMetricItems = fireSetupItems.length
+    ? [
+        ...heroMetrics,
+        {
+          label: copy.resultHeroFireSetup,
+          value: fireSetupItems.join(" / "),
+          tone: "orange" as const,
+        },
+      ]
+    : heroMetrics;
   const canViewSteps = Boolean(resultBlocks?.PASOS || resultBlocks?.STEPS);
 
   function getMetricClass(tone: MetricTone) {
@@ -120,56 +131,60 @@ export default function ResultHero({
             }}
           />
 
-          {heroMetrics.length > 0 && (
+          {heroMetricItems.length > 0 && (
             <div className="grid grid-cols-3 gap-2">
-              {heroMetrics.map((item) => (
+              {heroMetricItems.map((item) => {
+                const isFireMetric = item.label === copy.resultHeroFireSetup;
+                return (
                 <div
                   key={item.label}
-                  className={`rounded-2xl border p-3 shadow-lg shadow-black/10 ring-1 ring-inset ${getMetricClass(item.tone)}`}
+                  className={`min-w-0 rounded-2xl border px-2.5 py-2.5 shadow-lg shadow-black/10 ring-1 ring-inset sm:p-3 ${getMetricClass(item.tone)}`}
                 >
                   <p className="text-[9px] font-black uppercase tracking-[0.18em] text-current/70 sm:text-[10px]">
                     {item.label}
                   </p>
-                  <p className="mt-1 text-2xl font-black leading-none tracking-[-0.04em] text-white sm:text-3xl">
+                  <p
+                    className={`mt-1 font-black leading-none tracking-[-0.04em] text-white ${
+                      isFireMetric
+                        ? "truncate text-[clamp(0.95rem,4vw,1.45rem)]"
+                        : "text-[clamp(1.35rem,6vw,1.8rem)] sm:text-3xl"
+                    }`}
+                    title={item.value}
+                  >
                     {item.value}
                   </p>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
 
         <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] sm:items-end">
-          {fireSetupItems.length > 0 && (
-            <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-3 ring-1 ring-inset ring-white/[0.03]">
-              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
-                {copy.resultHeroFireSetup}
-              </p>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {fireSetupItems.map((item) => (
-                  <span
-                    key={item}
-                    className="rounded-full border border-orange-300/20 bg-orange-500/[0.08] px-3 py-1.5 text-xs font-black text-orange-100"
-                  >
-                    {item}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="grid gap-2">
+          <div className="grid gap-2 sm:col-start-2">
             {actions.onStartCooking && (
               <button
                 type="button"
                 onClick={actions.onStartCooking}
-                className="group flex min-h-[52px] w-full items-center justify-between gap-3 rounded-[1.25rem] border border-orange-300/35 bg-orange-500 px-4 py-3 text-left text-slate-950 shadow-lg shadow-orange-950/20 ring-1 ring-inset ring-white/15 transition-all duration-200 hover:border-orange-200/60 hover:bg-orange-400 active:scale-[0.99]"
+                className="group flex min-h-[56px] w-full items-center justify-between gap-3 rounded-[1.35rem] border border-orange-200/40 bg-gradient-to-br from-orange-300 via-orange-500 to-orange-600 px-3.5 py-3 text-left text-slate-950 shadow-[0_16px_34px_rgba(234,88,12,0.26)] ring-1 ring-inset ring-white/20 transition-all duration-200 hover:border-orange-100/70 hover:brightness-105 active:scale-[0.99]"
               >
-                <span className="min-w-0 text-[15px] font-black leading-tight sm:text-base">
-                  {copy.resultActionsLiveCta || t.startCooking}
+                <span className="flex min-w-0 items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-slate-950/15 bg-slate-950/18 shadow-inner ring-1 ring-white/20">
+                    <BrandImageIcon
+                      src={brandIconAssets.navLive}
+                      alt=""
+                      size="sm"
+                      shape="plain"
+                      aria-hidden="true"
+                      className="h-7 w-7 rounded-md drop-shadow-[0_0_10px_rgba(0,0,0,0.24)]"
+                    />
+                  </span>
+                  <span className="min-w-0 text-[15px] font-black leading-tight sm:text-base">
+                    {copy.resultActionsLiveCta || t.startCooking}
+                  </span>
                 </span>
                 <span
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-950/10 text-slate-950 ring-1 ring-inset ring-slate-950/10 transition-transform duration-200 group-hover:translate-x-0.5"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-950/13 text-slate-950 ring-1 ring-inset ring-slate-950/12 transition-transform duration-200 group-hover:translate-x-0.5"
                   aria-hidden="true"
                 >
                   <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none">
