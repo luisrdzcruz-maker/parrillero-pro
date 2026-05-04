@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandImageIcon } from "@/components/ui/BrandImageIcon";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -7,6 +8,8 @@ type Props = {
   title: string;
   subtitle: string;
   image: string;
+  iconSrc?: string;
+  iconAlt?: string;
   badge?: string;
   selectedLabel?: string;
   selected?: boolean;
@@ -17,6 +20,8 @@ export default function FoodCard({
   title,
   subtitle,
   image,
+  iconSrc,
+  iconAlt,
   badge,
   selected,
   selectedLabel = "Seleccionado",
@@ -66,6 +71,16 @@ export default function FoodCard({
         <span className="absolute right-2 top-2 z-10 rounded-full border border-white/10 bg-black/35 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-orange-100 shadow-lg shadow-black/20 backdrop-blur-md sm:right-3 sm:top-3 sm:text-[11px]">
           {badge}
         </span>
+      )}
+
+      {iconSrc && (
+        <BrandImageIcon
+          src={iconSrc}
+          alt={iconAlt ?? ""}
+          size="lg"
+          shape="soft"
+          className="absolute left-3 top-3 z-10 h-12 w-12 rounded-[1.05rem] bg-black/45 shadow-lg shadow-black/30 backdrop-blur-sm sm:h-14 sm:w-14"
+        />
       )}
 
       {selected && (
