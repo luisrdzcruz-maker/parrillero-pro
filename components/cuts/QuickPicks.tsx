@@ -18,6 +18,7 @@ type QuickPicksProps = {
   lang: Lang;
   limit?: number;
   selectedCutId?: string;
+  fillAvailable?: boolean;
   onSelect: (profile: GeneratedCutProfile) => void;
   onViewDetails?: (profile: GeneratedCutProfile) => void;
 };
@@ -38,6 +39,7 @@ export function QuickPicks({
   lang,
   limit = 4,
   selectedCutId,
+  fillAvailable = false,
   onSelect,
   onViewDetails,
 }: QuickPicksProps) {
@@ -46,7 +48,11 @@ export function QuickPicks({
   if (picks.length === 0) return null;
 
   return (
-    <section className="min-w-0 max-w-full rounded-[1.05rem] border border-white/10 bg-white/[0.03] p-1.5 backdrop-blur-xl sm:rounded-[1.2rem] sm:p-2">
+    <section
+      className={`min-w-0 max-w-full rounded-[1.05rem] border border-white/10 bg-white/[0.03] p-1.5 backdrop-blur-xl sm:rounded-[1.2rem] sm:p-2 ${
+        fillAvailable ? "flex min-h-0 flex-1 flex-col" : ""
+      }`}
+    >
       <div className="mb-1 flex items-center justify-between px-1">
         <div>
           <h2 className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-400">
@@ -55,7 +61,11 @@ export function QuickPicks({
         </div>
         <span className="text-xs font-bold text-zinc-500">{picks.length}</span>
       </div>
-      <div className="grid max-h-[236px] max-w-full min-w-0 gap-1.5 overflow-y-auto px-0.5 pb-0.5 touch-pan-y [scrollbar-width:none] sm:max-h-none sm:grid-cols-2 sm:overflow-visible sm:px-1 [&::-webkit-scrollbar]:hidden">
+      <div
+        className={`grid max-w-full min-w-0 content-start gap-1.5 overflow-y-auto px-0.5 pb-0.5 touch-pan-y [scrollbar-width:none] sm:grid-cols-2 sm:overflow-visible sm:px-1 [&::-webkit-scrollbar]:hidden ${
+          fillAvailable ? "min-h-0 flex-1" : "sm:max-h-none"
+        }`}
+      >
         {picks.map((profile) => {
           const isActive = selectedCutId === profile.id;
           const cutIcon = getCutIconAsset(profile.id);

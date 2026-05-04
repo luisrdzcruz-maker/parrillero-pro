@@ -3,7 +3,7 @@
 import { BrandImageIcon } from "@/components/ui/BrandImageIcon";
 import { categoryIconAssets } from "@/lib/brand/categoryIconAssets";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { GeneratedAnimalId, GeneratedCutProfile } from "@/lib/generated/cutProfiles";
 import { CutBottomSheet } from "./CutBottomSheet";
 import { CutList } from "./CutList";
@@ -66,6 +66,12 @@ function getCategoryIcon(animalId: GeneratedAnimalId) {
     : undefined;
 }
 
+function getSearchActionLabel(lang: "es" | "en" | "fi") {
+  if (lang === "es") return "Buscar";
+  if (lang === "fi") return "Hae";
+  return "Search";
+}
+
 function FishFallbackIcon() {
   return (
     <span
@@ -113,7 +119,7 @@ export function CutSelectionScreen({
   const [catalogExpanded, setCatalogExpanded] = useState(false);
   const [viewMode, setViewMode] = useState<CutViewMode>("list");
   const [searchQuery, setSearchQuery] = useState("");
-  const catalogContentRef = useRef<HTMLDivElement>(null);
+  const [focusCatalogSearch, setFocusCatalogSearch] = useState(false);
   const isSelectedCutControlled = selectedCutId !== undefined;
 
   const selectedIntent =
@@ -186,6 +192,19 @@ export function CutSelectionScreen({
   const selectedAnimalLabel = getAnimalLabel(selectedAnimal, effectiveLang);
   const compactStatusLine = `${selectedAnimalLabel} · ${totalCutsByAnimal} ${getCutsUnitLabel(effectiveLang)} · ${activeFilterLabel}`;
   const hasActiveFilters = Boolean(selectedZone);
+  useEffect(() => {
+    if (!catalogExpanded || typeof window === "undefined") return;
+
+    const isMobileCatalog = window.matchMedia("(max-width: 767px)").matches;
+    if (!isMobileCatalog) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [catalogExpanded]);
   const handleStartCooking = (profile: GeneratedCutProfile) => {
     if (onStartCooking) {
       onStartCooking(profile);
@@ -201,6 +220,7 @@ export function CutSelectionScreen({
   const handleAnimalSelect = (nextAnimal: GeneratedAnimalId) => {
     if (!onAnimalChange || nextAnimal === selectedAnimal) return;
     setCatalogExpanded(false);
+    setFocusCatalogSearch(false);
     setViewMode("list");
     setSearchQuery("");
     handleZoneChange(null);
@@ -208,19 +228,24 @@ export function CutSelectionScreen({
   };
   const handleCatalogExpandedChange = (nextExpanded: boolean) => {
     setCatalogExpanded(nextExpanded);
-    if (nextExpanded && typeof window !== "undefined") {
-      window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(() => {
-          catalogContentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-        });
-      });
+    if (nextExpanded) {
+      setFocusCatalogSearch(false);
     }
     if (!nextExpanded) {
       setSearchQuery("");
+      setFocusCatalogSearch(false);
     }
+  };
+  const handleSearchCatalogOpen = () => {
+    setViewMode("list");
+    setCatalogExpanded(true);
+    setFocusCatalogSearch(true);
   };
   const handleViewModeChange = (nextMode: CutViewMode) => {
     setViewMode(nextMode);
+    if (nextMode !== "list") {
+      setFocusCatalogSearch(false);
+    }
     if (nextMode === "map") {
       setSearchQuery("");
     }
@@ -230,18 +255,19 @@ export function CutSelectionScreen({
   };
   const viewAllLabel = getViewAllLabel(totalCutsByAnimal, selectedAnimal, effectiveLang);
   const hideAllLabel = getHideAllLabel(effectiveLang);
+  const searchActionLabel = getSearchActionLabel(effectiveLang);
   const sectionBottomPaddingClass = catalogExpanded
-    ? "pb-6 sm:pb-8 lg:pb-8"
-    : "pb-4 sm:pb-6 lg:pb-6";
+    ? "pb-0 md:pb-8 lg:pb-8"
+    : "pb-0 md:pb-6 lg:pb-6";
 
   return (
-    <main className="relative w-full max-w-full overflow-x-clip overflow-y-visible text-white">
+    <main className="relative w-full max-w-full overflow-x-clip overflow-y-hidden text-white md:overflow-y-visible">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -left-48 -top-44 h-[340px] w-[340px] rounded-full bg-orange-500/10 blur-[120px]" />
         <div className="absolute -right-20 top-10 h-[300px] w-[300px] rounded-full bg-red-600/7 blur-[130px]" />
       </div>
 
-      <section className={`relative mx-auto flex w-full max-w-[1000px] flex-col px-0 pt-0.5 sm:px-2 sm:pt-2 ${sectionBottomPaddingClass}`}>
+      <section className={`relative mx-auto flex h-[calc(100dvh-6rem-env(safe-area-inset-bottom))] min-h-0 w-full max-w-[1000px] flex-col overflow-hidden px-0 pt-0.5 sm:px-2 sm:pt-2 md:h-auto md:overflow-visible ${sectionBottomPaddingClass}`}>
         <header className="rounded-[1.05rem] border border-orange-300/14 bg-white/[0.035] px-2 py-1.5 shadow-[0_12px_34px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:rounded-[1.2rem] sm:px-3 sm:py-2.5">
           <div className="grid grid-cols-5 gap-1 touch-pan-y sm:gap-2">
             {animalOptions.map(([animalId]) => {
@@ -283,105 +309,99 @@ export function CutSelectionScreen({
           </div>
         </header>
 
-        {!catalogExpanded && (
-          <div className="mt-2 sm:mt-3">
+        <div className={catalogExpanded ? "mt-2 sm:mt-3 md:hidden" : "mt-2 sm:mt-3"}>
             <IntentSelector lang={effectiveLang} selectedIntent={selectedIntent} onIntentChange={handleIntentChange} />
-          </div>
-        )}
+        </div>
 
-        <div className="mt-2 grid min-w-0 gap-3 sm:mt-3 lg:grid-cols-[1fr_300px] lg:gap-4">
-          <div className="min-w-0 space-y-2 sm:space-y-4">
-            {!catalogExpanded && (
+        <div className="mt-2 flex min-h-0 min-w-0 flex-1 flex-col gap-3 sm:mt-3 md:grid md:flex-none lg:grid-cols-[1fr_300px] lg:gap-4">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 sm:gap-4 md:block md:space-y-4">
+            <div className={catalogExpanded ? "flex min-h-0 flex-1 flex-col md:hidden" : "flex min-h-0 flex-1 flex-col"}>
               <QuickPicks
                 profiles={animalProfiles}
                 intent={selectedIntent}
                 lang={effectiveLang}
-                limit={4}
+                limit={6}
                 selectedCutId={selectedProfile?.id}
+                fillAvailable
                 onSelect={handleStartCooking}
                 onViewDetails={handleProfileChange}
               />
-            )}
-            <button
-              type="button"
-              onClick={() => handleCatalogExpandedChange(!catalogExpanded)}
-              className="w-full rounded-2xl border border-white/14 bg-white/[0.035] px-4 py-3 text-left text-sm font-black text-zinc-100 shadow-[0_10px_28px_rgba(0,0,0,0.20)] transition hover:border-orange-300/45 hover:bg-orange-500/10 active:scale-[0.99]"
-              aria-expanded={catalogExpanded}
-            >
-              {catalogExpanded ? hideAllLabel : viewAllLabel}
-            </button>
+            </div>
+            <div className="grid shrink-0 grid-cols-[0.82fr_1.18fr] gap-2">
+              <button
+                type="button"
+                onClick={handleSearchCatalogOpen}
+                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl border border-orange-300/25 bg-orange-500/12 px-3 py-2.5 text-sm font-black text-orange-100 shadow-[0_10px_28px_rgba(249,115,22,0.10)] transition hover:border-orange-300/50 hover:bg-orange-500/18 active:scale-[0.99]"
+                aria-expanded={catalogExpanded}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4">
+                  <path
+                    d="M10.8 4.5a6.3 6.3 0 1 0 0 12.6 6.3 6.3 0 0 0 0-12.6Zm0 1.8a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Z"
+                    fill="currentColor"
+                  />
+                  <path d="m15.6 15.1 4 4a1.1 1.1 0 0 1-1.6 1.6l-4-4 1.6-1.6Z" fill="currentColor" />
+                </svg>
+                <span>{searchActionLabel}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleCatalogExpandedChange(!catalogExpanded)}
+                className="min-h-[44px] rounded-2xl border border-white/14 bg-white/[0.035] px-3 py-2.5 text-left text-sm font-black text-zinc-100 shadow-[0_10px_28px_rgba(0,0,0,0.20)] transition hover:border-orange-300/45 hover:bg-orange-500/10 active:scale-[0.99]"
+                aria-expanded={catalogExpanded}
+              >
+                <span className="block truncate">{catalogExpanded ? hideAllLabel : viewAllLabel}</span>
+              </button>
+            </div>
 
             {catalogExpanded && (
-              <div ref={catalogContentRef} className="scroll-mt-3 space-y-3">
-                <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
-                  <CutViewToggle lang={effectiveLang} value={viewMode} onChange={handleViewModeChange} />
-                  {selectedZone && (
-                    <button
-                      type="button"
-                      onClick={() => handleZoneChange(null)}
-                      className="w-full rounded-2xl border border-orange-400/25 bg-orange-500/10 px-4 py-3 text-xs font-black text-orange-200 transition active:scale-[0.98] sm:w-auto"
-                    >
-                      {getClearZoneLabel(getCategoryLabel(selectedZone, effectiveLang), effectiveLang)}
-                    </button>
-                  )}
-                </div>
-                {viewMode === "list" && (
-                  <div className="relative">
-                    <label htmlFor="cut-search-input" className="sr-only">
-                      {getCutSearchAriaLabel(effectiveLang)}
-                    </label>
-                    <input
-                      id="cut-search-input"
-                      type="text"
-                      value={searchQuery}
-                      onChange={(event) => setSearchQuery(event.target.value)}
-                      placeholder={getCutSearchPlaceholder(effectiveLang)}
-                      aria-label={getCutSearchAriaLabel(effectiveLang)}
-                      className="h-11 w-full rounded-2xl border border-white/15 bg-black/35 px-4 pr-12 text-sm font-semibold text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-orange-300/60 focus:ring-2 focus:ring-orange-400/30"
-                    />
-                    {isSearchActive && (
-                      <button
-                        type="button"
-                        onClick={clearSearch}
-                        aria-label={getCutSearchClearLabel(effectiveLang)}
-                        className="absolute right-1.5 top-1/2 flex h-8 min-w-8 -translate-y-1/2 items-center justify-center rounded-full border border-orange-400/25 bg-orange-500/12 px-2 text-xs font-black text-orange-200 transition hover:bg-orange-500/20 active:scale-[0.97]"
-                      >
-                        &#10005;
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {viewMode === "map" && (
-                  <CutMap
-                    animal={selectedAnimal}
-                    lang={effectiveLang}
-                    selectedZone={selectedZone}
-                    onZoneChange={handleZoneChange}
-                  />
-                )}
-                {isSearchActive && catalogGroups.length === 0 ? (
-                  <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-6 text-center">
-                    <p className="text-lg font-black tracking-tight text-white">
-                      {getCutSearchNoResultsTitle(searchQuery.trim(), effectiveLang)}
-                    </p>
-                    <p className="mx-auto mt-2 max-w-sm text-sm font-semibold leading-6 text-zinc-500">
-                      {getCutSearchNoResultsMessage(effectiveLang)}
-                    </p>
-                  </div>
-                ) : (
-                  <CutList
-                    groups={catalogGroups}
-                    lang={effectiveLang}
-                    selectedCutId={selectedProfile?.id}
-                    hasActiveFilters={hasActiveFilters && !isSearchActive}
-                    onResetFilters={handleResetFilters}
-                    onSelect={handleStartCooking}
-                    onViewDetails={handleProfileChange}
-                  />
-                )}
+              <div className="hidden scroll-mt-3 space-y-3 md:block">
+                <CatalogContent
+                  animal={selectedAnimal}
+                  lang={effectiveLang}
+                  viewMode={viewMode}
+                  searchQuery={searchQuery}
+                  selectedZone={selectedZone}
+                  selectedCutId={selectedProfile?.id}
+                  catalogGroups={catalogGroups}
+                  isSearchActive={isSearchActive}
+                  hasActiveFilters={hasActiveFilters}
+                  searchInputId="cut-search-input-desktop"
+                  focusSearch={false}
+                  onSearchQueryChange={setSearchQuery}
+                  onClearSearch={clearSearch}
+                  onViewModeChange={handleViewModeChange}
+                  onZoneChange={handleZoneChange}
+                  onResetFilters={handleResetFilters}
+                  onSelect={handleStartCooking}
+                  onViewDetails={handleProfileChange}
+                />
               </div>
             )}
+
+            <MobileCatalogSheet
+              open={catalogExpanded}
+              title={viewAllLabel}
+              statusLine={compactStatusLine}
+              closeLabel={hideAllLabel}
+              animal={selectedAnimal}
+              lang={effectiveLang}
+              viewMode={viewMode}
+              searchQuery={searchQuery}
+              selectedZone={selectedZone}
+              selectedCutId={selectedProfile?.id}
+              catalogGroups={catalogGroups}
+              isSearchActive={isSearchActive}
+              hasActiveFilters={hasActiveFilters}
+              focusSearch={focusCatalogSearch}
+              onClose={() => handleCatalogExpandedChange(false)}
+              onSearchQueryChange={setSearchQuery}
+              onClearSearch={clearSearch}
+              onViewModeChange={handleViewModeChange}
+              onZoneChange={handleZoneChange}
+              onResetFilters={handleResetFilters}
+              onSelect={handleStartCooking}
+              onViewDetails={handleProfileChange}
+            />
 
             <CutBottomSheet
               profile={selectedProfile}
@@ -406,5 +426,198 @@ export function CutSelectionScreen({
       </section>
 
     </main>
+  );
+}
+
+type CatalogContentProps = {
+  animal: GeneratedAnimalId;
+  lang: "es" | "en" | "fi";
+  viewMode: CutViewMode;
+  searchQuery: string;
+  selectedZone: string | null;
+  selectedCutId?: string;
+  catalogGroups: ReturnType<typeof getCategoryGroups>;
+  isSearchActive: boolean;
+  hasActiveFilters: boolean;
+  searchInputId: string;
+  focusSearch: boolean;
+  onSearchQueryChange: (query: string) => void;
+  onClearSearch: () => void;
+  onViewModeChange: (mode: CutViewMode) => void;
+  onZoneChange: (zone: string | null) => void;
+  onResetFilters: () => void;
+  onSelect: (profile: GeneratedCutProfile) => void;
+  onViewDetails: (profile: GeneratedCutProfile | null) => void;
+};
+
+function CatalogContent({
+  animal,
+  lang,
+  viewMode,
+  searchQuery,
+  selectedZone,
+  selectedCutId,
+  catalogGroups,
+  isSearchActive,
+  hasActiveFilters,
+  searchInputId,
+  focusSearch,
+  onSearchQueryChange,
+  onClearSearch,
+  onViewModeChange,
+  onZoneChange,
+  onResetFilters,
+  onSelect,
+  onViewDetails,
+}: CatalogContentProps) {
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!focusSearch || viewMode !== "list") return;
+
+    const focusFrame = window.requestAnimationFrame(() => {
+      searchInputRef.current?.focus({ preventScroll: true });
+    });
+
+    return () => window.cancelAnimationFrame(focusFrame);
+  }, [focusSearch, viewMode]);
+
+  return (
+    <>
+      <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+        <CutViewToggle lang={lang} value={viewMode} onChange={onViewModeChange} />
+        {selectedZone && (
+          <button
+            type="button"
+            onClick={() => onZoneChange(null)}
+            className="w-full rounded-2xl border border-orange-400/25 bg-orange-500/10 px-4 py-3 text-xs font-black text-orange-200 transition active:scale-[0.98] sm:w-auto"
+          >
+            {getClearZoneLabel(getCategoryLabel(selectedZone, lang), lang)}
+          </button>
+        )}
+      </div>
+      {viewMode === "list" && (
+        <div className="relative">
+          <label htmlFor={searchInputId} className="sr-only">
+            {getCutSearchAriaLabel(lang)}
+          </label>
+          <input
+            id={searchInputId}
+            ref={searchInputRef}
+            type="text"
+            value={searchQuery}
+            onChange={(event) => onSearchQueryChange(event.target.value)}
+            placeholder={getCutSearchPlaceholder(lang)}
+            aria-label={getCutSearchAriaLabel(lang)}
+            autoFocus={focusSearch}
+            className="h-11 w-full rounded-2xl border border-white/15 bg-black/35 px-4 pr-12 text-sm font-semibold text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-orange-300/60 focus:ring-2 focus:ring-orange-400/30"
+          />
+          {isSearchActive && (
+            <button
+              type="button"
+              onClick={onClearSearch}
+              aria-label={getCutSearchClearLabel(lang)}
+              className="absolute right-1.5 top-1/2 flex h-8 min-w-8 -translate-y-1/2 items-center justify-center rounded-full border border-orange-400/25 bg-orange-500/12 px-2 text-xs font-black text-orange-200 transition hover:bg-orange-500/20 active:scale-[0.97]"
+            >
+              &#10005;
+            </button>
+          )}
+        </div>
+      )}
+
+      {viewMode === "map" && (
+        <CutMap
+          animal={animal}
+          lang={lang}
+          selectedZone={selectedZone}
+          onZoneChange={onZoneChange}
+        />
+      )}
+      {isSearchActive && catalogGroups.length === 0 ? (
+        <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-6 text-center">
+          <p className="text-lg font-black tracking-tight text-white">
+            {getCutSearchNoResultsTitle(searchQuery.trim(), lang)}
+          </p>
+          <p className="mx-auto mt-2 max-w-sm text-sm font-semibold leading-6 text-zinc-500">
+            {getCutSearchNoResultsMessage(lang)}
+          </p>
+        </div>
+      ) : (
+        <CutList
+          groups={catalogGroups}
+          lang={lang}
+          selectedCutId={selectedCutId}
+          hasActiveFilters={hasActiveFilters && !isSearchActive}
+          onResetFilters={onResetFilters}
+          onSelect={onSelect}
+          onViewDetails={onViewDetails}
+        />
+      )}
+    </>
+  );
+}
+
+type MobileCatalogSheetProps = Omit<CatalogContentProps, "searchInputId"> & {
+  open: boolean;
+  title: string;
+  statusLine: string;
+  closeLabel: string;
+  onClose: () => void;
+};
+
+function MobileCatalogSheet({
+  open,
+  title,
+  statusLine,
+  closeLabel,
+  onClose,
+  ...catalogProps
+}: MobileCatalogSheetProps) {
+  if (!open) return null;
+
+  return (
+    <div className="md:hidden">
+      <button
+        type="button"
+        aria-label={closeLabel}
+        onClick={onClose}
+        className="fixed inset-0 z-[74] bg-black/62 backdrop-blur-sm"
+      />
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mobile-cut-catalog-title"
+        className="fixed inset-x-0 bottom-0 z-[75] mx-auto flex w-full max-w-3xl items-end px-2.5 pb-[calc(0.65rem+env(safe-area-inset-bottom))]"
+      >
+        <div className="flex max-h-[calc(100vh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-1.25rem)] max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-1.25rem)] w-full flex-col overflow-hidden rounded-t-[2rem] border border-white/10 bg-[#070503]/96 shadow-[0_-28px_110px_rgba(0,0,0,0.72)] backdrop-blur-2xl">
+          <div className="shrink-0 border-b border-white/10 px-4 pb-3 pt-3">
+            <div className="mx-auto mb-3 h-1 w-12 rounded-full bg-white/20" />
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-300">
+                  {catalogProps.lang === "es" ? "Catálogo completo" : catalogProps.lang === "fi" ? "Koko valikoima" : "Full catalog"}
+                </p>
+                <h2 id="mobile-cut-catalog-title" className="mt-1 truncate text-xl font-black tracking-tight text-white">
+                  {title}
+                </h2>
+                <p className="mt-1 truncate text-[11px] font-semibold text-zinc-500">{statusLine}</p>
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="inline-flex h-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-full border border-white/10 bg-white/[0.08] px-3 text-xs font-black text-zinc-200 shadow-lg transition hover:bg-white/12 active:scale-[0.97]"
+              >
+                {closeLabel}
+              </button>
+            </div>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 scroll-pb-[calc(1rem+env(safe-area-inset-bottom))]">
+            <div className="space-y-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+              <CatalogContent {...catalogProps} searchInputId="cut-search-input-mobile" />
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
   );
 }

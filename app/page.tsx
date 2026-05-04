@@ -1903,6 +1903,8 @@ ERROR
     );
   }
 
+  const isCutSelectionShell = mode === "coccion" && cookingStep === "cut";
+
   return (
     <>
     {showProModal && (
@@ -1914,11 +1916,15 @@ ERROR
       />
     )}
     <main
-      className={`${ds.shell.page} relative isolate mx-auto flex min-h-screen min-w-0 w-full max-w-none flex-col overflow-x-hidden px-3 pb-[calc(7.5rem+env(safe-area-inset-bottom))] pt-2 before:pointer-events-none before:fixed before:inset-x-0 before:bottom-0 before:z-0 before:h-40 before:bg-gradient-to-t before:from-[#030201] before:via-[#030201]/85 before:to-transparent sm:px-4 sm:pt-5 lg:px-8 lg:pb-10 lg:pt-6`}
+      className={`${ds.shell.page} relative isolate mx-auto flex min-w-0 w-full max-w-none flex-col overflow-x-hidden px-3 pt-2 before:pointer-events-none before:fixed before:inset-x-0 before:bottom-0 before:z-0 before:h-40 before:bg-gradient-to-t before:from-[#030201] before:via-[#030201]/85 before:to-transparent sm:px-4 sm:pt-5 lg:px-8 lg:pb-10 lg:pt-6 ${
+        isCutSelectionShell
+          ? "box-border h-[100dvh] min-h-0 overflow-y-hidden pb-[calc(5.75rem+env(safe-area-inset-bottom))] lg:h-auto lg:min-h-screen lg:overflow-y-visible"
+          : "min-h-screen pb-[calc(7.5rem+env(safe-area-inset-bottom))]"
+      }`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <div className={`${ds.shell.container} mx-auto min-w-0 w-full max-w-[1180px] flex-1`}>
+      <div className={`${ds.shell.container} mx-auto min-w-0 w-full max-w-[1180px] flex-1 ${isCutSelectionShell ? "min-h-0" : ""}`}>
         <DesktopModeTabs lang={lang} mode={mode} onModeChange={handleModeChange} t={t} />
 
         {mode === "inicio" && (
