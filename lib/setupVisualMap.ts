@@ -11,17 +11,17 @@ export const setupVisualMap: Record<string, string> = {
 export const SETUP_VISUAL_FALLBACK = "/setup/setup_two_zone.webp";
 
 const SETUP_VISUAL_ASSETS = new Set([
+  "setup_charcoal_two_zone.webp",
   "setup_fire_direct_heat.webp",
   "setup_fire_indirect_heat.webp",
   "setup_fire_two_zone.webp",
   "setup_gas_direct_heat.webp",
   "setup_gas_two_zone.webp",
-  "setup_charcoal_two_zone.webp",
-  "setup_kamado_indirect_deflector.webp",
   "setup_indoor_pan_oven.webp",
+  "setup_kamado_indirect_deflector.webp",
   "setup_reverse_sear.webp",
-  "setup_two_zone.webp",
   "setup_two_zone_v1.webp",
+  "setup_two_zone.webp"
 ]);
 
 function normalizeLookupText(text = ""): string {

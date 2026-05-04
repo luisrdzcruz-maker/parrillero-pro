@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE. DO NOT EDIT MANUALLY.
-// Source: data\assets\cuts-prompts.json
+// Source: data/assets/cuts-prompts.json
 
 export const cutsVisualMap: Record<string, string> = {
   "beef:ribeye": "/cuts/beef_ribeye_grilled.webp",

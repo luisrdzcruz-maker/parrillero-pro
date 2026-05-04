@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE. DO NOT EDIT MANUALLY.
-// Source: data\assets\vegetables-prompts.json
+// Source: data/assets/vegetables-prompts.json
 
 export const vegetablesVisualMap: Record<string, string> = {
 

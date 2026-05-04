@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE. DO NOT EDIT MANUALLY.
-// Source: data\assets\hero-prompts.json
+// Source: data/assets/hero-prompts.json
 
 export const heroVisualMap: Record<string, string> = {
   "hero_ribeye_fire": "/hero/hero_ribeye_fire.webp",
