@@ -72,6 +72,14 @@ function getSearchActionLabel(lang: "es" | "en" | "fi") {
   return "Search";
 }
 
+function getRecommendedLimitForViewport(containerHeight?: number) {
+  if (typeof window === "undefined") return 5;
+  if (!window.matchMedia("(max-width: 767px)").matches) return 6;
+  const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+  const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
+  return viewportHeight <= 760 || viewportWidth <= 360 || (containerHeight !== undefined && containerHeight <= 650) ? 4 : 5;
+}
+
 function FishFallbackIcon() {
   return (
     <span
@@ -120,6 +128,8 @@ export function CutSelectionScreen({
   const [viewMode, setViewMode] = useState<CutViewMode>("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [focusCatalogSearch, setFocusCatalogSearch] = useState(false);
+  const [recommendedLimit, setRecommendedLimit] = useState(5);
+  const cutSelectionShellRef = useRef<HTMLElement>(null);
   const isSelectedCutControlled = selectedCutId !== undefined;
 
   const selectedIntent =
@@ -193,6 +203,29 @@ export function CutSelectionScreen({
   const compactStatusLine = `${selectedAnimalLabel} · ${totalCutsByAnimal} ${getCutsUnitLabel(effectiveLang)} · ${activeFilterLabel}`;
   const hasActiveFilters = Boolean(selectedZone);
   useEffect(() => {
+    const syncRecommendedLimit = () => {
+      setRecommendedLimit(getRecommendedLimitForViewport(cutSelectionShellRef.current?.clientHeight));
+    };
+
+    syncRecommendedLimit();
+    window.addEventListener("resize", syncRecommendedLimit);
+    window.visualViewport?.addEventListener("resize", syncRecommendedLimit);
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(() => {
+            syncRecommendedLimit();
+          });
+    if (cutSelectionShellRef.current) {
+      observer?.observe(cutSelectionShellRef.current);
+    }
+    return () => {
+      window.removeEventListener("resize", syncRecommendedLimit);
+      window.visualViewport?.removeEventListener("resize", syncRecommendedLimit);
+      observer?.disconnect();
+    };
+  }, []);
+  useEffect(() => {
     if (!catalogExpanded || typeof window === "undefined") return;
 
     const isMobileCatalog = window.matchMedia("(max-width: 767px)").matches;
@@ -261,13 +294,13 @@ export function CutSelectionScreen({
     : "pb-0 md:pb-6 lg:pb-6";
 
   return (
-    <main className="relative w-full max-w-full overflow-x-clip overflow-y-hidden text-white md:overflow-y-visible">
+    <main className="relative flex h-full min-h-0 w-full max-w-full overflow-x-clip overflow-y-hidden text-white md:block md:h-auto md:overflow-y-visible">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -left-48 -top-44 h-[340px] w-[340px] rounded-full bg-orange-500/10 blur-[120px]" />
         <div className="absolute -right-20 top-10 h-[300px] w-[300px] rounded-full bg-red-600/7 blur-[130px]" />
       </div>
 
-      <section className={`relative mx-auto flex h-[calc(100dvh-6rem-env(safe-area-inset-bottom))] min-h-0 w-full max-w-[1000px] flex-col overflow-hidden px-0 pt-0.5 sm:px-2 sm:pt-2 md:h-auto md:overflow-visible ${sectionBottomPaddingClass}`}>
+      <section ref={cutSelectionShellRef} className={`relative mx-auto flex h-full min-h-0 w-full max-w-[1000px] flex-col overflow-hidden px-0 pt-0.5 sm:px-2 sm:pt-2 md:h-auto md:overflow-visible ${sectionBottomPaddingClass}`}>
         <header className="rounded-[1.05rem] border border-orange-300/14 bg-white/[0.035] px-2 py-1.5 shadow-[0_12px_34px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:rounded-[1.2rem] sm:px-3 sm:py-2.5">
           <div className="grid grid-cols-5 gap-1 touch-pan-y sm:gap-2">
             {animalOptions.map(([animalId]) => {
@@ -320,7 +353,7 @@ export function CutSelectionScreen({
                 profiles={animalProfiles}
                 intent={selectedIntent}
                 lang={effectiveLang}
-                limit={6}
+                limit={recommendedLimit}
                 selectedCutId={selectedProfile?.id}
                 fillAvailable
                 onSelect={handleStartCooking}
