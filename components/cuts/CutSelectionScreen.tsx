@@ -3,7 +3,7 @@
 import { BrandImageIcon } from "@/components/ui/BrandImageIcon";
 import { categoryIconAssets } from "@/lib/brand/categoryIconAssets";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { GeneratedAnimalId, GeneratedCutProfile } from "@/lib/generated/cutProfiles";
 import { CutBottomSheet } from "./CutBottomSheet";
 import { CutList } from "./CutList";
@@ -113,6 +113,7 @@ export function CutSelectionScreen({
   const [catalogExpanded, setCatalogExpanded] = useState(false);
   const [viewMode, setViewMode] = useState<CutViewMode>("list");
   const [searchQuery, setSearchQuery] = useState("");
+  const catalogContentRef = useRef<HTMLDivElement>(null);
   const isSelectedCutControlled = selectedCutId !== undefined;
 
   const selectedIntent =
@@ -207,6 +208,13 @@ export function CutSelectionScreen({
   };
   const handleCatalogExpandedChange = (nextExpanded: boolean) => {
     setCatalogExpanded(nextExpanded);
+    if (nextExpanded && typeof window !== "undefined") {
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          catalogContentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      });
+    }
     if (!nextExpanded) {
       setSearchQuery("");
     }
@@ -275,21 +283,25 @@ export function CutSelectionScreen({
           </div>
         </header>
 
-        <div className="mt-3 space-y-3">
-          <IntentSelector lang={effectiveLang} selectedIntent={selectedIntent} onIntentChange={handleIntentChange} />
-        </div>
+        {!catalogExpanded && (
+          <div className="mt-3 space-y-3">
+            <IntentSelector lang={effectiveLang} selectedIntent={selectedIntent} onIntentChange={handleIntentChange} />
+          </div>
+        )}
 
         <div className="mt-3 grid min-w-0 gap-4 lg:grid-cols-[1fr_300px]">
           <div className="min-w-0 space-y-4">
-            <QuickPicks
-              profiles={animalProfiles}
-              intent={selectedIntent}
-              lang={effectiveLang}
-              limit={4}
-              selectedCutId={selectedProfile?.id}
-              onSelect={handleStartCooking}
-              onViewDetails={handleProfileChange}
-            />
+            {!catalogExpanded && (
+              <QuickPicks
+                profiles={animalProfiles}
+                intent={selectedIntent}
+                lang={effectiveLang}
+                limit={4}
+                selectedCutId={selectedProfile?.id}
+                onSelect={handleStartCooking}
+                onViewDetails={handleProfileChange}
+              />
+            )}
             <button
               type="button"
               onClick={() => handleCatalogExpandedChange(!catalogExpanded)}
@@ -300,7 +312,7 @@ export function CutSelectionScreen({
             </button>
 
             {catalogExpanded && (
-              <div className="space-y-3">
+              <div ref={catalogContentRef} className="scroll-mt-3 space-y-3">
                 <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
                   <CutViewToggle lang={effectiveLang} value={viewMode} onChange={handleViewModeChange} />
                   {selectedZone && (
