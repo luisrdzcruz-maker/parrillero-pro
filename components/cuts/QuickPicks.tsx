@@ -46,8 +46,8 @@ export function QuickPicks({
   if (picks.length === 0) return null;
 
   return (
-    <section className="min-w-0 max-w-full rounded-[1.2rem] border border-white/10 bg-white/[0.03] p-2 backdrop-blur-xl">
-      <div className="mb-1.5 flex items-center justify-between px-1">
+    <section className="min-w-0 max-w-full rounded-[1.05rem] border border-white/10 bg-white/[0.03] p-1.5 backdrop-blur-xl sm:rounded-[1.2rem] sm:p-2">
+      <div className="mb-1 flex items-center justify-between px-1">
         <div>
           <h2 className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-400">
             {lang === "es" ? "Recomendados" : lang === "fi" ? "Suositukset" : "Recommended"}
@@ -55,43 +55,45 @@ export function QuickPicks({
         </div>
         <span className="text-xs font-bold text-zinc-500">{picks.length}</span>
       </div>
-      <div className="grid max-w-full min-w-0 grid-cols-2 gap-1.5 px-1 pb-0.5 touch-pan-y">
+      <div className="grid max-h-[236px] max-w-full min-w-0 gap-1.5 overflow-y-auto px-0.5 pb-0.5 touch-pan-y [scrollbar-width:none] sm:max-h-none sm:grid-cols-2 sm:overflow-visible sm:px-1 [&::-webkit-scrollbar]:hidden">
         {picks.map((profile) => {
           const isActive = selectedCutId === profile.id;
           const cutIcon = getCutIconAsset(profile.id);
           return (
             <article
               key={profile.id}
-              className={`min-w-0 rounded-xl border p-2 text-left transition active:scale-[0.97] ${
+              className={`flex min-w-0 items-center gap-2 rounded-xl border p-1.5 text-left transition active:scale-[0.97] sm:p-2 ${
                 isActive
-                  ? "border-orange-400 bg-orange-500/20"
+                  ? "border-orange-400 bg-orange-500/20 shadow-[0_12px_30px_rgba(249,115,22,0.12)]"
                   : "border-white/10 bg-black/25 hover:border-orange-400/45 hover:bg-white/[0.07]"
               }`}
             >
-              <button type="button" onClick={() => onSelect(profile)} className="block min-w-0 text-left">
-                <span className="flex min-w-0 items-center gap-2">
-                  {cutIcon && (
+              <button type="button" onClick={() => onSelect(profile)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-black/30 sm:h-11 sm:w-11">
+                  {cutIcon ? (
                     <BrandImageIcon
                       src={cutIcon}
                       alt=""
                       size="sm"
                       shape="plain"
                       aria-hidden="true"
-                      className="h-7 w-7 rounded-lg"
+                      className="h-8 w-8 rounded-lg"
                     />
+                  ) : (
+                    <span aria-hidden="true" className="h-2.5 w-2.5 rounded-full bg-orange-300/80 shadow-[0_0_16px_rgba(251,146,60,0.35)]" />
                   )}
-                  <span className="block truncate text-[13px] font-black text-white">{getDisplayName(profile, lang)}</span>
                 </span>
-                <span className="mt-1 block truncate text-[10px] text-zinc-500">{getCutDescriptor(profile, lang)}</span>
-                <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-black text-orange-300">
-                  <span className="inline-flex rounded-full bg-orange-500/10 px-2 py-0.5">{getEstimatedTimeLabel(profile, lang)}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[13px] font-black text-white sm:text-sm">{getDisplayName(profile, lang)}</span>
+                  <span className="mt-0.5 block truncate text-[10px] font-semibold text-zinc-500 sm:text-[11px]">{getCutDescriptor(profile, lang)}</span>
+                  <span className="mt-0.5 block truncate text-[10px] font-black text-orange-300">{getEstimatedTimeLabel(profile, lang)}</span>
                 </span>
               </button>
               {onViewDetails && (
                 <button
                   type="button"
                   onClick={() => onViewDetails(profile)}
-                  className="mt-2 rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-black text-zinc-400 transition hover:border-orange-300/35 hover:text-orange-200 active:scale-[0.97]"
+                  className="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 text-[10px] font-black text-zinc-400 transition hover:border-orange-300/35 hover:text-orange-200 active:scale-[0.97]"
                 >
                   {getDetailsLabel(lang)}
                 </button>

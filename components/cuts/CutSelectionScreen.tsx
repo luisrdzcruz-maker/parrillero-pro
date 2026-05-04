@@ -70,9 +70,9 @@ function FishFallbackIcon() {
   return (
     <span
       aria-hidden="true"
-      className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-orange-300/16 bg-black/35 shadow-[0_8px_22px_rgba(249,115,22,0.12)] ring-1 ring-inset ring-white/[0.035] sm:h-12 sm:w-12"
+      className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-orange-300/16 bg-black/35 shadow-[0_8px_22px_rgba(249,115,22,0.12)] ring-1 ring-inset ring-white/[0.035] sm:h-11 sm:w-11"
     >
-      <svg viewBox="0 0 48 48" className="h-8 w-8 text-orange-300 drop-shadow-[0_0_10px_rgba(249,115,22,0.45)]">
+      <svg viewBox="0 0 48 48" className="h-7 w-7 text-orange-300 drop-shadow-[0_0_10px_rgba(249,115,22,0.45)] sm:h-8 sm:w-8">
         <path
           d="M6 24c5.8-7.4 13.2-11.1 22.1-11.1 5.2 0 9.7 2.4 13.5 7.1l4.4-4.3v16.6L41.6 28c-3.8 4.7-8.3 7.1-13.5 7.1C19.2 35.1 11.8 31.4 6 24Z"
           fill="currentColor"
@@ -241,9 +241,9 @@ export function CutSelectionScreen({
         <div className="absolute -right-20 top-10 h-[300px] w-[300px] rounded-full bg-red-600/7 blur-[130px]" />
       </div>
 
-      <section className={`relative mx-auto flex w-full max-w-[1000px] flex-col px-0 pt-1 sm:px-2 sm:pt-2 ${sectionBottomPaddingClass}`}>
-        <header className="rounded-[1.2rem] border border-orange-300/14 bg-white/[0.035] px-2.5 py-2 shadow-[0_12px_34px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:px-3 sm:py-2.5">
-          <div className="grid grid-cols-5 gap-1.5 touch-pan-y sm:gap-2">
+      <section className={`relative mx-auto flex w-full max-w-[1000px] flex-col px-0 pt-0.5 sm:px-2 sm:pt-2 ${sectionBottomPaddingClass}`}>
+        <header className="rounded-[1.05rem] border border-orange-300/14 bg-white/[0.035] px-2 py-1.5 shadow-[0_12px_34px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:rounded-[1.2rem] sm:px-3 sm:py-2.5">
+          <div className="grid grid-cols-5 gap-1 touch-pan-y sm:gap-2">
             {animalOptions.map(([animalId]) => {
               const selected = animalId === selectedAnimal;
               const iconSrc = getCategoryIcon(animalId);
@@ -255,7 +255,7 @@ export function CutSelectionScreen({
                   aria-label={label}
                   title={label}
                   onClick={() => handleAnimalSelect(animalId)}
-                  className={`flex min-h-[58px] min-w-0 items-center justify-center rounded-[1.15rem] border p-1.5 transition active:scale-[0.98] sm:min-h-[66px] sm:rounded-[1.35rem] sm:p-2 ${
+                  className={`flex min-h-[46px] min-w-0 items-center justify-center rounded-[0.95rem] border p-1 transition active:scale-[0.98] sm:min-h-[66px] sm:rounded-[1.35rem] sm:p-2 ${
                     selected
                       ? "border-orange-300/85 bg-orange-500/18 shadow-[0_0_0_1px_rgba(251,146,60,0.28),0_12px_30px_rgba(249,115,22,0.18)]"
                       : "border-white/12 bg-black/25 hover:border-orange-300/35 hover:bg-orange-500/8"
@@ -268,7 +268,7 @@ export function CutSelectionScreen({
                       size="lg"
                       shape="plain"
                       aria-hidden="true"
-                      className={selected ? "h-11 w-11 rounded-2xl sm:h-12 sm:w-12" : "h-10 w-10 rounded-2xl opacity-86 sm:h-12 sm:w-12"}
+                      className={selected ? "h-9 w-9 rounded-xl sm:h-12 sm:w-12 sm:rounded-2xl" : "h-8 w-8 rounded-xl opacity-86 sm:h-12 sm:w-12 sm:rounded-2xl"}
                     />
                   ) : (
                     <FishFallbackIcon />
@@ -277,20 +277,20 @@ export function CutSelectionScreen({
               );
             })}
           </div>
-          <div className="mt-2 px-0.5 text-[11px] font-semibold text-zinc-400 sm:text-xs">
+          <div className="mt-1.5 px-0.5 text-[10px] font-semibold text-zinc-400 sm:mt-2 sm:text-xs">
             <span className="block truncate">{compactStatusLine}</span>
             {selectedZone && <span className="block truncate text-orange-200">· {getCategoryLabel(selectedZone, effectiveLang)}</span>}
           </div>
         </header>
 
         {!catalogExpanded && (
-          <div className="mt-3 space-y-3">
+          <div className="mt-2 sm:mt-3">
             <IntentSelector lang={effectiveLang} selectedIntent={selectedIntent} onIntentChange={handleIntentChange} />
           </div>
         )}
 
-        <div className="mt-3 grid min-w-0 gap-4 lg:grid-cols-[1fr_300px]">
-          <div className="min-w-0 space-y-4">
+        <div className="mt-2 grid min-w-0 gap-3 sm:mt-3 lg:grid-cols-[1fr_300px] lg:gap-4">
+          <div className="min-w-0 space-y-2 sm:space-y-4">
             {!catalogExpanded && (
               <QuickPicks
                 profiles={animalProfiles}
