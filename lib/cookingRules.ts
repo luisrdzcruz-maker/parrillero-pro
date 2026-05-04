@@ -24,6 +24,11 @@ import {
   resolveLegacyDonenessId,
 } from "./legacyCookingInputAdapter";
 import { resolveCookingProfile, resolveProductCut } from "./resolveCookingProfile";
+import {
+  getTemperatureDeltaFromRecommended,
+  getTargetTempsForProfile,
+  resolveDonenessProfileId,
+} from "./donenessProfiles";
 
 function normalizeKey(value: string) {
   return value.trim().toLowerCase();
@@ -70,7 +75,20 @@ function getLocalizedList(
   return value?.[language] ?? value?.es ?? value?.en ?? [];
 }
 
+function getCutDonenessProfileId(cut: ProductCut) {
+  return (
+    cut.donenessProfileId ??
+    resolveDonenessProfileId({
+      animalId: cut.animalId,
+      inputProfileId: cut.inputProfileId,
+      style: cut.style,
+    })
+  );
+}
+
 function getTargetTemp(cut: ProductCut, doneness: DonenessId): TargetTemp | undefined {
+  const profileTemps = getTargetTempsForProfile(getCutDonenessProfileId(cut));
+  if (profileTemps?.[doneness]) return profileTemps[doneness];
   if (cut.targetTempsC?.[doneness]) return cut.targetTempsC[doneness];
   if (cut.animalId === "beef") return beefTemps[doneness] ?? beefTemps.medium_rare;
   if (cut.animalId === "pork") return porkTemps[doneness] ?? porkTemps.juicy_safe;
@@ -123,16 +141,44 @@ function getDonenessBias(doneness: DonenessId) {
   return 0;
 }
 
-function getSearSeconds(thickness: number, style: CookingStyle) {
-  if (style === "fish") return clamp(Math.round(thickness * 35), 60, 150);
+function getDonenessTempDeltaC(cut: ProductCut, doneness: DonenessId) {
+  return getTemperatureDeltaFromRecommended(getCutDonenessProfileId(cut), doneness);
+}
+
+function getDonenessTimeAdjustmentSeconds(style: CookingStyle, tempDeltaC: number) {
+  const secondsPerDegree: Record<CookingStyle, number> = {
+    fast: 10,
+    thick: 18,
+    reverse: 28,
+    fatcap: 16,
+    lowSlow: 0,
+    crispy: 0,
+    poultry: 20,
+    fish: 8,
+    vegetable: 0,
+  };
+
+  return Math.round(tempDeltaC * secondsPerDegree[style]);
+}
+
+function getSearSeconds(thickness: number, style: CookingStyle, tempDeltaC = 0) {
+  const donenessAdjustment =
+    style === "fast" || style === "fish" ? getDonenessTimeAdjustmentSeconds(style, tempDeltaC) : 0;
+
+  if (style === "fish") return clamp(Math.round(thickness * 35 + donenessAdjustment), 60, 180);
   if (style === "poultry") return clamp(Math.round(thickness * 45), 120, 240);
-  if (style === "fast") return clamp(Math.round(thickness * 45), 90, 180);
+  if (style === "fast") return clamp(Math.round(thickness * 45 + donenessAdjustment), 75, 240);
   if (style === "fatcap") return clamp(Math.round(thickness * 50), 120, 210);
   if (style === "crispy") return clamp(Math.round(thickness * 60), 180, 360);
   return clamp(Math.round(thickness * 55), 150, 270);
 }
 
-function getIndirectSeconds(thickness: number, style: CookingStyle, doneness: DonenessId) {
+function getIndirectSeconds(
+  thickness: number,
+  style: CookingStyle,
+  doneness: DonenessId,
+  tempDeltaC = 0,
+) {
   const extraByPoint: Partial<Record<DonenessId, number>> = {
     blue: -120,
     rare: -60,
@@ -146,13 +192,13 @@ function getIndirectSeconds(thickness: number, style: CookingStyle, doneness: Do
     juicy: -60,
   };
 
-  const extra = extraByPoint[doneness] ?? 0;
+  const extra = (extraByPoint[doneness] ?? 0) + getDonenessTimeAdjustmentSeconds(style, tempDeltaC);
 
   if (style === "fish")
     return thickness <= 3 ? 0 : clamp(Math.round(thickness * 70 + extra), 120, 360);
   if (style === "poultry") return clamp(Math.round(thickness * 260 + extra), 900, 3600);
   if (style === "fast")
-    return thickness <= 3 ? 0 : clamp(Math.round(thickness * 70 + extra), 120, 420);
+    return thickness <= 3 ? 0 : clamp(Math.round(thickness * 70 + extra), 120, 900);
   if (style === "reverse") return clamp(Math.round(thickness * 260 + extra), 900, 2100);
   if (style === "fatcap") return clamp(Math.round(thickness * 120 + extra), 300, 900);
   if (style === "crispy") return clamp(Math.round(thickness * 180), 600, 1800);
@@ -175,7 +221,7 @@ function getMainCookSeconds(cut: ProductCut, thickness: number, doneness: Donene
   const generatedCookSeconds = getGeneratedCookSeconds(cut);
   if (generatedCookSeconds && !cut.showThickness) return generatedCookSeconds;
 
-  return getIndirectSeconds(thickness, cut.style, doneness);
+  return getIndirectSeconds(thickness, cut.style, doneness, getDonenessTempDeltaC(cut, doneness));
 }
 
 function getRestSeconds(cut: ProductCut) {
@@ -270,7 +316,7 @@ function estimateTimes(input: CookingInput, cut: ProductCut, doneness: DonenessI
   const thickness = cut.showThickness
     ? parseNumber(input.thicknessCm, cut.defaultThicknessCm)
     : cut.defaultThicknessCm;
-  const sear = getSearSeconds(thickness, cut.style);
+  const sear = getSearSeconds(thickness, cut.style, getDonenessTempDeltaC(cut, doneness));
   const indirect = getMainCookSeconds(cut, thickness, doneness);
   const rest = getRestSeconds(cut);
 
@@ -363,7 +409,7 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
     ? parseNumber(input.thicknessCm, cut.defaultThicknessCm)
     : cut.defaultThicknessCm;
   const doneness = getDonenessId(input.doneness, cut.animalId, cut.allowedDoneness);
-  const sear = getSearSeconds(thickness, cut.style);
+  const sear = getSearSeconds(thickness, cut.style, getDonenessTempDeltaC(cut, doneness));
   const indirect = getMainCookSeconds(cut, thickness, doneness);
   const rest = getRestSeconds(cut);
   const equipmentProfile = getEquipmentProfile(input.equipment);

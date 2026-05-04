@@ -20,6 +20,11 @@ import {
   type DonenessId,
   type ProductCut,
 } from "./cookingCatalog";
+import {
+  donenessTemperatureProfiles,
+  getTargetTempsForProfile,
+  resolveDonenessProfileId,
+} from "./donenessProfiles";
 
 export type CookingProfileSource = "generated" | "legacy";
 export type ExtendedCookingProfileSource = "generated" | "legacy" | "fallback";
@@ -68,6 +73,18 @@ function uniqueValues<T extends string>(values: readonly T[]) {
 }
 
 function safeAllowedDoneness(profile: GeneratedCutProfile, legacyCut?: ProductCut) {
+  const donenessProfileId = resolveDonenessProfileId({
+    animalId: profile.animalId,
+    category: profile.category,
+    inputProfileId: profile.inputProfileId,
+    style: profile.style as CookingStyle,
+    targetTempC: profile.targetTempC,
+    defaultDoneness: profile.defaultDoneness,
+  });
+  if (donenessProfileId) {
+    return donenessTemperatureProfiles[donenessProfileId].allowed;
+  }
+
   const generatedAllowed = profile.allowedDoneness as DonenessId[];
   if (profile.animalId === "chicken") {
     const safe = generatedAllowed.filter((doneness) => doneness === "safe" || doneness === "well_done");
@@ -99,6 +116,14 @@ function resolveLegacyCut(input: CookingInput) {
 }
 
 function buildProductCutFromGenerated(profile: GeneratedCutProfile, legacyCut?: ProductCut): ProductCut {
+  const donenessProfileId = resolveDonenessProfileId({
+    animalId: profile.animalId,
+    category: profile.category,
+    inputProfileId: profile.inputProfileId,
+    style: profile.style as CookingStyle,
+    targetTempC: profile.targetTempC,
+    defaultDoneness: profile.defaultDoneness,
+  });
   const allowedDoneness = safeAllowedDoneness(profile, legacyCut);
   const criticalError = profile.criticalMistakeEn ?? profile.errorEn;
 
@@ -126,11 +151,12 @@ function buildProductCutFromGenerated(profile: GeneratedCutProfile, legacyCut?: 
     id: legacyCut?.id ?? profile.id,
     animalId: legacyCut?.animalId ?? profile.animalId,
     inputProfileId: profile.inputProfileId,
+    donenessProfileId,
     defaultThicknessCm: profile.defaultThicknessCm,
     showThickness: profile.showThickness,
     allowedMethods: profile.allowedMethods as CookingMethod[],
     allowedDoneness,
-    targetTempsC: legacyCut?.targetTempsC,
+    targetTempsC: getTargetTempsForProfile(donenessProfileId) ?? legacyCut?.targetTempsC,
     cookingMinutes: profile.cookingMinutes ?? legacyCut?.cookingMinutes,
     restingMinutes: profile.restingMinutes,
     style: profile.style as CookingStyle,
@@ -198,6 +224,11 @@ function buildFallbackCutFromAnimal(animalId: string, inputCutName: string): Pro
       : ["grill_direct", "grill_indirect", "oven_pan"];
   const defaultMethod: CookingMethod = animalId === "vegetables" ? "vegetables_grill" : "grill_indirect";
   const normalizedId = normalizeLegacyKey(inputCutName).replace(/\s+/g, "_") || `${animalId}_cut`;
+  const donenessProfileId = resolveDonenessProfileId({
+    animalId: animalId as ProductCut["animalId"],
+    style,
+  });
+  const targetTempsC = getTargetTempsForProfile(donenessProfileId);
 
   return {
     id: normalizedId,
@@ -210,7 +241,12 @@ function buildFallbackCutFromAnimal(animalId: string, inputCutName: string): Pro
     defaultThicknessCm: animalId === "fish" ? 3 : animalId === "vegetables" ? 2 : 4,
     showThickness: animalId !== "vegetables",
     allowedMethods,
-    allowedDoneness: animalDoneness[animalId as ProductCut["animalId"]] ?? [],
+    allowedDoneness:
+      donenessProfileId != null
+        ? donenessTemperatureProfiles[donenessProfileId].allowed
+        : (animalDoneness[animalId as ProductCut["animalId"]] ?? []),
+    donenessProfileId,
+    targetTempsC,
     restingMinutes: animalId === "vegetables" ? 1 : 5,
     style,
     defaultMethod,
