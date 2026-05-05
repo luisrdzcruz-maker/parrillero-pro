@@ -5,11 +5,12 @@ import ResultHero from "@/components/ResultHero";
 import FoodCard from "@/components/FoodCard";
 import { CookingLoadingScreen } from "@/components/cooking/CookingLoadingScreen";
 import { BrandImageIcon } from "@/components/ui/BrandImageIcon";
+import { resolveEquipmentIconKey } from "@/lib/assets/equipmentMethodIconResolver";
 import { categoryIconAssets } from "@/lib/brand/categoryIconAssets";
 import { cutIconAssets } from "@/lib/brand/cutIconAssets";
 import { getInputProfileForCut } from "@/lib/cooking/inputProfiles";
 import { getCutById } from "@/lib/cookingRules";
-import { Badge, Button, Section } from "@/components/ui";
+import { AppIcon, Badge, Button, Section } from "@/components/ui";
 import { CutIdentityHeader, CutMetaChip } from "@/components/cuts/CutFlowPrimitives";
 import { getCutSelectionIconPath } from "@/components/cuts/cutSelectionIconResolver";
 import { ds } from "@/lib/design-system";
@@ -961,6 +962,60 @@ function DetailsSelect({
   );
 }
 
+function EquipmentOptionCards({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: Array<{ label: string; value: string }>;
+}) {
+  return (
+    <div className="min-[390px]:col-span-2">
+      <p className="text-[10px] font-bold uppercase tracking-[0.11em] text-slate-400 sm:text-[11px] sm:tracking-[0.12em]">
+        {label}
+      </p>
+      <div className="mt-1 grid grid-cols-2 gap-2">
+        {options.map((option) => {
+          const selected = option.value === value;
+          const icon = resolveEquipmentIconKey(option.value) ?? resolveEquipmentIconKey(option.label);
+
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onChange(option.value)}
+              className={
+                selected
+                  ? "flex min-h-[48px] min-w-0 items-center gap-2 rounded-xl border border-orange-300/70 bg-orange-500/18 px-2.5 py-2 text-left text-sm font-black text-orange-50 shadow-[0_10px_28px_rgba(249,115,22,0.14)] ring-1 ring-orange-300/20 transition active:scale-[0.98]"
+                  : "flex min-h-[48px] min-w-0 items-center gap-2 rounded-xl border border-white/10 bg-slate-950/80 px-2.5 py-2 text-left text-sm font-semibold text-slate-200 shadow-inner shadow-black/20 transition hover:border-orange-300/35 hover:bg-orange-500/8 active:scale-[0.98]"
+              }
+              aria-pressed={selected}
+            >
+              {icon ? (
+                <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-black/28">
+                  <AppIcon
+                    category={icon.category}
+                    iconKey={icon.key}
+                    alt=""
+                    size="sm"
+                    aria-hidden="true"
+                    className="h-5 w-5 opacity-90"
+                  />
+                </span>
+              ) : null}
+              <span className="min-w-0 truncate">{option.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function CookingDetailsStep({
   advancedThicknessEnabled,
   animal,
@@ -1173,7 +1228,7 @@ function CookingDetailsStep({
                 options={localizedDonenessOptions}
               />
             )}
-            <DetailsSelect
+            <EquipmentOptionCards
               label={t.equipment}
               value={equipment}
               onChange={setEquipment}

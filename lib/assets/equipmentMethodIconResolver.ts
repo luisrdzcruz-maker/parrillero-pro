@@ -4,7 +4,7 @@ type MethodIconMatch = { category: "methods"; key: string };
 const EQUIPMENT_ICON_MAPPINGS: Array<{ key: string; patterns: string[] }> = [
   {
     key: "gas-grill",
-    patterns: ["gas", "gas grill", "gas_grill", "parrilla gas", "parrilla de gas"],
+    patterns: ["gas", "gas grill", "gas_grill", "parrilla gas", "parrilla de gas", "napoleon", "rogue"],
   },
   {
     key: "charcoal-grill",
@@ -24,7 +24,18 @@ const EQUIPMENT_ICON_MAPPINGS: Array<{ key: string; patterns: string[] }> = [
   { key: "oven", patterns: ["oven", "horno"] },
   {
     key: "cast-iron-pan",
-    patterns: ["pan", "cast iron", "cast-iron", "cast iron pan", "sarten", "sartén"],
+    patterns: [
+      "pan",
+      "cast iron",
+      "cast-iron",
+      "cast iron pan",
+      "sarten",
+      "sartén",
+      "cocina interior",
+      "indoor kitchen",
+      "sisakeittio",
+      "sisäkeittiö",
+    ],
   },
   {
     key: "probe-thermometer",

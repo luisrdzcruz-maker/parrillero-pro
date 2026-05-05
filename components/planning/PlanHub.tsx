@@ -1,7 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui";
+import { AppIcon, Button } from "@/components/ui";
 import { Select, type Blocks, type SaveMenuStatus } from "@/components/cooking/CookingWizard";
+import { resolveEquipmentIconKey } from "@/lib/assets/equipmentMethodIconResolver";
 import { texts, type AppText, type Lang } from "@/lib/i18n/texts";
 import { useMemo, useState } from "react";
 
@@ -258,7 +259,12 @@ export function PlanHub({
                 value={people}
                 onChange={setPeople}
               />
-              <Select label={t.equipment} value={equipment} onChange={setEquipment} options={equipmentOptions} />
+              <PlanEquipmentChips
+                label={t.equipment}
+                value={equipment}
+                onChange={setEquipment}
+                options={equipmentOptions}
+              />
             </>
           )}
 
@@ -284,7 +290,12 @@ export function PlanHub({
                 value={sides}
                 onChange={setSides}
               />
-              <Select label={t.equipment} value={equipment} onChange={setEquipment} options={equipmentOptions} />
+              <PlanEquipmentChips
+                label={t.equipment}
+                value={equipment}
+                onChange={setEquipment}
+                options={equipmentOptions}
+              />
               <Select label={t.difficulty} value={difficulty} onChange={setDifficulty} options={difficultyOptions} />
             </>
           )}
@@ -315,7 +326,12 @@ export function PlanHub({
                 value={parrilladaSides}
                 onChange={setParrilladaSides}
               />
-              <Select label={t.equipment} value={equipment} onChange={setEquipment} options={equipmentOptions} />
+              <PlanEquipmentChips
+                label={t.equipment}
+                value={equipment}
+                onChange={setEquipment}
+                options={equipmentOptions}
+              />
             </>
           )}
 
@@ -362,6 +378,60 @@ function PlanInput({
         value={value}
       />
     </label>
+  );
+}
+
+function PlanEquipmentChips({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: Array<{ label: string; value: string }>;
+}) {
+  return (
+    <div>
+      <p className="mb-1.5 block text-[11px] font-black uppercase tracking-[0.17em] text-slate-400">
+        {label}
+      </p>
+      <div className="grid grid-cols-2 gap-2 min-[520px]:grid-cols-3">
+        {options.map((option) => {
+          const selected = option.value === value;
+          const icon = resolveEquipmentIconKey(option.value) ?? resolveEquipmentIconKey(option.label);
+
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onChange(option.value)}
+              className={
+                selected
+                  ? "inline-flex min-h-[46px] min-w-0 items-center gap-2 rounded-2xl border border-orange-300/70 bg-orange-500/18 px-2.5 py-2 text-left text-[13px] font-black text-orange-50 shadow-[0_10px_28px_rgba(249,115,22,0.14)] ring-1 ring-orange-300/20 transition active:scale-[0.98]"
+                  : "inline-flex min-h-[46px] min-w-0 items-center gap-2 rounded-2xl border border-white/10 bg-black/30 px-2.5 py-2 text-left text-[13px] font-bold text-slate-200 transition hover:border-orange-300/35 hover:bg-orange-500/8 active:scale-[0.98]"
+              }
+              aria-pressed={selected}
+            >
+              {icon ? (
+                <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-black/28">
+                  <AppIcon
+                    category={icon.category}
+                    iconKey={icon.key}
+                    alt=""
+                    size="sm"
+                    aria-hidden="true"
+                    className="h-5 w-5 opacity-90"
+                  />
+                </span>
+              ) : null}
+              <span className="min-w-0 truncate">{option.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
