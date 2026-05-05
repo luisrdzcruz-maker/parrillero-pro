@@ -10,13 +10,14 @@ import { cutIconAssets } from "@/lib/brand/cutIconAssets";
 import { getInputProfileForCut } from "@/lib/cooking/inputProfiles";
 import { getCutById } from "@/lib/cookingRules";
 import { Badge, Button, Section } from "@/components/ui";
+import { CutIdentityHeader, CutMetaChip } from "@/components/cuts/CutFlowPrimitives";
+import { getCutSelectionIconPath } from "@/components/cuts/cutSelectionIconResolver";
 import { ds } from "@/lib/design-system";
 import {
   getAnimalSurfaceLabel,
   getDetailsSetupLabels,
   getDonenessSurfaceLabel,
   getEquipmentSurfaceLabel,
-  sanitizeCriticalErrorCopy,
 } from "@/lib/i18n/surfaceFallbacks";
 import type { AppText, Lang } from "@/lib/i18n/texts";
 import {
@@ -367,7 +368,7 @@ function DetailsBackButton({ label, onBack }: { label: string; onBack: () => voi
     <button
       type="button"
       onClick={onBack}
-      className="absolute left-2 top-2 z-30 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/40 text-lg font-black leading-none text-white shadow-lg shadow-black/20 backdrop-blur transition-all duration-200 hover:bg-black/55 active:scale-95 md:hidden"
+      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.07] text-lg font-black leading-none text-white shadow-lg shadow-black/20 backdrop-blur transition-all duration-200 hover:bg-white/12 active:scale-95"
       aria-label={label}
       title={label}
     >
@@ -844,106 +845,41 @@ function getCutPositioningLine(style: CookingStyle | undefined, lang: Lang) {
   return style ? positioningByStyle[style][lang] : positioningByStyle.fast[lang];
 }
 
-function getCutGuidanceLabels(lang: Lang) {
-  if (lang === "es") {
-    return {
-      eyebrow: "Guia del corte",
-      bestMethods: "Mejor setup",
-      warning: "Evita",
-      fallbackWarning: "Controla temperatura interna y evita calor excesivo.",
-    };
-  }
-  if (lang === "fi") {
-    return {
-      eyebrow: "Leikkauksen ohje",
-      bestMethods: "Paras valmistelu",
-      warning: "Valta",
-      fallbackWarning: "Tarkista sisalampotila ja valta liian kovaa lampoa.",
-    };
-  }
-  return {
-    eyebrow: "Cut guidance",
-    bestMethods: "Best setup",
-    warning: "Avoid",
-    fallbackWarning: "Check internal temperature and avoid excessive heat.",
-  };
-}
-
-function getCutWarning(cutMeta: ProductCut | undefined, lang: Lang) {
-  const labels = getCutGuidanceLabels(lang);
-  if (!cutMeta) return labels.fallbackWarning;
-  if (lang === "es") return sanitizeCriticalErrorCopy(cutMeta.error.es, lang);
-  if (lang === "en") return sanitizeCriticalErrorCopy(cutMeta.error.en, lang);
-  return labels.fallbackWarning;
-}
-
 function CookingDetailsHero({
   animal,
   badge,
   cutMeta,
   lang,
+  onBack,
   selectedCut,
 }: {
   animal: AnimalLabel;
   badge: string;
   cutMeta?: ProductCut;
   lang: Lang;
+  onBack: () => void;
   selectedCut: CutItem;
 }) {
-  const [imageFailed, setImageFailed] = useState(false);
-  const showImage = Boolean(selectedCut.image) && !imageFailed;
   const positioningLine = getCutPositioningLine(cutMeta?.style, lang);
-  const warning = getCutWarning(cutMeta, lang);
+  const cutIconSrc = getCutSelectionIconPath({ id: selectedCut.id });
 
   return (
-    <div className="animate-live-enter relative overflow-hidden rounded-[1.55rem] border border-orange-300/15 bg-zinc-950 shadow-[0_18px_54px_rgba(0,0,0,0.42)] ring-1 ring-inset ring-white/[0.04] sm:rounded-[2rem]">
-      <div className="relative h-[132px] overflow-hidden sm:h-[178px]">
-        {!showImage && (
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_68%_28%,rgba(255,106,0,0.28),transparent_34%),radial-gradient(circle_at_22%_75%,rgba(251,146,60,0.13),transparent_32%),linear-gradient(145deg,#18181b_0%,#09090b_50%,#000000_100%)]" />
-        )}
-        {showImage && (
-          <Image
-            src={selectedCut.image}
-            alt={selectedCut.name}
-            fill
-            sizes="(min-width: 768px) 760px, 100vw"
-            className="scale-[1.1] object-cover object-center"
-            priority={false}
-            onError={() => setImageFailed(true)}
-          />
-        )}
-
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_10%,rgba(0,0,0,0.54)_58%,rgba(0,0,0,0.94)_100%)]" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/94 via-black/62 to-black/18" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/34" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_0%,rgba(255,106,0,0.24),transparent_34%)]" />
-        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-orange-300/45 to-transparent" />
-
-        <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-5">
-          <div className="mb-1.5 flex flex-wrap items-center gap-1.5 sm:mb-2 sm:gap-2">
-            <span className="rounded-full border border-orange-300/35 bg-orange-500/18 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-orange-200 shadow-lg shadow-orange-950/20 backdrop-blur-md">
-              {badge}
-            </span>
-            <span className="rounded-full border border-white/10 bg-black/45 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/55 backdrop-blur-md">
-              {getAnimalSurfaceLabel(animal, lang)}
-            </span>
-            {cutMeta?.restingMinutes ? (
-              <span className="rounded-full border border-white/10 bg-black/45 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/55 backdrop-blur-md">
-                {cutMeta.restingMinutes} min
-              </span>
-            ) : null}
-          </div>
-          <h1 className="max-w-2xl text-[1.55rem] font-black leading-none tracking-tight text-white drop-shadow-[0_3px_18px_rgba(0,0,0,0.85)] sm:text-4xl">
-            {selectedCut.name}
-          </h1>
-          <p className="mt-1 line-clamp-1 max-w-xl text-xs font-semibold leading-4 text-slate-200/82 sm:mt-2 sm:text-sm sm:leading-5">
-            {positioningLine}
-          </p>
-          <p className="mt-1 line-clamp-1 max-w-xl text-[11px] font-bold leading-4 text-red-100/82 sm:text-xs">
-            {warning}
-          </p>
-        </div>
-      </div>
+    <div className="animate-live-enter">
+      <CutIdentityHeader
+        compact
+        title={selectedCut.name}
+        eyebrow={lang === "es" ? "Ajusta detalles" : lang === "fi" ? "Aseta tiedot" : "Adjust details"}
+        description={positioningLine}
+        iconSrc={cutIconSrc}
+        chips={
+          <>
+            <CutMetaChip tone="accent">{badge}</CutMetaChip>
+            <CutMetaChip>{getAnimalSurfaceLabel(animal, lang)}</CutMetaChip>
+            {cutMeta?.restingMinutes ? <CutMetaChip>{cutMeta.restingMinutes} min</CutMetaChip> : null}
+          </>
+        }
+        action={<DetailsBackButton label={selectedCut.name} onBack={onBack} />}
+      />
     </div>
   );
 }
@@ -956,11 +892,11 @@ function DetailsFieldGroup({
   title: string;
 }) {
   return (
-    <div className="rounded-[1.1rem] border border-white/[0.08] bg-[radial-gradient(circle_at_50%_0%,rgba(255,106,0,0.055),transparent_42%),rgba(0,0,0,0.22)] p-2 shadow-inner shadow-black/25 ring-1 ring-inset ring-orange-300/[0.045] sm:rounded-[1.35rem] sm:p-3">
-      <p className="mb-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-orange-200/70 sm:mb-2 sm:tracking-[0.18em]">
+    <div className="rounded-[1.1rem] border border-white/[0.08] bg-white/[0.03] p-3 sm:rounded-[1.25rem] sm:p-3.5">
+      <p className="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-orange-200/70">
         {title}
       </p>
-      <div className="grid grid-cols-1 gap-2 min-[390px]:grid-cols-2 sm:gap-2.5">{children}</div>
+      <div className="grid grid-cols-1 gap-2 min-[390px]:grid-cols-2">{children}</div>
     </div>
   );
 }
@@ -985,7 +921,7 @@ function DetailsInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/85 px-3 py-2.5 text-sm font-semibold text-slate-100 shadow-inner shadow-black/25 outline-none transition placeholder:text-slate-600 focus:border-orange-400/55 focus:ring-2 focus:ring-orange-500/15 sm:mt-1.5 sm:rounded-2xl sm:py-2.5"
+        className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2.5 text-sm font-semibold text-slate-100 shadow-inner shadow-black/20 outline-none transition placeholder:text-slate-600 focus:border-orange-400/55 focus:ring-2 focus:ring-orange-500/15"
       />
     </div>
   );
@@ -1010,7 +946,7 @@ function DetailsSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/85 px-3 py-2.5 text-sm font-semibold text-slate-100 shadow-inner shadow-black/25 outline-none transition focus:border-orange-400/55 focus:ring-2 focus:ring-orange-500/15 sm:mt-1.5 sm:rounded-2xl sm:py-2.5"
+        className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2.5 text-sm font-semibold text-slate-100 shadow-inner shadow-black/20 outline-none transition focus:border-orange-400/55 focus:ring-2 focus:ring-orange-500/15"
       >
         {options.map((item) => (
           <option
@@ -1137,20 +1073,18 @@ function CookingDetailsStep({
   const detailsSetupText = getDetailsSetupLabels(lang);
 
   return (
-    <section className="relative mx-auto max-w-4xl animate-[fadeIn_220ms_ease-out] space-y-2 pb-4 pt-0 sm:space-y-4 sm:pb-6 sm:pt-1 lg:pb-6">
-      <DetailsBackButton label={selectedCut.name} onBack={onBack} />
-
+    <section className="relative mx-auto max-w-3xl animate-[fadeIn_220ms_ease-out] space-y-3 pb-4 pt-0 sm:space-y-4 sm:pb-6 sm:pt-1 lg:pb-6">
       <CookingDetailsHero
         animal={animal}
         badge={detailsHeroBadge}
         cutMeta={cutMeta}
         lang={lang}
+        onBack={onBack}
         selectedCut={selectedCut}
       />
 
-      <div className="animate-live-enter relative overflow-hidden rounded-[1.45rem] border border-orange-300/18 bg-[radial-gradient(circle_at_18%_0%,rgba(255,106,0,0.20),transparent_34%),linear-gradient(145deg,rgba(24,24,27,0.99),rgba(3,7,18,0.97)_58%,rgba(0,0,0,0.98))] p-[1px] shadow-[0_18px_54px_rgba(0,0,0,0.42),0_0_28px_rgba(255,106,0,0.08)] ring-1 ring-inset ring-white/[0.055] [animation-delay:70ms] sm:rounded-[2rem]">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(251,146,60,0.14),transparent_42%)]" />
-        <div className="relative space-y-2 rounded-[calc(1.45rem-1px)] bg-black/14 p-2.5 backdrop-blur-sm sm:space-y-3 sm:rounded-[calc(2rem-1px)] sm:p-4">
+      <div className="animate-live-enter relative overflow-hidden rounded-[1.35rem] border border-white/10 bg-[linear-gradient(145deg,rgba(12,10,9,0.94),rgba(3,7,18,0.94))] p-3 shadow-[0_14px_42px_rgba(0,0,0,0.34)] ring-1 ring-inset ring-white/[0.04] [animation-delay:70ms] sm:rounded-[1.6rem] sm:p-4">
+        <div className="relative space-y-3">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-200/75">
@@ -1160,7 +1094,7 @@ function CookingDetailsStep({
                 {detailsSetupText.title}
               </h2>
             </div>
-            <div className="hidden rounded-full border border-orange-300/20 bg-orange-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-orange-200 sm:block">
+            <div className="hidden rounded-full border border-orange-300/20 bg-orange-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-orange-200 min-[390px]:block">
               {detailsHeroBadge}
             </div>
           </div>
@@ -1249,13 +1183,13 @@ function CookingDetailsStep({
         </div>
       </div>
 
-      <div className="animate-live-enter max-w-md [animation-delay:140ms] sm:max-w-sm">
+      <div className="animate-live-enter [animation-delay:140ms]">
         <PrimaryButton
           onClick={generateCookingPlan}
           loading={loading}
           text={t.generatePlan}
           loadingText={t.generating}
-          className="min-h-[3.2rem] rounded-[1.35rem] border border-orange-200/25 shadow-[0_18px_50px_rgba(249,115,22,0.34),0_0_28px_rgba(255,106,0,0.14)] ring-1 ring-orange-300/25 hover:shadow-[0_22px_60px_rgba(249,115,22,0.42),0_0_34px_rgba(255,106,0,0.18)] sm:min-h-[3.35rem]"
+          className="min-h-[3.15rem] rounded-[1.25rem] border border-orange-200/25 shadow-[0_18px_50px_rgba(249,115,22,0.34),0_0_28px_rgba(255,106,0,0.14)] ring-1 ring-orange-300/25 hover:shadow-[0_22px_60px_rgba(249,115,22,0.42),0_0_34px_rgba(255,106,0,0.18)] sm:min-h-[3.3rem]"
         />
       </div>
     </section>
