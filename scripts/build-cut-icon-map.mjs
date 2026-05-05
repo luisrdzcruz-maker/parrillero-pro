@@ -46,13 +46,13 @@ function toMapKey(filePath) {
 }
 
 function buildMapContent(entries) {
-  const mapEntries = entries.map(([key, publicPath]) => `  "${key}": "${publicPath}"`);
+  const mapEntries = entries.map(([key, publicPath]) => `  "${key}": "${publicPath}",`);
 
   return `// AUTO-GENERATED FILE. DO NOT EDIT MANUALLY.
 // Source: public/cut-icons/**/*.webp
 
 export const cutIconMap = {
-${mapEntries.join(",\n")}
+${mapEntries.join("\n")}
 } as const satisfies Record<string, string>;
 
 export type CutIconKey = keyof typeof cutIconMap;

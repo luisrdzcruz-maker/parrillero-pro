@@ -42,7 +42,7 @@ export const cutIconMap = {
   "vegetables/red-bell-pepper": "/cut-icons/vegetables/red-bell-pepper.webp",
   "vegetables/red-onion": "/cut-icons/vegetables/red-onion.webp",
   "vegetables/tomato": "/cut-icons/vegetables/tomato.webp",
-  "vegetables/zucchini": "/cut-icons/vegetables/zucchini.webp"
+  "vegetables/zucchini": "/cut-icons/vegetables/zucchini.webp",
 } as const satisfies Record<string, string>;
 
 export type CutIconKey = keyof typeof cutIconMap;
