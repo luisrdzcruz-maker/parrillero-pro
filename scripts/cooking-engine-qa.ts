@@ -982,6 +982,120 @@ function validateCatalogV2RuntimeAdapterBridge(): Failure[] {
   return failures;
 }
 
+function validateBoneInRibeyeNormalization(): Failure[] {
+  const failures: Failure[] = [];
+  const legacyAliases = ["ribeye:bone_in_chuleton", "bone_in_chuleton", "chuleton", "chuletón", "bone-in ribeye", "cowboy steak"];
+
+  for (const alias of legacyAliases) {
+    const input = makeInput({
+      animal: "Vacuno",
+      cut: alias,
+      doneness: "medium_rare",
+      thickness: THICKNESS_CM.medium,
+    });
+    const cut = getCutForInput(input);
+
+    if (cut?.id !== "bone_in_ribeye") {
+      failures.push({
+        animal: input.animal,
+        cut: alias,
+        doneness: input.doneness,
+        thickness: `${THICKNESS_CM.medium} cm`,
+        equipment: input.equipment,
+        reason: `bone-in ribeye normalization: expected bone_in_ribeye, got ${cut?.id ?? "unresolved"}`,
+      });
+      continue;
+    }
+
+    if (getTemperatureModeForCut(cut) !== "doneness_target") {
+      failures.push({
+        animal: input.animal,
+        cut: alias,
+        doneness: input.doneness,
+        thickness: `${THICKNESS_CM.medium} cm`,
+        equipment: input.equipment,
+        reason: "bone-in ribeye normalization: expected doneness_target mode",
+      });
+    }
+
+    if (cut.inputProfileId !== "thick_steak_bone_in_thickness_weight" || cut.cookingMinutes == null || cut.cookingMinutes < 33) {
+      failures.push({
+        animal: input.animal,
+        cut: alias,
+        doneness: input.doneness,
+        thickness: `${THICKNESS_CM.medium} cm`,
+        equipment: input.equipment,
+        reason: "bone-in ribeye normalization: expected thick bone-in behavior and timing",
+      });
+    }
+  }
+
+  const ribeye = getCutForInput(
+    makeInput({
+      animal: "Vacuno",
+      cut: "ribeye",
+      doneness: "medium_rare",
+      thickness: THICKNESS_CM.medium,
+    }),
+  );
+  const ribeyePrep = getPrepGuidanceForCut(ribeye);
+
+  if (ribeye?.id !== "ribeye" || ribeye.inputProfileId !== "beef-steak") {
+    failures.push({
+      animal: "Vacuno",
+      cut: "ribeye",
+      doneness: "medium_rare",
+      thickness: `${THICKNESS_CM.medium} cm`,
+      equipment: "parrilla gas",
+      reason: `ribeye steak behavior: expected normal ribeye steak, got ${ribeye?.id ?? "unresolved"}`,
+    });
+  }
+
+  if (ribeyePrep?.saltTimingMinutes?.min !== 45 || ribeyePrep.saltTimingMinutes.max !== 1440) {
+    failures.push({
+      animal: "Vacuno",
+      cut: "ribeye",
+      doneness: "medium_rare",
+      thickness: `${THICKNESS_CM.medium} cm`,
+      equipment: "parrilla gas",
+      reason: "ribeye steak behavior: expected 45 min-24 h prep guidance",
+    });
+  }
+
+  const chuletonPrep = getPrepGuidanceForCut({ id: "bone_in_ribeye", animalId: "beef" });
+  if (chuletonPrep?.saltTimingMinutes?.min !== 120 || chuletonPrep.saltTimingMinutes.max !== 1440) {
+    failures.push({
+      animal: "Vacuno",
+      cut: "bone_in_ribeye",
+      doneness: "medium_rare",
+      thickness: `${THICKNESS_CM.medium} cm`,
+      equipment: "parrilla gas",
+      reason: "chuleton prep behavior: expected 2-24 h prep guidance",
+    });
+  }
+
+  const tomahawk = getCutForInput(
+    makeInput({
+      animal: "Vacuno",
+      cut: "tomahawk",
+      doneness: "medium_rare",
+      thickness: THICKNESS_CM.medium,
+    }),
+  );
+  if (tomahawk?.id !== "tomahawk") {
+    failures.push({
+      animal: "Vacuno",
+      cut: "tomahawk",
+      doneness: "medium_rare",
+      thickness: `${THICKNESS_CM.medium} cm`,
+      equipment: "parrilla gas",
+      reason: `tomahawk distinction: expected tomahawk, got ${tomahawk?.id ?? "unresolved"}`,
+    });
+  }
+
+  return failures;
+}
+
 function validatePrepSaltingGuidance(): Failure[] {
   const failures: Failure[] = [];
   const cases = [
@@ -1309,6 +1423,7 @@ function main() {
   const temperatureModeFailures = validateTemperatureModeProfiles();
   const picanhaFatCapFailures = validatePicanhaFatCapProfile();
   const catalogV2RuntimeAdapterFailures = validateCatalogV2RuntimeAdapterBridge();
+  const boneInRibeyeNormalizationFailures = validateBoneInRibeyeNormalization();
   const prepSaltingGuidanceFailures = validatePrepSaltingGuidance();
   const liveCookingPhaseFailures = validateLiveCookingPhaseMetadata();
 
@@ -1367,6 +1482,7 @@ function main() {
     temperatureModeFailures.length +
     picanhaFatCapFailures.length +
     catalogV2RuntimeAdapterFailures.length +
+    boneInRibeyeNormalizationFailures.length +
     prepSaltingGuidanceFailures.length +
     liveCookingPhaseFailures.length;
 
@@ -1447,6 +1563,18 @@ function main() {
     console.log("Catalog v2 runtime adapter failures:");
 
     for (const failure of catalogV2RuntimeAdapterFailures) {
+      console.log(
+        `- [${failure.animal} / ${failure.cut} / ${failure.doneness} / ${failure.thickness} / ${failure.equipment}] ${failure.reason}`,
+      );
+    }
+
+    process.exitCode = 1;
+  }
+
+  if (boneInRibeyeNormalizationFailures.length > 0) {
+    console.log("Bone-in ribeye normalization failures:");
+
+    for (const failure of boneInRibeyeNormalizationFailures) {
       console.log(
         `- [${failure.animal} / ${failure.cut} / ${failure.doneness} / ${failure.thickness} / ${failure.equipment}] ${failure.reason}`,
       );

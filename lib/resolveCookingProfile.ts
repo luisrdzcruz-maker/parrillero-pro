@@ -13,6 +13,7 @@ import {
 } from "./legacyCookingInputAdapter";
 import {
   animalDoneness,
+  beefTemps,
   productCatalog,
   type CookingInput,
   type CookingMethod,
@@ -57,6 +58,50 @@ export type ResolvedCookingProfile = {
 const legacyCutsById = new Map(productCatalog.map((cut) => [cut.id, cut]));
 const generatedPrimaryToId = new Map<string, string>();
 const generatedAliasToId = new Map<string, string>();
+const canonicalCutOverrides: Record<string, string> = {
+  "bone-in ribeye": "bone_in_ribeye",
+  "cowboy steak": "bone_in_ribeye",
+  "ribeye + bone_in_chuleton": "bone_in_ribeye",
+  "ribeye on the bone": "bone_in_ribeye",
+  "ribeye:bone_in_chuleton": "bone_in_ribeye",
+  bone_in_chuleton: "bone_in_ribeye",
+  chuleton: "bone_in_ribeye",
+};
+const catalogBackedCutsById = new Map<string, ProductCut>([
+  [
+    "bone_in_ribeye",
+    {
+      id: "bone_in_ribeye",
+      animalId: "beef",
+      inputProfileId: "thick_steak_bone_in_thickness_weight",
+      names: { es: "Chuletón", en: "Bone-in ribeye / Chuletón", fi: "Luullinen ribeye" },
+      defaultThicknessCm: 5,
+      showThickness: true,
+      allowedMethods: ["reverse_sear", "grill_indirect", "oven_pan"],
+      allowedDoneness: ["rare", "medium_rare", "medium"],
+      targetTempsC: beefTemps,
+      restingMinutes: 12,
+      cookingMinutes: 45,
+      style: "reverse",
+      defaultMethod: "reverse_sear",
+      error: {
+        es: "Cocinarlo como un ribeye fino: necesita zona indirecta y sonda lejos del hueso.",
+        en: "Cooking it like a thin ribeye: it needs indirect heat and a probe away from the bone.",
+      },
+      aliases: [
+        "Chuletón",
+        "Chuleton",
+        "Bone-in ribeye",
+        "Ribeye on the bone",
+        "Cowboy steak",
+        "Bone-in entrecote",
+        "bone_in_chuleton",
+        "ribeye:bone_in_chuleton",
+        "ribeye + bone_in_chuleton",
+      ],
+    },
+  ],
+]);
 
 for (const profile of generatedCutProfiles) {
   generatedPrimaryToId.set(normalizeLegacyKey(profile.id), profile.id);
@@ -66,6 +111,9 @@ for (const profile of generatedCutProfiles) {
 
 function resolveAnyCutId(value: string) {
   const normalized = normalizeLegacyKey(value);
+  const canonicalOverride = canonicalCutOverrides[normalized];
+  if (canonicalOverride) return canonicalOverride;
+
   const generatedPrimaryId = generatedPrimaryToId.get(normalized);
   if (generatedPrimaryId) return generatedPrimaryId;
 
@@ -125,7 +173,7 @@ function resolveGeneratedProfile(input: CookingInput) {
 
 function resolveLegacyCut(input: CookingInput) {
   const cutId = resolveAnyCutId(input.cut);
-  return cutId ? legacyCutsById.get(cutId) : undefined;
+  return cutId ? (legacyCutsById.get(cutId) ?? catalogBackedCutsById.get(cutId)) : undefined;
 }
 
 function buildProductCutFromGenerated(profile: GeneratedCutProfile, legacyCut?: ProductCut): ProductCut {
@@ -437,7 +485,7 @@ export function resolveProductCut(cutId: string): ProductCut | undefined {
   const id = resolveAnyCutId(cutId);
   if (!id) return undefined;
 
-  const legacyCut = legacyCutsById.get(id);
+  const legacyCut = legacyCutsById.get(id) ?? catalogBackedCutsById.get(id);
   const generatedProfile = getGeneratedCutProfile(id);
 
   if (!legacyCut) {

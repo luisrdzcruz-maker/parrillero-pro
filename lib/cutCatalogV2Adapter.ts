@@ -221,8 +221,8 @@ const cutCatalogV2Rows: readonly CutCatalogV2Row[] = [
     saltSurfaceGuidance: "all_sides",
   }),
   catalogRow({
-    cutId: "ribeye",
-    variantId: "bone_in_chuleton",
+    cutId: "bone_in_ribeye",
+    variantId: "chuleton",
     animal: "beef",
     category: "beef_steak",
     cookingProfileId: "thick_beef_direct_indirect",
@@ -655,8 +655,15 @@ for (const row of cutCatalogV2Rows) {
 }
 
 const cutAliases: Record<string, { cutId: string; variantId?: string }> = {
-  bone_in_chuleton: { cutId: "ribeye", variantId: "bone_in_chuleton" },
-  chuleton: { cutId: "ribeye", variantId: "bone_in_chuleton" },
+  "bone-in entrecote": { cutId: "bone_in_ribeye", variantId: "chuleton" },
+  "bone-in ribeye": { cutId: "bone_in_ribeye", variantId: "chuleton" },
+  "cowboy steak": { cutId: "bone_in_ribeye", variantId: "chuleton" },
+  "ribeye + bone_in_chuleton": { cutId: "bone_in_ribeye", variantId: "chuleton" },
+  "ribeye on the bone": { cutId: "bone_in_ribeye", variantId: "chuleton" },
+  "ribeye:bone_in_chuleton": { cutId: "bone_in_ribeye", variantId: "chuleton" },
+  bone_in_chuleton: { cutId: "bone_in_ribeye", variantId: "chuleton" },
+  bone_in_ribeye: { cutId: "bone_in_ribeye", variantId: "chuleton" },
+  chuleton: { cutId: "bone_in_ribeye", variantId: "chuleton" },
   entrecote: { cutId: "ribeye", variantId: "steak" },
   lomo_alto: { cutId: "ribeye", variantId: "steak" },
   maminha: { cutId: "tri_tip", variantId: "whole" },
@@ -722,13 +729,18 @@ export function getCutCatalogV2Row(cutId: string, variantId?: string): CutCatalo
   const normalizedVariantId = normalizeId(variantId);
   const alias = cutAliases[normalizedCutId];
   const resolvedCutId = alias?.cutId ?? normalizedCutId;
-  const resolvedVariantId = normalizedVariantId || alias?.variantId;
+  const resolvedVariantId =
+    resolvedCutId === "ribeye" && normalizedVariantId === "bone_in_chuleton"
+      ? "chuleton"
+      : normalizedVariantId || alias?.variantId;
+  const canonicalCutId =
+    resolvedCutId === "ribeye" && resolvedVariantId === "chuleton" ? "bone_in_ribeye" : resolvedCutId;
 
   if (resolvedVariantId) {
-    return rowByCutAndVariant.get(`${resolvedCutId}:${resolvedVariantId}`) ?? defaultRowForCut(resolvedCutId);
+    return rowByCutAndVariant.get(`${canonicalCutId}:${resolvedVariantId}`) ?? defaultRowForCut(canonicalCutId);
   }
 
-  return defaultRowForCut(resolvedCutId);
+  return defaultRowForCut(canonicalCutId);
 }
 
 export function getCookingProfileV2(profileId: string): CookingProfileV2 | undefined {
