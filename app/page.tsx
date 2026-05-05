@@ -198,13 +198,6 @@ type SavedCookConfig = {
   lang: Lang;
 };
 
-type HomePopularCutSelection = {
-  animal: string;
-  cutId: string;
-  doneness?: string;
-  thickness?: string;
-};
-
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   return value as Record<string, unknown>;
@@ -1476,35 +1469,6 @@ function HomeContent() {
     track({ name: "cut_selected", animal: selectedAnimal, cutId: profile.id, lang });
   }
 
-  function handleHomePopularCutSelect(selection: HomePopularCutSelection) {
-    const selectedAnimal = animalLabelsById[selection.animal] ?? animal;
-    const selectedCutId = selection.cutId.trim();
-    if (!selectedCutId) return;
-    const selectedDoneness = selection.doneness ?? getInitialDoneness(selectedAnimal);
-    const selectedThickness = selection.thickness ?? (shouldShowThickness(selectedCutId) ? "2" : undefined);
-
-    setAnimal(selectedAnimal);
-    setCut(selectedCutId);
-    resetAdaptiveDetailInputs(selectedCutId, selectedAnimal);
-    if (!isVegetableContextAnimal(selectedAnimal)) {
-      setDoneness(selectedDoneness);
-    }
-    if (selectedThickness && shouldShowThickness(selectedCutId)) {
-      setThickness(selectedThickness);
-      setSizePreset(mapThicknessToSizePreset(selectedThickness));
-    }
-    setBlocks({});
-    setCheckedItems({});
-    resetSaveMenuState();
-    commitNav("coccion", "details", "push", {
-      animal: selectedAnimal,
-      cut: selectedCutId,
-      ...(!isVegetableContextAnimal(selectedAnimal) ? { doneness: selectedDoneness } : {}),
-      ...(selectedThickness && shouldShowThickness(selectedCutId) ? { thickness: selectedThickness } : {}),
-    });
-    track({ name: "cut_selected", animal: selectedAnimal, cutId: selectedCutId, lang });
-  }
-
   async function callAI(
     message: string,
     createCookSteps = false,
@@ -1931,7 +1895,6 @@ ERROR
           <HomeScreen
             lang={lang}
             onLangChange={handleLanguageChange}
-            onPopularCutSelect={handleHomePopularCutSelect}
             savedMenusCount={savedMenus.length}
             t={t}
             onModeChange={handleModeChange}
