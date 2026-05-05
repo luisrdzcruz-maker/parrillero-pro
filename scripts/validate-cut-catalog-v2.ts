@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { getCutCatalogV2Row, getPrepGuidanceFromCatalogV2 } from "../lib/cutCatalogV2Adapter";
+import { getGeneratedCutProfile } from "../lib/generated/cutProfiles";
 
 type CsvRow = Record<string, string>;
 
@@ -335,6 +336,38 @@ for (const aliasCase of legacyAliasCases) {
       `cut_catalog_v2 adapter: legacy alias "${aliasCase.label}" must resolve to bone_in_ribeye/chuleton.`,
     );
   }
+}
+
+const tomahawkAliasCases = [
+  { cutId: "tomahawk", label: "tomahawk" },
+  { cutId: "long bone ribeye", label: "long bone ribeye" },
+  { cutId: "long-bone ribeye", label: "long-bone ribeye" },
+  { cutId: "frenched ribeye", label: "frenched ribeye" },
+  { cutId: "bone_in_ribeye_long_bone", label: "bone_in_ribeye_long_bone" },
+];
+
+for (const aliasCase of tomahawkAliasCases) {
+  const resolved = getCutCatalogV2Row(aliasCase.cutId);
+  if (resolved?.cutId !== "tomahawk" || resolved.variantId !== "long_bone") {
+    errors.push(`cut_catalog_v2 adapter: alias "${aliasCase.label}" must resolve to tomahawk/long_bone.`);
+  }
+}
+
+const tomahawkGenerated = getGeneratedCutProfile("tomahawk");
+const forbiddenTomahawkAliases = new Set(["chuleton", "chuletón", "bone-in ribeye", "cowboy steak", "ribeye on the bone"]);
+const generatedTomahawkAliases = [...(tomahawkGenerated?.aliasesEn ?? []), ...(tomahawkGenerated?.aliasesMixed ?? [])].map(
+  (alias) => alias.toLowerCase(),
+);
+const conflictingTomahawkAliases = [...new Set(generatedTomahawkAliases.filter((alias) => forbiddenTomahawkAliases.has(alias)))];
+if (conflictingTomahawkAliases.length > 0) {
+  errors.push(
+    `generated cut profiles: tomahawk aliases must not claim Chuletón/bone-in ribeye identity: ${conflictingTomahawkAliases.join(", ")}.`,
+  );
+}
+
+const triTipGenerated = getGeneratedCutProfile("tri_tip");
+if (triTipGenerated?.cookingStyle === "low_slow" || triTipGenerated?.style === "lowSlow") {
+  errors.push("generated cut profiles: tri_tip must not expose low_slow/lowSlow as its primary metadata style.");
 }
 
 const chuletonPrepGuidance = getPrepGuidanceFromCatalogV2("bone_in_ribeye", "chuleton");
