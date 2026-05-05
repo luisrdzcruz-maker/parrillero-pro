@@ -4,7 +4,11 @@ import ResultHeader from "@/components/ResultHeader";
 import { Button, BrandImageIcon, Panel } from "@/components/ui";
 import { resolveEquipmentIconKey, resolveMethodIconKey } from "@/lib/assets/equipmentMethodIconResolver";
 import { brandIconAssets } from "@/lib/brand/iconAssets";
-import { buildResultHeroMetrics, type MetricTone } from "@/lib/results/resultMetrics";
+import {
+  buildResultHeroMetrics,
+  getResultHeroSessionTotalMetric,
+  type MetricTone,
+} from "@/lib/results/resultMetrics";
 import { getResultStepDurationTotal, type ResultSummary } from "@/lib/results/resultSummary";
 import { texts } from "@/lib/i18n/texts";
 
@@ -88,7 +92,9 @@ export default function ResultHero({
     resultBlocks && resultKeys
       ? getResultStepDurationTotal(resultBlocks, resultKeys) || getDirectStepDurationTotal(resultBlocks)
       : getDirectStepDurationTotal(resultBlocks);
-  const heroMetrics = buildResultHeroMetrics({ doneness, lang, summary, timeFallback });
+  // TIMES/TIEMPOS can stay cut-plan-like; the hero total prefers structured full-session time.
+  const heroTotalTime = getResultHeroSessionTotalMetric(resultBlocks);
+  const heroMetrics = buildResultHeroMetrics({ doneness, heroTotalTime, lang, summary, timeFallback });
   const fireSetupItems = getFireSetupItems(summary?.method, lang);
   const heroMetricItems = fireSetupItems.length
     ? [
