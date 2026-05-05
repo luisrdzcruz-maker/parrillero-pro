@@ -1,4 +1,5 @@
 import type { Animal } from "@/lib/types/domain";
+import type { CookingTimeSemantics } from "./cookingTimeSemantics";
 import { getTargetTempsForProfile, type DonenessTemperatureProfileId } from "./donenessProfiles";
 
 export type CookingInput = {
@@ -11,7 +12,9 @@ export type CookingInput = {
   language: "es" | "en";
 };
 
-export type CookingPlan = Record<string, string>;
+export type CookingPlan = Record<string, string> & {
+  readonly timeSemantics?: CookingTimeSemantics;
+};
 
 export type CookingStep = {
   title: string;

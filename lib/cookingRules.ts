@@ -23,6 +23,10 @@ import {
   resolveLegacyAnimalId,
   resolveLegacyDonenessId,
 } from "./legacyCookingInputAdapter";
+import {
+  attachCookingTimeSemantics,
+  deriveCookingTimeSemanticsFromSteps,
+} from "./cookingTimeSemantics";
 import { resolveCookingProfile, resolveProductCut } from "./resolveCookingProfile";
 import {
   getTemperatureDeltaFromRecommended,
@@ -983,10 +987,12 @@ export function generateCookingPlan(input: CookingInput): CookingPlan | null {
   const ovenGuidance = isIndoor(engineInput.equipment) ? getIndoorOvenGuidance(cut, selectedMethod) : null;
   const ovenText = ovenGuidance ? ` ${formatOvenGuidance(ovenGuidance, engineInput.language)}` : "";
   const note = getLocalized(cut.notes, engineInput.language);
-  const planSteps = buildPlanStepsText(makeStandardSteps(engineInput, cut, temp), engineInput.language);
+  const steps = makeStandardSteps(engineInput, cut, temp);
+  const planSteps = buildPlanStepsText(steps, engineInput.language);
+  const timeSemantics = deriveCookingTimeSemanticsFromSteps(steps);
 
   if (engineInput.language === "en") {
-    return {
+    return attachCookingTimeSemantics({
       SETUP: `${method}. Use ${engineInput.equipment}.${ovenText}`,
       TIMES: times,
       TEMPERATURE: temp
@@ -995,10 +1001,10 @@ export function generateCookingPlan(input: CookingInput): CookingPlan | null {
       STEPS: planSteps,
       ...(note ? { TIPS: note } : {}),
       ERROR: cut.error.en,
-    };
+    }, timeSemantics);
   }
 
-  return {
+  return attachCookingTimeSemantics({
     SETUP: `${method}. Equipo: ${engineInput.equipment}.${ovenText}`,
     TIEMPOS: times,
     TEMPERATURA: temp
@@ -1007,5 +1013,5 @@ export function generateCookingPlan(input: CookingInput): CookingPlan | null {
     PASOS: planSteps,
     ...(note ? { CONSEJOS: note } : {}),
     ERROR: cut.error.es,
-  };
+  }, timeSemantics);
 }
