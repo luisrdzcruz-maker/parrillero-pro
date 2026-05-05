@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { AppIcon, Badge, Card, Grid } from "@/components/ui";
+import { resolveMethodIconKey } from "@/lib/assets/equipmentMethodIconResolver";
 import { ds } from "@/lib/design-system";
 import {
   detectSetupFromText,
@@ -101,11 +102,28 @@ function SetupVisualAnchor({
       />
 
       <div className="pointer-events-none absolute left-0 top-0 flex max-w-[82%] flex-wrap items-start gap-2 p-4 sm:max-w-[70%] sm:p-5">
-        {overlayChips.map((chip) => (
-          <span key={`${chip.tone}-${chip.label}`} className={getSetupOverlayChipClass(chip.tone)}>
-            {chip.label}
-          </span>
-        ))}
+        {overlayChips.map((chip) => {
+          const chipIcon = resolveMethodIconKey(chip.label);
+
+          return (
+            <span
+              key={`${chip.tone}-${chip.label}`}
+              className={`${getSetupOverlayChipClass(chip.tone)} inline-flex items-center gap-1.5`}
+            >
+              {chipIcon ? (
+                <AppIcon
+                  category={chipIcon.category}
+                  iconKey={chipIcon.key}
+                  alt=""
+                  size="sm"
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 opacity-85"
+                />
+              ) : null}
+              {chip.label}
+            </span>
+          );
+        })}
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950 via-slate-950/82 to-transparent p-4 pt-16 sm:p-5 sm:pt-20">
