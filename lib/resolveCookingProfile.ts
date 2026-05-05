@@ -25,6 +25,12 @@ import {
   getTargetTempsForProfile,
   resolveDonenessProfileId,
 } from "./donenessProfiles";
+import {
+  getAllowedDonenessForCut,
+  getAllowedTemperatureTargetTempsForCut,
+  getDefaultDonenessForCut,
+  getDonenessProfileIdForTemperatureMode,
+} from "./temperatureModeProfiles";
 
 export type CookingProfileSource = "generated" | "legacy";
 export type ExtendedCookingProfileSource = "generated" | "legacy" | "fallback";
@@ -73,14 +79,20 @@ function uniqueValues<T extends string>(values: readonly T[]) {
 }
 
 function safeAllowedDoneness(profile: GeneratedCutProfile, legacyCut?: ProductCut) {
-  const donenessProfileId = resolveDonenessProfileId({
+  const temperatureModeProfile = {
+    id: profile.id,
     animalId: profile.animalId,
     category: profile.category,
     inputProfileId: profile.inputProfileId,
     style: profile.style as CookingStyle,
     targetTempC: profile.targetTempC,
     defaultDoneness: profile.defaultDoneness,
-  });
+    allowedDoneness: profile.allowedDoneness as DonenessId[],
+  };
+  const temperatureModeAllowed = getAllowedDonenessForCut(legacyCut ?? temperatureModeProfile, temperatureModeProfile);
+  if (temperatureModeAllowed.length > 0) return temperatureModeAllowed;
+
+  const donenessProfileId = resolveDonenessProfileId(temperatureModeProfile);
   if (donenessProfileId) {
     return donenessTemperatureProfiles[donenessProfileId].allowed;
   }
@@ -116,14 +128,19 @@ function resolveLegacyCut(input: CookingInput) {
 }
 
 function buildProductCutFromGenerated(profile: GeneratedCutProfile, legacyCut?: ProductCut): ProductCut {
-  const donenessProfileId = resolveDonenessProfileId({
+  const temperatureModeProfile = {
+    id: profile.id,
     animalId: profile.animalId,
     category: profile.category,
     inputProfileId: profile.inputProfileId,
     style: profile.style as CookingStyle,
     targetTempC: profile.targetTempC,
     defaultDoneness: profile.defaultDoneness,
-  });
+    allowedDoneness: profile.allowedDoneness as DonenessId[],
+  };
+  const donenessProfileId =
+    getDonenessProfileIdForTemperatureMode(legacyCut ?? temperatureModeProfile, temperatureModeProfile) ??
+    resolveDonenessProfileId(temperatureModeProfile);
   const allowedDoneness = safeAllowedDoneness(profile, legacyCut);
   const criticalError = profile.criticalMistakeEn ?? profile.errorEn;
 
@@ -156,7 +173,10 @@ function buildProductCutFromGenerated(profile: GeneratedCutProfile, legacyCut?: 
     showThickness: profile.showThickness,
     allowedMethods: profile.allowedMethods as CookingMethod[],
     allowedDoneness,
-    targetTempsC: getTargetTempsForProfile(donenessProfileId) ?? legacyCut?.targetTempsC,
+    targetTempsC:
+      getAllowedTemperatureTargetTempsForCut(legacyCut ?? temperatureModeProfile, temperatureModeProfile) ??
+      getTargetTempsForProfile(donenessProfileId) ??
+      legacyCut?.targetTempsC,
     cookingMinutes: profile.cookingMinutes ?? legacyCut?.cookingMinutes,
     restingMinutes: profile.restingMinutes,
     style: profile.style as CookingStyle,
@@ -189,6 +209,19 @@ function buildProductCutFromGenerated(profile: GeneratedCutProfile, legacyCut?: 
       profile.canonicalNameEn,
       ...profile.aliasesEn,
     ]),
+  };
+}
+
+function applyTemperatureModeToProductCut(cut: ProductCut): ProductCut {
+  const allowedDoneness = getAllowedDonenessForCut(cut);
+  const targetTempsC = getAllowedTemperatureTargetTempsForCut(cut);
+  const donenessProfileId = getDonenessProfileIdForTemperatureMode(cut) ?? cut.donenessProfileId;
+
+  return {
+    ...cut,
+    allowedDoneness,
+    donenessProfileId,
+    targetTempsC: Object.keys(targetTempsC).length > 0 ? targetTempsC : cut.targetTempsC,
   };
 }
 
@@ -262,16 +295,19 @@ function resolveBestDoneness({
   requested,
   allowed,
   animal,
+  cut,
 }: {
   requested?: DonenessId;
   allowed: readonly DonenessId[];
   animal: string;
+  cut: ProductCut;
 }) {
   if (animal === "vegetables") return undefined;
 
+  const defaultDoneness = getDefaultDonenessForCut(cut);
   const disallowUnsafeRed = requested === "rare" || requested === "medium_rare";
   if (animal === "chicken" && disallowUnsafeRed) {
-    return allowed.find((doneness) => doneness === "safe" || doneness === "well_done") ?? "safe";
+    return allowed.find((doneness) => doneness === "safe" || doneness === "well_done") ?? defaultDoneness;
   }
   if (animal === "pork" && disallowUnsafeRed) {
     return (
@@ -282,6 +318,8 @@ function resolveBestDoneness({
   }
 
   if (requested && allowed.includes(requested)) return requested;
+
+  if (allowed.includes(defaultDoneness)) return defaultDoneness;
 
   if (animal === "fish") {
     if ((requested === "rare" || requested === "medium_rare") && allowed.includes(requested)) return requested;
@@ -371,7 +409,7 @@ export function resolveProductCut(cutId: string): ProductCut | undefined {
   }
 
   if (!generatedProfile || generatedProfile.animalId !== legacyCut.animalId) {
-    return legacyCut;
+    return applyTemperatureModeToProductCut(legacyCut);
   }
 
   return buildProductCutFromGenerated(generatedProfile, legacyCut);
@@ -386,11 +424,12 @@ export function resolveCookingProfile(input: CookingInput): ResolvedCookingProfi
   if (!generatedProfile && !legacyCut && !fallbackAnimalId) return undefined;
 
   const fallbackUsed = !generatedProfile && !legacyCut;
-  const baseCut =
+  const rawBaseCut =
     (generatedProfile ? buildProductCutFromGenerated(generatedProfile, legacyCut) : undefined) ??
     legacyCut ??
     (fallbackAnimalId ? buildFallbackCutFromAnimal(fallbackAnimalId, input.cut) : undefined);
-  if (!baseCut) return undefined;
+  if (!rawBaseCut) return undefined;
+  const baseCut = applyTemperatureModeToProductCut(rawBaseCut);
 
   const requestedDonenessId = resolveLegacyDonenessId(input.doneness);
   const safeDoneness =
@@ -398,6 +437,7 @@ export function resolveCookingProfile(input: CookingInput): ResolvedCookingProfi
       requested: requestedDonenessId,
       allowed: baseCut.allowedDoneness,
       animal: baseCut.animalId,
+      cut: baseCut,
     }) ??
     applyCookingSafetyRules(baseCut.animalId, requestedDonenessId, baseCut.allowedDoneness);
   const thicknessCm = parseThicknessCm(input.thicknessCm);

@@ -22,6 +22,12 @@ import {
   createLiveCookingPayload,
 } from "../lib/liveCookingPlan";
 import { normalizeCookingOutput } from "../lib/normalization/normalizeCookingOutput";
+import {
+  getAllowedDonenessForCut,
+  getTemperatureModeForCut,
+  shouldShowDonenessSelectorForCut,
+  type TemperatureMode,
+} from "../lib/temperatureModeProfiles";
 
 const THICKNESS_CM = {
   thin: "2",
@@ -504,6 +510,215 @@ function validateFoodSafetyRegression(): Failure[] {
   return failures;
 }
 
+function getTemperatureText(plan: CookingPlan | null) {
+  if (!plan) return "";
+  const normalized = normalizeCookingOutput(plan);
+  return String(normalized.TEMPERATURA ?? normalized.TEMPERATURE ?? normalized.temperature ?? "");
+}
+
+type TemperatureModeQaCase = {
+  animal: string;
+  cut: string;
+  requestedDoneness: string;
+  mode: TemperatureMode;
+  showDoneness: boolean;
+  forbiddenDoneness?: readonly string[];
+  requiredDoneness?: readonly string[];
+  requiredText?: RegExp;
+  forbiddenText?: RegExp;
+  label: string;
+};
+
+function validateTemperatureModeProfiles(): Failure[] {
+  const failures: Failure[] = [];
+  const cases: TemperatureModeQaCase[] = [
+    {
+      animal: "Vacuno",
+      cut: "chuck_roast",
+      requestedDoneness: "medium_rare",
+      mode: "texture_breakdown",
+      showDoneness: false,
+      forbiddenDoneness: ["rare", "medium_rare", "medium"],
+      requiredText: /\b(textura|tierno|pinchar|probe tender)\b/i,
+      forbiddenText: /\btemperatura de salida\b/i,
+      label: "chuck roast texture mode",
+    },
+    {
+      animal: "Vacuno",
+      cut: "tri_tip",
+      requestedDoneness: "medium_rare",
+      mode: "doneness_target",
+      showDoneness: true,
+      requiredDoneness: ["medium_rare", "medium"],
+      label: "tri-tip beef doneness mode",
+    },
+    {
+      animal: "Pollo",
+      cut: "chicken_breast",
+      requestedDoneness: "rare",
+      mode: "safe_temp",
+      showDoneness: false,
+      forbiddenDoneness: ["rare", "medium_rare"],
+      requiredText: /\b(seguro|safe)\b/i,
+      label: "chicken breast safe mode",
+    },
+    {
+      animal: "Pollo",
+      cut: "whole_chicken",
+      requestedDoneness: "medium_rare",
+      mode: "safe_temp",
+      showDoneness: false,
+      forbiddenDoneness: ["rare", "medium_rare"],
+      label: "whole chicken hides steak doneness",
+    },
+    {
+      animal: "Verduras",
+      cut: "asparagus",
+      requestedDoneness: "medium",
+      mode: "visual_only",
+      showDoneness: false,
+      forbiddenDoneness: ["rare", "medium_rare", "medium", "well_done"],
+      requiredText: /\b(dorado visible|visible browning|no hay objetivo interno|no internal meat)\b/i,
+      label: "asparagus visual mode",
+    },
+    {
+      animal: "Vacuno",
+      cut: "brisket",
+      requestedDoneness: "medium_rare",
+      mode: "texture_breakdown",
+      showDoneness: false,
+      forbiddenDoneness: ["rare", "medium_rare", "medium"],
+      label: "brisket texture mode",
+    },
+    {
+      animal: "Cerdo",
+      cut: "pork_ribs",
+      requestedDoneness: "medium_rare",
+      mode: "texture_breakdown",
+      showDoneness: false,
+      forbiddenDoneness: ["rare", "medium_rare", "medium"],
+      label: "pork ribs texture mode",
+    },
+    {
+      animal: "Vacuno",
+      cut: "ribeye",
+      requestedDoneness: "medium_rare",
+      mode: "doneness_target",
+      showDoneness: true,
+      requiredDoneness: ["medium_rare", "medium"],
+      label: "ribeye doneness mode",
+    },
+    {
+      animal: "Vacuno",
+      cut: "tomahawk",
+      requestedDoneness: "medium_rare",
+      mode: "doneness_target",
+      showDoneness: true,
+      requiredDoneness: ["medium_rare", "medium"],
+      label: "chuleton bone-in ribeye doneness mode",
+    },
+  ];
+
+  for (const testCase of cases) {
+    const input = makeInput({
+      animal: testCase.animal,
+      cut: testCase.cut,
+      doneness: testCase.requestedDoneness,
+    });
+    const cut = getCutForInput(input);
+    const plan = generateCookingPlan(input);
+
+    if (!cut) {
+      failures.push({
+        animal: testCase.animal,
+        cut: testCase.cut,
+        doneness: testCase.requestedDoneness,
+        thickness: `${THICKNESS_CM.medium} cm`,
+        equipment: "parrilla gas",
+        reason: `${testCase.label}: cut could not be resolved`,
+      });
+      continue;
+    }
+
+    const mode = getTemperatureModeForCut(cut);
+    const allowed = getAllowedDonenessForCut(cut);
+    const showDoneness = shouldShowDonenessSelectorForCut(cut);
+    const temperatureText = getTemperatureText(plan);
+
+    if (mode !== testCase.mode) {
+      failures.push({
+        animal: testCase.animal,
+        cut: testCase.cut,
+        doneness: testCase.requestedDoneness,
+        thickness: `${THICKNESS_CM.medium} cm`,
+        equipment: "parrilla gas",
+        reason: `${testCase.label}: expected mode ${testCase.mode}, got ${mode}`,
+      });
+    }
+
+    if (showDoneness !== testCase.showDoneness) {
+      failures.push({
+        animal: testCase.animal,
+        cut: testCase.cut,
+        doneness: testCase.requestedDoneness,
+        thickness: `${THICKNESS_CM.medium} cm`,
+        equipment: "parrilla gas",
+        reason: `${testCase.label}: expected showDoneness ${testCase.showDoneness}, got ${showDoneness}`,
+      });
+    }
+
+    for (const forbidden of testCase.forbiddenDoneness ?? []) {
+      if (allowed.includes(forbidden as (typeof allowed)[number])) {
+        failures.push({
+          animal: testCase.animal,
+          cut: testCase.cut,
+          doneness: forbidden,
+          thickness: `${THICKNESS_CM.medium} cm`,
+          equipment: "parrilla gas",
+          reason: `${testCase.label}: forbidden doneness is allowed`,
+        });
+      }
+    }
+
+    for (const required of testCase.requiredDoneness ?? []) {
+      if (!allowed.includes(required as (typeof allowed)[number])) {
+        failures.push({
+          animal: testCase.animal,
+          cut: testCase.cut,
+          doneness: required,
+          thickness: `${THICKNESS_CM.medium} cm`,
+          equipment: "parrilla gas",
+          reason: `${testCase.label}: required doneness is missing`,
+        });
+      }
+    }
+
+    if (testCase.requiredText && !testCase.requiredText.test(temperatureText)) {
+      failures.push({
+        animal: testCase.animal,
+        cut: testCase.cut,
+        doneness: testCase.requestedDoneness,
+        thickness: `${THICKNESS_CM.medium} cm`,
+        equipment: "parrilla gas",
+        reason: `${testCase.label}: temperature text did not include expected semantics`,
+      });
+    }
+
+    if (testCase.forbiddenText?.test(temperatureText)) {
+      failures.push({
+        animal: testCase.animal,
+        cut: testCase.cut,
+        doneness: testCase.requestedDoneness,
+        thickness: `${THICKNESS_CM.medium} cm`,
+        equipment: "parrilla gas",
+        reason: `${testCase.label}: temperature text includes steak-style target phrasing`,
+      });
+    }
+  }
+
+  return failures;
+}
+
 function validateLiveCookingPhaseMetadata(): Failure[] {
   const failures: Failure[] = [];
   const cases = [
@@ -665,6 +880,7 @@ function main() {
   const languageRegressionError = validateLanguageRegression();
   const donenessRegressionFailures = validateDonenessTemperatureRegression();
   const foodSafetyFailures = validateFoodSafetyRegression();
+  const temperatureModeFailures = validateTemperatureModeProfiles();
   const liveCookingPhaseFailures = validateLiveCookingPhaseMetadata();
 
   for (const animal of animalCatalog) {
@@ -717,7 +933,10 @@ function main() {
 
   const failed = failures.length;
   const guardFailed =
-    donenessRegressionFailures.length + foodSafetyFailures.length + liveCookingPhaseFailures.length;
+    donenessRegressionFailures.length +
+    foodSafetyFailures.length +
+    temperatureModeFailures.length +
+    liveCookingPhaseFailures.length;
 
   console.log("Cooking engine QA (local only)");
   console.log("------------------------------");
@@ -760,6 +979,18 @@ function main() {
     console.log("Food safety regression failures:");
 
     for (const failure of foodSafetyFailures) {
+      console.log(
+        `- [${failure.animal} / ${failure.cut} / ${failure.doneness} / ${failure.thickness} / ${failure.equipment}] ${failure.reason}`,
+      );
+    }
+
+    process.exitCode = 1;
+  }
+
+  if (temperatureModeFailures.length > 0) {
+    console.log("Temperature mode profile failures:");
+
+    for (const failure of temperatureModeFailures) {
       console.log(
         `- [${failure.animal} / ${failure.cut} / ${failure.doneness} / ${failure.thickness} / ${failure.equipment}] ${failure.reason}`,
       );

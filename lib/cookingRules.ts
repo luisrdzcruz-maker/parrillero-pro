@@ -33,6 +33,12 @@ import {
   getTargetTempsForProfile,
   resolveDonenessProfileId,
 } from "./donenessProfiles";
+import {
+  getDefaultDonenessForCut,
+  getDonenessProfileIdForTemperatureMode,
+  getTemperatureTargetForCut,
+  type TemperatureTargetForCut,
+} from "./temperatureModeProfiles";
 
 function normalizeKey(value: string) {
   return value.trim().toLowerCase();
@@ -64,8 +70,10 @@ function getDonenessId(
   value: string,
   animalId: AnimalId,
   allowedDoneness: readonly DonenessId[] = animalDoneness[animalId],
+  cut?: ProductCut,
 ): DonenessId {
-  return applyCookingSafetyRules(animalId, resolveLegacyDonenessId(value), allowedDoneness);
+  const resolved = applyCookingSafetyRules(animalId, resolveLegacyDonenessId(value), allowedDoneness);
+  return allowedDoneness.includes(resolved) ? resolved : (cut ? getDefaultDonenessForCut(cut) : resolved);
 }
 
 function getLocalized(value: Partial<Record<Language, string>> | undefined, language: "es" | "en") {
@@ -82,6 +90,7 @@ function getLocalizedList(
 function getCutDonenessProfileId(cut: ProductCut) {
   return (
     cut.donenessProfileId ??
+    getDonenessProfileIdForTemperatureMode(cut) ??
     resolveDonenessProfileId({
       animalId: cut.animalId,
       inputProfileId: cut.inputProfileId,
@@ -91,6 +100,9 @@ function getCutDonenessProfileId(cut: ProductCut) {
 }
 
 function getTargetTemp(cut: ProductCut, doneness: DonenessId): TargetTemp | undefined {
+  const temperatureTarget = getTemperatureTargetForCut(cut, doneness);
+  if (temperatureTarget.target) return temperatureTarget.target;
+
   const profileTemps = getTargetTempsForProfile(getCutDonenessProfileId(cut));
   if (profileTemps?.[doneness]) return profileTemps[doneness];
   if (cut.targetTempsC?.[doneness]) return cut.targetTempsC[doneness];
@@ -231,6 +243,49 @@ function formatOvenGuidance(guidance: OvenGuidance, language: "es" | "en") {
 function appendOvenGuidance(text: string, guidance: OvenGuidance | null, language: "es" | "en") {
   if (!guidance) return text;
   return `${text} ${formatOvenGuidance(guidance, language)}`;
+}
+
+function formatTemperatureGuidance(
+  target: TemperatureTargetForCut,
+  language: "es" | "en",
+  ovenText: string,
+) {
+  const temp = target.target;
+
+  if (target.mode === "visual_only") {
+    return language === "en"
+      ? `Cook by visible browning and tender texture; no internal meat temperature target.${ovenText}`
+      : `Cocina por dorado visible y textura tierna; no hay objetivo interno de carne.${ovenText}`;
+  }
+
+  if (target.mode === "texture_breakdown") {
+    const secondaryTemp = temp?.final ? ` ${language === "en" ? "Temperature is only a guide, around" : "La temperatura es solo una guia, cerca de"} ${temp.final}°C.` : "";
+    return language === "en"
+      ? `Target texture: probe tender, sliceable or shreddable depending on the cut; do not use steak doneness.${secondaryTemp}${ovenText}`
+      : `Objetivo de textura: tierno al pinchar, cortable o desmechable segun el corte; no uses punto de steak.${secondaryTemp}${ovenText}`;
+  }
+
+  if (!temp) {
+    return language === "en"
+      ? `Cook to tender texture and browned edges.${ovenText}`
+      : `Cocina hasta textura tierna y bordes dorados.${ovenText}`;
+  }
+
+  if (target.mode === "safe_temp") {
+    return language === "en"
+      ? `Safe juicy target: pull near ${temp.pull}°C. Expected final safe temperature after rest: ${temp.final}°C.${ovenText}`
+      : `Objetivo seguro y jugoso: saca cerca de ${temp.pull}°C. Temperatura final segura tras reposo: ${temp.final}°C.${ovenText}`;
+  }
+
+  if (target.mode === "delicate_target") {
+    return language === "en"
+      ? `Delicate target: pull near ${temp.pull}°C. Expected final temperature after rest: ${temp.final}°C; avoid drying it out.${ovenText}`
+      : `Objetivo delicado: saca cerca de ${temp.pull}°C. Temperatura final tras reposo: ${temp.final}°C; evita secarlo.${ovenText}`;
+  }
+
+  return language === "en"
+    ? `Pull target: ${temp.pull}°C. Expected final temperature after rest: ${temp.final}°C.${ovenText}`
+    : `Temperatura de salida: ${temp.pull}°C. Temperatura final esperada tras reposo: ${temp.final}°C.${ovenText}`;
 }
 
 type EquipmentProfile = "indoor" | "gas" | "charcoal" | "kamado" | "generic";
@@ -518,7 +573,7 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
   const thickness = cut.showThickness
     ? parseNumber(input.thicknessCm, cut.defaultThicknessCm)
     : cut.defaultThicknessCm;
-  const doneness = getDonenessId(input.doneness, cut.animalId, cut.allowedDoneness);
+  const doneness = getDonenessId(input.doneness, cut.animalId, cut.allowedDoneness, cut);
   const sear = getSearSeconds(thickness, cut.style, getDonenessTempDeltaC(cut, doneness));
   const indirect = getMainCookSeconds(cut, thickness, doneness);
   const rest = getRestSeconds(cut);
@@ -532,6 +587,8 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
   const phraseVariant = phraseSeed % 3;
   const pull = temp?.pull ?? 0;
   const final = temp?.final ?? 0;
+  const temperatureTarget = getTemperatureTargetForCut(cut, doneness);
+  const textureGuide = temperatureTarget.target?.final;
 
   if (cut.style === "lowSlow") {
     return sanitizeSteps(
@@ -549,7 +606,9 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
           {
             title: "Slow cook",
             duration: indirect,
-            description: `Cook gently until tender, around ${pull}°C if checking.`,
+            description: textureGuide
+              ? `Cook gently until probe tender; ${textureGuide}°C is only a guide, not steak doneness.`
+              : "Cook gently until probe tender; use texture, not steak doneness.",
             image: "/visuals/indirect.jpg",
             tips: ["Keep heat stable", "Check tenderness", "Avoid direct flames"],
           },
@@ -581,7 +640,9 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
           {
             title: "Cocción lenta",
             duration: indirect,
-            description: `Cocina suave hasta que esté tierno, cerca de ${pull}°C si mides.`,
+            description: textureGuide
+              ? `Cocina suave hasta que esté tierno al pinchar; ${textureGuide}°C es solo una guia, no punto de steak.`
+              : "Cocina suave hasta que esté tierno al pinchar; usa textura, no punto de steak.",
             image: "/visuals/indirect.jpg",
             tips: ["Mantén calor estable", "Busca ternura", "Evita llama directa"],
           },
@@ -969,7 +1030,7 @@ export function generateCookingSteps(input: CookingInput): CookingStep[] | null 
   const profile = resolveCookingProfile(input);
   if (!profile) return null;
 
-  const doneness = getDonenessId(profile.input.doneness, profile.cut.animalId, profile.cut.allowedDoneness);
+  const doneness = getDonenessId(profile.input.doneness, profile.cut.animalId, profile.cut.allowedDoneness, profile.cut);
   return makeStandardSteps(profile.input, profile.cut, getTargetTemp(profile.cut, doneness));
 }
 
@@ -979,8 +1040,9 @@ export function generateCookingPlan(input: CookingInput): CookingPlan | null {
 
   const { cut } = profile;
   const engineInput = profile.input;
-  const doneness = getDonenessId(engineInput.doneness, cut.animalId, cut.allowedDoneness);
-  const temp = getTargetTemp(cut, doneness);
+  const doneness = getDonenessId(engineInput.doneness, cut.animalId, cut.allowedDoneness, cut);
+  const temperatureTarget = getTemperatureTargetForCut(cut, doneness);
+  const temp = temperatureTarget.target ?? getTargetTemp(cut, doneness);
   const times = estimateTimes(engineInput, cut, doneness);
   const selectedMethod = getMethod(cut, engineInput.equipment);
   const method = getMethodText(selectedMethod, engineInput.language);
@@ -995,9 +1057,7 @@ export function generateCookingPlan(input: CookingInput): CookingPlan | null {
     return attachCookingTimeSemantics({
       SETUP: `${method}. Use ${engineInput.equipment}.${ovenText}`,
       TIMES: times,
-      TEMPERATURE: temp
-        ? `Pull target: ${temp.pull}°C. Expected final temperature after rest: ${temp.final}°C.${ovenText}`
-        : `Cook to tender texture and browned edges.${ovenText}`,
+      TEMPERATURE: formatTemperatureGuidance({ ...temperatureTarget, target: temp }, engineInput.language, ovenText),
       STEPS: planSteps,
       ...(note ? { TIPS: note } : {}),
       ERROR: cut.error.en,
@@ -1007,9 +1067,7 @@ export function generateCookingPlan(input: CookingInput): CookingPlan | null {
   return attachCookingTimeSemantics({
     SETUP: `${method}. Equipo: ${engineInput.equipment}.${ovenText}`,
     TIEMPOS: times,
-    TEMPERATURA: temp
-      ? `Temperatura de salida: ${temp.pull}°C. Temperatura final esperada tras reposo: ${temp.final}°C.${ovenText}`
-      : `Cocina hasta textura tierna y bordes dorados.${ovenText}`,
+    TEMPERATURA: formatTemperatureGuidance({ ...temperatureTarget, target: temp }, engineInput.language, ovenText),
     PASOS: planSteps,
     ...(note ? { CONSEJOS: note } : {}),
     ERROR: cut.error.es,

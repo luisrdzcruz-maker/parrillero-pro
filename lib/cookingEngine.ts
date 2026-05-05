@@ -51,6 +51,18 @@ export type {
   DonenessTemperatureProfile,
   DonenessTemperatureProfileId,
 } from "./donenessProfiles";
+export {
+  getAllowedDonenessForCut,
+  getDefaultDonenessForCut,
+  getTemperatureModeForCut,
+  getTemperatureTargetForCut,
+  shouldShowDonenessSelectorForCut,
+} from "./temperatureModeProfiles";
+export type {
+  TemperatureMode,
+  TemperatureModeCutProfile,
+  TemperatureTargetForCut,
+} from "./temperatureModeProfiles";
 export { validateCookingEngineOutput, COOKING_WARNING_CODES } from "./cookingOutputValidation";
 export type {
   CookingOutputWarning,
