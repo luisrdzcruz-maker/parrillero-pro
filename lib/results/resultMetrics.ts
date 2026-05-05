@@ -1,4 +1,5 @@
 import { texts } from "@/lib/i18n/texts";
+import type { CookingTimeSemantics } from "@/lib/cookingTimeSemantics";
 import type { ResultSummary } from "@/lib/results/resultSummary";
 
 export type ResultLang = "es" | "en" | "fi";
@@ -13,6 +14,7 @@ type ResultHeroRawMetricItem = {
   value: string | null | undefined;
   tone: MetricTone;
 };
+type ResultHeroTimeSemantics = Pick<CookingTimeSemantics, "sessionTotalMinutes">;
 
 const restPattern = /\b(reposo|reposa|reposar|descanso|rest|resting|lepuutus|lepuuta|lepaa|levata)\b/i;
 
@@ -46,6 +48,24 @@ function looksLikeInstruction(value: string) {
 
 function formatMinuteValue(value: string) {
   return `${value} min`;
+}
+
+function getPlanTimeSemantics(plan: unknown): Partial<ResultHeroTimeSemantics> | undefined {
+  if (!plan || typeof plan !== "object") return undefined;
+
+  const value = (plan as { readonly timeSemantics?: unknown }).timeSemantics;
+  if (!value || typeof value !== "object") return undefined;
+
+  return value as Partial<ResultHeroTimeSemantics>;
+}
+
+export function getResultHeroSessionTotalMetric(plan: unknown) {
+  const minutes = getPlanTimeSemantics(plan)?.sessionTotalMinutes;
+  const minutesNumber = typeof minutes === "number" ? minutes : NaN;
+  if (!Number.isFinite(minutesNumber) || minutesNumber <= 0) return "";
+
+  // Hero total means full session time: setupMinutes + activeCookMinutes + restMinutes.
+  return formatMinuteValue(String(Math.round(minutesNumber)));
 }
 
 function extractMinuteValues(
@@ -203,11 +223,13 @@ function compactRestMetric(value?: string) {
 
 export function buildResultHeroMetrics({
   doneness,
+  heroTotalTime,
   lang = "es",
   summary,
   timeFallback,
 }: {
   doneness?: string;
+  heroTotalTime?: string;
   lang?: ResultLang;
   summary?: ResultSummary;
   timeFallback?: string;
@@ -216,7 +238,8 @@ export function buildResultHeroMetrics({
   const restMetric = compactRestMetric(summary?.rest);
   const temperaturePair = extractTemperaturePair(summary?.temperature);
   const fallbackTarget = compactTemperatureMetric(summary?.temperature, summary?.doneness || doneness, lang);
-  const timeMetric = compactTimeMetric(summary?.time, restMetric) || compactTimeMetric(timeFallback, restMetric);
+  const timeMetric =
+    heroTotalTime || compactTimeMetric(summary?.time, restMetric) || compactTimeMetric(timeFallback, restMetric);
   const usedMetricValues = new Set<string>();
 
   const rawMetrics: ResultHeroRawMetricItem[] = [
