@@ -15,7 +15,7 @@
     "snapshots:cooking:update": "tsx scripts/cooking-snapshots.ts --update",
     "generate:assets": "node scripts/generate-assets.mjs",
     "process:assets": "node scripts/process-assets.mjs",
-    "process:icons": "node scripts/process-assets.mjs icons",
+    "process:icons": "node scripts/process-icons.mjs",
     "process:cut-icons": "node scripts/process-cut-icons.mjs",
     "process:cuts": "node scripts/process-assets.mjs cuts",
     "build:asset-map": "node scripts/build-asset-map.mjs",
