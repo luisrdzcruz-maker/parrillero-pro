@@ -125,6 +125,84 @@ function totalStepSeconds(steps: CookingStep[] | null) {
   return steps.reduce((total, step) => total + step.duration, 0);
 }
 
+function parseMinuteValues(value: string) {
+  return Array.from(value.matchAll(/(\d{1,3})\s*min\b/gi), (match) => Number(match[1])).filter(
+    (minutes) => Number.isFinite(minutes),
+  );
+}
+
+function parseTimesCutPlanMinutes(value: string) {
+  const segments = value
+    .split(/\s*(?:\+|,|;|\/|\by\b|\band\b)\s*/i)
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+  const sourceSegments = segments.length > 1 ? segments : [value];
+  const hasRest = /\b(rest|reposo|reposar|reposa|descanso)\b/i.test(value);
+
+  const total = sourceSegments.reduce((sum, segment) => {
+    const match = segment.match(/(\d{1,3})\s*min\b/i);
+    if (!match?.[1]) return sum;
+
+    const minutes = Number(match[1]);
+    const multiplier = /\b(per\s+side|por\s+lado|por\s+cara)\b/i.test(segment) ? 2 : 1;
+    return sum + minutes * multiplier;
+  }, 0);
+
+  if (hasRest) return total;
+  const minuteValues = parseMinuteValues(value);
+  return minuteValues.length === 1 ? total : 0;
+}
+
+function validateTimeSemantics(plan: CookingPlan | null, steps: CookingStep[] | null): string | null {
+  if (!plan) return "time semantics: plan is null";
+  const timeSemantics = plan.timeSemantics;
+  if (!timeSemantics) return "time semantics: missing timeSemantics";
+
+  const {
+    setupMinutes,
+    activeCookMinutes,
+    restMinutes,
+    cutPlanMinutes,
+    sessionTotalMinutes,
+  } = timeSemantics;
+
+  if (timeSemantics.source !== "legacy-engine-derived") {
+    return `time semantics: unexpected source ${timeSemantics.source}`;
+  }
+
+  if (setupMinutes < 0) return `time semantics: setupMinutes must be >= 0, got ${setupMinutes}`;
+  if (activeCookMinutes <= 0) {
+    return `time semantics: activeCookMinutes must be > 0, got ${activeCookMinutes}`;
+  }
+  if (restMinutes < 0) return `time semantics: restMinutes must be >= 0, got ${restMinutes}`;
+  if (cutPlanMinutes !== activeCookMinutes + restMinutes) {
+    return `time semantics: cutPlanMinutes ${cutPlanMinutes} must equal activeCookMinutes + restMinutes ${activeCookMinutes + restMinutes}`;
+  }
+  if (sessionTotalMinutes !== setupMinutes + cutPlanMinutes) {
+    return `time semantics: sessionTotalMinutes ${sessionTotalMinutes} must equal setupMinutes + cutPlanMinutes ${setupMinutes + cutPlanMinutes}`;
+  }
+
+  const executableStepMinutes = Math.round(totalStepSeconds(steps) / 60);
+  if (steps && executableStepMinutes > 0 && Math.abs(executableStepMinutes - sessionTotalMinutes) > 1) {
+    return `time semantics: step duration total ${executableStepMinutes} min is not close to sessionTotalMinutes ${sessionTotalMinutes} min`;
+  }
+
+  const normalized = normalizeCookingOutput(plan);
+  const timesText = String(normalized.TIEMPOS ?? normalized.TIMES ?? normalized.times ?? "");
+  const timesMinutes = parseTimesCutPlanMinutes(timesText);
+  const rawMinuteValues = parseMinuteValues(timesText);
+
+  if (timesMinutes > 0 && setupMinutes > 0 && timesMinutes >= sessionTotalMinutes - 1) {
+    return "time semantics: TIMES/TIEMPOS appears to describe sessionTotalMinutes instead of cut-plan time";
+  }
+
+  if (setupMinutes > 0 && rawMinuteValues.includes(sessionTotalMinutes)) {
+    return "time semantics: TIMES/TIEMPOS appears to include sessionTotalMinutes";
+  }
+
+  return null;
+}
+
 function donenessListForAnimal(animalId: AnimalId): string[] {
   const options = getDonenessOptions(animalId);
 
@@ -456,8 +534,9 @@ function main() {
 
             const steps = generateCookingSteps(input);
             const stepErr = validateSteps(steps);
+            const timeErr = validateTimeSemantics(plan, steps);
 
-            const reason = planErr ?? stepErr;
+            const reason = planErr ?? stepErr ?? timeErr;
 
             if (reason) {
               failures.push({
