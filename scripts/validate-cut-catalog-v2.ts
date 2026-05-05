@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { getCutCatalogV2Row, getPrepGuidanceFromCatalogV2 } from "../lib/cutCatalogV2Adapter";
 
 type CsvRow = Record<string, string>;
 
@@ -55,7 +56,7 @@ const allowedTemperatureModes = new Set([
   "delicate_target",
 ]);
 const textureBreakdownCutIds = new Set(["chuck_roast", "brisket", "beef_short_ribs", "pork_ribs"]);
-const donenessTargetCutIds = new Set(["tri_tip", "ribeye"]);
+const donenessTargetCutIds = new Set(["tri_tip", "ribeye", "bone_in_ribeye", "tomahawk"]);
 
 function parseCsv(content: string, fileLabel: string): CsvFile {
   const records: string[][] = [];
@@ -190,7 +191,10 @@ validateRequiredColumns("prep_profiles_v2.csv", prepProfiles, requiredColumns.pr
 const cookingProfileIds = new Set(cookingProfiles.rows.map((row) => row.profile_id).filter(Boolean));
 const prepProfileIds = new Set(prepProfiles.rows.map((row) => row.prep_profile_id).filter(Boolean));
 
-let hasBoneInChuleton = false;
+let hasRibeyeSteak = false;
+let hasBoneInRibeyeChuleton = false;
+let hasTomahawk = false;
+let hasTomahawkLongBone = false;
 
 for (const [index, row] of catalog.rows.entries()) {
   const rowLabel = `cut_catalog_v2.csv row ${index + 2} (${row.cut_id || "missing cut_id"}:${
@@ -270,17 +274,75 @@ for (const [index, row] of catalog.rows.entries()) {
     }
   }
 
+  if (row.cut_id === "ribeye" && row.variant_id === "steak") {
+    hasRibeyeSteak = true;
+  }
+
   if (row.cut_id === "ribeye" && row.variant_id === "bone_in_chuleton") {
+    errors.push(`${rowLabel}: legacy ribeye/bone_in_chuleton row must be normalized to bone_in_ribeye/chuleton.`);
+  }
+
+  if (row.cut_id === "bone_in_ribeye" && row.variant_id === "chuleton") {
     if (row.temperature_mode !== "doneness_target") {
-      errors.push(`${rowLabel}: bone_in_chuleton must use temperature_mode=doneness_target.`);
+      errors.push(`${rowLabel}: bone_in_ribeye/chuleton must use temperature_mode=doneness_target.`);
     }
 
-    hasBoneInChuleton = true;
+    if (row.cooking_profile !== "thick_beef_direct_indirect") {
+      errors.push(`${rowLabel}: bone_in_ribeye/chuleton must use cooking_profile=thick_beef_direct_indirect.`);
+    }
+
+    if (row.prep_profile !== "beef_thick_dry_brine") {
+      errors.push(`${rowLabel}: bone_in_ribeye/chuleton must use prep_profile=beef_thick_dry_brine.`);
+    }
+
+    hasBoneInRibeyeChuleton = true;
+  }
+
+  if (row.cut_id === "tomahawk") {
+    hasTomahawk = true;
+    if (row.variant_id === "long_bone") {
+      hasTomahawkLongBone = true;
+    }
   }
 }
 
-if (!hasBoneInChuleton) {
-  errors.push("cut_catalog_v2.csv: missing cut_id=ribeye and variant_id=bone_in_chuleton row.");
+if (!hasRibeyeSteak) {
+  errors.push("cut_catalog_v2.csv: missing cut_id=ribeye and variant_id=steak row.");
+}
+
+if (!hasBoneInRibeyeChuleton) {
+  errors.push("cut_catalog_v2.csv: missing cut_id=bone_in_ribeye and variant_id=chuleton row.");
+}
+
+if (hasTomahawk && !hasTomahawkLongBone) {
+  errors.push("cut_catalog_v2.csv: tomahawk exists but is missing variant_id=long_bone row.");
+}
+
+const legacyAliasCases = [
+  { cutId: "ribeye", variantId: "bone_in_chuleton", label: "ribeye + bone_in_chuleton" },
+  { cutId: "ribeye:bone_in_chuleton", label: "ribeye:bone_in_chuleton" },
+  { cutId: "bone_in_chuleton", label: "bone_in_chuleton" },
+  { cutId: "chuleton", label: "chuleton" },
+  { cutId: "chuletón", label: "chuletón" },
+  { cutId: "bone-in ribeye", label: "bone-in ribeye" },
+  { cutId: "cowboy steak", label: "cowboy steak" },
+];
+
+for (const aliasCase of legacyAliasCases) {
+  const resolved = getCutCatalogV2Row(aliasCase.cutId, aliasCase.variantId);
+  if (resolved?.cutId !== "bone_in_ribeye" || resolved.variantId !== "chuleton") {
+    errors.push(
+      `cut_catalog_v2 adapter: legacy alias "${aliasCase.label}" must resolve to bone_in_ribeye/chuleton.`,
+    );
+  }
+}
+
+const chuletonPrepGuidance = getPrepGuidanceFromCatalogV2("bone_in_ribeye", "chuleton");
+if (
+  chuletonPrepGuidance?.saltTimingMinutes?.min !== 120 ||
+  chuletonPrepGuidance.saltTimingMinutes.max !== 1440
+) {
+  errors.push("cut_catalog_v2 adapter: bone_in_ribeye/chuleton must expose 2-24 h prep guidance.");
 }
 
 if (errors.length > 0) {

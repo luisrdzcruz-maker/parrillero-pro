@@ -32,7 +32,9 @@ Files intentionally keep the `*_v2.csv` names because the previous package was n
 - `chuck_roast`: `temperature_mode=texture_breakdown`, `hide_doneness_selector=true`, no steak doneness.
 - `tri_tip`: `temperature_mode=doneness_target`, medium-rare/medium temps, not 92°C.
 - `picanha`: fat-cap behavior, flare-up risk, brief controlled fat-cap sear.
-- `ribeye` + `bone_in_chuleton`: bone-in ribeye/chuletón is a ribeye variant using thick steak profile.
+- `ribeye` + `steak`: normal ribeye steak uses the direct steak profile.
+- `bone_in_ribeye` + `chuleton`: Chuletón uses the thick bone-in steak profile; legacy `ribeye` + `bone_in_chuleton` aliases still resolve here.
+- `tomahawk` + `long_bone`: Tomahawk remains separate from Chuletón.
 - `chicken_*`: `safe_temp`, no rare/medium options.
 - `asparagus`: `visual_only`, high timing sensitivity, serve immediately.
 
