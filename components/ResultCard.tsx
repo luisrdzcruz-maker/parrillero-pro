@@ -11,6 +11,7 @@ import {
   type SetupType,
 } from "@/lib/setupVisualMap";
 import { AppIcon, Panel } from "@/components/ui";
+import { resolveMethodIconKey } from "@/lib/assets/equipmentMethodIconResolver";
 import { ds } from "@/lib/design-system";
 import type { IconCategory } from "@/lib/assets/iconTypes";
 
@@ -413,11 +414,28 @@ function SetupVisualToggle({
                 className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_4%,rgba(251,146,60,0.2),transparent_28%),radial-gradient(circle_at_28%_0%,rgba(56,189,248,0.13),transparent_24%),linear-gradient(135deg,rgba(2,6,23,0.88)_0%,rgba(2,6,23,0.5)_26%,rgba(2,6,23,0.12)_48%,transparent_68%)]"
               />
               <div className="pointer-events-none absolute left-0 top-0 flex max-w-[82%] flex-wrap items-start gap-2 p-3 sm:max-w-[70%] sm:p-4">
-                {overlayChips.map((chip) => (
-                  <span key={`${chip.tone}-${chip.label}`} className={getSetupOverlayChipClass(chip.tone)}>
-                    {chip.label}
-                  </span>
-                ))}
+                {overlayChips.map((chip) => {
+                  const chipIcon = resolveMethodIconKey(chip.label);
+
+                  return (
+                    <span
+                      key={`${chip.tone}-${chip.label}`}
+                      className={`${getSetupOverlayChipClass(chip.tone)} inline-flex items-center gap-1.5`}
+                    >
+                      {chipIcon ? (
+                        <AppIcon
+                          category={chipIcon.category}
+                          iconKey={chipIcon.key}
+                          alt=""
+                          size="sm"
+                          aria-hidden="true"
+                          className="h-3.5 w-3.5 opacity-85"
+                        />
+                      ) : null}
+                      {chip.label}
+                    </span>
+                  );
+                })}
               </div>
             </div>
           </div>

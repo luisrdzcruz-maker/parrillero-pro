@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import { useMemo, useState } from "react";
+import { AppIcon } from "@/components/ui";
+import { resolveMethodIconKey } from "@/lib/assets/equipmentMethodIconResolver";
 import type { GeneratedCutProfile } from "@/lib/generated/cutProfiles";
 import type { Lang } from "@/lib/i18n/texts";
 import { getSetupVisual } from "@/lib/setup/getSetupVisual";
@@ -53,6 +55,7 @@ export function CutBottomSheet({ profile, lang, onClose, onStartCooking }: CutBo
   const helpfulAlias = getHelpfulAlias(profile, effectiveLang);
   const bestMethod = getMethodLabel(profile.defaultMethod, effectiveLang) ?? getStyleLabel(profile, effectiveLang);
   const methodValue = temperature ? `${bestMethod} · ${temperature}` : bestMethod;
+  const methodIcon = resolveMethodIconKey(bestMethod);
   const primaryCtaLabel = getPrimaryCtaLabel(effectiveLang, displayName);
   const cutIconSrc = getCutSelectionIconPath(profile);
 
@@ -64,6 +67,7 @@ export function CutBottomSheet({ profile, lang, onClose, onStartCooking }: CutBo
           lang={effectiveLang}
           displayName={displayName}
           helpfulAlias={helpfulAlias}
+          methodIcon={methodIcon}
           methodValue={methodValue}
           primaryCtaLabel={primaryCtaLabel}
           cutIconSrc={cutIconSrc}
@@ -81,6 +85,7 @@ export function CutBottomSheet({ profile, lang, onClose, onStartCooking }: CutBo
           lang={effectiveLang}
           displayName={displayName}
           helpfulAlias={helpfulAlias}
+          methodIcon={methodIcon}
           methodValue={methodValue}
           primaryCtaLabel={primaryCtaLabel}
           cutIconSrc={cutIconSrc}
@@ -101,6 +106,7 @@ type CutDetailContentProps = {
   lang: Lang;
   displayName: string;
   helpfulAlias: string | null;
+  methodIcon: ReturnType<typeof resolveMethodIconKey>;
   methodValue: string;
   primaryCtaLabel: string;
   cutIconSrc?: string;
@@ -117,6 +123,7 @@ function CutDetailContent({
   lang,
   displayName,
   helpfulAlias,
+  methodIcon,
   methodValue,
   primaryCtaLabel,
   cutIconSrc,
@@ -182,7 +189,22 @@ function CutDetailContent({
           title={lang === "es" ? "Por qué elegirlo" : lang === "fi" ? "Miksi valita tämä" : "Why choose it"}
           value={getWhyChooseLabel(profile, lang)}
         />
-        <CutInfoModule title={lang === "es" ? "Mejor método" : lang === "fi" ? "Paras menetelmä" : "Best method"} value={methodValue} />
+        <CutInfoModule
+          title={lang === "es" ? "Mejor método" : lang === "fi" ? "Paras menetelmä" : "Best method"}
+          value={methodValue}
+          icon={
+            methodIcon ? (
+              <AppIcon
+                category={methodIcon.category}
+                iconKey={methodIcon.key}
+                alt=""
+                size="sm"
+                aria-hidden="true"
+                className="h-5 w-5 opacity-90"
+              />
+            ) : undefined
+          }
+        />
         <CutInfoModule
           title={lang === "es" ? "Tiempo y dificultad" : lang === "fi" ? "Aika ja vaikeus" : "Time and difficulty"}
           value={`${getEstimatedTimeLabel(profile, lang)} · ${getDifficultyLabel(profile, lang)} · ${

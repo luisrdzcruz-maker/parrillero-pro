@@ -2,6 +2,7 @@
 
 import ResultHeader from "@/components/ResultHeader";
 import { Button, BrandImageIcon, Panel } from "@/components/ui";
+import { resolveEquipmentIconKey, resolveMethodIconKey } from "@/lib/assets/equipmentMethodIconResolver";
 import { brandIconAssets } from "@/lib/brand/iconAssets";
 import { buildResultHeroMetrics, type MetricTone } from "@/lib/results/resultMetrics";
 import { getResultStepDurationTotal, type ResultSummary } from "@/lib/results/resultSummary";
@@ -81,6 +82,8 @@ export default function ResultHero({
   const title = cut || copy.resultHeroTitleFallback;
   const method = getCompactMethod(summary?.method);
   const equipmentLabel = context?.split("·").slice(1).join(" / ").trim() ?? "";
+  const equipmentIcon = resolveEquipmentIconKey(equipmentLabel);
+  const methodIcon = resolveMethodIconKey(summary?.method ?? method);
   const timeFallback =
     resultBlocks && resultKeys
       ? getResultStepDurationTotal(resultBlocks, resultKeys) || getDirectStepDurationTotal(resultBlocks)
@@ -121,8 +124,10 @@ export default function ResultHero({
           <ResultHeader
             doneness={summary?.doneness || doneness}
             equipment={equipmentLabel}
+            equipmentIcon={equipmentIcon}
             eyebrow={eyebrow}
             method={method}
+            methodIcon={methodIcon}
             onEdit={onEdit}
             title={title}
             t={{
