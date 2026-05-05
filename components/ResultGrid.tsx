@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { Badge, Card, Grid } from "@/components/ui";
+import { AppIcon, Badge, Card, Grid } from "@/components/ui";
 import { ds } from "@/lib/design-system";
 import {
   detectSetupFromText,
@@ -154,7 +154,16 @@ function ShoppingListCard({
       <div className="absolute left-0 top-0 h-full w-[3px] rounded-l-2xl bg-emerald-400/70" />
       <div className="flex flex-col gap-3 border-b border-white/5 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
         <div className="flex items-start gap-3">
-          <div className={ds.media.iconBox}>🛒</div>
+          <div className={ds.media.iconBox}>
+            <AppIcon
+              category="ui"
+              iconKey="shopping-list"
+              alt=""
+              size="md"
+              aria-hidden="true"
+              fallback={<span aria-hidden>🛒</span>}
+            />
+          </div>
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-emerald-300">
               {checklistLabel}
@@ -215,7 +224,16 @@ function GrillManagerCard({
       <div className="absolute left-0 top-0 h-full w-[3px] rounded-l-2xl bg-red-400/70" />
       <div className="mb-5 flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <div className={ds.media.iconBox}>🎛️</div>
+          <div className={ds.media.iconBox}>
+            <AppIcon
+              category="ui"
+              iconKey="cooking-dashboard"
+              alt=""
+              size="md"
+              aria-hidden="true"
+              fallback={<span aria-hidden>🎛️</span>}
+            />
+          </div>
           <div>
             <h3 className="text-sm font-semibold tracking-wide text-white">{title}</h3>
             <p className="mt-1 text-sm leading-relaxed text-slate-400">{subtitle}</p>

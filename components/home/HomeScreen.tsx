@@ -1,13 +1,13 @@
 "use client";
 
 import { BrandLogo } from "@/components/brand/BrandLogo";
-import { BrandImageIcon } from "@/components/ui/BrandImageIcon";
-import { brandIconAssets } from "@/lib/brand/iconAssets";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { useRouter } from "next/navigation";
 import type { Mode } from "@/components/navigation/AppHeader";
 import { buildCookingDetailsUrl } from "@/lib/navigation/cookingNavigation";
 import { buildLiveUrl } from "@/lib/navigation/buildLiveUrl";
 import { readLiveCookingPayload } from "@/lib/liveCookingPlan";
+import type { IconCategory } from "@/lib/assets/iconTypes";
 import type { Animal } from "@/lib/types/domain";
 import type { AppText, Lang } from "@/lib/i18n/texts";
 import { type MouseEvent, type ReactNode, useLayoutEffect, useMemo, useState } from "react";
@@ -119,7 +119,10 @@ function PopularCuts({
 type QuickAction = {
   id: string;
   icon: string;
-  iconAsset?: string;
+  registryIcon?: {
+    category: IconCategory;
+    key: string;
+  };
   title: string;
   description: string;
   emphasized?: boolean;
@@ -149,14 +152,19 @@ function HomeQuickActions({
             }`}
           >
             <div className="flex items-center gap-3 sm:items-start">
-              {action.iconAsset ? (
-                <BrandImageIcon
-                  src={action.iconAsset}
+              {action.registryIcon ? (
+                <AppIcon
+                  category={action.registryIcon.category}
+                  iconKey={action.registryIcon.key}
                   alt=""
-                  size="md"
-                  shape={action.emphasized ? "tile" : "soft"}
+                  size="lg"
                   aria-hidden="true"
-                  className="h-12 w-12 rounded-2xl"
+                  className={`h-12 w-12 rounded-2xl border p-2 ${
+                    action.emphasized
+                      ? "border-orange-300/18 bg-black/35 shadow-[0_10px_28px_rgba(249,115,22,0.16)] ring-1 ring-inset ring-white/[0.045]"
+                      : "border-white/10 bg-white/[0.04] shadow-[0_8px_22px_rgba(0,0,0,0.22)]"
+                  }`}
+                  fallback={<span className="text-xl" aria-hidden>{action.icon}</span>}
                 />
               ) : (
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-xl sm:h-auto sm:w-auto sm:border-0 sm:bg-transparent sm:pt-0.5 sm:text-lg" aria-hidden>{action.icon}</span>
@@ -359,7 +367,7 @@ export function HomeScreen({
     {
       id: "start-cooking",
       icon: "🥩",
-      iconAsset: brandIconAssets.navCooking,
+      registryIcon: { category: "ui", key: "meat-selection" },
       title: t.homePrimaryCta,
       description: t.homeGuidedCookingSub,
       emphasized: true,
@@ -369,7 +377,7 @@ export function HomeScreen({
     {
       id: "plan-bbq",
       icon: "🧭",
-      iconAsset: brandIconAssets.appFlameProbe,
+      registryIcon: { category: "ui", key: "cooking-dashboard" },
       title: t.homeParrillada,
       description: t.homeParrilladaSub,
       onClick: () => onModeChange("plan"),
@@ -380,7 +388,7 @@ export function HomeScreen({
     quickActions.push({
       id: "saved-plans",
       icon: "⭐",
-      iconAsset: brandIconAssets.navSaved,
+      registryIcon: { category: "ui", key: "shopping-list" },
       title: t.homeSaved,
       description: savedPlansLabel,
       onClick: () => onModeChange("guardados"),
@@ -391,7 +399,7 @@ export function HomeScreen({
     quickActions.push({
       id: "continue-live",
       icon: "⏱️",
-      iconAsset: brandIconAssets.navLive,
+      registryIcon: { category: "live", key: "place-food" },
       title: t.homeLiveCooking,
       description: t.homeLiveCookingSub,
       onClick: () => router.push(buildLiveUrl({ lang })),

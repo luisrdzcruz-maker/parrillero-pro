@@ -10,8 +10,9 @@ import {
   type SetupEquipment,
   type SetupType,
 } from "@/lib/setupVisualMap";
-import { Panel } from "@/components/ui";
+import { AppIcon, Panel } from "@/components/ui";
 import { ds } from "@/lib/design-system";
+import type { IconCategory } from "@/lib/assets/iconTypes";
 
 type ResultCardProps = {
   title: string;
@@ -78,13 +79,25 @@ function ResultCardHeader({
   const iconClassName = isTip
     ? "border-red-300/25 bg-red-500/15 text-red-100 ring-red-200/[0.05]"
     : "bg-white/[0.06] text-white ring-white/[0.04]";
+  const registryIcon = getDefaultResultCardRegistryIcon(variant);
 
   return (
     <div className="flex items-start gap-3.5">
       <div
         className={`${ds.media.iconBox} ${isPrimary ? "h-12 w-12 text-xl" : "h-10 w-10 text-base"} ${iconClassName} rounded-2xl ring-1 ring-inset`}
       >
-        {icon}
+        {registryIcon ? (
+          <AppIcon
+            category={registryIcon.category}
+            iconKey={registryIcon.key}
+            alt=""
+            size={isPrimary ? "lg" : "md"}
+            aria-hidden="true"
+            fallback={<span aria-hidden>{icon}</span>}
+          />
+        ) : (
+          icon
+        )}
       </div>
 
       <div className="min-w-0 flex-1">
@@ -100,6 +113,24 @@ function ResultCardHeader({
       </div>
     </div>
   );
+}
+
+function getDefaultResultCardRegistryIcon(
+  variant: NonNullable<ResultCardProps["variant"]>,
+): { category: IconCategory; key: string } | null {
+  if (variant === "tip") {
+    return { category: "warnings", key: "flare-up-risk" };
+  }
+
+  if (variant === "primary") {
+    return { category: "live", key: "place-food" };
+  }
+
+  if (variant === "setup") {
+    return { category: "methods", key: "two-zone-charcoal-left" };
+  }
+
+  return null;
 }
 
 // ─── ResultCardContent ────────────────────────────────────────────────────────
