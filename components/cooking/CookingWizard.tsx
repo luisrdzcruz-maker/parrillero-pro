@@ -28,6 +28,7 @@ import {
   type LiveCookingPlanPayload,
 } from "@/lib/liveCookingPlan";
 import { buildLiveUrl } from "@/lib/navigation/buildLiveUrl";
+import { shouldShowDonenessSelectorForCut } from "@/lib/temperatureModeProfiles";
 import { animalIdsByLabel, animalOptions, type AnimalLabel } from "@/lib/media/animalMedia";
 import type { CookingStyle, DonenessId, ProductCut } from "@/lib/cookingCatalog";
 import Image from "next/image";
@@ -1076,7 +1077,10 @@ function CookingDetailsStep({
         animalId: animal === "Verduras" ? "vegetables" : "beef",
         style: "fast",
       });
-  const showDoneness = inputProfile.showDoneness && currentDonenessOptions.length > 0;
+  const showDoneness =
+    Boolean(cutMeta && shouldShowDonenessSelectorForCut(cutMeta)) &&
+    inputProfile.showDoneness &&
+    currentDonenessOptions.length > 0;
   const showSizePreset = inputProfile.showSizePreset;
   const showWeightRange = inputProfile.showWeightRange;
   const showWeightPreset = inputProfile.showWeightPreset;

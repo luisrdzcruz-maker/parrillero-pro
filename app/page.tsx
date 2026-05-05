@@ -57,6 +57,10 @@ import {
   shouldShowThickness,
 } from "@/lib/cookingRules";
 import {
+  getAllowedDonenessForCut,
+  getDefaultDonenessForCut,
+} from "@/lib/temperatureModeProfiles";
+import {
   mapBeefLargeWeightPresetToKg,
   mapSizePresetToThickness,
   mapThicknessToSizePreset,
@@ -262,15 +266,26 @@ function engineLang(lang: Lang): EngineLang {
   return lang === "es" ? "es" : "en";
 }
 
-function getInitialDoneness(animal: AnimalLabel) {
+function getInitialDoneness(animal: AnimalLabel, cutId?: string) {
+  const cut = cutId ? getCutById(cutId) : undefined;
+  if (cut) return getDefaultDonenessForCut(cut);
+
   return getDonenessOptions(animalIdsByLabel[animal])[0]?.id ?? "";
 }
 
-function getDonenessSelectOptions(animal: AnimalLabel, lang: Lang): SelectOption[] {
-  return getDonenessOptions(animalIdsByLabel[animal]).map((option) => ({
+function getDonenessSelectOptions(animal: AnimalLabel, lang: Lang, cutId?: string): SelectOption[] {
+  const cut = cutId ? getCutById(cutId) : undefined;
+  const allowed = cut ? getAllowedDonenessForCut(cut) : getDonenessOptions(animalIdsByLabel[animal]).map((option) => option.id);
+  const optionsById = new Map(getDonenessOptions(animalIdsByLabel[animal]).map((option) => [option.id, option]));
+
+  return allowed.flatMap((id) => {
+    const option = optionsById.get(id);
+    if (!option) return [];
+    return {
     value: option.id,
     label: lang === "fi" ? getDonenessSurfaceLabel(option.id, "fi") : option.names[lang],
-  }));
+    };
+  });
 }
 
 function catalogLang(lang: Lang) {
@@ -571,7 +586,7 @@ function HomeContent() {
   }, [baseCuts, selectedCutFallback]);
   const selectedCut = cuts.find((item) => item.id === cut);
 
-  const currentDonenessOptions = getDonenessSelectOptions(animal, lang);
+  const currentDonenessOptions = getDonenessSelectOptions(animal, lang, cut);
   const showThickness = cut ? shouldShowThickness(cut) : true;
   const isCutSelectionSheetOpen = mode === "coccion" && cookingStep === "cut" && Boolean(cut);
   const liveSession = useLiveCookingSession({
@@ -1414,16 +1429,18 @@ function HomeContent() {
   function handleCutChange(selectedCutId: string) {
     const defaults = getAdaptiveDetailDefaults(selectedCutId, animal);
     const defaultThickness = mapSizePresetToThickness(defaults.sizePreset);
+    const defaultDoneness = getInitialDoneness(animal, selectedCutId);
 
     setCut(selectedCutId);
     resetAdaptiveDetailInputs(selectedCutId, animal);
+    setDoneness(defaultDoneness);
     setBlocks({});
     setCheckedItems({});
     resetSaveMenuState();
     commitNav("coccion", "details", "push", {
       animal,
       cut: selectedCutId,
-      doneness,
+      ...(defaultDoneness ? { doneness: defaultDoneness } : {}),
       thickness: defaultThickness,
     });
     track({ name: "cut_selected", animal, cutId: selectedCutId, lang });
@@ -1445,7 +1462,7 @@ function HomeContent() {
 
   function handleCutSelectionStartCooking(profile: GeneratedCutProfile) {
     const selectedAnimal = animalLabelsById[profile.animalId] ?? animal;
-    const selectedDoneness = profile.defaultDoneness ?? getInitialDoneness(selectedAnimal);
+    const selectedDoneness = getInitialDoneness(selectedAnimal, profile.id);
     const selectedThickness =
       profile.showThickness && Number.isFinite(profile.defaultThicknessCm)
         ? `${profile.defaultThicknessCm}`
