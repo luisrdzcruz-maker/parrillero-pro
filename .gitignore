@@ -39,5 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-# Raw generated assets (NO subir)
-assets/raw/
+# Raw generated assets
+assets/raw/*
+!assets/raw/icons/
+!assets/raw/icons/**
