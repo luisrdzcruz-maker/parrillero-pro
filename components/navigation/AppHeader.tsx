@@ -174,7 +174,7 @@ export function BottomNavigation({
         disabled ? "pointer-events-none opacity-0" : "pointer-events-none opacity-100"
       }`}
     >
-      <div className="pointer-events-auto relative mx-auto grid w-full max-w-[448px] min-w-0 grid-cols-5 items-center gap-0.5 overflow-hidden rounded-[2.1rem] border border-white/12 bg-[#080604]/88 p-1.5 shadow-[0_18px_60px_rgba(0,0,0,0.66),0_0_34px_rgba(249,115,22,0.1)] ring-1 ring-inset ring-white/[0.045] backdrop-blur-xl">
+      <div className="pointer-events-auto relative mx-auto grid w-full max-w-[448px] min-w-0 grid-cols-5 items-center gap-1 overflow-hidden rounded-[2rem] border border-white/12 bg-[#080604]/90 p-1.5 shadow-[0_18px_60px_rgba(0,0,0,0.66),0_0_28px_rgba(249,115,22,0.08)] ring-1 ring-inset ring-white/[0.045] backdrop-blur-xl">
         <Tab
           active={mode === "inicio"}
           label={t.start}
@@ -232,15 +232,15 @@ function Tab({
       title={label}
       className={
         active
-          ? "pointer-events-auto flex min-h-[58px] min-w-0 touch-manipulation items-center justify-center overflow-hidden rounded-[1.55rem] bg-gradient-to-br from-orange-200 via-orange-500 to-orange-600 px-0.5 py-2 text-black shadow-lg shadow-orange-500/50 ring-1 ring-orange-100/65 transition-all duration-200 motion-reduce:transition-none active:scale-[0.96] motion-reduce:active:scale-100 active:brightness-95"
-          : "pointer-events-auto flex min-h-[58px] min-w-0 touch-manipulation items-center justify-center overflow-hidden rounded-[1.55rem] px-0.5 py-2 text-slate-200/85 transition-all duration-200 motion-reduce:transition-none hover:bg-white/[0.06] hover:text-slate-100 active:scale-[0.96] motion-reduce:active:scale-100 active:bg-white/10"
+          ? "pointer-events-auto flex min-h-[54px] min-w-0 touch-manipulation items-center justify-center overflow-hidden rounded-[1.45rem] bg-gradient-to-br from-orange-200 via-orange-500 to-orange-600 px-1 py-2 text-black shadow-[0_10px_24px_rgba(249,115,22,0.32)] ring-1 ring-orange-100/55 transition-all duration-200 motion-reduce:transition-none active:scale-[0.97] motion-reduce:active:scale-100 active:brightness-95"
+          : "pointer-events-auto flex min-h-[54px] min-w-0 touch-manipulation items-center justify-center overflow-hidden rounded-[1.45rem] px-1 py-2 text-slate-200/82 transition-all duration-200 motion-reduce:transition-none hover:bg-white/[0.06] hover:text-slate-100 active:scale-[0.97] motion-reduce:active:scale-100 active:bg-white/10"
       }
     >
       <NavIcon
         icon={icon}
         active={active}
-        className={active ? "h-10 w-10" : "h-8 w-8"}
-        fallbackClassName={active ? "text-[32px]" : "text-[26px]"}
+        className="h-8 w-8"
+        fallbackClassName="text-[26px]"
       />
       <span className="sr-only">{label}</span>
     </button>
