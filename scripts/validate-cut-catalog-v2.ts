@@ -26,6 +26,10 @@ const requiredColumns = {
     "prep_profile",
     "temperature_mode",
     "hide_doneness_selector",
+    "has_fat_cap",
+    "fat_cap_behavior",
+    "flare_up_risk",
+    "requires_move_on_flareup",
     "setup_minutes_min",
     "setup_minutes_max",
     "active_cook_min_minutes",
@@ -43,6 +47,15 @@ const requiredColumns = {
 } as const;
 
 const errors: string[] = [];
+const allowedTemperatureModes = new Set([
+  "doneness_target",
+  "safe_temp",
+  "texture_breakdown",
+  "visual_only",
+  "delicate_target",
+]);
+const textureBreakdownCutIds = new Set(["chuck_roast", "brisket", "beef_short_ribs", "pork_ribs"]);
+const donenessTargetCutIds = new Set(["tri_tip", "ribeye"]);
 
 function parseCsv(content: string, fileLabel: string): CsvFile {
   const records: string[][] = [];
@@ -151,6 +164,10 @@ function validateSum(row: CsvRow, rowLabel: string, resultColumn: string, leftCo
   }
 }
 
+function isHighFlareUpWarningCode(code: string) {
+  return /flare|move.*indirect|indirect.*flare/i.test(code);
+}
+
 function isTrue(value: string) {
   return value.trim().toLowerCase() === "true";
 }
@@ -193,8 +210,16 @@ for (const [index, row] of catalog.rows.entries()) {
   validateSum(row, rowLabel, "session_total_minutes_min", "setup_minutes_min", "cut_plan_minutes_min");
   validateSum(row, rowLabel, "session_total_minutes_max", "setup_minutes_max", "cut_plan_minutes_max");
 
+  if (!allowedTemperatureModes.has(row.temperature_mode)) {
+    errors.push(`${rowLabel}: temperature_mode "${row.temperature_mode}" is not supported.`);
+  }
+
   if (row.temperature_mode === "texture_breakdown" && !isTrue(row.hide_doneness_selector)) {
     errors.push(`${rowLabel}: texture_breakdown rows must hide the doneness selector.`);
+  }
+
+  if (row.temperature_mode === "visual_only" && !isTrue(row.hide_doneness_selector)) {
+    errors.push(`${rowLabel}: visual_only rows must hide the doneness selector.`);
   }
 
   if (row.animal === "chicken") {
@@ -207,6 +232,24 @@ for (const [index, row] of catalog.rows.entries()) {
     }
   }
 
+  if (row.animal === "vegetable" || row.category === "vegetables") {
+    if (row.temperature_mode !== "visual_only") {
+      errors.push(`${rowLabel}: vegetable rows must use temperature_mode=visual_only.`);
+    }
+  }
+
+  if (textureBreakdownCutIds.has(row.cut_id) && row.temperature_mode !== "texture_breakdown") {
+    errors.push(`${rowLabel}: ${row.cut_id} must use temperature_mode=texture_breakdown.`);
+  }
+
+  if (
+    donenessTargetCutIds.has(row.cut_id) &&
+    row.temperature_mode !== "doneness_target" &&
+    row.variant_id !== "unused"
+  ) {
+    errors.push(`${rowLabel}: ${row.cut_id} must use temperature_mode=doneness_target.`);
+  }
+
   if (row.cut_id === "picanha") {
     const warningCodes = splitCodes(row.warning_codes);
     const hasFatCapOrFlareUpWarning = warningCodes.some((code) => /fat|flare|burn/i.test(code));
@@ -216,7 +259,22 @@ for (const [index, row] of catalog.rows.entries()) {
     }
   }
 
+  if (isTrue(row.has_fat_cap) && !row.fat_cap_behavior.trim()) {
+    errors.push(`${rowLabel}: has_fat_cap=true requires fat_cap_behavior.`);
+  }
+
+  if (row.flare_up_risk === "high") {
+    const warningCodes = splitCodes(row.warning_codes);
+    if (!warningCodes.some(isHighFlareUpWarningCode)) {
+      errors.push(`${rowLabel}: flare_up_risk=high requires flare-up/move-to-indirect warning code.`);
+    }
+  }
+
   if (row.cut_id === "ribeye" && row.variant_id === "bone_in_chuleton") {
+    if (row.temperature_mode !== "doneness_target") {
+      errors.push(`${rowLabel}: bone_in_chuleton must use temperature_mode=doneness_target.`);
+    }
+
     hasBoneInChuleton = true;
   }
 }

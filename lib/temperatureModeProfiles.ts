@@ -1,4 +1,9 @@
 import type { AnimalId, CookingStyle, DonenessId, ProductCut, TargetTemp } from "./cookingCatalog";
+import {
+  getAllowedDonenessFromCatalogV2,
+  getDefaultDonenessFromCatalogV2,
+  getTemperatureModeFromCatalogV2,
+} from "./cutCatalogV2Adapter";
 import { donenessTemperatureProfiles, getTargetTempsForProfile, type DonenessTemperatureProfileId } from "./donenessProfiles";
 
 export type TemperatureMode =
@@ -124,12 +129,20 @@ function categoryLooksLowAndSlow(category: string) {
   return ["bbq", "ribs", "shoulder", "brisket"].includes(category);
 }
 
+function getCatalogVariantId(profile?: TemperatureModeCutProfile) {
+  const variantId = normalize(profile?.id);
+  return variantId || undefined;
+}
+
 export function getTemperatureModeForCut(
   cut: ProductCut | TemperatureModeCutProfile,
   profile?: TemperatureModeCutProfile,
 ): TemperatureMode {
   const context = contextFor(cut, profile);
   const id = normalize(context.id);
+  const catalogMode = getTemperatureModeFromCatalogV2(id, getCatalogVariantId(profile));
+  if (catalogMode) return catalogMode;
+
   const mappedMode = phaseOneModeByCutId[id];
   if (mappedMode) return mappedMode;
 
@@ -172,6 +185,9 @@ export function getAllowedDonenessForCut(
   const context = contextFor(cut, profile);
   const id = normalize(context.id);
   const mode = getTemperatureModeForCut(context);
+  const catalogAllowed = getAllowedDonenessFromCatalogV2(id, getCatalogVariantId(profile));
+  if (catalogAllowed?.length) return catalogAllowed;
+
   const mappedAllowed = phaseOneAllowedDonenessByCutId[id];
   if (mappedAllowed) return mappedAllowed;
 
@@ -193,8 +209,10 @@ export function getDefaultDonenessForCut(
   const context = contextFor(cut, profile);
   const mode = getTemperatureModeForCut(context);
   const allowed = getAllowedDonenessForCut(context);
+  const catalogDefault = getDefaultDonenessFromCatalogV2(normalize(context.id), getCatalogVariantId(profile));
   const defaultDoneness = context.defaultDoneness as DonenessId | undefined;
 
+  if (catalogDefault && allowed.includes(catalogDefault)) return catalogDefault;
   if (defaultDoneness && allowed.includes(defaultDoneness)) return defaultDoneness;
   if (mode === "visual_only") return "medium";
   if (mode === "texture_breakdown") return "well_done";
