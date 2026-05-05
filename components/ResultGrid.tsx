@@ -298,6 +298,16 @@ function ResultLoadingState({ text }: { text: string }) {
   );
 }
 
+function PrepGuidanceInline({ line }: { line?: string }) {
+  if (!line?.trim()) return null;
+
+  return (
+    <div className="col-span-full rounded-[1.25rem] border border-orange-300/15 bg-orange-500/[0.06] px-3.5 py-3 shadow-lg shadow-black/10 ring-1 ring-inset ring-orange-200/[0.04]">
+      <p className="text-sm font-semibold leading-relaxed text-orange-50/90">{line}</p>
+    </div>
+  );
+}
+
 function findBlockKey(keys: string[], candidates: string[]) {
   return keys.find((key) => candidates.includes(key.toUpperCase()));
 }
@@ -431,6 +441,7 @@ export default function ResultGrid({
   keys,
   lang = "es",
   loading,
+  prepGuidanceLine,
   setCheckedItems,
   t,
 }: {
@@ -440,6 +451,7 @@ export default function ResultGrid({
   keys: string[];
   lang?: "es" | "en" | "fi";
   loading: boolean;
+  prepGuidanceLine?: string;
   setCheckedItems: (value: Record<string, boolean>) => void;
   t: {
     generating: string;
@@ -457,6 +469,8 @@ export default function ResultGrid({
         lang={lang}
         setup={setupKey ? detectSetupFromText(blocks[setupKey]) : undefined}
       />
+
+      <PrepGuidanceInline line={prepGuidanceLine} />
 
       {items.map((item) => {
         if (item.type === "timeline") {

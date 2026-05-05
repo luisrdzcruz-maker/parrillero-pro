@@ -27,6 +27,7 @@ import {
   attachCookingTimeSemantics,
   deriveCookingTimeSemanticsFromSteps,
 } from "./cookingTimeSemantics";
+import { attachPrepGuidance, getPrepGuidanceForCut } from "./prepGuidance";
 import { resolveCookingProfile, resolveProductCut } from "./resolveCookingProfile";
 import {
   getTemperatureDeltaFromRecommended,
@@ -1222,24 +1223,25 @@ export function generateCookingPlan(input: CookingInput): CookingPlan | null {
   const steps = makeStandardSteps(engineInput, cut, temp);
   const planSteps = buildPlanStepsText(steps, engineInput.language);
   const timeSemantics = deriveCookingTimeSemanticsFromSteps(steps);
+  const prepGuidance = getPrepGuidanceForCut(cut);
 
   if (engineInput.language === "en") {
-    return attachCookingTimeSemantics({
+    return attachPrepGuidance(attachCookingTimeSemantics({
       SETUP: `${method}. Use ${engineInput.equipment}.${ovenText}${fatCapText}`,
       TIMES: times,
       TEMPERATURE: formatTemperatureGuidance({ ...temperatureTarget, target: temp }, engineInput.language, ovenText),
       STEPS: planSteps,
       ...(note ? { TIPS: note } : {}),
       ERROR: cut.error.en,
-    }, timeSemantics);
+    }, timeSemantics), prepGuidance);
   }
 
-  return attachCookingTimeSemantics({
+  return attachPrepGuidance(attachCookingTimeSemantics({
     SETUP: `${method}. Equipo: ${engineInput.equipment}.${ovenText}${fatCapText}`,
     TIEMPOS: times,
     TEMPERATURA: formatTemperatureGuidance({ ...temperatureTarget, target: temp }, engineInput.language, ovenText),
     PASOS: planSteps,
     ...(note ? { CONSEJOS: note } : {}),
     ERROR: cut.error.es,
-  }, timeSemantics);
+  }, timeSemantics), prepGuidance);
 }
