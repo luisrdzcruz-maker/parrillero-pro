@@ -39,6 +39,12 @@ import {
   getTemperatureTargetForCut,
   type TemperatureTargetForCut,
 } from "./temperatureModeProfiles";
+import {
+  getFatCapBehaviorForCut,
+  getFatCapProfileForCut,
+  getFatCapWarningCodesForCut,
+  requiresMoveOnFlareupForCut,
+} from "./cooking/fatCapProfiles";
 
 function normalizeKey(value: string) {
   return value.trim().toLowerCase();
@@ -245,6 +251,33 @@ function appendOvenGuidance(text: string, guidance: OvenGuidance | null, languag
   return `${text} ${formatOvenGuidance(guidance, language)}`;
 }
 
+function getFatCapSetupGuidance(cut: ProductCut, language: "es" | "en") {
+  const behavior = getFatCapBehaviorForCut(cut);
+  if (!behavior) return "";
+
+  const warningCodes = getFatCapWarningCodesForCut(cut);
+  const mustMove = requiresMoveOnFlareupForCut(cut);
+  const mentionsFatCapBurn = warningCodes.includes("fat_cap_burn_risk");
+
+  if (behavior === "indirect_then_brief_fat_cap_sear") {
+    if (language === "en") {
+      return ` Fat-cap profile: indirect first, then a brief controlled fat-cap sear. Keep the fat cap away from uncontrolled direct flames${mustMove ? "; move to indirect heat immediately if flare-ups happen" : ""}${mentionsFatCapBurn ? "; do not leave the fat cap over direct flames" : ""}.`;
+    }
+
+    return ` Perfil de grasa: indirecto primero y sellado breve controlado de la grasa. Mantén la grasa lejos de llamas directas sin control${mustMove ? "; mueve a calor indirecto inmediatamente si hay llamaradas" : ""}${mentionsFatCapBurn ? "; no dejes la grasa sobre llamas directas" : ""}.`;
+  }
+
+  if (behavior === "direct_sear_then_brief_fat_edge_render") {
+    return language === "en"
+      ? ` Fat-edge profile: steak-style direct sear, brief fat-edge render, and move away from flare-ups.`
+      : ` Perfil de borde graso: sellado directo estilo steak, fundido breve del borde graso y alejar de llamaradas.`;
+  }
+
+  return language === "en"
+    ? ` Fat-cap profile: protect the fat cap during the main cook.`
+    : ` Perfil de grasa: protege la capa de grasa durante la cocción principal.`;
+}
+
 function formatTemperatureGuidance(
   target: TemperatureTargetForCut,
   language: "es" | "en",
@@ -393,6 +426,36 @@ function getRestSeconds(cut: ProductCut) {
   return cut.restingMinutes * 60;
 }
 
+function getWholeFatCapDurations(cut: ProductCut, thickness: number, doneness: DonenessId) {
+  const fatCapProfile = getFatCapProfileForCut(cut);
+  const directExposureMaxSeconds = (fatCapProfile?.directExposureMaxMinutes ?? 3) * 60;
+  const fatCapSear = clamp(
+    (fatCapProfile?.fatCapSearMinutes ?? 3) * 60,
+    60,
+    directExposureMaxSeconds,
+  );
+  const meatSideFinish = clamp(
+    Math.round(getSearSeconds(thickness, cut.style, getDonenessTempDeltaC(cut, doneness)) * 0.5),
+    60,
+    120,
+  );
+  const minActive = (fatCapProfile?.minActiveCookMinutes ?? 30) * 60;
+  const maxActive = (fatCapProfile?.maxActiveCookMinutes ?? 75) * 60;
+  const donenessExtra = getDonenessTimeAdjustmentSeconds(cut.style, getDonenessTempDeltaC(cut, doneness));
+  const indirect = clamp(
+    Math.round(thickness * 420 + donenessExtra),
+    Math.max(900, minActive - fatCapSear - meatSideFinish),
+    Math.max(900, maxActive - fatCapSear - meatSideFinish),
+  );
+
+  return {
+    indirect,
+    fatCapSear,
+    meatSideFinish,
+    rest: getRestSeconds(cut),
+  };
+}
+
 function secondsToText(seconds: number) {
   const minutes = Math.round(seconds / 60);
 
@@ -484,6 +547,15 @@ function estimateTimes(input: CookingInput, cut: ProductCut, doneness: DonenessI
   const sear = getSearSeconds(thickness, cut.style, getDonenessTempDeltaC(cut, doneness));
   const indirect = getMainCookSeconds(cut, thickness, doneness);
   const rest = getRestSeconds(cut);
+
+  if (getFatCapBehaviorForCut(cut) === "indirect_then_brief_fat_cap_sear") {
+    const durations = getWholeFatCapDurations(cut, thickness, doneness);
+    const active = durations.indirect + durations.fatCapSear + durations.meatSideFinish;
+
+    return input.language === "en"
+      ? `${secondsToText(active)} controlled cook: indirect first + ${secondsToText(durations.fatCapSear)} brief fat-cap sear + ${secondsToText(durations.rest)} rest`
+      : `${secondsToText(active)} cocción controlada: indirecto primero + ${secondsToText(durations.fatCapSear)} sellado breve de grasa + ${secondsToText(durations.rest)} reposo`;
+  }
 
   if (input.language === "en") {
     if (cut.style === "vegetable") return `${secondsToText(indirect)} direct grill`;
@@ -589,6 +661,103 @@ function makeStandardSteps(input: CookingInput, cut: ProductCut, temp?: TargetTe
   const final = temp?.final ?? 0;
   const temperatureTarget = getTemperatureTargetForCut(cut, doneness);
   const textureGuide = temperatureTarget.target?.final;
+
+  if (getFatCapBehaviorForCut(cut) === "indirect_then_brief_fat_cap_sear") {
+    const durations = getWholeFatCapDurations(cut, thickness, doneness);
+
+    return sanitizeSteps(
+      isEnglish
+        ? [
+          {
+            title: indoor ? "Preheat pan and oven" : "Set indirect safety zone",
+            duration: 600,
+            description: indoor
+              ? appendOvenGuidance(
+                "Use controlled heat first; keep the fat cap away from aggressive direct heat.",
+                ovenGuidance,
+                input.language,
+              )
+              : "Set a stable indirect zone and a small direct finishing zone; keep the fat cap away from uncontrolled direct flames.",
+            image: "/visuals/preheat.jpg",
+            tips: ["Indirect first", "Direct zone only for finish", "Fat cap away from flames"],
+          },
+          {
+            title: "Cook indirect first",
+            duration: durations.indirect,
+            description: `Cook gently with the fat cap protected until the center is close to ${Math.max(35, pull - 6)}°C.`,
+            image: "/visuals/indirect.jpg",
+            tips: ["Lid closed", "Stable heat", "Render fat without burning"],
+          },
+          {
+            title: "Brief fat-cap sear",
+            duration: durations.fatCapSear,
+            description: "Sear the fat cap briefly and attentively. If flare-ups happen, move to indirect heat immediately; do not leave the fat cap over direct flames.",
+            image: "/visuals/fatcap.jpg",
+            tips: ["Brief direct exposure", "Move indirect on flare-ups", "Do not burn the fat cap"],
+            warningCue: "Fat cap burns quickly over direct flames.",
+          },
+          {
+            title: "Finish meat side",
+            duration: durations.meatSideFinish,
+            description: `Finish only as needed, then pull near ${pull}°C for the selected doneness.`,
+            image: "/visuals/sear.jpg",
+            tips: ["Short finish", "Use thermometer", "Avoid chasing crust"],
+          },
+          {
+            title: "Rest and slice",
+            duration: durations.rest,
+            description: `Rest until final temperature approaches ${final}°C, then slice against the grain.`,
+            image: "/visuals/rest.jpg",
+            tips: ["Rest fully", "Slice against the grain", "Keep juices"],
+          },
+        ]
+        : [
+          {
+            title: indoor ? "Precalentar sartén y horno" : "Preparar zona indirecta segura",
+            duration: 600,
+            description: indoor
+              ? appendOvenGuidance(
+                "Usa calor controlado primero; mantén la grasa lejos de calor directo agresivo.",
+                ovenGuidance,
+                input.language,
+              )
+              : "Prepara una zona indirecta estable y una zona directa pequeña para el final; mantén la grasa lejos de llamas directas sin control.",
+            image: "/visuals/preheat.jpg",
+            tips: ["Indirecto primero", "Zona directa solo al final", "Grasa lejos de llamas"],
+          },
+          {
+            title: "Cocinar indirecto primero",
+            duration: durations.indirect,
+            description: `Cocina suave con la grasa protegida hasta acercarte a ${Math.max(35, pull - 6)}°C en el centro.`,
+            image: "/visuals/indirect.jpg",
+            tips: ["Tapa cerrada", "Calor estable", "Fundir grasa sin quemar"],
+          },
+          {
+            title: "Sellado breve de la grasa",
+            duration: durations.fatCapSear,
+            description: "Sella la grasa brevemente y con atención. Si hay llamaradas, mueve a calor indirecto inmediatamente; no dejes la grasa sobre llamas directas.",
+            image: "/visuals/fatcap.jpg",
+            tips: ["Exposición directa breve", "Mover a indirecto si hay llamaradas", "No quemar la grasa"],
+            warningCue: "La grasa se quema rápido sobre llama directa.",
+          },
+          {
+            title: "Terminar lado carne",
+            duration: durations.meatSideFinish,
+            description: `Termina solo lo necesario y saca cerca de ${pull}°C para el punto elegido.`,
+            image: "/visuals/sear.jpg",
+            tips: ["Final corto", "Usa termómetro", "No perseguir costra"],
+          },
+          {
+            title: "Reposar y cortar",
+            duration: durations.rest,
+            description: `Reposa hasta acercarte a ${final}°C finales y corta contra la fibra.`,
+            image: "/visuals/rest.jpg",
+            tips: ["Reposo completo", "Cortar contra la fibra", "Mantener jugos"],
+          },
+        ],
+      input.language,
+    );
+  }
 
   if (cut.style === "lowSlow") {
     return sanitizeSteps(
@@ -1048,6 +1217,7 @@ export function generateCookingPlan(input: CookingInput): CookingPlan | null {
   const method = getMethodText(selectedMethod, engineInput.language);
   const ovenGuidance = isIndoor(engineInput.equipment) ? getIndoorOvenGuidance(cut, selectedMethod) : null;
   const ovenText = ovenGuidance ? ` ${formatOvenGuidance(ovenGuidance, engineInput.language)}` : "";
+  const fatCapText = getFatCapSetupGuidance(cut, engineInput.language);
   const note = getLocalized(cut.notes, engineInput.language);
   const steps = makeStandardSteps(engineInput, cut, temp);
   const planSteps = buildPlanStepsText(steps, engineInput.language);
@@ -1055,7 +1225,7 @@ export function generateCookingPlan(input: CookingInput): CookingPlan | null {
 
   if (engineInput.language === "en") {
     return attachCookingTimeSemantics({
-      SETUP: `${method}. Use ${engineInput.equipment}.${ovenText}`,
+      SETUP: `${method}. Use ${engineInput.equipment}.${ovenText}${fatCapText}`,
       TIMES: times,
       TEMPERATURE: formatTemperatureGuidance({ ...temperatureTarget, target: temp }, engineInput.language, ovenText),
       STEPS: planSteps,
@@ -1065,7 +1235,7 @@ export function generateCookingPlan(input: CookingInput): CookingPlan | null {
   }
 
   return attachCookingTimeSemantics({
-    SETUP: `${method}. Equipo: ${engineInput.equipment}.${ovenText}`,
+    SETUP: `${method}. Equipo: ${engineInput.equipment}.${ovenText}${fatCapText}`,
     TIEMPOS: times,
     TEMPERATURA: formatTemperatureGuidance({ ...temperatureTarget, target: temp }, engineInput.language, ovenText),
     PASOS: planSteps,
