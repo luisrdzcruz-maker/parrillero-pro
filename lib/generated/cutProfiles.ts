@@ -3526,6 +3526,251 @@ export const generatedCutProfiles = [
       "lengthwise slices"
     ],
     "cuttingDirectionEn": "lengthwise slices"
+  },
+  {
+    "id": "sausages",
+    "animalId": "pork",
+    "category": "sausage",
+    "canonicalNameEn": "Sausages",
+    "displayNameEn": "Sausages",
+    "displayNameEsEs": "salchichas",
+    "displayNameEsAr": "salchichas",
+    "displayNameFi": "makkarat",
+    "zone": "sausage",
+    "anatomicalArea": "sausage",
+    "inputProfileId": "default",
+    "defaultThicknessCm": 2,
+    "showThickness": false,
+    "allowedMethods": [
+      "grill_direct",
+      "grill_indirect"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "well_done"
+    ],
+    "style": "fast",
+    "cookingStyle": "fast",
+    "fireZone": "mixed",
+    "timeType": "total",
+    "defaultDoneness": "well_done",
+    "confidenceLevel": "medium",
+    "restingMinutes": 3,
+    "estimatedTotalTimeMin": 14,
+    "cookingMinutes": 14,
+    "targetTempC": 72,
+    "shortDescriptionEn": "Cook gently so they do not split.",
+    "safetyNoteEn": "Cook sausages to safe internal temperature.",
+    "criticalWarningEn": "cooking too hot until the casing splits",
+    "errorEn": "cooking too hot until the casing splits",
+    "aliasesEn": [
+      "sausages",
+      "salchichas",
+      "grill sausages",
+      "hot dogs"
+    ],
+    "aliasesMixed": [
+      "sausages",
+      "salchichas",
+      "grill sausages",
+      "hot dogs"
+    ],
+    "notesEn": "Cook gently so they do not split.",
+    "tipsEn": [
+      "bbq",
+      "easy",
+      "kid friendly",
+      "not applicable"
+    ],
+    "criticalMistakeEn": "cooking too hot until the casing splits",
+    "cuttingDirectionEn": "not applicable",
+    "proTipEn": "use medium heat and move indirect if fat drips cause flames",
+    "textureResultEn": "snappy browned casing with hot juicy center",
+    "setupVisualKeyEn": "medium direct zone with cooler safety side"
+  },
+  {
+    "id": "chorizo_criollo",
+    "animalId": "pork",
+    "category": "sausage",
+    "canonicalNameEn": "Chorizo Criollo",
+    "displayNameEn": "Chorizo Criollo",
+    "displayNameEsEs": "chorizo criollo",
+    "displayNameEsAr": "chorizo criollo",
+    "displayNameFi": "chorizo criollo",
+    "zone": "sausage",
+    "anatomicalArea": "sausage",
+    "inputProfileId": "default",
+    "defaultThicknessCm": 2,
+    "showThickness": false,
+    "allowedMethods": [
+      "grill_direct",
+      "grill_indirect"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "well_done"
+    ],
+    "style": "fast",
+    "cookingStyle": "fast",
+    "fireZone": "mixed",
+    "timeType": "total",
+    "defaultDoneness": "well_done",
+    "confidenceLevel": "medium",
+    "restingMinutes": 3,
+    "estimatedTotalTimeMin": 20,
+    "cookingMinutes": 20,
+    "targetTempC": 72,
+    "shortDescriptionEn": "Already seasoned and fatty; cook gently.",
+    "safetyNoteEn": "Cook chorizo to safe internal temperature.",
+    "criticalWarningEn": "rushing over high flames and bursting the casing",
+    "errorEn": "rushing over high flames and bursting the casing",
+    "aliasesEn": [
+      "chorizo",
+      "chorizo criollo",
+      "choripan",
+      "criollo"
+    ],
+    "aliasesMixed": [
+      "chorizo",
+      "chorizo criollo",
+      "choripan",
+      "criollo"
+    ],
+    "notesEn": "Already seasoned and fatty; cook gently.",
+    "tipsEn": [
+      "bbq",
+      "argentinian",
+      "classic",
+      "not applicable"
+    ],
+    "criticalMistakeEn": "rushing over high flames and bursting the casing",
+    "cuttingDirectionEn": "not applicable",
+    "proTipEn": "brown slowly then finish away from flare-ups",
+    "textureResultEn": "deep browned casing with safe juicy center",
+    "setupVisualKeyEn": "medium direct zone with indirect escape area"
+  },
+  {
+    "id": "burger_patty",
+    "animalId": "beef",
+    "category": "ground",
+    "canonicalNameEn": "Burger Patty",
+    "displayNameEn": "Burger Patty",
+    "displayNameEsEs": "hamburguesa",
+    "displayNameEsAr": "hamburguesa",
+    "displayNameFi": "burgerpihvi",
+    "zone": "ground meat",
+    "anatomicalArea": "ground meat",
+    "inputProfileId": "default",
+    "defaultThicknessCm": 2,
+    "showThickness": false,
+    "allowedMethods": [
+      "grill_direct",
+      "oven_pan"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "well_done"
+    ],
+    "style": "fast",
+    "cookingStyle": "fast",
+    "fireZone": "direct",
+    "timeType": "total",
+    "defaultDoneness": "well_done",
+    "confidenceLevel": "high",
+    "restingMinutes": 2,
+    "estimatedTotalTimeMin": 11,
+    "cookingMinutes": 11,
+    "targetTempC": 73,
+    "shortDescriptionEn": "Ground meat uses safe temperature by default.",
+    "safetyNoteEn": "Ground beef must be cooked to 71C / 160F for safety.",
+    "criticalWarningEn": "treating ground meat like steak doneness",
+    "errorEn": "treating ground meat like steak doneness",
+    "aliasesEn": [
+      "burger",
+      "burger patty",
+      "hamburger",
+      "hamburguesa"
+    ],
+    "aliasesMixed": [
+      "burger",
+      "burger patty",
+      "hamburger",
+      "hamburguesa"
+    ],
+    "notesEn": "Ground meat uses safe temperature by default.",
+    "tipsEn": [
+      "burger",
+      "quick",
+      "bbq",
+      "not applicable"
+    ],
+    "criticalMistakeEn": "treating ground meat like steak doneness",
+    "cuttingDirectionEn": "not applicable",
+    "proTipEn": "salt just before cooking and avoid pressing out juices",
+    "textureResultEn": "browned crust with safe juicy center",
+    "setupVisualKeyEn": "hot direct zone with cooler finishing side"
+  },
+  {
+    "id": "chicken_wings",
+    "animalId": "chicken",
+    "category": "wing",
+    "canonicalNameEn": "Chicken Wings",
+    "displayNameEn": "Chicken Wings",
+    "displayNameEsEs": "alitas de pollo",
+    "displayNameEsAr": "alitas de pollo",
+    "displayNameFi": "broilerin siivet",
+    "zone": "wing",
+    "anatomicalArea": "wing",
+    "inputProfileId": "poultry-whole",
+    "defaultThicknessCm": 2,
+    "showThickness": false,
+    "allowedMethods": [
+      "grill_direct",
+      "grill_indirect"
+    ],
+    "defaultMethod": "grill_direct",
+    "allowedDoneness": [
+      "safe",
+      "well_done"
+    ],
+    "style": "poultry",
+    "cookingStyle": "poultry",
+    "fireZone": "mixed",
+    "timeType": "total",
+    "defaultDoneness": "safe",
+    "confidenceLevel": "high",
+    "restingMinutes": 3,
+    "estimatedTotalTimeMin": 24,
+    "cookingMinutes": 24,
+    "targetTempC": 80,
+    "shortDescriptionEn": "Cook to safe temperature; higher finish helps crisp skin.",
+    "safetyNoteEn": "Chicken wings must be fully cooked.",
+    "criticalWarningEn": "serving before the meat near the bone is safely cooked",
+    "errorEn": "serving before the meat near the bone is safely cooked",
+    "aliasesEn": [
+      "chicken wings",
+      "wings",
+      "alitas",
+      "chicken wing"
+    ],
+    "aliasesMixed": [
+      "chicken wings",
+      "wings",
+      "alitas",
+      "chicken wing"
+    ],
+    "notesEn": "Cook to safe temperature; higher finish helps crisp skin.",
+    "tipsEn": [
+      "snack",
+      "crispy",
+      "bbq",
+      "not applicable"
+    ],
+    "criticalMistakeEn": "serving before the meat near the bone is safely cooked",
+    "cuttingDirectionEn": "not applicable",
+    "proTipEn": "dry brine 1 to 12 h and move away from flare-ups from skin fat",
+    "textureResultEn": "crisp skin with fully cooked juicy meat",
+    "setupVisualKeyEn": "medium direct zone plus cooler finishing area"
   }
 ] satisfies GeneratedCutProfile[];
 

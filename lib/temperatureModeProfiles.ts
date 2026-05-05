@@ -68,6 +68,20 @@ const phaseOneModeByCutId: Record<string, TemperatureMode> = {
   virrey: "delicate_target",
   asparagus: "visual_only",
   esparragos: "visual_only",
+  sausages: "safe_temp",
+  salchichas: "safe_temp",
+  chorizo: "safe_temp",
+  chorizo_criollo: "safe_temp",
+  burger: "safe_temp",
+  burger_patty: "safe_temp",
+  chicken_wing: "safe_temp",
+  chicken_wings: "safe_temp",
+  pork_belly_slices: "safe_temp",
+  panceta: "safe_temp",
+  corn_on_cob: "visual_only",
+  potato_halves: "visual_only",
+  mushrooms: "visual_only",
+  bell_peppers: "visual_only",
 };
 
 const phaseOneAllowedDonenessByCutId: Partial<Record<string, DonenessId[]>> = {
@@ -90,6 +104,14 @@ const phaseOneAllowedDonenessByCutId: Partial<Record<string, DonenessId[]>> = {
   pollo_entero: ["safe"],
   salmon: ["juicy", "medium"],
   virrey: ["juicy", "medium"],
+  sausages: ["safe"],
+  salchichas: ["safe"],
+  chorizo: ["safe"],
+  chorizo_criollo: ["safe"],
+  burger: ["safe"],
+  burger_patty: ["safe"],
+  chicken_wing: ["safe"],
+  chicken_wings: ["safe"],
 };
 
 const phaseOneTargetsByCutId: Partial<Record<string, Partial<Record<DonenessId, TargetTemp>>>> = {
@@ -103,6 +125,14 @@ const phaseOneTargetsByCutId: Partial<Record<string, Partial<Record<DonenessId, 
   pechuga: { safe: { pull: 72, final: 74 } },
   whole_chicken: { safe: { pull: 76, final: 78 } },
   pollo_entero: { safe: { pull: 76, final: 78 } },
+  sausages: { safe: { pull: 68, final: 70 } },
+  salchichas: { safe: { pull: 68, final: 70 } },
+  chorizo: { safe: { pull: 68, final: 70 } },
+  chorizo_criollo: { safe: { pull: 68, final: 70 } },
+  burger: { safe: { pull: 69, final: 71 } },
+  burger_patty: { safe: { pull: 69, final: 71 } },
+  chicken_wing: { safe: { pull: 72, final: 74 } },
+  chicken_wings: { safe: { pull: 72, final: 74 } },
 };
 
 function normalize(value: string | undefined) {

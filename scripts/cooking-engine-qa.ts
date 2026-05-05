@@ -24,6 +24,7 @@ import {
 import { normalizeCookingOutput } from "../lib/normalization/normalizeCookingOutput";
 import {
   getAllowedDonenessForCut,
+  getDefaultDonenessForCut,
   getTemperatureModeForCut,
   shouldShowDonenessSelectorForCut,
   type TemperatureMode,
@@ -37,6 +38,7 @@ import {
 } from "../lib/cooking/fatCapProfiles";
 import { formatPrepGuidance, getPrepGuidanceForCut } from "../lib/prepGuidance";
 import { getGeneratedCutProfile } from "../lib/generated/cutProfiles";
+import { getWarningCodesFromCatalogV2 } from "../lib/cutCatalogV2Adapter";
 
 const THICKNESS_CM = {
   thin: "2",
@@ -983,6 +985,128 @@ function validateCatalogV2RuntimeAdapterBridge(): Failure[] {
   return failures;
 }
 
+function validateBbqBasicItems(): Failure[] {
+  const failures: Failure[] = [];
+  const safeCases = [
+    { animalId: "pork", id: "sausages", label: "sausages" },
+    { animalId: "pork", id: "chorizo_criollo", label: "chorizo criollo" },
+    { animalId: "beef", id: "burger_patty", label: "burger patty" },
+    { animalId: "chicken", id: "chicken_wings", label: "chicken wings" },
+    { animalId: "pork", id: "pork_belly_slices", label: "pork belly slices" },
+  ] as const;
+  const visualCases = [
+    { animalId: "vegetables", id: "corn_on_cob", label: "corn on the cob" },
+    { animalId: "vegetables", id: "potato_halves", label: "potato halves" },
+    { animalId: "vegetables", id: "mushrooms", label: "mushrooms" },
+    { animalId: "vegetables", id: "bell_peppers", label: "bell peppers" },
+  ] as const;
+
+  for (const testCase of safeCases) {
+    const cut = { id: testCase.id, animalId: testCase.animalId };
+    const mode = getTemperatureModeForCut(cut);
+    const allowed = getAllowedDonenessForCut(cut);
+
+    if (mode !== "safe_temp") {
+      failures.push({
+        animal: testCase.animalId,
+        cut: testCase.id,
+        doneness: "safe",
+        thickness: `${THICKNESS_CM.medium} cm`,
+        equipment: "parrilla gas",
+        reason: `${testCase.label}: expected safe_temp, got ${mode}`,
+      });
+    }
+
+    if (allowed.some((doneness) => doneness === "rare" || doneness === "medium_rare") || shouldShowDonenessSelectorForCut(cut)) {
+      failures.push({
+        animal: testCase.animalId,
+        cut: testCase.id,
+        doneness: allowed.join("|") || "none",
+        thickness: `${THICKNESS_CM.medium} cm`,
+        equipment: "parrilla gas",
+        reason: `${testCase.label}: must not expose steak doneness`,
+      });
+    }
+
+    if (!getPrepGuidanceForCut(cut)) {
+      failures.push({
+        animal: testCase.animalId,
+        cut: testCase.id,
+        doneness: "safe",
+        thickness: `${THICKNESS_CM.medium} cm`,
+        equipment: "parrilla gas",
+        reason: `${testCase.label}: missing prep guidance`,
+      });
+    }
+  }
+
+  if (getDefaultDonenessForCut({ id: "burger_patty", animalId: "beef" }) !== "safe") {
+    failures.push({
+      animal: "beef",
+      cut: "burger_patty",
+      doneness: "safe",
+      thickness: `${THICKNESS_CM.medium} cm`,
+      equipment: "parrilla gas",
+      reason: "burger patty: expected safe ground-meat default doneness",
+    });
+  }
+
+  const porkBellyWarnings = getWarningCodesFromCatalogV2("pork_belly_slices") ?? [];
+  if (getFlareUpRiskForCut({ id: "pork_belly_slices", animalId: "pork" }) !== "high" || !porkBellyWarnings.includes("flare_up_risk")) {
+    failures.push({
+      animal: "pork",
+      cut: "pork_belly_slices",
+      doneness: "safe",
+      thickness: `${THICKNESS_CM.medium} cm`,
+      equipment: "parrilla gas",
+      reason: "pork belly slices: expected high flare-up metadata and warning code",
+    });
+  }
+
+  for (const testCase of visualCases) {
+    const cut = { id: testCase.id, animalId: testCase.animalId };
+    const mode = getTemperatureModeForCut(cut);
+    const allowed = getAllowedDonenessForCut(cut);
+
+    if (mode !== "visual_only" || allowed.length > 0 || shouldShowDonenessSelectorForCut(cut)) {
+      failures.push({
+        animal: testCase.animalId,
+        cut: testCase.id,
+        doneness: allowed.join("|") || "none",
+        thickness: `${THICKNESS_CM.medium} cm`,
+        equipment: "parrilla gas",
+        reason: `${testCase.label}: expected visual_only with no doneness selector`,
+      });
+    }
+
+    if (!getPrepGuidanceForCut(cut)) {
+      failures.push({
+        animal: testCase.animalId,
+        cut: testCase.id,
+        doneness: "visual_only",
+        thickness: `${THICKNESS_CM.medium} cm`,
+        equipment: "parrilla gas",
+        reason: `${testCase.label}: missing prep guidance`,
+      });
+    }
+  }
+
+  for (const id of ["sausages", "chorizo_criollo", "burger_patty", "chicken_wings"]) {
+    if (!getGeneratedCutProfile(id)) {
+      failures.push({
+        animal: "generated",
+        cut: id,
+        doneness: "safe",
+        thickness: `${THICKNESS_CM.medium} cm`,
+        equipment: "parrilla gas",
+        reason: `${id}: missing generated runtime cut profile`,
+      });
+    }
+  }
+
+  return failures;
+}
+
 function validateBoneInRibeyeNormalization(): Failure[] {
   const failures: Failure[] = [];
   const legacyAliases = [
@@ -1516,6 +1640,7 @@ function main() {
   const temperatureModeFailures = validateTemperatureModeProfiles();
   const picanhaFatCapFailures = validatePicanhaFatCapProfile();
   const catalogV2RuntimeAdapterFailures = validateCatalogV2RuntimeAdapterBridge();
+  const bbqBasicItemFailures = validateBbqBasicItems();
   const boneInRibeyeNormalizationFailures = validateBoneInRibeyeNormalization();
   const criticalAliasAndMetadataFailures = validateCriticalAliasAndMetadataSafety();
   const prepSaltingGuidanceFailures = validatePrepSaltingGuidance();
@@ -1576,6 +1701,7 @@ function main() {
     temperatureModeFailures.length +
     picanhaFatCapFailures.length +
     catalogV2RuntimeAdapterFailures.length +
+    bbqBasicItemFailures.length +
     boneInRibeyeNormalizationFailures.length +
     criticalAliasAndMetadataFailures.length +
     prepSaltingGuidanceFailures.length +
@@ -1663,6 +1789,17 @@ function main() {
       );
     }
 
+    process.exitCode = 1;
+  }
+
+  if (bbqBasicItemFailures.length > 0) {
+    console.log("BBQ basic item failures:");
+
+    for (const failure of bbqBasicItemFailures) {
+      console.log(
+        `- [${failure.animal} / ${failure.cut} / ${failure.doneness} / ${failure.thickness} / ${failure.equipment}] ${failure.reason}`,
+      );
+    }
     process.exitCode = 1;
   }
 
