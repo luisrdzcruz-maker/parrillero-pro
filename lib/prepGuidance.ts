@@ -220,12 +220,28 @@ function hasFatCapSurfaceGuidance(guidance: PrepGuidance) {
   return guidance.saltSurfaceGuidance === "meat_side_generous_fat_cap_light";
 }
 
+function hasPrepWarning(guidance: PrepGuidance, code: string) {
+  return guidance.prepWarningCodes.includes(code);
+}
+
 export function formatPrepGuidance(guidance: PrepGuidance | undefined, lang: Language = "en") {
   if (!guidance) return "";
 
   const range = formatRange(guidance.saltTimingMinutes ?? guidance.prepLeadTimeMinutes, lang);
 
   if (lang === "es") {
+    if (guidance.saltStrategy === "already_seasoned") {
+      return "Preparacion recomendada: Normalmente ya viene sazonado; evita agregar mucha sal.";
+    }
+    if (guidance.saltStrategy === "cured_salt_aware") {
+      return `Preparacion recomendada: Sala ${range} antes, pero usa poca sal si la panceta ya viene curada.`;
+    }
+    if (hasPrepWarning(guidance, "salt_butter_after_or_just_before")) {
+      return "Preparacion recomendada: Sala o agrega mantequilla justo antes o despues de cocinar.";
+    }
+    if (hasPrepWarning(guidance, "salt_late_to_avoid_moisture")) {
+      return "Preparacion recomendada: Sala tarde o justo antes para evitar exceso de humedad.";
+    }
     if (isVegetableGuidance(guidance)) return "Preparacion recomendada: Sala justo antes de cocinar.";
     if (isFishGuidance(guidance)) return `Preparacion recomendada: Sala ${range} antes solamente.`;
     if (hasFatCapSurfaceGuidance(guidance)) {
@@ -237,6 +253,18 @@ export function formatPrepGuidance(guidance: PrepGuidance | undefined, lang: Lan
     return `Preparacion recomendada: Sala ${range} antes. Si cocinas ahora, sala justo antes y seca la superficie.`;
   }
 
+  if (guidance.saltStrategy === "already_seasoned") {
+    return "Recommended prep: Usually already seasoned; avoid heavy extra salt.";
+  }
+  if (guidance.saltStrategy === "cured_salt_aware") {
+    return `Recommended prep: Salt ${range} before, but go light if the pork belly is already cured.`;
+  }
+  if (hasPrepWarning(guidance, "salt_butter_after_or_just_before")) {
+    return "Recommended prep: Salt or butter just before or after cooking.";
+  }
+  if (hasPrepWarning(guidance, "salt_late_to_avoid_moisture")) {
+    return "Recommended prep: Salt late or just before cooking to avoid excess moisture.";
+  }
   if (isVegetableGuidance(guidance)) return "Recommended prep: Salt just before cooking.";
   if (isFishGuidance(guidance)) return `Recommended prep: Salt ${range} before only.`;
   if (hasFatCapSurfaceGuidance(guidance)) {
