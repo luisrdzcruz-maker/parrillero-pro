@@ -1,4 +1,6 @@
+import { attachCookingTimeSemantics, type CookingTimeSemantics } from "../cookingTimeSemantics";
 import { normalizeCookingOutput } from "../normalization/normalizeCookingOutput";
+import { attachPrepGuidance, getPlanPrepGuidance } from "../prepGuidance";
 
 export const REQUIRED_MENU_BLOCKS = ["MENU", "CANTIDADES", "TIMING", "ORDEN", "COMPRA", "ERROR"];
 export const REQUIRED_MENU_BLOCKS_EN = ["MENU", "QUANTITIES", "TIMING", "ORDER", "SHOPPING", "ERROR"];
@@ -36,7 +38,9 @@ export function normalizeBlocks(
     normalized[key] = getBlockValue(source, key) || getFallbackText(key, type);
   }
 
-  return normalized;
+  const timeSemantics = (blocks as { readonly timeSemantics?: CookingTimeSemantics }).timeSemantics;
+  const normalizedWithTime = timeSemantics ? attachCookingTimeSemantics(normalized, timeSemantics) : normalized;
+  return attachPrepGuidance(normalizedWithTime, getPlanPrepGuidance(blocks));
 }
 
 function resolveRequiredBlocksForSource(

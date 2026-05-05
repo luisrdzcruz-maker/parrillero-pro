@@ -20,6 +20,7 @@ import {
   getDonenessSurfaceLabel,
   getEquipmentSurfaceLabel,
 } from "@/lib/i18n/surfaceFallbacks";
+import { formatPrepGuidance, getPlanPrepGuidance, getPrepGuidanceForCut } from "@/lib/prepGuidance";
 import type { AppText, Lang } from "@/lib/i18n/texts";
 import {
   createLiveCookingPayload,
@@ -1341,6 +1342,7 @@ function CookingResultStep({
         blocks={blocks}
         context={`${getAnimalSurfaceLabel(animal, lang)} · ${getEquipmentSurfaceLabel(equipment, lang)}`}
         cut={cut}
+        cutId={cutId}
         doneness={getDonenessSurfaceLabel(doneness, lang)}
         equipment={equipment}
         lang={lang}
@@ -1363,6 +1365,7 @@ export function ResultCards({
   blocks,
   context,
   cut,
+  cutId,
   doneness,
   equipment,
   lang = "es",
@@ -1380,6 +1383,7 @@ export function ResultCards({
   blocks: Blocks;
   context?: string;
   cut?: string;
+  cutId?: string;
   doneness?: string;
   equipment?: string;
   lang?: Lang;
@@ -1397,6 +1401,9 @@ export function ResultCards({
   const hasResult = keys.length > 0;
   const canStartCooking = Boolean(blocks.PASOS || blocks.STEPS);
   const resultSummary = buildResultSummary(blocks, keys, lang ?? "es");
+  const cutMeta = cutId ? getCutById(cutId) : undefined;
+  const prepGuidance = getPlanPrepGuidance(blocks) ?? (cutId ? getPrepGuidanceForCut(cutMeta ?? { id: cutId }) : undefined);
+  const prepGuidanceLine = formatPrepGuidance(prepGuidance, lang);
 
   function copyText() {
     if (typeof window === "undefined" || !navigator.clipboard) return;
@@ -1474,6 +1481,7 @@ export function ResultCards({
         keys={keys}
         lang={lang}
         loading={loading}
+        prepGuidanceLine={prepGuidanceLine}
         setCheckedItems={setCheckedItems}
         t={t}
       />

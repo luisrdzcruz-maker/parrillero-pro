@@ -83,6 +83,7 @@ export type CatalogV2FatCapMetadata = {
 
 export type CatalogV2PrepGuidance = {
   prepProfileId: string;
+  prepLeadTimeMinutes?: CatalogV2TimeRange;
   prepWarningCodes: readonly string[];
   saltStrategy?: string;
   saltTimingMinutes?: CatalogV2TimeRange;
@@ -786,14 +787,16 @@ export function getFatCapMetadataFromCatalogV2(
 export function getPrepGuidanceFromCatalogV2(cutId: string, variantId?: string): CatalogV2PrepGuidance | undefined {
   const row = getCutCatalogV2Row(cutId, variantId);
   if (!row) return undefined;
+  const prepProfile = getPrepProfileV2(row.prepProfileId);
 
   return {
     prepProfileId: row.prepProfileId,
-    prepWarningCodes: row.prepWarningCodes,
-    saltStrategy: row.saltStrategy,
-    saltTimingMinutes: row.saltTimingMinutes,
-    saltAmountGuidance: row.saltAmountGuidance,
-    saltSurfaceGuidance: row.saltSurfaceGuidance,
+    prepLeadTimeMinutes: prepProfile?.prepLeadTimeMinutes,
+    prepWarningCodes: row.prepWarningCodes.length ? row.prepWarningCodes : (prepProfile?.prepWarningCodes ?? []),
+    saltStrategy: row.saltStrategy ?? prepProfile?.saltStrategy,
+    saltTimingMinutes: row.saltTimingMinutes ?? prepProfile?.saltTimingMinutes,
+    saltAmountGuidance: row.saltAmountGuidance ?? prepProfile?.saltAmountGuidance,
+    saltSurfaceGuidance: row.saltSurfaceGuidance ?? prepProfile?.saltSurfaceGuidance,
   };
 }
 

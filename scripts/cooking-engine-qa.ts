@@ -35,6 +35,7 @@ import {
   hasFatCapForCut,
   requiresMoveOnFlareupForCut,
 } from "../lib/cooking/fatCapProfiles";
+import { formatPrepGuidance, getPrepGuidanceForCut } from "../lib/prepGuidance";
 
 const THICKNESS_CM = {
   thin: "2",
@@ -981,6 +982,169 @@ function validateCatalogV2RuntimeAdapterBridge(): Failure[] {
   return failures;
 }
 
+function validatePrepSaltingGuidance(): Failure[] {
+  const failures: Failure[] = [];
+  const cases = [
+    {
+      animal: "Vacuno",
+      cut: "ribeye",
+      doneness: "medium_rare",
+      label: "ribeye steak dry-brine guidance",
+      expectedMin: 45,
+      expectedMax: 1440,
+      requiredText: /\b45 min-24 h\b/i,
+    },
+    {
+      animal: "Vacuno",
+      cut: "picanha",
+      doneness: "medium_rare",
+      label: "picanha whole light fat-cap salting",
+      expectedMin: 120,
+      expectedMax: 1440,
+      requiredText: /\b2 h-24 h\b.*\b(grasa|fat cap)\b/i,
+    },
+    {
+      animal: "Vacuno",
+      cut: "brisket",
+      doneness: "medium_rare",
+      label: "brisket long dry-brine guidance",
+      expectedMin: 720,
+      expectedMax: 1440,
+      requiredText: /\b12 h-24 h\b/i,
+    },
+    {
+      animal: "Vacuno",
+      cut: "chuck_roast",
+      doneness: "medium_rare",
+      label: "chuck long dry-brine guidance",
+      expectedMin: 720,
+      expectedMax: 1440,
+      requiredText: /\b12 h-24 h\b/i,
+    },
+    {
+      animal: "Pollo",
+      cut: "chicken_breast",
+      doneness: "safe",
+      label: "chicken breast safe dry-brine guidance",
+      expectedMin: 30,
+      expectedMax: 240,
+      requiredText: /\b30 min-4 h\b/i,
+    },
+    {
+      animal: "Verduras",
+      cut: "asparagus",
+      doneness: "medium",
+      label: "asparagus just-before salting guidance",
+      expectedMin: 0,
+      expectedMax: 5,
+      requiredText: /\bjusto antes\b/i,
+    },
+  ] as const;
+
+  for (const testCase of cases) {
+    const input = makeInput({
+      animal: testCase.animal,
+      cut: testCase.cut,
+      doneness: testCase.doneness,
+    });
+    const plan = generateCookingPlan(input);
+    const guidance = plan?.prepGuidance;
+    const formatted = formatPrepGuidance(guidance, LANGUAGE);
+    const label = testCase.label;
+
+    if (!guidance) {
+      failures.push({
+        animal: testCase.animal,
+        cut: testCase.cut,
+        doneness: testCase.doneness,
+        thickness: `${THICKNESS_CM.medium} cm`,
+        equipment: "parrilla gas",
+        reason: `${label}: missing prepGuidance`,
+      });
+      continue;
+    }
+
+    const saltTiming = guidance.saltTimingMinutes;
+    if (saltTiming?.min !== testCase.expectedMin || saltTiming?.max !== testCase.expectedMax) {
+      failures.push({
+        animal: testCase.animal,
+        cut: testCase.cut,
+        doneness: testCase.doneness,
+        thickness: `${THICKNESS_CM.medium} cm`,
+        equipment: "parrilla gas",
+        reason: `${label}: expected salt window ${testCase.expectedMin}-${testCase.expectedMax}, got ${saltTiming?.min}-${saltTiming?.max}`,
+      });
+    }
+
+    if (!testCase.requiredText.test(formatted)) {
+      failures.push({
+        animal: testCase.animal,
+        cut: testCase.cut,
+        doneness: testCase.doneness,
+        thickness: `${THICKNESS_CM.medium} cm`,
+        equipment: "parrilla gas",
+        reason: `${label}: formatted guidance did not include expected text (${formatted})`,
+      });
+    }
+
+    if (plan?.timeSemantics) {
+      const { setupMinutes, cutPlanMinutes, sessionTotalMinutes } = plan.timeSemantics;
+      if (sessionTotalMinutes !== setupMinutes + cutPlanMinutes) {
+        failures.push({
+          animal: testCase.animal,
+          cut: testCase.cut,
+          doneness: testCase.doneness,
+          thickness: `${THICKNESS_CM.medium} cm`,
+          equipment: "parrilla gas",
+          reason: `${label}: prep lead time appears to affect sessionTotalMinutes`,
+        });
+      }
+    }
+  }
+
+  const directCases = [
+    {
+      animal: "beef",
+      cut: "bone_in_chuleton",
+      label: "chuleton thick steak dry-brine guidance",
+      expectedMin: 120,
+      expectedMax: 1440,
+    },
+    {
+      animal: "fish",
+      cut: "salmon",
+      label: "salmon short fish salting window",
+      expectedMin: 10,
+      expectedMax: 30,
+    },
+    {
+      animal: "fish",
+      cut: "virrey",
+      label: "virrey short fish salting window",
+      expectedMin: 10,
+      expectedMax: 30,
+    },
+  ] as const;
+
+  for (const testCase of directCases) {
+    const guidance = getPrepGuidanceForCut({ id: testCase.cut, animalId: testCase.animal });
+    const saltTiming = guidance?.saltTimingMinutes;
+
+    if (!guidance || saltTiming?.min !== testCase.expectedMin || saltTiming?.max !== testCase.expectedMax) {
+      failures.push({
+        animal: testCase.animal,
+        cut: testCase.cut,
+        doneness: "medium",
+        thickness: `${THICKNESS_CM.medium} cm`,
+        equipment: "parrilla gas",
+        reason: `${testCase.label}: expected salt window ${testCase.expectedMin}-${testCase.expectedMax}, got ${saltTiming?.min}-${saltTiming?.max}`,
+      });
+    }
+  }
+
+  return failures;
+}
+
 function validateLiveCookingPhaseMetadata(): Failure[] {
   const failures: Failure[] = [];
   const cases = [
@@ -1145,6 +1309,7 @@ function main() {
   const temperatureModeFailures = validateTemperatureModeProfiles();
   const picanhaFatCapFailures = validatePicanhaFatCapProfile();
   const catalogV2RuntimeAdapterFailures = validateCatalogV2RuntimeAdapterBridge();
+  const prepSaltingGuidanceFailures = validatePrepSaltingGuidance();
   const liveCookingPhaseFailures = validateLiveCookingPhaseMetadata();
 
   for (const animal of animalCatalog) {
@@ -1202,6 +1367,7 @@ function main() {
     temperatureModeFailures.length +
     picanhaFatCapFailures.length +
     catalogV2RuntimeAdapterFailures.length +
+    prepSaltingGuidanceFailures.length +
     liveCookingPhaseFailures.length;
 
   console.log("Cooking engine QA (local only)");
@@ -1281,6 +1447,18 @@ function main() {
     console.log("Catalog v2 runtime adapter failures:");
 
     for (const failure of catalogV2RuntimeAdapterFailures) {
+      console.log(
+        `- [${failure.animal} / ${failure.cut} / ${failure.doneness} / ${failure.thickness} / ${failure.equipment}] ${failure.reason}`,
+      );
+    }
+
+    process.exitCode = 1;
+  }
+
+  if (prepSaltingGuidanceFailures.length > 0) {
+    console.log("Prep salting guidance failures:");
+
+    for (const failure of prepSaltingGuidanceFailures) {
       console.log(
         `- [${failure.animal} / ${failure.cut} / ${failure.doneness} / ${failure.thickness} / ${failure.equipment}] ${failure.reason}`,
       );
