@@ -30,6 +30,7 @@
     "pipeline:setup": "npm run pipeline:assets -- setup",
     "pipeline:cuts": "npm run pipeline:assets -- cuts",
     "validate:cuts": "node scripts/validate-cuts.mjs",
+    "validate:cuts:v2": "tsx scripts/validate-cut-catalog-v2.ts",
     "generate:cuts": "node scripts/generate-cuts.mjs",
     "validate:generated-cuts": "tsx scripts/validate-generated-cut-runtime.ts",
     "pipeline:vegetables": "npm run pipeline:assets -- vegetables",
