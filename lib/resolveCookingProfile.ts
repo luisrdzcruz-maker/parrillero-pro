@@ -31,6 +31,7 @@ import {
   getDefaultDonenessForCut,
   getDonenessProfileIdForTemperatureMode,
 } from "./temperatureModeProfiles";
+import { getFatCapProfileForCut } from "./cooking/fatCapProfiles";
 
 export type CookingProfileSource = "generated" | "legacy";
 export type ExtendedCookingProfileSource = "generated" | "legacy" | "fallback";
@@ -367,6 +368,41 @@ function resolveCookingTime({
   return undefined;
 }
 
+function applyFatCapProfileToProductCut(
+  cut: ProductCut,
+  generatedProfile?: GeneratedCutProfile,
+): ProductCut {
+  const fatCapProfile = getFatCapProfileForCut(cut, generatedProfile);
+  if (!fatCapProfile) return cut;
+
+  return {
+    ...cut,
+    inputProfileId: fatCapProfile.preferredInputProfileId ?? cut.inputProfileId,
+    defaultMethod: fatCapProfile.preferredDefaultMethod ?? cut.defaultMethod,
+    defaultThicknessCm: fatCapProfile.minDefaultThicknessCm
+      ? Math.max(cut.defaultThicknessCm, fatCapProfile.minDefaultThicknessCm)
+      : cut.defaultThicknessCm,
+    restingMinutes: fatCapProfile.restMinutes
+      ? Math.max(cut.restingMinutes, fatCapProfile.restMinutes)
+      : cut.restingMinutes,
+    cookingMinutes:
+      cut.cookingMinutes && fatCapProfile.minActiveCookMinutes
+        ? Math.max(cut.cookingMinutes, fatCapProfile.minActiveCookMinutes)
+        : cut.cookingMinutes,
+  };
+}
+
+function applyFatCapMinimumCookMinutes(
+  cut: ProductCut,
+  minutes: number | undefined,
+  generatedProfile?: GeneratedCutProfile,
+) {
+  const fatCapProfile = getFatCapProfileForCut(cut, generatedProfile);
+  if (!fatCapProfile?.minActiveCookMinutes) return minutes;
+
+  return Math.max(minutes ?? 0, fatCapProfile.minActiveCookMinutes);
+}
+
 function resolveConfidenceLevel({
   generatedProfile,
   legacyCut,
@@ -429,7 +465,10 @@ export function resolveCookingProfile(input: CookingInput): ResolvedCookingProfi
     legacyCut ??
     (fallbackAnimalId ? buildFallbackCutFromAnimal(fallbackAnimalId, input.cut) : undefined);
   if (!rawBaseCut) return undefined;
-  const baseCut = applyTemperatureModeToProductCut(rawBaseCut);
+  const baseCut = applyFatCapProfileToProductCut(
+    applyTemperatureModeToProductCut(rawBaseCut),
+    generatedProfile,
+  );
 
   const requestedDonenessId = resolveLegacyDonenessId(input.doneness);
   const safeDoneness =
@@ -441,11 +480,15 @@ export function resolveCookingProfile(input: CookingInput): ResolvedCookingProfi
     }) ??
     applyCookingSafetyRules(baseCut.animalId, requestedDonenessId, baseCut.allowedDoneness);
   const thicknessCm = parseThicknessCm(input.thicknessCm);
-  const resolvedCookingMinutes = resolveCookingTime({
-    profile: generatedProfile,
-    thicknessCm,
-    legacyCut,
-  });
+  const resolvedCookingMinutes = applyFatCapMinimumCookMinutes(
+    baseCut,
+    resolveCookingTime({
+      profile: generatedProfile,
+      thicknessCm,
+      legacyCut,
+    }),
+    generatedProfile,
+  );
   const cut: ProductCut = {
     ...baseCut,
     cookingMinutes: resolvedCookingMinutes ?? baseCut.cookingMinutes,

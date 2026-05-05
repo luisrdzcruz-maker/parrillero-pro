@@ -28,6 +28,11 @@ import {
   shouldShowDonenessSelectorForCut,
   type TemperatureMode,
 } from "../lib/temperatureModeProfiles";
+import {
+  getFatCapBehaviorForCut,
+  getFatCapWarningCodesForCut,
+  requiresMoveOnFlareupForCut,
+} from "../lib/cooking/fatCapProfiles";
 
 const THICKNESS_CM = {
   thin: "2",
@@ -516,6 +521,16 @@ function getTemperatureText(plan: CookingPlan | null) {
   return String(normalized.TEMPERATURA ?? normalized.TEMPERATURE ?? normalized.temperature ?? "");
 }
 
+function getPlanAndStepText(plan: CookingPlan | null, steps: CookingStep[] | null) {
+  const normalized = plan ? normalizeCookingOutput(plan) : {};
+  const planText = Object.values(normalized).join(" ");
+  const stepText = (steps ?? [])
+    .map((step) => `${step.title} ${step.description} ${(step.tips ?? []).join(" ")} ${step.warningCue ?? ""}`)
+    .join(" ");
+
+  return `${planText} ${stepText}`;
+}
+
 type TemperatureModeQaCase = {
   animal: string;
   cut: string;
@@ -719,6 +734,152 @@ function validateTemperatureModeProfiles(): Failure[] {
   return failures;
 }
 
+function validatePicanhaFatCapProfile(): Failure[] {
+  const failures: Failure[] = [];
+  const input = makeInput({
+    animal: "Vacuno",
+    cut: "picanha",
+    doneness: "medium_rare",
+    thickness: "4",
+    equipment: "parrilla gas",
+  });
+  const cut = getCutForInput(input);
+  const plan = generateCookingPlan(input);
+  const steps = generateCookingSteps(input);
+  const combinedText = getPlanAndStepText(plan, steps);
+  const label = "picanha whole fat-cap profile";
+
+  if (!cut) {
+    failures.push({
+      animal: input.animal,
+      cut: input.cut,
+      doneness: input.doneness,
+      thickness: `${input.thicknessCm} cm`,
+      equipment: input.equipment,
+      reason: `${label}: cut could not be resolved`,
+    });
+    return failures;
+  }
+
+  const warningCodes = getFatCapWarningCodesForCut(cut);
+  const hasWarningMetadata = warningCodes.some((code) => /fat|flare|burn|indirect/i.test(code));
+  const hasWarningText = /\b(fat cap|grasa|flare-ups?|llamaradas|direct flames|llamas directas)\b/i.test(
+    combinedText,
+  );
+
+  if (!hasWarningMetadata && !hasWarningText) {
+    failures.push({
+      animal: input.animal,
+      cut: input.cut,
+      doneness: input.doneness,
+      thickness: `${input.thicknessCm} cm`,
+      equipment: input.equipment,
+      reason: `${label}: missing fat-cap warning metadata or warning text`,
+    });
+  }
+
+  if (getFatCapBehaviorForCut(cut) !== "indirect_then_brief_fat_cap_sear") {
+    failures.push({
+      animal: input.animal,
+      cut: input.cut,
+      doneness: input.doneness,
+      thickness: `${input.thicknessCm} cm`,
+      equipment: input.equipment,
+      reason: `${label}: expected indirect-first controlled fat-cap behavior`,
+    });
+  }
+
+  if (!requiresMoveOnFlareupForCut(cut)) {
+    failures.push({
+      animal: input.animal,
+      cut: input.cut,
+      doneness: input.doneness,
+      thickness: `${input.thicknessCm} cm`,
+      equipment: input.equipment,
+      reason: `${label}: expected move-to-indirect-on-flare-up metadata`,
+    });
+  }
+
+  if (getTemperatureModeForCut(cut) !== "doneness_target") {
+    failures.push({
+      animal: input.animal,
+      cut: input.cut,
+      doneness: input.doneness,
+      thickness: `${input.thicknessCm} cm`,
+      equipment: input.equipment,
+      reason: `${label}: picanha must remain doneness_target`,
+    });
+  }
+
+  if (!plan?.timeSemantics) {
+    failures.push({
+      animal: input.animal,
+      cut: input.cut,
+      doneness: input.doneness,
+      thickness: `${input.thicknessCm} cm`,
+      equipment: input.equipment,
+      reason: `${label}: missing timeSemantics`,
+    });
+  } else {
+    if (plan.timeSemantics.activeCookMinutes < 30) {
+      failures.push({
+        animal: input.animal,
+        cut: input.cut,
+        doneness: input.doneness,
+        thickness: `${input.thicknessCm} cm`,
+        equipment: input.equipment,
+        reason: `${label}: active cook time is unrealistically short (${plan.timeSemantics.activeCookMinutes} min)`,
+      });
+    }
+
+    if (plan.timeSemantics.cutPlanMinutes < 40) {
+      failures.push({
+        animal: input.animal,
+        cut: input.cut,
+        doneness: input.doneness,
+        thickness: `${input.thicknessCm} cm`,
+        equipment: input.equipment,
+        reason: `${label}: cut-plan time is unrealistically short (${plan.timeSemantics.cutPlanMinutes} min)`,
+      });
+    }
+  }
+
+  if (!/\b(indirect|indirecto)\b/i.test(combinedText) || !/\b(fat[- ]cap|grasa)\b/i.test(combinedText)) {
+    failures.push({
+      animal: input.animal,
+      cut: input.cut,
+      doneness: input.doneness,
+      thickness: `${input.thicknessCm} cm`,
+      equipment: input.equipment,
+      reason: `${label}: plan does not describe controlled indirect fat-cap behavior`,
+    });
+  }
+
+  if (!/\b(move|mueve|mover)\b.*\b(indirect|indirecto)\b.*\b(flare|llamarada)/i.test(combinedText)) {
+    failures.push({
+      animal: input.animal,
+      cut: input.cut,
+      doneness: input.doneness,
+      thickness: `${input.thicknessCm} cm`,
+      equipment: input.equipment,
+      reason: `${label}: plan does not tell the cook to move indirect on flare-ups`,
+    });
+  }
+
+  if (!/\b(slice against the grain|corta contra la fibra|cortar contra la fibra)\b/i.test(combinedText)) {
+    failures.push({
+      animal: input.animal,
+      cut: input.cut,
+      doneness: input.doneness,
+      thickness: `${input.thicknessCm} cm`,
+      equipment: input.equipment,
+      reason: `${label}: missing slice-against-grain guidance`,
+    });
+  }
+
+  return failures;
+}
+
 function validateLiveCookingPhaseMetadata(): Failure[] {
   const failures: Failure[] = [];
   const cases = [
@@ -881,6 +1042,7 @@ function main() {
   const donenessRegressionFailures = validateDonenessTemperatureRegression();
   const foodSafetyFailures = validateFoodSafetyRegression();
   const temperatureModeFailures = validateTemperatureModeProfiles();
+  const picanhaFatCapFailures = validatePicanhaFatCapProfile();
   const liveCookingPhaseFailures = validateLiveCookingPhaseMetadata();
 
   for (const animal of animalCatalog) {
@@ -936,6 +1098,7 @@ function main() {
     donenessRegressionFailures.length +
     foodSafetyFailures.length +
     temperatureModeFailures.length +
+    picanhaFatCapFailures.length +
     liveCookingPhaseFailures.length;
 
   console.log("Cooking engine QA (local only)");
@@ -991,6 +1154,18 @@ function main() {
     console.log("Temperature mode profile failures:");
 
     for (const failure of temperatureModeFailures) {
+      console.log(
+        `- [${failure.animal} / ${failure.cut} / ${failure.doneness} / ${failure.thickness} / ${failure.equipment}] ${failure.reason}`,
+      );
+    }
+
+    process.exitCode = 1;
+  }
+
+  if (picanhaFatCapFailures.length > 0) {
+    console.log("Picanha fat-cap profile failures:");
+
+    for (const failure of picanhaFatCapFailures) {
       console.log(
         `- [${failure.animal} / ${failure.cut} / ${failure.doneness} / ${failure.thickness} / ${failure.equipment}] ${failure.reason}`,
       );
