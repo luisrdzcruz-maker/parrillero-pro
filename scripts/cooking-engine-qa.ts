@@ -36,6 +36,7 @@ import {
   requiresMoveOnFlareupForCut,
 } from "../lib/cooking/fatCapProfiles";
 import { formatPrepGuidance, getPrepGuidanceForCut } from "../lib/prepGuidance";
+import { getGeneratedCutProfile } from "../lib/generated/cutProfiles";
 
 const THICKNESS_CM = {
   thin: "2",
@@ -633,7 +634,7 @@ function validateTemperatureModeProfiles(): Failure[] {
       mode: "doneness_target",
       showDoneness: true,
       requiredDoneness: ["medium_rare", "medium"],
-      label: "chuleton bone-in ribeye doneness mode",
+      label: "tomahawk long-bone ribeye doneness mode",
     },
   ];
 
@@ -984,7 +985,15 @@ function validateCatalogV2RuntimeAdapterBridge(): Failure[] {
 
 function validateBoneInRibeyeNormalization(): Failure[] {
   const failures: Failure[] = [];
-  const legacyAliases = ["ribeye:bone_in_chuleton", "bone_in_chuleton", "chuleton", "chuletón", "bone-in ribeye", "cowboy steak"];
+  const legacyAliases = [
+    "ribeye:bone_in_chuleton",
+    "bone_in_chuleton",
+    "chuleton",
+    "chuletón",
+    "bone-in ribeye",
+    "ribeye on the bone",
+    "cowboy steak",
+  ];
 
   for (const alias of legacyAliases) {
     const input = makeInput({
@@ -1090,6 +1099,90 @@ function validateBoneInRibeyeNormalization(): Failure[] {
       thickness: `${THICKNESS_CM.medium} cm`,
       equipment: "parrilla gas",
       reason: `tomahawk distinction: expected tomahawk, got ${tomahawk?.id ?? "unresolved"}`,
+    });
+  }
+
+  return failures;
+}
+
+function validateCriticalAliasAndMetadataSafety(): Failure[] {
+  const failures: Failure[] = [];
+  const tomahawkAliases = ["tomahawk", "long bone ribeye", "long-bone ribeye", "frenched ribeye"];
+
+  for (const alias of tomahawkAliases) {
+    const input = makeInput({
+      animal: "Vacuno",
+      cut: alias,
+      doneness: "medium_rare",
+      thickness: THICKNESS_CM.medium,
+    });
+    const cut = getCutForInput(input);
+
+    if (cut?.id !== "tomahawk") {
+      failures.push({
+        animal: input.animal,
+        cut: alias,
+        doneness: input.doneness,
+        thickness: `${THICKNESS_CM.medium} cm`,
+        equipment: input.equipment,
+        reason: `tomahawk alias safety: expected tomahawk, got ${cut?.id ?? "unresolved"}`,
+      });
+    }
+  }
+
+  const tomahawkGenerated = getGeneratedCutProfile("tomahawk");
+  const forbiddenTomahawkAliases = new Set(["chuleton", "chuletón", "bone-in ribeye", "cowboy steak", "ribeye on the bone"]);
+  const generatedTomahawkAliases = [...(tomahawkGenerated?.aliasesEn ?? []), ...(tomahawkGenerated?.aliasesMixed ?? [])].map(
+    (alias) => alias.toLowerCase(),
+  );
+  const conflictingTomahawkAliases = [...new Set(generatedTomahawkAliases.filter((alias) => forbiddenTomahawkAliases.has(alias)))];
+
+  if (conflictingTomahawkAliases.length > 0) {
+    failures.push({
+      animal: "Vacuno",
+      cut: "tomahawk",
+      doneness: "medium_rare",
+      thickness: `${THICKNESS_CM.medium} cm`,
+      equipment: "parrilla gas",
+      reason: `tomahawk generated aliases include Chuletón/bone-in ribeye aliases: ${conflictingTomahawkAliases.join(", ")}`,
+    });
+  }
+
+  const triTipGenerated = getGeneratedCutProfile("tri_tip");
+  if (triTipGenerated?.cookingStyle === "low_slow" || triTipGenerated?.style === "lowSlow") {
+    failures.push({
+      animal: "Vacuno",
+      cut: "tri_tip",
+      doneness: "medium_rare",
+      thickness: `${THICKNESS_CM.medium} cm`,
+      equipment: "parrilla gas",
+      reason: "tri-tip generated metadata must not expose low_slow/lowSlow as its primary style",
+    });
+  }
+
+  const triTip = getCutForInput(
+    makeInput({
+      animal: "Vacuno",
+      cut: "tri_tip",
+      doneness: "medium_rare",
+      thickness: THICKNESS_CM.medium,
+    }),
+  );
+  const triTipAllowedDoneness = triTip ? getAllowedDonenessForCut(triTip) : [];
+
+  if (
+    !triTip ||
+    getTemperatureModeForCut(triTip) !== "doneness_target" ||
+    !triTipAllowedDoneness.includes("medium_rare") ||
+    !triTipAllowedDoneness.includes("medium")
+  ) {
+    failures.push({
+      animal: "Vacuno",
+      cut: "tri_tip",
+      doneness: "medium_rare",
+      thickness: `${THICKNESS_CM.medium} cm`,
+      equipment: "parrilla gas",
+      reason: "tri-tip must remain doneness_target with medium_rare and medium targets",
     });
   }
 
@@ -1424,6 +1517,7 @@ function main() {
   const picanhaFatCapFailures = validatePicanhaFatCapProfile();
   const catalogV2RuntimeAdapterFailures = validateCatalogV2RuntimeAdapterBridge();
   const boneInRibeyeNormalizationFailures = validateBoneInRibeyeNormalization();
+  const criticalAliasAndMetadataFailures = validateCriticalAliasAndMetadataSafety();
   const prepSaltingGuidanceFailures = validatePrepSaltingGuidance();
   const liveCookingPhaseFailures = validateLiveCookingPhaseMetadata();
 
@@ -1483,6 +1577,7 @@ function main() {
     picanhaFatCapFailures.length +
     catalogV2RuntimeAdapterFailures.length +
     boneInRibeyeNormalizationFailures.length +
+    criticalAliasAndMetadataFailures.length +
     prepSaltingGuidanceFailures.length +
     liveCookingPhaseFailures.length;
 
@@ -1575,6 +1670,18 @@ function main() {
     console.log("Bone-in ribeye normalization failures:");
 
     for (const failure of boneInRibeyeNormalizationFailures) {
+      console.log(
+        `- [${failure.animal} / ${failure.cut} / ${failure.doneness} / ${failure.thickness} / ${failure.equipment}] ${failure.reason}`,
+      );
+    }
+
+    process.exitCode = 1;
+  }
+
+  if (criticalAliasAndMetadataFailures.length > 0) {
+    console.log("Critical alias and metadata safety failures:");
+
+    for (const failure of criticalAliasAndMetadataFailures) {
       console.log(
         `- [${failure.animal} / ${failure.cut} / ${failure.doneness} / ${failure.thickness} / ${failure.equipment}] ${failure.reason}`,
       );

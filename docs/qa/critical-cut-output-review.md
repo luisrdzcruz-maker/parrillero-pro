@@ -82,5 +82,5 @@ Legacy aliases still resolve to `bone_in_ribeye/chuleton`, including:
 
 ## Remaining Risks / Later Work
 
-- The generated source data still lists `bone-in ribeye` and `cowboy steak` as Tomahawk aliases. Runtime normalization now overrides those aliases safely, but a future generated-data cleanup should remove that ambiguity at the source.
-- `tri_tip` generated metadata still has a low-slow style label even though Catalog v2 and runtime guards correctly force `doneness_target`. This is not dangerous in current output, but should be cleaned up when generated cut data is refreshed.
+- Resolved in `docs/qa/critical-alias-metadata-cleanup.md`: generated Tomahawk aliases no longer claim generic bone-in ribeye / cowboy steak identity.
+- Resolved in `docs/qa/critical-alias-metadata-cleanup.md`: generated `tri_tip` metadata no longer exposes `low_slow` as its primary style.

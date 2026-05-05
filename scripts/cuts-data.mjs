@@ -293,6 +293,33 @@ function validateRecord(record, line, seenIds, errors) {
   if (record.confidence_level) {
     expectOneOf(record.confidence_level, CONFIDENCE_LEVELS, line, "confidence_level", errors);
   }
+
+  validateCriticalAliasAndMetadataSafety(record, line, errors);
+}
+
+function validateCriticalAliasAndMetadataSafety(record, line, errors) {
+  if (record.cut_id === "tomahawk") {
+    const aliases = parseSemicolonList(record.aliases).map((alias) => alias.toLowerCase());
+    const forbiddenAliases = new Set(["chuleton", "chuletón", "bone-in ribeye", "cowboy steak", "ribeye on the bone"]);
+    const conflictingAliases = aliases.filter((alias) => forbiddenAliases.has(alias));
+
+    if (conflictingAliases.length > 0) {
+      errors.push(
+        `Line ${line}: tomahawk aliases must not claim Chuletón/bone-in ribeye identity: ${conflictingAliases.join(", ")}`
+      );
+    }
+  }
+
+  if (record.cut_id === "tri_tip") {
+    if (record.cooking_style === "low_slow") {
+      errors.push(`Line ${line}: tri_tip cooking_style must not be low_slow; use reverse/doneness-target metadata.`);
+    }
+
+    const recommendedDoneness = parseSemicolonList(record.recommended_doneness).map((doneness) => doneness.toLowerCase());
+    if (!recommendedDoneness.includes("medium rare") || !recommendedDoneness.includes("medium")) {
+      errors.push(`Line ${line}: tri_tip must keep medium rare and medium doneness targets.`);
+    }
+  }
 }
 
 function parseCsv(csv) {

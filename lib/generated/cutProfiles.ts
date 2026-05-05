@@ -567,8 +567,8 @@ export const generatedCutProfiles = [
       "medium_rare",
       "medium"
     ],
-    "style": "lowSlow",
-    "cookingStyle": "low_slow",
+    "style": "reverse",
+    "cookingStyle": "reverse",
     "fireZone": "mixed",
     "timeType": "per_cm",
     "defaultDoneness": "medium_rare",
@@ -980,20 +980,22 @@ export const generatedCutProfiles = [
     "restingMinutes": 10,
     "estimatedTimeMinPerCm": 6,
     "targetTempC": 54,
-    "shortDescriptionEn": "Very thick bone-in ribeye.",
+    "shortDescriptionEn": "Very thick long-bone ribeye.",
     "criticalWarningEn": "trying to cook only over direct heat and burning outside",
     "errorEn": "trying to cook only over direct heat and burning outside",
     "aliasesEn": [
       "tomahawk",
-      "bone-in ribeye",
-      "cowboy steak"
+      "long bone ribeye",
+      "long-bone ribeye",
+      "frenched ribeye"
     ],
     "aliasesMixed": [
       "tomahawk",
-      "bone-in ribeye",
-      "cowboy steak"
+      "long bone ribeye",
+      "long-bone ribeye",
+      "frenched ribeye"
     ],
-    "notesEn": "Very thick bone-in ribeye.",
+    "notesEn": "Very thick long-bone ribeye.",
     "tipsEn": [
       "premium",
       "wow",
