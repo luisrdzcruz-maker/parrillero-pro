@@ -1,4 +1,5 @@
 import type { AnimalId, CookingMethod } from "@/lib/cookingCatalog";
+import { getFatCapMetadataFromCatalogV2 } from "@/lib/cutCatalogV2Adapter";
 
 export type FatCapBehavior =
   | "indirect_then_brief_fat_cap_sear"
@@ -52,6 +53,15 @@ export type FatCapProfile = {
   restMinutes?: number;
   directExposureMaxMinutes?: number;
   fatCapSearMinutes?: number;
+};
+
+const catalogBehaviorByValue: Record<string, FatCapBehavior> = {
+  brief_edge_render_only: "direct_sear_then_brief_fat_edge_render",
+  direct_sear_then_brief_fat_edge_render: "direct_sear_then_brief_fat_edge_render",
+  indirect_then_brief_fat_cap_sear: "indirect_then_brief_fat_cap_sear",
+  keep_fat_cap_indirect_then_sear_briefly_never_leave_over_flames: "indirect_then_brief_fat_cap_sear",
+  low_and_slow_fat_cap_protection: "low_and_slow_fat_cap_protection",
+  trim_to_even_layer_and_cook_fat_side_toward_heat_if_needed: "low_and_slow_fat_cap_protection",
 };
 
 const phaseOneFatCapProfilesByCutId: Record<string, FatCapProfile> = {
@@ -139,11 +149,63 @@ function getFatCapProfileForId(id: string | undefined) {
   return phaseOneFatCapProfilesByCutId[normalize(id)];
 }
 
+function isFatCapWarningCode(value: string): value is FatCapWarningCode {
+  return [
+    "fat_cap_burn_risk",
+    "flare_up_risk",
+    "move_to_indirect_on_flareup",
+    "do_not_leave_fat_cap_over_direct_flames",
+    "slice_against_grain",
+    "do_not_burn_fat_edge",
+    "probe_tender_not_doneness",
+  ].includes(value);
+}
+
+function isFatCapPhase(value: string): value is FatCapPhase {
+  return [
+    "preheat",
+    "indirect_roast",
+    "brief_fat_cap_sear",
+    "direct_sear",
+    "edge_fat_render_brief",
+    "low_slow_indirect",
+    "rest",
+    "slice_against_grain",
+  ].includes(value);
+}
+
+function getCatalogFatCapProfileForId(id: string | undefined): FatCapProfile | undefined {
+  const metadata = getFatCapMetadataFromCatalogV2(normalize(id));
+  if (!metadata?.hasFatCap) return undefined;
+
+  const behavior = catalogBehaviorByValue[normalize(metadata.behavior)];
+  if (!behavior) return undefined;
+
+  return {
+    hasFatCap: true,
+    behavior,
+    flareUpRisk: metadata.flareUpRisk,
+    requiresMoveOnFlareup: metadata.requiresMoveOnFlareup,
+    warningCodes: metadata.warningCodes.filter(isFatCapWarningCode),
+    preferredPhases: metadata.requiredPhases.filter(isFatCapPhase),
+    minActiveCookMinutes: metadata.timeRanges.activeCookMinutes.min,
+    maxActiveCookMinutes: metadata.timeRanges.activeCookMinutes.max,
+    restMinutes: metadata.timeRanges.restMinutes.min,
+    directExposureMaxMinutes: behavior === "direct_sear_then_brief_fat_edge_render" ? 2 : 3,
+    fatCapSearMinutes: behavior === "direct_sear_then_brief_fat_edge_render" ? 2 : 3,
+  };
+}
+
 export function getFatCapProfileForCut(
   cut: FatCapCutContext,
   profile?: Partial<FatCapCutContext>,
 ): FatCapProfile | undefined {
-  return getFatCapProfileForId(profile?.id) ?? getFatCapProfileForId(cut.id);
+  return (
+    getCatalogFatCapProfileForId(profile?.id) ??
+    getCatalogFatCapProfileForId(cut.id) ??
+    getFatCapProfileForId(profile?.id) ??
+    getFatCapProfileForId(cut.id)
+  );
 }
 
 export function hasFatCapForCut(cut: FatCapCutContext, profile?: Partial<FatCapCutContext>) {
@@ -158,7 +220,7 @@ export function getFatCapBehaviorForCut(
 }
 
 export function getFlareUpRiskForCut(cut: FatCapCutContext, profile?: Partial<FatCapCutContext>) {
-  return getFatCapProfileForCut(cut, profile)?.flareUpRisk;
+  return getFatCapProfileForCut(cut, profile)?.flareUpRisk ?? "low";
 }
 
 export function requiresMoveOnFlareupForCut(

@@ -30,7 +30,9 @@ import {
 } from "../lib/temperatureModeProfiles";
 import {
   getFatCapBehaviorForCut,
+  getFlareUpRiskForCut,
   getFatCapWarningCodesForCut,
+  hasFatCapForCut,
   requiresMoveOnFlareupForCut,
 } from "../lib/cooking/fatCapProfiles";
 
@@ -880,6 +882,105 @@ function validatePicanhaFatCapProfile(): Failure[] {
   return failures;
 }
 
+function validateCatalogV2RuntimeAdapterBridge(): Failure[] {
+  const failures: Failure[] = [];
+  const temperatureCases = [
+    { animalId: "beef", id: "chuck_roast", mode: "texture_breakdown", label: "chuck roast v2 mode" },
+    { animalId: "beef", id: "tri_tip", mode: "doneness_target", label: "tri-tip v2 mode" },
+    { animalId: "chicken", id: "chicken_breast", mode: "safe_temp", label: "chicken breast v2 mode" },
+    { animalId: "vegetables", id: "asparagus", mode: "visual_only", label: "asparagus v2 mode" },
+    { animalId: "beef", id: "ribeye", mode: "doneness_target", label: "ribeye v2 mode" },
+    { animalId: "beef", id: "bone_in_chuleton", mode: "doneness_target", label: "chuleton v2 alias mode" },
+  ] as const;
+
+  for (const testCase of temperatureCases) {
+    const mode = getTemperatureModeForCut({
+      id: testCase.id,
+      animalId: testCase.animalId,
+    });
+
+    if (mode !== testCase.mode) {
+      failures.push({
+        animal: testCase.animalId,
+        cut: testCase.id,
+        doneness: "medium",
+        thickness: `${THICKNESS_CM.medium} cm`,
+        equipment: "parrilla gas",
+        reason: `${testCase.label}: expected ${testCase.mode}, got ${mode}`,
+      });
+    }
+  }
+
+  const legacyFallbackMode = getTemperatureModeForCut({
+    id: "legacy_unmapped_bbq_cut",
+    animalId: "beef",
+    category: "bbq",
+  });
+  if (legacyFallbackMode !== "texture_breakdown") {
+    failures.push({
+      animal: "beef",
+      cut: "legacy_unmapped_bbq_cut",
+      doneness: "medium",
+      thickness: `${THICKNESS_CM.medium} cm`,
+      equipment: "parrilla gas",
+      reason: `legacy fallback mode: expected texture_breakdown, got ${legacyFallbackMode}`,
+    });
+  }
+
+  const picanha = { id: "picanha", animalId: "beef" as const };
+  const warningCodes = getFatCapWarningCodesForCut(picanha);
+
+  if (!hasFatCapForCut(picanha)) {
+    failures.push({
+      animal: "beef",
+      cut: "picanha",
+      doneness: "medium_rare",
+      thickness: "4 cm",
+      equipment: "parrilla gas",
+      reason: "catalog v2 fat-cap bridge: picanha should expose fat-cap metadata",
+    });
+  }
+
+  if (getFlareUpRiskForCut(picanha) !== "high" || !warningCodes.includes("flare_up_risk")) {
+    failures.push({
+      animal: "beef",
+      cut: "picanha",
+      doneness: "medium_rare",
+      thickness: "4 cm",
+      equipment: "parrilla gas",
+      reason: "catalog v2 fat-cap bridge: picanha should expose high flare-up warning metadata",
+    });
+  }
+
+  if (!requiresMoveOnFlareupForCut(picanha) || !warningCodes.includes("move_to_indirect_on_flareup")) {
+    failures.push({
+      animal: "beef",
+      cut: "picanha",
+      doneness: "medium_rare",
+      thickness: "4 cm",
+      equipment: "parrilla gas",
+      reason: "catalog v2 fat-cap bridge: picanha should require move-to-indirect behavior",
+    });
+  }
+
+  const fallbackFlareUpRisk = getFlareUpRiskForCut({
+    id: "legacy_unmapped_lean_cut",
+    animalId: "beef",
+  });
+  if (fallbackFlareUpRisk !== "low") {
+    failures.push({
+      animal: "beef",
+      cut: "legacy_unmapped_lean_cut",
+      doneness: "medium",
+      thickness: `${THICKNESS_CM.medium} cm`,
+      equipment: "parrilla gas",
+      reason: `fat-cap safe default: expected low flare-up risk, got ${fallbackFlareUpRisk}`,
+    });
+  }
+
+  return failures;
+}
+
 function validateLiveCookingPhaseMetadata(): Failure[] {
   const failures: Failure[] = [];
   const cases = [
@@ -1043,6 +1144,7 @@ function main() {
   const foodSafetyFailures = validateFoodSafetyRegression();
   const temperatureModeFailures = validateTemperatureModeProfiles();
   const picanhaFatCapFailures = validatePicanhaFatCapProfile();
+  const catalogV2RuntimeAdapterFailures = validateCatalogV2RuntimeAdapterBridge();
   const liveCookingPhaseFailures = validateLiveCookingPhaseMetadata();
 
   for (const animal of animalCatalog) {
@@ -1099,6 +1201,7 @@ function main() {
     foodSafetyFailures.length +
     temperatureModeFailures.length +
     picanhaFatCapFailures.length +
+    catalogV2RuntimeAdapterFailures.length +
     liveCookingPhaseFailures.length;
 
   console.log("Cooking engine QA (local only)");
@@ -1166,6 +1269,18 @@ function main() {
     console.log("Picanha fat-cap profile failures:");
 
     for (const failure of picanhaFatCapFailures) {
+      console.log(
+        `- [${failure.animal} / ${failure.cut} / ${failure.doneness} / ${failure.thickness} / ${failure.equipment}] ${failure.reason}`,
+      );
+    }
+
+    process.exitCode = 1;
+  }
+
+  if (catalogV2RuntimeAdapterFailures.length > 0) {
+    console.log("Catalog v2 runtime adapter failures:");
+
+    for (const failure of catalogV2RuntimeAdapterFailures) {
       console.log(
         `- [${failure.animal} / ${failure.cut} / ${failure.doneness} / ${failure.thickness} / ${failure.equipment}] ${failure.reason}`,
       );
