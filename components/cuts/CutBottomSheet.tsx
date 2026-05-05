@@ -1,13 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { AppIcon } from "@/components/ui";
 import { resolveMethodIconKey } from "@/lib/assets/equipmentMethodIconResolver";
 import type { GeneratedCutProfile } from "@/lib/generated/cutProfiles";
 import type { Lang } from "@/lib/i18n/texts";
-import { getSetupVisual } from "@/lib/setup/getSetupVisual";
-import { SETUP_VISUAL_FALLBACK } from "@/lib/setupVisualMap";
 import {
   getCategoryLabel,
   getCutDescriptor,
@@ -44,10 +42,8 @@ function getPrimaryCtaLabel(lang: Lang | undefined, cutName: string) {
 }
 
 export function CutBottomSheet({ profile, lang, onClose, onStartCooking }: CutBottomSheetProps) {
-  const [visualFallbackStep, setVisualFallbackStep] = useState<"none" | "fallback">("none");
+  const [failedVisualSrc, setFailedVisualSrc] = useState<string | null>(null);
   const effectiveLang = lang ?? "en";
-  const setupVisualSrc = useMemo(() => (profile ? getSetupVisual(profile.id) : null), [profile]);
-  const visualSrc = visualFallbackStep === "fallback" ? SETUP_VISUAL_FALLBACK : setupVisualSrc;
   if (!profile) return null;
 
   const displayName = getDisplayName(profile, effectiveLang);
@@ -58,6 +54,7 @@ export function CutBottomSheet({ profile, lang, onClose, onStartCooking }: CutBo
   const methodIcon = resolveMethodIconKey(bestMethod);
   const primaryCtaLabel = getPrimaryCtaLabel(effectiveLang, displayName);
   const cutIconSrc = getCutSelectionIconPath(profile);
+  const visualSrc = cutIconSrc && failedVisualSrc !== cutIconSrc ? cutIconSrc : null;
 
   return (
     <>
@@ -71,11 +68,10 @@ export function CutBottomSheet({ profile, lang, onClose, onStartCooking }: CutBo
           methodValue={methodValue}
           primaryCtaLabel={primaryCtaLabel}
           cutIconSrc={cutIconSrc}
-          visualFallbackStep={visualFallbackStep}
           visualSrc={visualSrc}
           onClose={onClose}
           onStartCooking={onStartCooking}
-          setVisualFallbackStep={setVisualFallbackStep}
+          onVisualError={setFailedVisualSrc}
           inline={false}
         />
       </aside>
@@ -89,11 +85,10 @@ export function CutBottomSheet({ profile, lang, onClose, onStartCooking }: CutBo
           methodValue={methodValue}
           primaryCtaLabel={primaryCtaLabel}
           cutIconSrc={cutIconSrc}
-          visualFallbackStep={visualFallbackStep}
           visualSrc={visualSrc}
           onClose={onClose}
           onStartCooking={onStartCooking}
-          setVisualFallbackStep={setVisualFallbackStep}
+          onVisualError={setFailedVisualSrc}
           inline
         />
       </div>
@@ -110,11 +105,10 @@ type CutDetailContentProps = {
   methodValue: string;
   primaryCtaLabel: string;
   cutIconSrc?: string;
-  visualFallbackStep: "none" | "fallback";
   visualSrc: string | null | undefined;
   onClose: () => void;
   onStartCooking?: (profile: GeneratedCutProfile) => void;
-  setVisualFallbackStep: (value: "none" | "fallback") => void;
+  onVisualError: (src: string) => void;
   inline: boolean;
 };
 
@@ -127,11 +121,10 @@ function CutDetailContent({
   methodValue,
   primaryCtaLabel,
   cutIconSrc,
-  visualFallbackStep,
   visualSrc,
   onClose,
   onStartCooking,
-  setVisualFallbackStep,
+  onVisualError,
   inline,
 }: CutDetailContentProps) {
   return (
@@ -213,37 +206,28 @@ function CutDetailContent({
         />
       </div>
 
-      <div className="mt-2.5 overflow-hidden rounded-[1.2rem] border border-white/10 bg-slate-950 shadow-lg shadow-black/20 ring-1 ring-inset ring-white/[0.04]">
-        <div className="relative aspect-[16/7] w-full sm:aspect-[16/6]">
-          {visualSrc ? (
+      {visualSrc ? (
+        <div className="mt-2.5 overflow-hidden rounded-[1.2rem] border border-white/10 bg-[radial-gradient(circle_at_20%_0%,rgba(251,146,60,0.16),transparent_38%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(2,6,23,0.94))] shadow-lg shadow-black/20 ring-1 ring-inset ring-white/[0.04]">
+          <div className="relative aspect-[16/7] w-full sm:aspect-[16/6]">
             <Image
               src={visualSrc}
               alt={
                 lang === "es"
-                  ? `Visual de setup para ${displayName}`
+                  ? `Visual de ${displayName}`
                   : lang === "fi"
-                    ? `Valmistelukuva: ${displayName}`
-                    : `Setup visual for ${displayName}`
+                    ? `${displayName} - kuva`
+                    : `Visual for ${displayName}`
               }
               fill
               loading="lazy"
               sizes="(min-width: 640px) 560px, 100vw"
-              className="object-cover"
-              onError={() => {
-                if (visualFallbackStep === "none" && visualSrc !== SETUP_VISUAL_FALLBACK) {
-                  setVisualFallbackStep("fallback");
-                }
-              }}
+              className="object-contain p-5 sm:p-6"
+              onError={() => onVisualError(visualSrc)}
             />
-          ) : (
-            <div className="h-full w-full bg-[radial-gradient(circle_at_20%_0%,rgba(251,146,60,0.22),transparent_38%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(2,6,23,0.94))]" />
-          )}
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent_56%,rgba(2,6,23,0.78)_100%)]" />
-          <p className="absolute bottom-2 left-2 rounded-full border border-white/15 bg-black/45 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-orange-200 backdrop-blur-md">
-            {lang === "es" ? "Visual de setup" : lang === "fi" ? "Valmistelukuva" : "Setup visual"}
-          </p>
+            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent_62%,rgba(2,6,23,0.56)_100%)]" />
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <div className="mt-2.5">
         <CutInfoModule
