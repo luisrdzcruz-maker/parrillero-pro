@@ -5,6 +5,8 @@ import {
   localizeLiveStepEntry,
   localizeResultSurfaceCopy,
 } from "@/lib/i18n/surfaceFallbacks";
+import type { CookingTimeSemantics, CookingTimeSemanticsSource } from "@/lib/cookingTimeSemantics";
+import { getLiveCookingPhaseMetadata } from "@/lib/liveCookingPhases";
 
 export const LIVE_COOKING_STORAGE_KEY = "parrillero_live_cooking_plan_v1";
 
@@ -25,6 +27,7 @@ export type LiveCookingPlanPayload = {
   input: LiveCookingInputSnapshot;
   blocks: LiveCookingBlocks;
   signature: string;
+  timeSemantics?: CookingTimeSemantics;
 };
 
 type BuildLiveStepsResult = {
@@ -38,6 +41,47 @@ const FALLBACK_STEP_SECONDS = 180;
 
 function asText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function asCookingTimeSemantics(value: unknown): CookingTimeSemantics | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const record = value as Record<string, unknown>;
+  const source = asText(record.source);
+  const readMinutes = (key: keyof CookingTimeSemantics) => {
+    const parsed = Number(record[key]);
+    return Number.isFinite(parsed) && parsed >= 0 ? Math.round(parsed) : null;
+  };
+  const setupMinutes = readMinutes("setupMinutes");
+  const activeCookMinutes = readMinutes("activeCookMinutes");
+  const restMinutes = readMinutes("restMinutes");
+  const cutPlanMinutes = readMinutes("cutPlanMinutes");
+  const sessionTotalMinutes = readMinutes("sessionTotalMinutes");
+  const validSource: CookingTimeSemanticsSource =
+    source === "catalog-v2" || source === "mixed" || source === "legacy-engine-derived"
+      ? source
+      : "legacy-engine-derived";
+
+  if (
+    setupMinutes == null ||
+    activeCookMinutes == null ||
+    restMinutes == null ||
+    cutPlanMinutes == null ||
+    sessionTotalMinutes == null
+  ) {
+    return undefined;
+  }
+
+  const prepLeadTimeMinutes = readMinutes("prepLeadTimeMinutes");
+
+  return {
+    setupMinutes,
+    activeCookMinutes,
+    restMinutes,
+    cutPlanMinutes,
+    sessionTotalMinutes,
+    prepLeadTimeMinutes,
+    source: validSource,
+  };
 }
 
 function normalizeBlocks(blocks: LiveCookingBlocks): LiveCookingBlocks {
@@ -185,6 +229,9 @@ export function createLiveCookingPayload(params: {
   input: LiveCookingInputSnapshot;
   blocks: LiveCookingBlocks;
 }) {
+  const timeSemantics = asCookingTimeSemantics(
+    (params.blocks as LiveCookingBlocks & { readonly timeSemantics?: unknown }).timeSemantics,
+  );
   const normalizedBlocks = normalizeBlocks(params.blocks);
   const baseSignature = [
     params.input.animal,
@@ -204,6 +251,7 @@ export function createLiveCookingPayload(params: {
     input: params.input,
     blocks: normalizedBlocks,
     signature: baseSignature,
+    ...(timeSemantics ? { timeSemantics } : {}),
   };
 
   return payload;
@@ -240,6 +288,9 @@ export function readLiveCookingPayload(): LiveCookingPlanPayload | null {
       input: parsed.input,
       blocks: normalizeBlocks(parsed.blocks),
       signature: asText(parsed.signature),
+      ...(asCookingTimeSemantics(parsed.timeSemantics)
+        ? { timeSemantics: asCookingTimeSemantics(parsed.timeSemantics) }
+        : {}),
     };
   } catch {
     return null;
@@ -283,14 +334,26 @@ export function buildLiveStepsFromPayload(
     const tempTarget =
       explicitTemp ??
       (zone === "Rest" ? targets.final : targets.pull ?? null);
+    const label = pickLabel(entry);
+    const notes = pickStepInstruction(entry, surfaceLang);
+    const phaseMetadata = getLiveCookingPhaseMetadata({
+      label,
+      zone,
+      duration,
+      notes,
+      index,
+      totalSteps: entries.length,
+      timeSemantics: payload.timeSemantics,
+    });
 
     return {
       id: `plan-step-${index + 1}`,
-      label: pickLabel(entry),
+      label,
       zone,
       duration,
       tempTarget,
-      notes: pickStepInstruction(entry, surfaceLang),
+      notes,
+      ...phaseMetadata,
     };
   });
 

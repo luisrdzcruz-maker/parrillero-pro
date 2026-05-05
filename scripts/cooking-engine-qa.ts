@@ -17,6 +17,10 @@ import {
   getCutsByAnimal,
   getDonenessOptions,
 } from "../lib/cookingEngine";
+import {
+  buildLiveStepsFromPayload,
+  createLiveCookingPayload,
+} from "../lib/liveCookingPlan";
 import { normalizeCookingOutput } from "../lib/normalization/normalizeCookingOutput";
 
 const THICKNESS_CM = {
@@ -500,6 +504,160 @@ function validateFoodSafetyRegression(): Failure[] {
   return failures;
 }
 
+function validateLiveCookingPhaseMetadata(): Failure[] {
+  const failures: Failure[] = [];
+  const cases = [
+    {
+      animal: "Vacuno",
+      cut: "ribeye",
+      doneness: "medium_rare",
+      thickness: THICKNESS_CM.medium,
+      equipment: "parrilla gas",
+      label: "ribeye live phases",
+    },
+    {
+      animal: "Vacuno",
+      cut: "picanha",
+      doneness: "medium",
+      thickness: THICKNESS_CM.medium,
+      equipment: "parrilla gas",
+      label: "picanha live phases",
+    },
+    {
+      animal: "Pollo",
+      cut: "pollo_entero",
+      doneness: "safe",
+      thickness: THICKNESS_CM.medium,
+      equipment: "parrilla gas",
+      label: "whole chicken live phases",
+    },
+    {
+      animal: "Verduras",
+      cut: "esparragos",
+      doneness: "juicy",
+      thickness: THICKNESS_CM.thin,
+      equipment: "parrilla gas",
+      label: "asparagus live phases",
+    },
+  ];
+
+  for (const testCase of cases) {
+    const input = makeInput(testCase);
+    const plan = generateCookingPlan(input);
+    if (!plan) {
+      failures.push({
+        ...testCase,
+        thickness: `${testCase.thickness} cm`,
+        reason: `${testCase.label}: plan is null`,
+      });
+      continue;
+    }
+
+    const payload = createLiveCookingPayload({
+      input: {
+        animal: testCase.animal,
+        cut: testCase.cut,
+        equipment: testCase.equipment,
+        doneness: testCase.doneness,
+        thickness: testCase.thickness,
+        lang: LANGUAGE,
+      },
+      blocks: plan,
+    });
+    const steps = buildLiveStepsFromPayload(payload, [], LANGUAGE).steps;
+
+    if (steps.length === 0) {
+      failures.push({
+        ...testCase,
+        thickness: `${testCase.thickness} cm`,
+        reason: `${testCase.label}: no live steps built`,
+      });
+      continue;
+    }
+
+    if (steps.some((step) => !step.phaseType)) {
+      failures.push({
+        ...testCase,
+        thickness: `${testCase.thickness} cm`,
+        reason: `${testCase.label}: missing phaseType metadata`,
+      });
+    }
+
+    if (plan.timeSemantics?.setupMinutes && !steps.some((step) => step.isSetupPhase)) {
+      failures.push({
+        ...testCase,
+        thickness: `${testCase.thickness} cm`,
+        reason: `${testCase.label}: missing setup phase`,
+      });
+    }
+
+    if (!steps.some((step) => step.isActiveCookingPhase)) {
+      failures.push({
+        ...testCase,
+        thickness: `${testCase.thickness} cm`,
+        reason: `${testCase.label}: missing active cooking phase`,
+      });
+    }
+
+    const hasServeText = steps.some((step) =>
+      /\b(servir|serve|listo|slice|cortar|finish|terminar)\b/i.test(`${step.label} ${step.notes ?? ""}`),
+    );
+
+    if (
+      plan.timeSemantics?.restMinutes &&
+      !hasServeText &&
+      !steps.some((step) => step.isRestPhase)
+    ) {
+      failures.push({
+        ...testCase,
+        thickness: `${testCase.thickness} cm`,
+        reason: `${testCase.label}: missing rest phase`,
+      });
+    }
+
+    const sessionMinutes = Math.round(
+      steps
+        .filter((step) => step.contributesToSessionTotal)
+        .reduce((sum, step) => sum + step.duration, 0) / 60,
+    );
+    const cutPlanMinutes = Math.round(
+      steps
+        .filter((step) => step.contributesToCutPlan)
+        .reduce((sum, step) => sum + step.duration, 0) / 60,
+    );
+
+    if (plan.timeSemantics && Math.abs(sessionMinutes - plan.timeSemantics.sessionTotalMinutes) > 1) {
+      failures.push({
+        ...testCase,
+        thickness: `${testCase.thickness} cm`,
+        reason: `${testCase.label}: live session phase total ${sessionMinutes} min differs from sessionTotalMinutes ${plan.timeSemantics.sessionTotalMinutes} min`,
+      });
+    }
+
+    if (
+      plan.timeSemantics &&
+      !steps.some((step) => step.phaseType === "serve") &&
+      Math.abs(cutPlanMinutes - plan.timeSemantics.cutPlanMinutes) > 1
+    ) {
+      failures.push({
+        ...testCase,
+        thickness: `${testCase.thickness} cm`,
+        reason: `${testCase.label}: live cut-plan phase total ${cutPlanMinutes} min differs from cutPlanMinutes ${plan.timeSemantics.cutPlanMinutes} min`,
+      });
+    }
+
+    if (hasServeText && !steps.some((step) => step.phaseType === "serve")) {
+      failures.push({
+        ...testCase,
+        thickness: `${testCase.thickness} cm`,
+        reason: `${testCase.label}: serve-like step was not classified as serve`,
+      });
+    }
+  }
+
+  return failures;
+}
+
 function main() {
   const failures: Failure[] = [];
   let total = 0;
@@ -507,6 +665,7 @@ function main() {
   const languageRegressionError = validateLanguageRegression();
   const donenessRegressionFailures = validateDonenessTemperatureRegression();
   const foodSafetyFailures = validateFoodSafetyRegression();
+  const liveCookingPhaseFailures = validateLiveCookingPhaseMetadata();
 
   for (const animal of animalCatalog) {
     const animalLabel = animal.names.es;
@@ -557,7 +716,8 @@ function main() {
   }
 
   const failed = failures.length;
-  const guardFailed = donenessRegressionFailures.length + foodSafetyFailures.length;
+  const guardFailed =
+    donenessRegressionFailures.length + foodSafetyFailures.length + liveCookingPhaseFailures.length;
 
   console.log("Cooking engine QA (local only)");
   console.log("------------------------------");
@@ -600,6 +760,18 @@ function main() {
     console.log("Food safety regression failures:");
 
     for (const failure of foodSafetyFailures) {
+      console.log(
+        `- [${failure.animal} / ${failure.cut} / ${failure.doneness} / ${failure.thickness} / ${failure.equipment}] ${failure.reason}`,
+      );
+    }
+
+    process.exitCode = 1;
+  }
+
+  if (liveCookingPhaseFailures.length > 0) {
+    console.log("Live cooking phase metadata failures:");
+
+    for (const failure of liveCookingPhaseFailures) {
       console.log(
         `- [${failure.animal} / ${failure.cut} / ${failure.doneness} / ${failure.thickness} / ${failure.equipment}] ${failure.reason}`,
       );

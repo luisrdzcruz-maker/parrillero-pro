@@ -9,6 +9,10 @@ import {
   sanitizeLiveInstructionCopy,
   type SurfaceLang,
 } from "@/lib/i18n/surfaceFallbacks";
+import {
+  getLiveCookingPhaseMetadata,
+  type LiveCookingPhaseType,
+} from "@/lib/liveCookingPhases";
 
 export type LiveZone = "direct" | "indirect" | "rest";
 export type UrgencyLevel = "normal" | "attention" | "critical";
@@ -20,6 +24,12 @@ export type LiveStep = {
   duration: number;
   tempTarget?: number | null;
   notes?: string | null;
+  phaseType?: LiveCookingPhaseType;
+  contributesToSessionTotal?: boolean;
+  contributesToCutPlan?: boolean;
+  isSetupPhase?: boolean;
+  isRestPhase?: boolean;
+  isActiveCookingPhase?: boolean;
 };
 
 export type LiveCookingStepState = {
@@ -30,6 +40,12 @@ export type LiveCookingStepState = {
   displayZone: string;
   instructions: string;
   tempTarget: number | null;
+  phaseType: LiveCookingPhaseType;
+  contributesToSessionTotal: boolean;
+  contributesToCutPlan: boolean;
+  isSetupPhase: boolean;
+  isRestPhase: boolean;
+  isActiveCookingPhase: boolean;
   isActive: boolean;
   isCompleted: boolean;
   isNext: boolean;
@@ -113,6 +129,12 @@ function buildLiveStepStates(
 
   return steps.map((step, index) => {
     const duration = safeDuration(step.duration);
+    const phaseMetadata = getLiveCookingPhaseMetadata({
+      ...step,
+      duration,
+      index,
+      totalSteps: steps.length,
+    });
     const isActive = index === safeCurrentIndex;
     const isCompleted = index < safeCurrentIndex;
     const isNext = index === safeCurrentIndex + 1;
@@ -131,6 +153,7 @@ function buildLiveStepStates(
       displayZone: localizeLiveZoneLabel(step.zone?.trim() || "", lang),
       instructions: pickInstructions(step, lang),
       tempTarget: step.tempTarget ?? null,
+      ...phaseMetadata,
       isActive,
       isCompleted,
       isNext,
@@ -257,6 +280,12 @@ export function useLiveCooking({
           ...step,
           id: step.id || `live-step-${index + 1}`,
           duration: safeDuration(step.duration),
+          ...getLiveCookingPhaseMetadata({
+            ...step,
+            duration: safeDuration(step.duration),
+            index,
+            totalSteps: steps.length,
+          }),
         })),
     [steps],
   );
