@@ -16,8 +16,40 @@ import { ParrilladaWarningsFinal } from './ParrilladaWarningsFinal';
 const MIN_ITEMS = 2;
 const MAX_ITEMS = 4;
 
-function localDateTimeToIso(value: string): string {
-  return new Date(value).toISOString();
+function toLocalInputValue(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+function tryLocalDateTimeToIso(value: string): string | null {
+  const trimmed = value.trim();
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(trimmed);
+  if (!match) return null;
+
+  const [, yearRaw, monthRaw, dayRaw, hourRaw, minuteRaw] = match;
+  const year = Number(yearRaw);
+  const month = Number(monthRaw);
+  const day = Number(dayRaw);
+  const hour = Number(hourRaw);
+  const minute = Number(minuteRaw);
+  const localDate = new Date(year, month - 1, day, hour, minute, 0, 0);
+
+  if (
+    Number.isNaN(localDate.getTime()) ||
+    localDate.getFullYear() !== year ||
+    localDate.getMonth() !== month - 1 ||
+    localDate.getDate() !== day ||
+    localDate.getHours() !== hour ||
+    localDate.getMinutes() !== minute
+  ) {
+    return null;
+  }
+
+  return localDate.toISOString();
 }
 
 function formatLocalDateTime(value: string): string {
@@ -46,7 +78,16 @@ function strategyLabel(strategy: SchedulerStrategy): string {
 function defaultServeAtLocal(): string {
   const d = new Date();
   d.setHours(d.getHours() + 3, 0, 0, 0);
-  return d.toISOString().slice(0, 16);
+  return toLocalInputValue(d);
+}
+
+function suggestedEarliestServeLocal(result: PlannerResult, nowMs: number): string {
+  const planStartMs = new Date(result.summary.planStartIso).getTime();
+  const currentServeMs = new Date(result.request.serveAtIso).getTime();
+  const latenessMinutes = Math.max(0, Math.ceil((nowMs - planStartMs) / 60000));
+  const bufferMinutes = 10;
+  const shiftedServeMs = currentServeMs + (latenessMinutes + bufferMinutes) * 60000;
+  return toLocalInputValue(new Date(shiftedServeMs));
 }
 
 function resolveNextStepMessage({
@@ -74,13 +115,15 @@ export function ParrilladaSchedulerScreen() {
   const [sessionNowMs] = useState(() => Date.now());
   const selectedCount = selectedItems.length;
   const canBuildPlan = selectedCount >= MIN_ITEMS;
+  const serveAtIso = useMemo(() => tryLocalDateTimeToIso(serveAtLocal), [serveAtLocal]);
+  const hasValidServeTime = Boolean(serveAtIso);
 
   const result = useMemo(() => {
-    if (!canBuildPlan) return null;
+    if (!canBuildPlan || !serveAtIso) return null;
     return (
       scheduleParrillada({
         items: selectedItems,
-        serveAtIso: localDateTimeToIso(serveAtLocal),
+        serveAtIso,
         grillCapacity: NAPOLEON_ROGUE_525_LITE,
         strategy,
         allowHolding: true,
@@ -88,7 +131,7 @@ export function ParrilladaSchedulerScreen() {
         maxPlanLookbackMinutes: 480,
       })
     );
-  }, [canBuildPlan, selectedItems, serveAtLocal, strategy]);
+  }, [canBuildPlan, selectedItems, serveAtIso, strategy]);
 
   const startsInPast = useMemo(() => {
     if (!result) return false;
@@ -101,6 +144,11 @@ export function ParrilladaSchedulerScreen() {
       if (current.length >= MAX_ITEMS) return current;
       return [...current, item];
     });
+  }
+
+  function applyEarliestServeTime() {
+    if (!result) return;
+    setServeAtLocal(suggestedEarliestServeLocal(result, Date.now()));
   }
 
   return (
@@ -124,6 +172,9 @@ export function ParrilladaSchedulerScreen() {
               onChange={(event) => setServeAtLocal(event.target.value)}
             />
             <p className="text-xs text-white/55">{formatLocalDateTime(serveAtLocal)}</p>
+            {!hasValidServeTime && (
+              <p className="text-xs text-amber-200">Choose a valid serve time.</p>
+            )}
           </label>
 
           <label className="space-y-1.5">
@@ -164,6 +215,9 @@ export function ParrilladaSchedulerScreen() {
           <article className="rounded-2xl border border-white/10 bg-black/20 p-2.5">
             <p className="text-[11px] uppercase tracking-wide text-white/45">Plan starts</p>
             <p className="mt-1 font-semibold">{result ? formatClock(result.summary.planStartIso) : '--:--'}</p>
+            <p className="mt-1 text-[11px] leading-4 text-white/50">
+              Calculated from selected items and serve time.
+            </p>
           </article>
           <article className="rounded-2xl border border-white/10 bg-black/20 p-2.5">
             <p className="text-[11px] uppercase tracking-wide text-white/45">Duration</p>
@@ -179,7 +233,16 @@ export function ParrilladaSchedulerScreen() {
 
         {startsInPast && (
           <section className="rounded-2xl border border-amber-300/25 bg-amber-500/10 px-3 py-2.5 text-sm text-amber-100">
-            Current serve time places plan start in the past. Move serve time forward for an executable timeline.
+            <p>Current serve time places plan start in the past.</p>
+            <div className="mt-2">
+              <button
+                type="button"
+                onClick={applyEarliestServeTime}
+                className="rounded-xl border border-amber-200/40 bg-amber-400/15 px-3 py-1.5 text-xs font-semibold text-amber-50 hover:bg-amber-400/25"
+              >
+                Set earliest serve time
+              </button>
+            </div>
           </section>
         )}
 
