@@ -3,7 +3,7 @@ import { getPlanPlanningMetadata } from "@/lib/cooking/planningMetadata";
 import { singleCutPlanToPlannerInput } from "./adapters/cookingCatalogAdapter";
 import type { PlannerCutInput } from "./types";
 
-type CatalogCandidate = {
+export type CatalogCandidate = {
   id: string;
   animal: string;
   cut: string;
@@ -60,9 +60,13 @@ const PARRILLADA_CATALOG_CANDIDATES: CatalogCandidate[] = [
   { id: "baby_back_ribs", animal: "Pork", cut: "baby_back_ribs", doneness: "medium_safe", thicknessCm: "4", weightGrams: 1400, priority: 3, tier: "advanced" },
   { id: "spare_ribs", animal: "Pork", cut: "spare_ribs", doneness: "medium_safe", thicknessCm: "5", weightGrams: 1800, priority: 3, tier: "advanced" },
   { id: "pork_belly", animal: "Pork", cut: "pork_belly", doneness: "medium_safe", thicknessCm: "4", weightGrams: 1400, priority: 3, tier: "advanced" },
-  { id: "pork_belly_slices", animal: "Pork", cut: "pork_belly_slices", doneness: "medium_safe", thicknessCm: "2", weightGrams: 850, priority: 2, tier: "advanced" },
+  { id: "pork_belly_slices", animal: "Pork", cut: "pork_belly_slices", doneness: "medium_safe", thicknessCm: "2", weightGrams: 850, priority: 2 },
   { id: "chuck_roast", animal: "Beef", cut: "chuck_roast", doneness: "medium", thicknessCm: "6", weightGrams: 2200, priority: 3, tier: "advanced" },
 ];
+
+export function getParrilladaCatalogCandidates(): readonly CatalogCandidate[] {
+  return PARRILLADA_CATALOG_CANDIDATES;
+}
 
 function makeInput(candidate: CatalogCandidate): CookingInput {
   return {

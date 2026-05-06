@@ -235,7 +235,7 @@ const PARRILLADA_UI_OVERRIDES: Partial<Record<string, CatalogUiOverride>> = {
     planningHint: "Long cook",
   },
   pork_belly_slices: {
-    role: "main",
+    role: "fastFinish",
     visibility: "standard",
     complexity: "medium",
     planningHint: "Fast finish",

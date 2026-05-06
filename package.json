@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "qa:parrillada": "tsx scripts/qa-parrillada-scheduler.ts",
+    "report:parrillada-catalog": "tsx scripts/report-parrillada-catalog-quality.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "qa:cooking": "tsx scripts/cooking-engine-qa.ts",

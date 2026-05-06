@@ -61,15 +61,15 @@ Currently included Parrillada catalog items:
 - chuck_roast
 
 ## Items Skipped
-- pork_belly_slices: excluded by advanced safety gate because session duration is too short for advanced long-cook handling.
+- none currently skipped in catalog-backed Parrillada Lite candidates.
 
 ## Metadata Coverage
 - Included items are planningMetadata-backed.
 - Fallback path exists.
 - Current QA reported:
-  - included metadata-backed items: 36
+  - included metadata-backed items: 37
   - fallback-note items: 0
-  - skipped items: 1
+  - skipped items: 0
 
 ## QA Scenarios
 `qa:parrillada` currently covers:
@@ -85,6 +85,11 @@ Currently included Parrillada catalog items:
 - catalog: fish + vegetable mix
 - catalog: default expanded 4-item menu
 - catalog: advanced long-cook mix if safe items resolve
+- catalog: advanced long-cook + side
+- catalog: ribs + vegetable
+- catalog: whole chicken + side
+- catalog: pork belly + side
+- catalog: pork belly slices + side
 
 ## Assertions Covered
 `qa:parrillada` validates:
@@ -99,9 +104,10 @@ Currently included Parrillada catalog items:
 - plan confidence exists
 - warnings array exists
 - catalog-backed items have planningMetadata or explicit fallback note
+- Parrillada Lite QA scenarios stay within the 2-4 item range
 
 ## Validation Results
-- `npm run qa:parrillada`: PASS 15/15
+- `npm run qa:parrillada`: PASS 20/20
 - `npm run qa:cooking`: PASS 1116/1116
 - `npm run lint`: PASS with known `app/page.tsx` warning
 - `npm run build`: PASS
@@ -123,7 +129,7 @@ Currently included Parrillada catalog items:
 - Home/Cooking/Live/Saved still reachable
 
 ## Known Risks
-- advanced long-cook scenario can produce lower confidence and warnings
+- advanced long-cook scenario can still produce low confidence when warning count exceeds threshold
 - QA validates scheduler structure, not perfect culinary outcome
 - full catalog may need stronger metadata quality review
 - large catalog may later need sticky category headers or real bottom sheet/modal
