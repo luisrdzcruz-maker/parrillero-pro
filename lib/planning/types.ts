@@ -42,6 +42,29 @@ export type DonenessLevel = 'rare' | 'medium_rare' | 'medium' | 'medium_well' | 
 export type PlannerSeverity = 'info' | 'warning' | 'critical';
 export type PlannerPhaseType = 'prep' | 'preheat' | 'cook' | 'sear' | 'flip' | 'rest' | 'hold' | 'serve' | 'check' | 'buffer';
 export type SchedulerStrategy = 'balanced' | 'serve_together' | 'quality_first' | 'low_stress';
+export type PlanningMetadataSource = 'single-cut-engine' | 'fallback';
+export type PlanningMetadataConfidence = 'high' | 'medium' | 'low';
+export type PlanningZoneDemand = 'low' | 'medium' | 'high';
+export type PlanningMetadataTimingSensitivity = 'low' | 'medium' | 'high';
+
+export interface PlanningMetadata {
+  version: 1;
+  source: PlanningMetadataSource;
+  confidence: PlanningMetadataConfidence;
+  setupMinutes: number;
+  activeCookMinutes: number;
+  restMinutes: number;
+  totalSessionMinutes: number;
+  requiredZones: PlanningZone[];
+  preferredZones: PlanningZone[];
+  zoneDemand: PlanningZoneDemand;
+  timingSensitivity: PlanningMetadataTimingSensitivity;
+  canHoldWarm: boolean;
+  maxHoldMinutes: number;
+  serveWindowMinutes: number;
+  riskTags: string[];
+  notes?: string[];
+}
 
 export interface ZoneCapacity {
   zone: PlanningZone;
@@ -100,6 +123,7 @@ export interface PlannerCutInput {
   fixedStartTime?: string;
   fixedZone?: PlanningZone;
   profileId?: string;
+  planningMetadata?: PlanningMetadata;
   priority?: number;
   notes?: string[];
 }

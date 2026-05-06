@@ -8,3 +8,4 @@ export * from './time';
 export * from './warnings';
 export * from './fixtures/demoItems';
 export * from './fixtures/demoGrills';
+export * from './adapters/cookingCatalogAdapter';

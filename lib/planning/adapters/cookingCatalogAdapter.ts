@@ -1,3 +1,5 @@
+import { getPlanPlanningMetadata } from '@/lib/cooking/planningMetadata';
+import type { CookingPlan, ProductCut } from '@/lib/cookingCatalog';
 import type { PlannerCutInput, PlanningAnimal } from '../types';
 
 /**
@@ -35,4 +37,30 @@ export function catalogCutToPlannerInput(cut: CatalogCutLike, overrides: Partial
     animal: overrides.animal ?? normalizeAnimal(cut.animal ?? cut.category),
     ...overrides,
   };
+}
+
+export function singleCutPlanToPlannerInput(args: {
+  id: string;
+  cut: Pick<ProductCut, 'id' | 'animalId' | 'names'>;
+  plan: CookingPlan;
+  weightGrams?: number;
+  thicknessCm?: number;
+  priority?: number;
+}): PlannerCutInput {
+  const { id, cut, plan, weightGrams, thicknessCm, priority } = args;
+  const metadata = getPlanPlanningMetadata(plan);
+  return catalogCutToPlannerInput(
+    {
+      id: cut.id,
+      name: cut.names.en ?? cut.names.es ?? cut.id,
+      animal: cut.animalId,
+    },
+    {
+      id,
+      weightGrams,
+      thicknessCm,
+      priority,
+      planningMetadata: metadata,
+    },
+  );
 }

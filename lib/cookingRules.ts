@@ -28,6 +28,7 @@ import {
   deriveCookingTimeSemanticsFromSteps,
 } from "./cookingTimeSemantics";
 import { attachPrepGuidance, getPrepGuidanceForCut } from "./prepGuidance";
+import { attachPlanningMetadata, derivePlanningMetadata } from "./cooking/planningMetadata";
 import { resolveCookingProfile, resolveProductCut } from "./resolveCookingProfile";
 import {
   getTemperatureDeltaFromRecommended,
@@ -1226,7 +1227,7 @@ export function generateCookingPlan(input: CookingInput): CookingPlan | null {
   const prepGuidance = getPrepGuidanceForCut(cut);
 
   if (engineInput.language === "en") {
-    return attachPrepGuidance(attachCookingTimeSemantics({
+    const plan = attachPrepGuidance(attachCookingTimeSemantics({
       SETUP: `${method}. Use ${engineInput.equipment}.${ovenText}${fatCapText}`,
       TIMES: times,
       TEMPERATURE: formatTemperatureGuidance({ ...temperatureTarget, target: temp }, engineInput.language, ovenText),
@@ -1234,9 +1235,16 @@ export function generateCookingPlan(input: CookingInput): CookingPlan | null {
       ...(note ? { TIPS: note } : {}),
       ERROR: cut.error.en,
     }, timeSemantics), prepGuidance);
+    return attachPlanningMetadata(plan, derivePlanningMetadata({
+      cut,
+      input: engineInput,
+      selectedMethod,
+      timeSemantics,
+      prepGuidance,
+    }));
   }
 
-  return attachPrepGuidance(attachCookingTimeSemantics({
+  const plan = attachPrepGuidance(attachCookingTimeSemantics({
     SETUP: `${method}. Equipo: ${engineInput.equipment}.${ovenText}${fatCapText}`,
     TIEMPOS: times,
     TEMPERATURA: formatTemperatureGuidance({ ...temperatureTarget, target: temp }, engineInput.language, ovenText),
@@ -1244,4 +1252,11 @@ export function generateCookingPlan(input: CookingInput): CookingPlan | null {
     ...(note ? { CONSEJOS: note } : {}),
     ERROR: cut.error.es,
   }, timeSemantics), prepGuidance);
+  return attachPlanningMetadata(plan, derivePlanningMetadata({
+    cut,
+    input: engineInput,
+    selectedMethod,
+    timeSemantics,
+    prepGuidance,
+  }));
 }
