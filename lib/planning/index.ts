@@ -9,3 +9,4 @@ export * from './warnings';
 export * from './fixtures/demoItems';
 export * from './fixtures/demoGrills';
 export * from './adapters/cookingCatalogAdapter';
+export * from './catalogItems';
