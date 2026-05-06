@@ -13,12 +13,12 @@ import type { PlannerCutInput } from "@/lib/planning/types";
 type CatalogQualityRow = {
   cutId: string;
   displayName: string;
+  status: "included" | "skipped";
+  skipReason: string;
   animal: string;
   category: string;
-  included: boolean;
-  skipReason: string;
-  source: string;
-  confidence: string;
+  planningMetadataSource: string;
+  planningMetadataConfidence: string;
   setupMinutes: string;
   activeCookMinutes: string;
   restMinutes: string;
@@ -34,21 +34,45 @@ type CatalogQualityRow = {
   visibility: string;
   role: string;
   complexity: string;
+  goodForGroups: string;
   requiresEarlyStart: string;
+  planningHint: string;
   notes: string;
 };
 
 type CatalogQualityReport = {
   rows: CatalogQualityRow[];
-  includedCount: number;
-  skippedCount: number;
-  fallbackCount: number;
-  confidenceCounts: {
+  summary: {
+    totalCandidates: number;
+    includedItems: number;
+    skippedItems: number;
+    metadataBackedItems: number;
+    fallbackNoteItems: number;
+    confidence: {
+      high: number;
+      medium: number;
+      low: number;
+    };
+    visibility: {
+      recommended: number;
+      standard: number;
+      advanced: number;
+    };
+    requiresEarlyStart: number;
+    withRiskTags: number;
+  };
+  skippedItems: Array<{
+    cutId: string;
+    displayName: string;
+    skipReason: string;
+  }>;
+  confidenceBreakdown: {
     high: number;
     medium: number;
     low: number;
     missing: number;
   };
+  advancedRows: CatalogQualityRow[];
   topRiskTags: Array<{ tag: string; count: number }>;
 };
 
@@ -72,6 +96,11 @@ function safeJoin(value: string[] | undefined): string {
 function safeNumber(value: number | undefined): string {
   if (typeof value !== "number") return "-";
   return String(value);
+}
+
+function yesNo(value: boolean | undefined): string {
+  if (typeof value !== "boolean") return "-";
+  return value ? "yes" : "no";
 }
 
 function collectReport(): CatalogQualityReport {
@@ -123,16 +152,17 @@ function collectReport(): CatalogQualityReport {
 
     const displayName = reportItem?.displayName ?? cut?.names.en ?? cut?.names.es ?? candidate.cut;
     const confidence = resolvedMetadata?.confidence ?? "missing";
+    const included = !skippedByCandidateId.has(candidate.id);
 
     return {
       cutId: candidate.cut,
       displayName,
+      status: included ? "included" : "skipped",
+      skipReason,
       animal: candidate.animal,
       category: presentation?.categoryLabel ?? "-",
-      included: !skippedByCandidateId.has(candidate.id),
-      skipReason,
-      source: resolvedMetadata?.source ?? "missing",
-      confidence,
+      planningMetadataSource: resolvedMetadata?.source ?? "missing",
+      planningMetadataConfidence: confidence,
       setupMinutes: safeNumber(resolvedMetadata?.setupMinutes),
       activeCookMinutes: safeNumber(resolvedMetadata?.activeCookMinutes),
       restMinutes: safeNumber(resolvedMetadata?.restMinutes),
@@ -141,43 +171,74 @@ function collectReport(): CatalogQualityReport {
       preferredZones: safeJoin(resolvedMetadata?.preferredZones),
       zoneDemand: resolvedMetadata?.zoneDemand ?? "-",
       timingSensitivity: resolvedMetadata?.timingSensitivity ?? "-",
-      canHoldWarm: typeof resolvedMetadata?.canHoldWarm === "boolean" ? String(resolvedMetadata.canHoldWarm) : "-",
+      canHoldWarm: yesNo(resolvedMetadata?.canHoldWarm),
       maxHoldMinutes: safeNumber(resolvedMetadata?.maxHoldMinutes),
       serveWindowMinutes: safeNumber(resolvedMetadata?.serveWindowMinutes),
       riskTags: safeJoin(resolvedMetadata?.riskTags),
       visibility: presentation?.visibility ?? "-",
       role: presentation?.role ?? "-",
       complexity: presentation?.complexity ?? "-",
-      requiresEarlyStart:
-        typeof presentation?.requiresEarlyStart === "boolean" ? String(presentation.requiresEarlyStart) : "-",
+      goodForGroups: yesNo(presentation?.goodForGroups),
+      requiresEarlyStart: yesNo(presentation?.requiresEarlyStart),
+      planningHint: presentation?.planningHint ?? "-",
       notes: rowNotes.length > 0 ? rowNotes.join("; ") : "-",
     } satisfies CatalogQualityRow;
   });
 
-  const confidenceCounts = rows.reduce(
+  const confidenceBreakdown = rows.reduce(
     (acc, row) => {
-      if (row.confidence === "high") acc.high += 1;
-      else if (row.confidence === "medium") acc.medium += 1;
-      else if (row.confidence === "low") acc.low += 1;
+      if (row.planningMetadataConfidence === "high") acc.high += 1;
+      else if (row.planningMetadataConfidence === "medium") acc.medium += 1;
+      else if (row.planningMetadataConfidence === "low") acc.low += 1;
       else acc.missing += 1;
       return acc;
     },
     { high: 0, medium: 0, low: 0, missing: 0 },
   );
 
-  const fallbackCount = rows.filter((row) => row.source === "fallback" || row.notes.includes("fallback")).length;
+  const withRiskTags = rows.filter((row) => row.riskTags !== "-").length;
+  const advancedRows = rows.filter((row) => row.visibility === "advanced");
+  const skippedItems = rows
+    .filter((row) => row.status === "skipped")
+    .map((row) => ({
+      cutId: row.cutId,
+      displayName: row.displayName,
+      skipReason: row.skipReason,
+    }));
+  const metadataBackedItems = rows.filter((row) => row.planningMetadataSource !== "missing").length;
+  const fallbackNoteItems = rows.filter(
+    (row) => row.planningMetadataSource === "fallback" || row.notes.toLowerCase().includes("fallback"),
+  ).length;
 
   const topRiskTags = [...riskCounter.entries()]
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 8)
+    .slice(0, 12)
     .map(([tag, count]) => ({ tag, count }));
 
   return {
     rows,
-    includedCount: rows.filter((row) => row.included).length,
-    skippedCount: rows.filter((row) => !row.included).length,
-    fallbackCount,
-    confidenceCounts,
+    summary: {
+      totalCandidates: rows.length,
+      includedItems: rows.filter((row) => row.status === "included").length,
+      skippedItems: rows.filter((row) => row.status === "skipped").length,
+      metadataBackedItems,
+      fallbackNoteItems,
+      confidence: {
+        high: confidenceBreakdown.high,
+        medium: confidenceBreakdown.medium,
+        low: confidenceBreakdown.low,
+      },
+      visibility: {
+        recommended: rows.filter((row) => row.visibility === "recommended").length,
+        standard: rows.filter((row) => row.visibility === "standard").length,
+        advanced: rows.filter((row) => row.visibility === "advanced").length,
+      },
+      requiresEarlyStart: rows.filter((row) => row.requiresEarlyStart === "yes").length,
+      withRiskTags,
+    },
+    skippedItems,
+    confidenceBreakdown,
+    advancedRows,
     topRiskTags,
   };
 }
@@ -190,11 +251,48 @@ function toMarkdown(report: CatalogQualityReport): string {
     `Generated at: ${generatedAt}`,
     "",
     "## Summary",
-    `- Total candidates: ${report.rows.length}`,
-    `- Included: ${report.includedCount}`,
-    `- Skipped: ${report.skippedCount}`,
-    `- Fallback items: ${report.fallbackCount}`,
-    `- Confidence high/medium/low/missing: ${report.confidenceCounts.high}/${report.confidenceCounts.medium}/${report.confidenceCounts.low}/${report.confidenceCounts.missing}`,
+    `- Total candidates: ${report.summary.totalCandidates}`,
+    `- Included items: ${report.summary.includedItems}`,
+    `- Skipped items: ${report.summary.skippedItems}`,
+    `- Metadata-backed items: ${report.summary.metadataBackedItems}`,
+    `- Fallback-note items: ${report.summary.fallbackNoteItems}`,
+    `- High confidence count: ${report.summary.confidence.high}`,
+    `- Medium confidence count: ${report.summary.confidence.medium}`,
+    `- Low confidence count: ${report.summary.confidence.low}`,
+    `- Recommended count: ${report.summary.visibility.recommended}`,
+    `- Standard count: ${report.summary.visibility.standard}`,
+    `- Advanced count: ${report.summary.visibility.advanced}`,
+    `- Items requiring early start: ${report.summary.requiresEarlyStart}`,
+    `- Items with risk tags: ${report.summary.withRiskTags}`,
+    "",
+    "## Confidence Breakdown",
+    `- High: ${report.confidenceBreakdown.high}`,
+    `- Medium: ${report.confidenceBreakdown.medium}`,
+    `- Low: ${report.confidenceBreakdown.low}`,
+    `- Missing: ${report.confidenceBreakdown.missing}`,
+    "",
+    "## Skipped Items and Reasons",
+  ];
+
+  const skippedLines =
+    report.skippedItems.length > 0
+      ? report.skippedItems.map((row) => `- ${row.cutId} (${row.displayName}): ${row.skipReason}`)
+      : ["- none"];
+
+  const advancedHeader = [
+    "",
+    "## Advanced Item Notes",
+  ];
+
+  const advancedLines =
+    report.advancedRows.length > 0
+      ? report.advancedRows.map(
+          (row) =>
+            `- ${row.cutId} (${row.displayName}): totalSession=${row.totalSessionMinutes}m, riskTags=${row.riskTags}, requiresEarlyStart=${row.requiresEarlyStart}, planningHint=${row.planningHint}, notes=${row.notes}`,
+        )
+      : ["- none"];
+
+  const riskHeader = [
     "",
     "## Main Risk Areas",
   ];
@@ -204,24 +302,33 @@ function toMarkdown(report: CatalogQualityReport): string {
       ? report.topRiskTags.map((risk) => `- ${risk.tag}: ${risk.count}`)
       : ["- none"];
 
+  const nextActionsHeader = [
+    "",
+    "## Recommended Next Actions",
+    "- Prioritize medium/low/missing confidence rows and improve metadata derivation before expanding eligibility.",
+    "- Keep advanced rows behind stricter safety gates until risk tags and timing sensitivity are validated in additional scenarios.",
+    "- Expand scenario coverage in `qa:parrillada` for high-risk tags that appear most often.",
+    "- Re-run this report after any catalog or planningMetadata updates to track quality drift.",
+  ];
+
   const tableHeader = [
     "",
-    "## Quality Matrix",
+    "## Full Item Matrix",
     "",
-    "| cutId | displayName | animal | category | included | skipReason | source | confidence | setupMinutes | activeCookMinutes | restMinutes | totalSessionMinutes | requiredZones | preferredZones | zoneDemand | timingSensitivity | canHoldWarm | maxHoldMinutes | serveWindowMinutes | riskTags | visibility | role | complexity | requiresEarlyStart | notes |",
-    "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+    "| cutId | displayName | status | skipReason | animal | category | planningMetadataSource | planningMetadataConfidence | setupMinutes | activeCookMinutes | restMinutes | totalSessionMinutes | requiredZones | preferredZones | zoneDemand | timingSensitivity | canHoldWarm | maxHoldMinutes | serveWindowMinutes | riskTags | visibility | role | complexity | goodForGroups | requiresEarlyStart | planningHint | notes |",
+    "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
   ];
 
   const rows = report.rows.map((row) =>
     [
       row.cutId,
       row.displayName,
+      row.status,
+      row.skipReason,
       row.animal,
       row.category,
-      row.included ? "included" : "skipped",
-      row.skipReason,
-      row.source,
-      row.confidence,
+      row.planningMetadataSource,
+      row.planningMetadataConfidence,
       row.setupMinutes,
       row.activeCookMinutes,
       row.restMinutes,
@@ -237,26 +344,45 @@ function toMarkdown(report: CatalogQualityReport): string {
       row.visibility,
       row.role,
       row.complexity,
+      row.goodForGroups,
       row.requiresEarlyStart,
+      row.planningHint,
       row.notes,
     ]
       .map((value) => String(value).replaceAll("|", "\\|"))
       .join(" | "),
   );
 
-  return [...header, ...riskLines, ...tableHeader, ...rows.map((line) => `| ${line} |`), ""].join("\n");
+  return [
+    ...header,
+    ...skippedLines,
+    ...advancedHeader,
+    ...advancedLines,
+    ...riskHeader,
+    ...riskLines,
+    ...nextActionsHeader,
+    ...tableHeader,
+    ...rows.map((line) => `| ${line} |`),
+    "",
+  ].join("\n");
 }
 
 function printConsoleSummary(report: CatalogQualityReport): void {
   console.log("Parrillada catalog quality report");
   console.log("--------------------------------");
-  console.log(`Total candidates: ${report.rows.length}`);
-  console.log(`Included: ${report.includedCount}`);
-  console.log(`Skipped: ${report.skippedCount}`);
-  console.log(`Fallback items: ${report.fallbackCount}`);
-  console.log(
-    `Confidence high/medium/low/missing: ${report.confidenceCounts.high}/${report.confidenceCounts.medium}/${report.confidenceCounts.low}/${report.confidenceCounts.missing}`,
-  );
+  console.log(`Total candidates: ${report.summary.totalCandidates}`);
+  console.log(`Included items: ${report.summary.includedItems}`);
+  console.log(`Skipped items: ${report.summary.skippedItems}`);
+  console.log(`Metadata-backed items: ${report.summary.metadataBackedItems}`);
+  console.log(`Fallback-note items: ${report.summary.fallbackNoteItems}`);
+  console.log(`High confidence count: ${report.summary.confidence.high}`);
+  console.log(`Medium confidence count: ${report.summary.confidence.medium}`);
+  console.log(`Low confidence count: ${report.summary.confidence.low}`);
+  console.log(`Recommended count: ${report.summary.visibility.recommended}`);
+  console.log(`Standard count: ${report.summary.visibility.standard}`);
+  console.log(`Advanced count: ${report.summary.visibility.advanced}`);
+  console.log(`Items requiring early start: ${report.summary.requiresEarlyStart}`);
+  console.log(`Items with risk tags: ${report.summary.withRiskTags}`);
   if (report.topRiskTags.length > 0) {
     console.log("Top risk tags:");
     report.topRiskTags.forEach((risk) => console.log(`- ${risk.tag}: ${risk.count}`));
