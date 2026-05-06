@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { getResultCardAccent, getResultCardIcon, getResultCardTitle } from "@/lib/uiHelpers";
 import {
   detectSetupFromText,
@@ -14,6 +14,7 @@ import { AppIcon, Panel } from "@/components/ui";
 import { resolveMethodIconKey } from "@/lib/assets/equipmentMethodIconResolver";
 import { ds } from "@/lib/design-system";
 import type { IconCategory } from "@/lib/assets/iconTypes";
+import { pushResultOverlayHistory, useResultOverlayBackBehavior } from "@/components/results/ResultGuidancePanel";
 
 type ResultCardProps = {
   title: string;
@@ -106,11 +107,13 @@ function ResultCardHeader({
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className={`text-[10px] font-black uppercase tracking-[0.22em] ${labelClassName}`}>
-          {getVariantLabel(variant, lang)}
-        </p>
+        {!isPrimary && (
+          <p className={`text-[10px] font-black uppercase tracking-[0.22em] ${labelClassName}`}>
+            {getVariantLabel(variant, lang)}
+          </p>
+        )}
         <h3
-          className={`${isPrimary ? "text-xl sm:text-2xl" : "text-lg"} mt-1 font-black tracking-tight text-white`}
+          className={`${isPrimary ? "text-xl sm:text-2xl" : "text-lg"} ${isPrimary ? "" : "mt-1"} font-black tracking-tight text-white`}
         >
           {title}
         </h3>
@@ -212,6 +215,75 @@ function ResultCardContent({
             <p className="whitespace-pre-wrap">{stripLinePrefix(line)}</p>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function getCloseLabel(lang: "es" | "en" | "fi") {
+  if (lang === "es") return "Cerrar";
+  if (lang === "fi") return "Sulje";
+  return "Close";
+}
+
+function StepsDetailSurface({
+  lang,
+  lines,
+  onClose,
+  open,
+  title,
+}: {
+  lang: "es" | "en" | "fi";
+  lines: string[];
+  onClose: () => void;
+  open: boolean;
+  title: string;
+}) {
+  const closeWithHistory = useResultOverlayBackBehavior(open, onClose);
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex bg-slate-950/92 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-sm"
+      aria-modal="true"
+      role="dialog"
+    >
+      <div className="mx-auto flex h-full w-full max-w-4xl flex-col overflow-hidden rounded-[1.65rem] border border-white/10 bg-slate-950 shadow-2xl shadow-black/45 ring-1 ring-inset ring-white/[0.05]">
+        <div className="flex items-center justify-between gap-3 border-b border-white/8 px-4 py-3">
+          <h3 className="truncate text-xl font-black tracking-tight text-white sm:text-2xl">
+            {title}
+          </h3>
+          <button
+            type="button"
+            onClick={closeWithHistory}
+            className="shrink-0 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs font-black text-slate-200 transition hover:bg-white/[0.1] active:scale-[0.98]"
+          >
+            {getCloseLabel(lang)}
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="grid gap-3">
+            {lines.map((line, index) => {
+              const step = parseStepLine(line);
+
+              return (
+                <div
+                  key={`${line}-${index}`}
+                  className="flex items-start gap-3 rounded-2xl border border-white/[0.08] bg-black/22 px-4 py-4 ring-1 ring-inset ring-white/[0.03]"
+                >
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-orange-500/25 text-xs font-black text-orange-300 ring-1 ring-inset ring-orange-400/20">
+                    {step?.number ?? index + 1}
+                  </span>
+                  <p className="flex-1 text-base leading-relaxed text-slate-100 sm:text-lg">
+                    {step?.text ?? stripLinePrefix(line)}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -491,6 +563,9 @@ export default function ResultCard({
   setup,
   variant = "default",
 }: ResultCardProps) {
+  const [stepsOpen, setStepsOpen] = useState(false);
+  const closeSteps = useCallback(() => setStepsOpen(false), []);
+
   if (!content?.trim()) return null;
 
   const icon = getResultCardIcon(title);
@@ -500,26 +575,58 @@ export default function ResultCard({
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean);
+  const isPrimary = variant === "primary";
 
   return (
-    <Panel as="article" className={`${cardClassName} ${getCardTone(variant)}`} tone="result">
-      <div className={`absolute left-0 top-0 h-full w-[3px] rounded-l-2xl ${accent}`} />
-      <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent blur-xl" />
-      </div>
-      <div className="pointer-events-none absolute -right-16 -top-16 h-32 w-32 rounded-full bg-orange-500/0 blur-3xl transition group-hover:bg-orange-500/10" />
+    <>
+      <Panel
+        as="article"
+        className={`${cardClassName} ${getCardTone(variant)} ${isPrimary ? "cursor-pointer" : ""}`}
+        onClick={isPrimary ? () => {
+          pushResultOverlayHistory("steps");
+          setStepsOpen(true);
+        } : undefined}
+        onKeyDown={
+          isPrimary
+            ? (event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  pushResultOverlayHistory("steps");
+                  setStepsOpen(true);
+                }
+              }
+            : undefined
+        }
+        role={isPrimary ? "button" : undefined}
+        tabIndex={isPrimary ? 0 : undefined}
+        tone="result"
+      >
+        <div className={`absolute left-0 top-0 h-full w-[3px] rounded-l-2xl ${accent}`} />
+        <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent blur-xl" />
+        </div>
+        <div className="pointer-events-none absolute -right-16 -top-16 h-32 w-32 rounded-full bg-orange-500/0 blur-3xl transition group-hover:bg-orange-500/10" />
 
-      <div className="relative z-10 p-4 sm:p-5">
-        <ResultCardHeader
-          accent={accent}
-          icon={icon}
-          lang={lang}
-          title={cleanTitle}
-          variant={variant}
-        />
-        <ResultCardContent lines={contentLines} variant={variant} />
-        <SetupVisualToggle content={content} equipment={equipment} lang={lang} setup={setup} title={title} />
-      </div>
-    </Panel>
+        <div className="relative z-10 p-4 sm:p-5">
+          <ResultCardHeader
+            accent={accent}
+            icon={icon}
+            lang={lang}
+            title={cleanTitle}
+            variant={variant}
+          />
+          <ResultCardContent lines={contentLines} variant={variant} />
+          <SetupVisualToggle content={content} equipment={equipment} lang={lang} setup={setup} title={title} />
+        </div>
+      </Panel>
+
+      <StepsDetailSurface
+        lang={lang}
+        lines={contentLines}
+        onClose={closeSteps}
+        open={stepsOpen}
+        title={cleanTitle}
+      />
+    </>
   );
 }

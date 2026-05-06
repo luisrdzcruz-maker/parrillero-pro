@@ -2,7 +2,7 @@
 
 import { AppIcon, Badge, Card, Grid } from "@/components/ui";
 import { ds } from "@/lib/design-system";
-import { detectSetupFromText, type SetupType } from "@/lib/setupVisualMap";
+import type { SetupType } from "@/lib/setupVisualMap";
 import { formatTitle, getGrillManagerLineClass, getShoppingItems } from "@/lib/uiHelpers";
 import { localizeResultSurfaceCopy, sanitizeCriticalErrorCopy } from "@/lib/i18n/surfaceFallbacks";
 import {
@@ -13,7 +13,7 @@ import {
   type ResultSummary,
 } from "@/lib/results/resultSummary";
 import ResultCard from "@/components/ResultCard";
-import ResultGuidanceToggles from "@/components/results/ResultGuidanceToggles";
+import ResultGuidancePanel from "@/components/results/ResultGuidancePanel";
 import ResultTimeline from "./ResultTimeline";
 
 type Blocks = ResultBlocks;
@@ -336,20 +336,14 @@ export default function ResultGrid({
   };
 }) {
   const items = getOrderedResultItems(blocks, keys, lang);
-  const setupKey = findBlockKey(keys, ["SETUP", "CONFIGURACION", "CONFIGURACIÓN"]);
-  const setupContent = setupKey ? blocks[setupKey] : undefined;
-  const setup = setupContent ? detectSetupFromText(setupContent) : undefined;
   const avoidContent = getAvoidGuidanceContent(blocks, keys, lang);
 
   return (
     <Grid className="mx-auto max-w-5xl gap-4 md:gap-5" variant="cards">
-      <ResultGuidanceToggles
+      <ResultGuidancePanel
         avoidContent={avoidContent}
-        equipment={equipment}
         lang={lang}
         prepGuidanceLine={prepGuidanceLine}
-        setup={setup}
-        setupContent={setupContent}
       />
 
       {items.map((item) => {
