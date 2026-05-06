@@ -100,7 +100,8 @@ const helpfulAliasByCutId: Record<string, string> = {
   ribeye: "Rib eye",
   striploin: "New York strip",
   tenderloin: "Filet",
-  tomahawk: "Bone-in ribeye",
+  tomahawk: "Long-bone ribeye",
+  bone_in_ribeye: "Chuletón",
   pork_tenderloin: "Pork fillet",
 };
 
