@@ -1,6 +1,7 @@
 import {
   buildCatalogBackedParrilladaLiteItems,
   DEMO_PARRILLADA_SCENARIOS,
+  getParrilladaItemPresentation,
   NAPOLEON_ROGUE_525_LITE,
   scheduleParrillada,
   type PlannerPhase,
@@ -11,6 +12,23 @@ type Scenario = {
   name: string;
   items: PlannerResult["request"]["items"];
   metadataCoverageRequired?: boolean;
+};
+
+type ScenarioSkip = {
+  name: string;
+  reason: string;
+};
+
+type CatalogItem = PlannerResult["request"]["items"][number];
+
+type GeneratedScenarioFamily = {
+  name: string;
+  selectors: Array<{
+    label: string;
+    min: number;
+    take: number;
+    predicate: (item: CatalogItem) => boolean;
+  }>;
 };
 
 const FIXED_SERVE_AT_ISO = "2030-05-01T18:00:00.000Z";
@@ -155,6 +173,58 @@ function validateLiteItemCount(name: string, items: PlannerResult["request"]["it
   );
 }
 
+function sortCatalogItems(items: CatalogItem[]): CatalogItem[] {
+  return [...items].sort((a, b) => {
+    const priorityDiff = (b.priority ?? 0) - (a.priority ?? 0);
+    if (priorityDiff !== 0) return priorityDiff;
+    const sessionDiff = (b.planningMetadata?.totalSessionMinutes ?? 0) - (a.planningMetadata?.totalSessionMinutes ?? 0);
+    if (sessionDiff !== 0) return sessionDiff;
+    return a.cutId.localeCompare(b.cutId);
+  });
+}
+
+function buildGeneratedScenario(
+  family: GeneratedScenarioFamily,
+  sortedCatalogItems: CatalogItem[],
+): { scenario?: Scenario; skip?: ScenarioSkip } {
+  const usedCutIds = new Set<string>();
+  const chosen: CatalogItem[] = [];
+
+  for (const selector of family.selectors) {
+    const matches = sortedCatalogItems.filter((item) => !usedCutIds.has(item.cutId) && selector.predicate(item));
+    if (matches.length < selector.min) {
+      return {
+        skip: {
+          name: family.name,
+          reason: `needs ${selector.min}+ ${selector.label} item(s), found ${matches.length}`,
+        },
+      };
+    }
+    const selected = matches.slice(0, selector.take);
+    for (const item of selected) {
+      usedCutIds.add(item.cutId);
+      chosen.push(item);
+    }
+  }
+
+  if (chosen.length < 2 || chosen.length > 4) {
+    return {
+      skip: {
+        name: family.name,
+        reason: `scenario size ${chosen.length} outside Lite bounds (2-4)`,
+      },
+    };
+  }
+
+  return {
+    scenario: {
+      name: family.name,
+      items: chosen,
+      metadataCoverageRequired: true,
+    },
+  };
+}
+
 function main(): void {
   const demoScenarios: Scenario[] = [
     { name: "picanha + asparagus", items: DEMO_PARRILLADA_SCENARIOS.picanhaAsparagus },
@@ -169,6 +239,7 @@ function main(): void {
     { name: "default 4-item demo menu", items: DEMO_PARRILLADA_SCENARIOS.defaultLite4 },
   ];
   const catalog = buildCatalogBackedParrilladaLiteItems();
+  const skippedScenarios: ScenarioSkip[] = [];
   if (catalog.skipped.length > 0) {
     console.log("Catalog items skipped:");
     catalog.skipped.forEach((skip) => console.log(`- ${skip.candidateId}: ${skip.reason}`));
@@ -184,7 +255,7 @@ function main(): void {
     const items = tryPickItemsByCutId(catalog.items, cutIds);
     if (!items) {
       const missing = cutIds.filter((cutId) => !catalog.items.some((item) => item.cutId === cutId));
-      console.log(`SKIP | ${name} | missing catalog items [${missing.join(", ")}]`);
+      skippedScenarios.push({ name, reason: `missing catalog items [${missing.join(", ")}]` });
       return;
     }
     catalogScenarios.push({ name, items, metadataCoverageRequired });
@@ -222,6 +293,176 @@ function main(): void {
     "catalog: pork belly slices + side",
     ["pork_belly_slices", "asparagus"],
   );
+
+  const sortedCatalogItems = sortCatalogItems(catalog.items);
+  const generatedFamilies: GeneratedScenarioFamily[] = [
+    {
+      name: "generated: beef + vegetable",
+      selectors: [
+        {
+          label: "beef main",
+          min: 2,
+          take: 2,
+          predicate: (item) => {
+            const presentation = getParrilladaItemPresentation(item);
+            return presentation.category === "beef" && presentation.role === "main";
+          },
+        },
+        {
+          label: "vegetable side",
+          min: 1,
+          take: 1,
+          predicate: (item) => getParrilladaItemPresentation(item).category === "vegetables",
+        },
+      ],
+    },
+    {
+      name: "generated: pork + vegetable",
+      selectors: [
+        {
+          label: "pork non-sausage main",
+          min: 2,
+          take: 2,
+          predicate: (item) => {
+            const presentation = getParrilladaItemPresentation(item);
+            return presentation.category === "pork" && presentation.role === "main";
+          },
+        },
+        {
+          label: "vegetable side",
+          min: 1,
+          take: 1,
+          predicate: (item) => getParrilladaItemPresentation(item).category === "vegetables",
+        },
+      ],
+    },
+    {
+      name: "generated: chicken + side",
+      selectors: [
+        {
+          label: "chicken item",
+          min: 2,
+          take: 2,
+          predicate: (item) => getParrilladaItemPresentation(item).category === "chicken",
+        },
+        {
+          label: "side item",
+          min: 1,
+          take: 1,
+          predicate: (item) => getParrilladaItemPresentation(item).role === "side",
+        },
+      ],
+    },
+    {
+      name: "generated: fish + vegetable",
+      selectors: [
+        {
+          label: "fish item",
+          min: 1,
+          take: 1,
+          predicate: (item) => getParrilladaItemPresentation(item).category === "fish",
+        },
+        {
+          label: "vegetable side",
+          min: 2,
+          take: 2,
+          predicate: (item) => getParrilladaItemPresentation(item).category === "vegetables",
+        },
+      ],
+    },
+    {
+      name: "generated: sausage + side",
+      selectors: [
+        {
+          label: "sausage starter",
+          min: 1,
+          take: 1,
+          predicate: (item) => getParrilladaItemPresentation(item).category === "sausages",
+        },
+        {
+          label: "side item",
+          min: 1,
+          take: 1,
+          predicate: (item) => getParrilladaItemPresentation(item).role === "side",
+        },
+      ],
+    },
+    {
+      name: "generated: advanced long-cook + fast finish",
+      selectors: [
+        {
+          label: "advanced long-cook",
+          min: 1,
+          take: 1,
+          predicate: (item) => {
+            const presentation = getParrilladaItemPresentation(item);
+            return presentation.visibility === "advanced" && presentation.role === "longCook";
+          },
+        },
+        {
+          label: "fast-finish item",
+          min: 1,
+          take: 1,
+          predicate: (item) => getParrilladaItemPresentation(item).role === "fastFinish",
+        },
+      ],
+    },
+    {
+      name: "generated: timing-sensitive + flexible",
+      selectors: [
+        {
+          label: "timing-sensitive",
+          min: 1,
+          take: 1,
+          predicate: (item) => item.planningMetadata?.timingSensitivity === "high",
+        },
+        {
+          label: "flexible",
+          min: 1,
+          take: 1,
+          predicate: (item) =>
+            item.planningMetadata?.timingSensitivity === "low" ||
+            (item.planningMetadata?.canHoldWarm === true && item.planningMetadata?.timingSensitivity === "medium"),
+        },
+      ],
+    },
+    {
+      name: "generated: holdable main + delicate side",
+      selectors: [
+        {
+          label: "holdable main",
+          min: 1,
+          take: 1,
+          predicate: (item) => {
+            const presentation = getParrilladaItemPresentation(item);
+            return (
+              (presentation.role === "main" || presentation.role === "longCook") &&
+              item.planningMetadata?.canHoldWarm === true
+            );
+          },
+        },
+        {
+          label: "delicate side",
+          min: 1,
+          take: 1,
+          predicate: (item) => {
+            const presentation = getParrilladaItemPresentation(item);
+            return presentation.role === "fastFinish" && item.planningMetadata?.canHoldWarm === false;
+          },
+        },
+      ],
+    },
+  ];
+
+  const generatedScenarios: Scenario[] = [];
+  for (const family of generatedFamilies) {
+    const built = buildGeneratedScenario(family, sortedCatalogItems);
+    if (built.skip) {
+      skippedScenarios.push(built.skip);
+      continue;
+    }
+    if (built.scenario) generatedScenarios.push(built.scenario);
+  }
 
   const compatibilityCatalogScenarios: Scenario[] = [
     {
@@ -262,12 +503,19 @@ function main(): void {
       metadataCoverageRequired: true,
     },
   ];
-  const scenarios = [...demoScenarios, ...catalogScenarios, ...compatibilityCatalogScenarios];
+  const scenarios = [...demoScenarios, ...catalogScenarios, ...generatedScenarios, ...compatibilityCatalogScenarios];
 
   let passed = 0;
+  const coveredCutIds = new Set<string>();
+  const coveredAdvancedCutIds = new Set<string>();
+  const warningSeverityCounts = { info: 0, warning: 0, critical: 0 };
   console.log("Parrillada scheduler QA");
   console.log("-----------------------");
+  if (skippedScenarios.length > 0) {
+    skippedScenarios.forEach((skip) => console.log(`SKIP | ${skip.name} | ${skip.reason}`));
+  }
 
+  let failed = false;
   for (const scenario of scenarios) {
     validateLiteItemCount(scenario.name, scenario.items);
     const result = scheduleParrillada({
@@ -283,6 +531,13 @@ function main(): void {
     try {
       validatePlanSanity(result);
       if (scenario.metadataCoverageRequired) validateMetadataCoverage(scenario.items);
+      scenario.items.forEach((item) => {
+        coveredCutIds.add(item.cutId);
+        if (getParrilladaItemPresentation(item).visibility === "advanced") coveredAdvancedCutIds.add(item.cutId);
+      });
+      result.warnings.forEach((warning) => {
+        warningSeverityCounts[warning.severity] += 1;
+      });
       passed += 1;
       console.log(
         `PASS | ${scenario.name} | items=${result.items.length} | actions=${result.phases.length} | confidence=${result.summary.confidence} | warnings=${result.warnings.length}`,
@@ -297,14 +552,22 @@ function main(): void {
       console.log("  Relevant actions:");
       context.forEach((phase) => console.log(`  - ${formatPhase(phase)}`));
       process.exitCode = 1;
+      failed = true;
       break;
     }
   }
 
-  if (passed === scenarios.length) {
-    console.log("");
-    console.log(`Parrillada QA passed: ${passed}/${scenarios.length} scenarios`);
-  }
+  console.log("");
+  console.log("Parrillada QA summary");
+  console.log("---------------------");
+  console.log(`Scenarios passed: ${passed}/${scenarios.length}`);
+  console.log(`Scenarios skipped: ${skippedScenarios.length}`);
+  console.log(`Included items covered: ${coveredCutIds.size}`);
+  console.log(`Advanced items covered: ${coveredAdvancedCutIds.size}`);
+  console.log(
+    `Warnings by severity (info/warning/critical): ${warningSeverityCounts.info}/${warningSeverityCounts.warning}/${warningSeverityCounts.critical}`,
+  );
+  if (!failed && passed === scenarios.length) console.log("Parrillada QA passed.");
 }
 
 main();

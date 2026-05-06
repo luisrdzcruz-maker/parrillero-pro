@@ -90,6 +90,14 @@ Currently included Parrillada catalog items:
 - catalog: whole chicken + side
 - catalog: pork belly + side
 - catalog: pork belly slices + side
+- generated: beef + vegetable
+- generated: pork + vegetable
+- generated: chicken + side
+- generated: fish + vegetable
+- generated: sausage + side
+- generated: advanced long-cook + fast finish
+- generated: timing-sensitive + flexible
+- generated: holdable main + delicate side
 
 ## Assertions Covered
 `qa:parrillada` validates:
@@ -105,9 +113,18 @@ Currently included Parrillada catalog items:
 - warnings array exists
 - catalog-backed items have planningMetadata or explicit fallback note
 - Parrillada Lite QA scenarios stay within the 2-4 item range
+- generated scenarios report explicit skips when a family cannot be built
+
+## Catalog-Wide QA Summary
+- scenario families generated: 8
+- scenarios passed: 28/28
+- scenarios skipped: 0
+- included items covered by passing scenarios: 27
+- advanced items covered by passing scenarios: 7
+- warning severity totals (info/warning/critical): 24/20/4
 
 ## Validation Results
-- `npm run qa:parrillada`: PASS 20/20
+- `npm run qa:parrillada`: PASS 28/28
 - `npm run qa:cooking`: PASS 1116/1116
 - `npm run lint`: PASS with known `app/page.tsx` warning
 - `npm run build`: PASS
