@@ -181,7 +181,7 @@ function resolveNextStepMessage({
   startsInPast: boolean;
   result: PlannerResult | null;
 }): string {
-  if (selectedCount < MIN_ITEMS) return 'Select at least 2 items to generate a Parrillada Lite plan.';
+  if (selectedCount < MIN_ITEMS) return 'Choose at least 2 items';
   if (startsInPast) return 'Adjust serve time to keep setup and preheat in the future.';
   if (!result?.ok) return 'Review critical warnings before executing the plan.';
   return 'Plan looks good. Check warnings and start from the first timeline block.';
@@ -204,7 +204,9 @@ function SelectedMenuModule({
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-200/75">Your menu</p>
-          <h2 className="mt-1 text-lg font-semibold text-white">Selected parrillada</h2>
+          <h2 className="mt-1 text-lg font-semibold text-white">
+            Selected parrillada · {selectedCount} item{selectedCount === 1 ? '' : 's'}
+          </h2>
         </div>
         <span
           className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${
@@ -213,13 +215,13 @@ function SelectedMenuModule({
               : 'border-emerald-300/25 bg-emerald-400/10 text-emerald-100'
           }`}
         >
-          {selectedCount}/{MAX_ITEMS}
+          {selectedCount >= MAX_ITEMS ? `${selectedCount} of ${MAX_ITEMS}` : `${selectedCount} selected`}
         </span>
       </div>
 
       {needsMoreItems && (
         <div className="mt-3 rounded-2xl border border-amber-300/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
-          Add {MIN_ITEMS - selectedCount} more item{MIN_ITEMS - selectedCount === 1 ? '' : 's'} to build a reliable Lite timeline.
+          Choose at least 2 items
         </div>
       )}
 
@@ -350,7 +352,7 @@ function ParrilladaItemBrowser({
         <div className="mt-3 space-y-3">
           {limitReached && (
             <div className="rounded-2xl border border-amber-300/25 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
-              Lite supports up to 4 items for now.
+              Lite limit reached. Maximum 4 items in Lite.
             </div>
           )}
 
@@ -556,9 +558,7 @@ export function ParrilladaSchedulerScreen() {
         <header className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.08] to-orange-500/[0.07] p-4 shadow-xl sm:p-5">
           <p className="text-[11px] uppercase tracking-[0.2em] text-orange-200/70">Parrillero Pro</p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">Parrillada Lite v1</h1>
-          <p className="mt-1 text-sm leading-5 text-white/70">
-            Select 2-4 items, choose serve time and strategy, then follow the compact timeline.
-          </p>
+          <p className="mt-1 text-sm leading-5 text-white/70">Lite supports 2-4 items. Choose serve time and strategy, then follow the compact timeline.</p>
         </header>
 
         <section className="grid gap-2 rounded-3xl border border-white/10 bg-white/[0.04] p-3 sm:p-4 md:grid-cols-2">
@@ -601,7 +601,10 @@ export function ParrilladaSchedulerScreen() {
         <section className="grid grid-cols-2 gap-2 rounded-3xl border border-white/10 bg-white/[0.04] p-3 text-sm sm:grid-cols-3 sm:p-4">
           <article className="rounded-2xl border border-white/10 bg-black/20 p-2.5">
             <p className="text-[11px] uppercase tracking-wide text-white/45">Items</p>
-            <p className="mt-1 font-semibold">{selectedCount}/{MIN_ITEMS}-{MAX_ITEMS}</p>
+            <p className="mt-1 font-semibold">
+              {selectedCount} selected{selectedCount >= MAX_ITEMS ? ` · ${selectedCount} of ${MAX_ITEMS}` : ''}
+            </p>
+            <p className="mt-1 text-[11px] leading-4 text-white/50">Lite supports 2-4 items.</p>
           </article>
           <article className="rounded-2xl border border-white/10 bg-black/20 p-2.5">
             <p className="text-[11px] uppercase tracking-wide text-white/45">Strategy</p>
@@ -666,7 +669,7 @@ export function ParrilladaSchedulerScreen() {
 
         {!canBuildPlan && (
           <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 text-sm text-white/80">
-            Select at least {MIN_ITEMS} items to build a timeline. Lite v1 supports up to {MAX_ITEMS} items to keep execution reliable.
+            Choose at least 2 items. Lite supports up to 4 items.
           </section>
         )}
 
