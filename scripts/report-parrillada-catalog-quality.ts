@@ -37,6 +37,8 @@ type CatalogQualityRow = {
   goodForGroups: string;
   requiresEarlyStart: string;
   planningHint: string;
+  targetCut: string;
+  advancedSafetyStatus: string;
   notes: string;
 };
 
@@ -60,6 +62,8 @@ type CatalogQualityReport = {
     };
     requiresEarlyStart: number;
     withRiskTags: number;
+    targetCutsIncluded: number;
+    targetCutsSkipped: number;
   };
   skippedItems: Array<{
     cutId: string;
@@ -75,6 +79,18 @@ type CatalogQualityReport = {
   advancedRows: CatalogQualityRow[];
   topRiskTags: Array<{ tag: string; count: number }>;
 };
+
+const TARGET_ADVANCED_TUNING_CUTS = new Set([
+  "brisket",
+  "short_ribs",
+  "baby_back_ribs",
+  "spare_ribs",
+  "pork_belly",
+  "chuck_roast",
+  "whole_chicken",
+  "spatchcock_chicken",
+  "pork_belly_slices",
+]);
 
 function makeInput(candidate: ReturnType<typeof getParrilladaCatalogCandidates>[number]): CookingInput {
   return {
@@ -145,6 +161,8 @@ function collectReport(): CatalogQualityReport {
     const presentation = reportItem ? getParrilladaItemPresentation(reportItem) : undefined;
     const resolvedMetadata = reportItem?.planningMetadata ?? metadata;
     const rowNotes = [...(resolvedMetadata?.notes ?? []), ...(reportItem?.notes ?? [])];
+    const needsAdvancedSafetyGate =
+      candidate.tier === "advanced" || presentation?.visibility === "advanced" || presentation?.role === "longCook";
 
     for (const tag of resolvedMetadata?.riskTags ?? []) {
       riskCounter.set(tag, (riskCounter.get(tag) ?? 0) + 1);
@@ -181,6 +199,8 @@ function collectReport(): CatalogQualityReport {
       goodForGroups: yesNo(presentation?.goodForGroups),
       requiresEarlyStart: yesNo(presentation?.requiresEarlyStart),
       planningHint: presentation?.planningHint ?? "-",
+      targetCut: TARGET_ADVANCED_TUNING_CUTS.has(candidate.cut) ? "yes" : "no",
+      advancedSafetyStatus: !needsAdvancedSafetyGate ? "not_required" : included ? "passed" : "skipped",
       notes: rowNotes.length > 0 ? rowNotes.join("; ") : "-",
     } satisfies CatalogQualityRow;
   });
@@ -235,6 +255,8 @@ function collectReport(): CatalogQualityReport {
       },
       requiresEarlyStart: rows.filter((row) => row.requiresEarlyStart === "yes").length,
       withRiskTags,
+      targetCutsIncluded: rows.filter((row) => row.targetCut === "yes" && row.status === "included").length,
+      targetCutsSkipped: rows.filter((row) => row.targetCut === "yes" && row.status === "skipped").length,
     },
     skippedItems,
     confidenceBreakdown,
@@ -264,6 +286,8 @@ function toMarkdown(report: CatalogQualityReport): string {
     `- Advanced count: ${report.summary.visibility.advanced}`,
     `- Items requiring early start: ${report.summary.requiresEarlyStart}`,
     `- Items with risk tags: ${report.summary.withRiskTags}`,
+    `- Target advanced-tuning cuts included: ${report.summary.targetCutsIncluded}`,
+    `- Target advanced-tuning cuts skipped: ${report.summary.targetCutsSkipped}`,
     "",
     "## Confidence Breakdown",
     `- High: ${report.confidenceBreakdown.high}`,
@@ -315,8 +339,8 @@ function toMarkdown(report: CatalogQualityReport): string {
     "",
     "## Full Item Matrix",
     "",
-    "| cutId | displayName | status | skipReason | animal | category | planningMetadataSource | planningMetadataConfidence | setupMinutes | activeCookMinutes | restMinutes | totalSessionMinutes | requiredZones | preferredZones | zoneDemand | timingSensitivity | canHoldWarm | maxHoldMinutes | serveWindowMinutes | riskTags | visibility | role | complexity | goodForGroups | requiresEarlyStart | planningHint | notes |",
-    "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+    "| cutId | displayName | status | skipReason | animal | category | planningMetadataSource | planningMetadataConfidence | setupMinutes | activeCookMinutes | restMinutes | totalSessionMinutes | requiredZones | preferredZones | zoneDemand | timingSensitivity | canHoldWarm | maxHoldMinutes | serveWindowMinutes | riskTags | visibility | role | complexity | goodForGroups | requiresEarlyStart | planningHint | targetCut | advancedSafetyStatus | notes |",
+    "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
   ];
 
   const rows = report.rows.map((row) =>
@@ -347,6 +371,8 @@ function toMarkdown(report: CatalogQualityReport): string {
       row.goodForGroups,
       row.requiresEarlyStart,
       row.planningHint,
+      row.targetCut,
+      row.advancedSafetyStatus,
       row.notes,
     ]
       .map((value) => String(value).replaceAll("|", "\\|"))
@@ -383,6 +409,8 @@ function printConsoleSummary(report: CatalogQualityReport): void {
   console.log(`Advanced count: ${report.summary.visibility.advanced}`);
   console.log(`Items requiring early start: ${report.summary.requiresEarlyStart}`);
   console.log(`Items with risk tags: ${report.summary.withRiskTags}`);
+  console.log(`Target advanced-tuning cuts included: ${report.summary.targetCutsIncluded}`);
+  console.log(`Target advanced-tuning cuts skipped: ${report.summary.targetCutsSkipped}`);
   if (report.topRiskTags.length > 0) {
     console.log("Top risk tags:");
     report.topRiskTags.forEach((risk) => console.log(`- ${risk.tag}: ${risk.count}`));

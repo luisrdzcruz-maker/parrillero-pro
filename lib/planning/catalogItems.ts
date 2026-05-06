@@ -1,6 +1,8 @@
 import { generateCookingPlan, getCutForInput, type CookingInput } from "@/lib/cookingEngine";
 import { getPlanPlanningMetadata } from "@/lib/cooking/planningMetadata";
 import { singleCutPlanToPlannerInput } from "./adapters/cookingCatalogAdapter";
+import { NAPOLEON_ROGUE_525_LITE } from "./fixtures/demoGrills";
+import { scheduleParrillada } from "./scheduler";
 import type { PlannerCutInput } from "./types";
 
 export type CatalogCandidate = {
@@ -23,6 +25,20 @@ export type CatalogBackedItemBuildResult = {
   items: PlannerCutInput[];
   skipped: CatalogBackedItemSkip[];
 };
+
+const ADVANCED_MIN_SESSION_MINUTES = 90;
+const ADVANCED_MAX_SESSION_MINUTES = 720;
+const ADVANCED_SANITY_SERVE_AT_ISO = "2030-05-01T18:00:00.000Z";
+const ADVANCED_SANITY_NOW_ISO = "2030-05-01T12:00:00.000Z";
+const ADVANCED_SAFETY_GATE_CUT_IDS = new Set([
+  "brisket",
+  "short_ribs",
+  "baby_back_ribs",
+  "spare_ribs",
+  "pork_belly",
+  "chuck_roast",
+  "whole_chicken",
+]);
 
 const PARRILLADA_CATALOG_CANDIDATES: CatalogCandidate[] = [
   { id: "ribeye", animal: "Beef", cut: "ribeye", doneness: "medium_rare", thicknessCm: "3", weightGrams: 500, priority: 5 },
@@ -80,6 +96,75 @@ function makeInput(candidate: CatalogCandidate): CookingInput {
   };
 }
 
+function isSortedByStartMinute(phases: ReturnType<typeof scheduleParrillada>["phases"]): boolean {
+  for (let i = 1; i < phases.length; i += 1) {
+    const prev = phases[i - 1];
+    const curr = phases[i];
+    if (curr.startMinute < prev.startMinute) return false;
+    if (curr.startMinute === prev.startMinute && curr.endMinute < prev.endMinute) return false;
+  }
+  return true;
+}
+
+function buildAdvancedSaneCompanion(itemCutId: string): PlannerCutInput {
+  return {
+    id: `advanced-sanity-companion-${itemCutId}`,
+    cutId: "asparagus",
+    displayName: "Asparagus",
+    animal: "vegetable",
+    weightGrams: 320,
+    thicknessCm: 2,
+    priority: 1,
+  };
+}
+
+function validateAdvancedTimeline(item: PlannerCutInput): string | null {
+  const sanityPlan = scheduleParrillada({
+    items: [item, buildAdvancedSaneCompanion(item.cutId)],
+    serveAtIso: ADVANCED_SANITY_SERVE_AT_ISO,
+    nowIso: ADVANCED_SANITY_NOW_ISO,
+    strategy: "balanced",
+    grillCapacity: NAPOLEON_ROGUE_525_LITE,
+    allowHolding: true,
+    maxPlanLookbackMinutes: 720,
+  });
+  if (sanityPlan.phases.length === 0) return "timeline has no actions";
+  if (!isSortedByStartMinute(sanityPlan.phases)) return "timeline ordering invalid";
+  const firstCook = sanityPlan.phases.find((phase) => phase.type === "cook" || phase.type === "sear");
+  if (!firstCook) return "timeline missing cook/sear phases";
+  const servePhases = sanityPlan.phases.filter((phase) => phase.type === "serve");
+  if (servePhases.length === 0) return "timeline missing serve phases";
+  const serveAtMs = new Date(ADVANCED_SANITY_SERVE_AT_ISO).getTime();
+  const maxServeDelta = Math.max(
+    ...servePhases.map((phase) => Math.abs(Math.round((new Date(phase.startIso).getTime() - serveAtMs) / 60000))),
+  );
+  if (maxServeDelta > 5) return `serve drift too high (${maxServeDelta}m)`;
+  return null;
+}
+
+function validateAdvancedCutSafety(item: PlannerCutInput): string | null {
+  const metadata = item.planningMetadata;
+  if (!metadata) return "advanced item missing planningMetadata";
+  if (metadata.source !== "single-cut-engine") {
+    return `advanced item metadata source not safe (${metadata.source})`;
+  }
+  if (metadata.confidence !== "high") {
+    return `advanced item confidence not safe (${metadata.confidence})`;
+  }
+  if (metadata.totalSessionMinutes < ADVANCED_MIN_SESSION_MINUTES) {
+    return `advanced item session too short (${metadata.totalSessionMinutes}m)`;
+  }
+  if (metadata.totalSessionMinutes > ADVANCED_MAX_SESSION_MINUTES) {
+    return `advanced item session too long (${metadata.totalSessionMinutes}m)`;
+  }
+  if (metadata.requiredZones.length === 0 && metadata.preferredZones.length === 0) {
+    return "advanced item metadata has no usable zones";
+  }
+  const timelineIssue = validateAdvancedTimeline(item);
+  if (timelineIssue) return `advanced item timeline not sane (${timelineIssue})`;
+  return null;
+}
+
 export function buildCatalogBackedParrilladaLiteItems(): CatalogBackedItemBuildResult {
   const items: PlannerCutInput[] = [];
   const skipped: CatalogBackedItemSkip[] = [];
@@ -106,26 +191,6 @@ export function buildCatalogBackedParrilladaLiteItems(): CatalogBackedItemBuildR
     }
 
     const metadata = getPlanPlanningMetadata(plan);
-    if (candidate.tier === "advanced") {
-      if (!metadata) {
-        skipped.push({ candidateId: candidate.id, reason: "advanced item missing planningMetadata" });
-        continue;
-      }
-      if (metadata.source !== "single-cut-engine" || metadata.confidence !== "high") {
-        skipped.push({
-          candidateId: candidate.id,
-          reason: `advanced item metadata not safe (${metadata.source}/${metadata.confidence})`,
-        });
-        continue;
-      }
-      if (metadata.totalSessionMinutes < 90) {
-        skipped.push({
-          candidateId: candidate.id,
-          reason: `advanced item session too short (${metadata.totalSessionMinutes}m)`,
-        });
-        continue;
-      }
-    }
 
     const plannerItem = singleCutPlanToPlannerInput({
       id: `catalog-${candidate.id}`,
@@ -138,6 +203,15 @@ export function buildCatalogBackedParrilladaLiteItems(): CatalogBackedItemBuildR
 
     if (!metadata) {
       plannerItem.notes = [...(plannerItem.notes ?? []), "fallback: planningMetadata missing"];
+    }
+
+    const requiresAdvancedGate = ADVANCED_SAFETY_GATE_CUT_IDS.has(candidate.cut);
+    if (requiresAdvancedGate) {
+      const unsafeReason = validateAdvancedCutSafety(plannerItem);
+      if (unsafeReason) {
+        skipped.push({ candidateId: candidate.id, reason: unsafeReason });
+        continue;
+      }
     }
 
     items.push(plannerItem);
