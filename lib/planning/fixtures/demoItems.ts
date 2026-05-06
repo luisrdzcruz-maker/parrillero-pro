@@ -36,3 +36,14 @@ export const DEMO_PARRILLADA_ITEMS: PlannerCutInput[] = [
     priority: 1,
   },
 ];
+
+function pick(ids: string[]): PlannerCutInput[] {
+  return DEMO_PARRILLADA_ITEMS.filter((item) => ids.includes(item.id));
+}
+
+export const DEMO_PARRILLADA_SCENARIOS = {
+  picanhaAsparagus: pick(['picanha-1', 'asparagus-1']),
+  picanhaSecretoAsparagus: pick(['picanha-1', 'secreto-1', 'asparagus-1']),
+  wingsSecretoAsparagus: pick(['chicken-wings-1', 'secreto-1', 'asparagus-1']),
+  defaultLite4: pick(['picanha-1', 'secreto-1', 'chicken-wings-1', 'asparagus-1']),
+} as const;

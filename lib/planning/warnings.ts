@@ -1,5 +1,13 @@
 import type { NormalizedPlannerItem, PlannerRequest, PlannerWarning, PlannerPhase, ZoneConflict } from './types';
 
+function formatSuggestedServeTime(iso: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(iso));
+}
+
 export function buildPlannerWarnings(args: {
   request: PlannerRequest;
   items: NormalizedPlannerItem[];
@@ -43,6 +51,35 @@ export function buildPlannerWarnings(args: {
   }
 
   for (const item of items) {
+    const itemPhases = phases.filter((phase) => phase.itemId === item.id);
+    const prep = itemPhases.find((phase) => phase.type === 'prep');
+    const cook = itemPhases.find((phase) => phase.type === 'cook');
+    const rest = itemPhases.find((phase) => phase.type === 'rest');
+
+    if (prep && cook && prep.endMinute > cook.startMinute) {
+      warnings.push({
+        id: `prep-after-cook-${item.id}`,
+        severity: 'critical',
+        code: 'UNKNOWN',
+        title: `${item.displayName}: prep order issue`,
+        message: 'Prep/setup must finish before cook starts.',
+        itemIds: [item.id],
+        phaseIds: [prep.id, cook.id],
+      });
+    }
+
+    if (cook && rest && rest.startMinute < cook.endMinute) {
+      warnings.push({
+        id: `rest-before-cook-finish-${item.id}`,
+        severity: 'critical',
+        code: 'UNKNOWN',
+        title: `${item.displayName}: rest order issue`,
+        message: 'Rest must start after cooking finishes.',
+        itemIds: [item.id],
+        phaseIds: [cook.id, rest.id],
+      });
+    }
+
     const hold = phases.find((phase) => phase.itemId === item.id && phase.type === 'hold');
     if (hold && hold.durationMinutes > item.profile.maxHoldMinutes) {
       warnings.push({
@@ -82,14 +119,33 @@ export function buildPlannerWarnings(args: {
   const nowIso = request.nowIso;
   if (nowIso) {
     const now = new Date(nowIso).getTime();
+
+    const globalPreheat = phases.find((phase) => phase.type === 'preheat' && phase.itemId === 'global');
+    const firstCook = phases
+      .filter((phase) => phase.type === 'cook')
+      .sort((a, b) => a.startMinute - b.startMinute)[0];
+
+    if (globalPreheat && firstCook && globalPreheat.endMinute > firstCook.startMinute) {
+      warnings.push({
+        id: 'preheat-after-cook-start',
+        severity: 'critical',
+        code: 'UNKNOWN',
+        title: 'Preheat scheduling issue',
+        message: 'Global preheat should finish before the first cook phase starts.',
+        phaseIds: [globalPreheat.id, firstCook.id],
+      });
+    }
+
     for (const phase of phases) {
       if (new Date(phase.startIso).getTime() < now && phase.type !== 'serve') {
+        const delayMinutes = Math.max(1, Math.ceil((now - new Date(phase.startIso).getTime()) / 60000));
+        const suggestedServeIso = new Date(new Date(request.serveAtIso).getTime() + (delayMinutes + 10) * 60000).toISOString();
         warnings.push({
           id: `starts-in-past-${phase.id}`,
           severity: 'critical',
           code: 'STARTS_IN_PAST',
           title: 'Plan starts in the past',
-          message: `${phase.displayName} should have started already. Regenerate with a later serve time or simplify the menu.`,
+          message: `${phase.displayName} should have started already. Suggested minimum serve time: ${formatSuggestedServeTime(suggestedServeIso)}.`,
           itemIds: [phase.itemId],
           phaseIds: [phase.id],
         });

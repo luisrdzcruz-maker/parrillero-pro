@@ -11,6 +11,8 @@ import type {
   SchedulerStrategy,
 } from './types';
 
+const GRILL_ACTIVE_PHASE_TYPES = new Set<PlannerPhase['type']>(['cook', 'sear', 'flip', 'check']);
+
 function itemSortScore(item: NormalizedPlannerItem, strategy: SchedulerStrategy): number {
   const sensitivityScore = { low: 1, medium: 2, high: 3, critical: 4 }[item.profile.timingSensitivity];
   const holdScore = { excellent: 1, good: 2, limited: 3, poor: 4, unsafe: 5 }[item.profile.holdQuality];
@@ -173,7 +175,18 @@ export function scheduleParrillada(request: PlannerRequest): PlannerResult {
   const sortedItems = [...items].sort((a, b) => itemSortScore(b, strategy) - itemSortScore(a, strategy));
   const phases: PlannerPhase[] = [];
 
+  for (const item of sortedItems) {
+    const itemPhases = buildItemPhases({ item, existing: phases, request });
+    phases.push(...itemPhases);
+  }
+
   const preheatMinutes = request.preheatMinutes ?? request.grillCapacity.defaultPreheatMinutes ?? 15;
+  const firstGrillCookStartMinute = phases
+    .filter((phase) => GRILL_ACTIVE_PHASE_TYPES.has(phase.type))
+    .reduce((earliest, phase) => Math.min(earliest, phase.startMinute), Number.POSITIVE_INFINITY);
+  const preheatEndMinute = Number.isFinite(firstGrillCookStartMinute) ? Math.min(0, firstGrillCookStartMinute) : 0;
+  const preheatStartMinute = preheatEndMinute - preheatMinutes;
+
   phases.push({
     id: `global-preheat-${preheatMinutes}`,
     itemId: 'global',
@@ -181,19 +194,14 @@ export function scheduleParrillada(request: PlannerRequest): PlannerResult {
     displayName: 'Preheat grill',
     type: 'preheat',
     zone: 'direct_high',
-    startMinute: -preheatMinutes,
-    endMinute: 0,
-    startIso: addMinutesIso(request.serveAtIso, -preheatMinutes),
-    endIso: request.serveAtIso,
+    startMinute: preheatStartMinute,
+    endMinute: preheatEndMinute,
+    startIso: addMinutesIso(request.serveAtIso, preheatStartMinute),
+    endIso: addMinutesIso(request.serveAtIso, preheatEndMinute),
     durationMinutes: preheatMinutes,
     isFlexible: true,
-    notes: ['Preheat can start earlier if long cooks need stable zones.'],
+    notes: ['Preheat is scheduled before the first grill-cook phase.'],
   });
-
-  for (const item of sortedItems) {
-    const itemPhases = buildItemPhases({ item, existing: phases, request });
-    phases.push(...itemPhases);
-  }
 
   const sortedPhases = sortPhases(phases);
   const conflicts = detectZoneConflicts(sortedPhases, request.grillCapacity);
