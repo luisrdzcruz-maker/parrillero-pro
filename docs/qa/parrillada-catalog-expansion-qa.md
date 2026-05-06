@@ -59,6 +59,7 @@ Currently included Parrillada catalog items:
 - spare_ribs
 - pork_belly
 - chuck_roast
+- pork_belly_slices
 
 ## Items Skipped
 - none currently skipped in catalog-backed Parrillada Lite candidates.
@@ -70,6 +71,16 @@ Currently included Parrillada catalog items:
   - included metadata-backed items: 37
   - fallback-note items: 0
   - skipped items: 0
+
+## Advanced Cut Tuning Note
+- Scope limited to planning metadata, Parrillada eligibility, catalog quality reporting, and `qa:parrillada` coverage.
+- Target cuts tuned: `brisket`, `short_ribs`, `baby_back_ribs`, `spare_ribs`, `pork_belly`, `chuck_roast`, `whole_chicken`, `spatchcock_chicken`, `pork_belly_slices`.
+- Included after tuning: all nine target cuts remained catalog-eligible.
+- Skipped after tuning: none of the target cuts; advanced safety gates now report explicit skip reasons when a targeted long-cook cut becomes unsafe.
+- `pork_belly_slices` decision: kept as `standard` + `fastFinish` (short session), not forced into advanced long-cook handling.
+- Confidence baseline: planning metadata remains `single-cut-engine/high` for all current catalog candidates.
+- Long-cook planning hints now use metadata context (`Needs low and slow`, `Start early`, `Higher timing risk`) rather than one generic advanced hint.
+- Remaining limitation: scheduler QA validates deterministic timeline sanity and warning surfacing, not full culinary optimization for every long-cook path.
 
 ## QA Scenarios
 `qa:parrillada` currently covers:
@@ -84,12 +95,13 @@ Currently included Parrillada catalog items:
 - catalog: chicken + side mix
 - catalog: fish + vegetable mix
 - catalog: default expanded 4-item menu
-- catalog: advanced long-cook mix if safe items resolve
+- catalog: advanced long-cook + vegetable
 - catalog: advanced long-cook + side
-- catalog: ribs + vegetable
-- catalog: whole chicken + side
+- catalog: ribs + side
+- catalog: whole/spatchcock chicken + side
 - catalog: pork belly + side
 - catalog: pork belly slices + side
+- catalog: brisket + chuck roast + side
 - generated: beef + vegetable
 - generated: pork + vegetable
 - generated: chicken + side
@@ -117,14 +129,14 @@ Currently included Parrillada catalog items:
 
 ## Catalog-Wide QA Summary
 - scenario families generated: 8
-- scenarios passed: 28/28
+- scenarios passed: 29/29
 - scenarios skipped: 0
-- included items covered by passing scenarios: 27
-- advanced items covered by passing scenarios: 7
-- warning severity totals (info/warning/critical): 24/20/4
+- included items covered by passing scenarios: 28
+- advanced items covered by passing scenarios: 8
+- warning severity totals (info/warning/critical): 27/21/5
 
 ## Validation Results
-- `npm run qa:parrillada`: PASS 28/28
+- `npm run qa:parrillada`: PASS 29/29
 - `npm run qa:cooking`: PASS 1116/1116
 - `npm run lint`: PASS with known `app/page.tsx` warning
 - `npm run build`: PASS
@@ -158,5 +170,5 @@ Currently included Parrillada catalog items:
 1. Commit current catalog expansion and QA report.
 2. Run final validation.
 3. Push PR.
-4. In follow-up branch, tune advanced cuts and full catalog metadata quality.
+4. Monitor advanced-cut safety gate skips in future catalog/report runs.
 5. Later add Event/Pro mode for more than 4 items.

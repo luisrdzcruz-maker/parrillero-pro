@@ -183,6 +183,39 @@ function sortCatalogItems(items: CatalogItem[]): CatalogItem[] {
   });
 }
 
+function buildMissingCutReason(
+  cutIds: string[],
+  availableItems: PlannerResult["request"]["items"],
+  skippedByCandidateId: Map<string, string>,
+): string {
+  const missing = cutIds.filter((cutId) => !availableItems.some((item) => item.cutId === cutId));
+  return missing
+    .map((cutId) => {
+      const skipReason = skippedByCandidateId.get(cutId);
+      return skipReason ? `${cutId} (${skipReason})` : cutId;
+    })
+    .join(", ");
+}
+
+function isTimelineSaneForScenario(items: PlannerResult["request"]["items"]): { ok: true } | { ok: false; reason: string } {
+  try {
+    const result = scheduleParrillada({
+      items,
+      serveAtIso: FIXED_SERVE_AT_ISO,
+      nowIso: FIXED_NOW_ISO,
+      strategy: "balanced",
+      grillCapacity: NAPOLEON_ROGUE_525_LITE,
+      allowHolding: true,
+      maxPlanLookbackMinutes: 720,
+    });
+    validatePlanSanity(result);
+    return { ok: true };
+  } catch (error) {
+    const qaError = error as QaError;
+    return { ok: false, reason: qaError.message };
+  }
+}
+
 function buildGeneratedScenario(
   family: GeneratedScenarioFamily,
   sortedCatalogItems: CatalogItem[],
@@ -240,6 +273,7 @@ function main(): void {
   ];
   const catalog = buildCatalogBackedParrilladaLiteItems();
   const skippedScenarios: ScenarioSkip[] = [];
+  const skippedByCandidateId = new Map(catalog.skipped.map((entry) => [entry.candidateId, entry.reason]));
   if (catalog.skipped.length > 0) {
     console.log("Catalog items skipped:");
     catalog.skipped.forEach((skip) => console.log(`- ${skip.candidateId}: ${skip.reason}`));
@@ -254,8 +288,23 @@ function main(): void {
   ): void => {
     const items = tryPickItemsByCutId(catalog.items, cutIds);
     if (!items) {
-      const missing = cutIds.filter((cutId) => !catalog.items.some((item) => item.cutId === cutId));
-      skippedScenarios.push({ name, reason: `missing catalog items [${missing.join(", ")}]` });
+      const missingReason = buildMissingCutReason(cutIds, catalog.items, skippedByCandidateId);
+      skippedScenarios.push({ name, reason: `missing/unsafe catalog items [${missingReason}]` });
+      return;
+    }
+    catalogScenarios.push({ name, items, metadataCoverageRequired });
+  };
+
+  const pushScenarioIfTimelineSane = (name: string, cutIds: string[], metadataCoverageRequired = true): void => {
+    const items = tryPickItemsByCutId(catalog.items, cutIds);
+    if (!items) {
+      const missingReason = buildMissingCutReason(cutIds, catalog.items, skippedByCandidateId);
+      skippedScenarios.push({ name, reason: `missing/unsafe catalog items [${missingReason}]` });
+      return;
+    }
+    const sanity = isTimelineSaneForScenario(items);
+    if (!sanity.ok) {
+      skippedScenarios.push({ name, reason: `timeline sanity check failed (${sanity.reason})` });
       return;
     }
     catalogScenarios.push({ name, items, metadataCoverageRequired });
@@ -270,7 +319,7 @@ function main(): void {
     ["striploin", "iberian_presa", "chicken_wing", "bell_peppers"],
   );
   pushScenarioIfAvailable(
-    "catalog: advanced long-cook mix",
+    "catalog: advanced long-cook + vegetable",
     ["brisket", "short_ribs", "pork_belly", "potato_halves"],
   );
   pushScenarioIfAvailable(
@@ -278,12 +327,12 @@ function main(): void {
     ["brisket", "potato_halves"],
   );
   pushScenarioIfAvailable(
-    "catalog: ribs + vegetable",
+    "catalog: ribs + side",
     ["baby_back_ribs", "spare_ribs", "corn_on_cob"],
   );
   pushScenarioIfAvailable(
-    "catalog: whole chicken + side",
-    ["whole_chicken", "asparagus"],
+    "catalog: whole/spatchcock chicken + side",
+    ["whole_chicken", "spatchcock_chicken", "asparagus"],
   );
   pushScenarioIfAvailable(
     "catalog: pork belly + side",
@@ -292,6 +341,10 @@ function main(): void {
   pushScenarioIfAvailable(
     "catalog: pork belly slices + side",
     ["pork_belly_slices", "asparagus"],
+  );
+  pushScenarioIfTimelineSane(
+    "catalog: brisket + chuck roast + side",
+    ["brisket", "chuck_roast", "potato_halves"],
   );
 
   const sortedCatalogItems = sortCatalogItems(catalog.items);

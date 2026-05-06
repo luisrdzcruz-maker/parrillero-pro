@@ -33,7 +33,6 @@ const PARRILLADA_UI_OVERRIDES: Partial<Record<string, CatalogUiOverride>> = {
     complexity: "advanced",
     goodForGroups: true,
     requiresEarlyStart: true,
-    planningHint: "Long cook",
   },
   picanha: {
     role: "main",
@@ -80,7 +79,6 @@ const PARRILLADA_UI_OVERRIDES: Partial<Record<string, CatalogUiOverride>> = {
     complexity: "advanced",
     goodForGroups: true,
     requiresEarlyStart: true,
-    planningHint: "Long cook",
   },
   iberian_secreto: {
     role: "fastFinish",
@@ -141,7 +139,6 @@ const PARRILLADA_UI_OVERRIDES: Partial<Record<string, CatalogUiOverride>> = {
     complexity: "advanced",
     goodForGroups: true,
     requiresEarlyStart: true,
-    planningHint: "Long cook",
   },
   spatchcock_chicken: {
     role: "main",
@@ -200,7 +197,6 @@ const PARRILLADA_UI_OVERRIDES: Partial<Record<string, CatalogUiOverride>> = {
     complexity: "advanced",
     goodForGroups: true,
     requiresEarlyStart: true,
-    planningHint: "Long cook",
   },
   short_ribs: {
     role: "longCook",
@@ -208,7 +204,6 @@ const PARRILLADA_UI_OVERRIDES: Partial<Record<string, CatalogUiOverride>> = {
     complexity: "advanced",
     goodForGroups: true,
     requiresEarlyStart: true,
-    planningHint: "Long cook",
   },
   baby_back_ribs: {
     role: "longCook",
@@ -216,7 +211,6 @@ const PARRILLADA_UI_OVERRIDES: Partial<Record<string, CatalogUiOverride>> = {
     complexity: "advanced",
     goodForGroups: true,
     requiresEarlyStart: true,
-    planningHint: "Long cook",
   },
   spare_ribs: {
     role: "longCook",
@@ -224,7 +218,6 @@ const PARRILLADA_UI_OVERRIDES: Partial<Record<string, CatalogUiOverride>> = {
     complexity: "advanced",
     goodForGroups: true,
     requiresEarlyStart: true,
-    planningHint: "Long cook",
   },
   pork_belly: {
     role: "longCook",
@@ -232,13 +225,11 @@ const PARRILLADA_UI_OVERRIDES: Partial<Record<string, CatalogUiOverride>> = {
     complexity: "advanced",
     goodForGroups: true,
     requiresEarlyStart: true,
-    planningHint: "Long cook",
   },
   pork_belly_slices: {
     role: "fastFinish",
     visibility: "standard",
     complexity: "medium",
-    planningHint: "Fast finish",
   },
   chuck_roast: {
     role: "longCook",
@@ -246,7 +237,6 @@ const PARRILLADA_UI_OVERRIDES: Partial<Record<string, CatalogUiOverride>> = {
     complexity: "advanced",
     goodForGroups: true,
     requiresEarlyStart: true,
-    planningHint: "Long cook",
   },
   pork_tenderloin: {
     role: "main",
@@ -312,9 +302,27 @@ function inferRole(item: PlannerCutInput): ParrilladaItemRole {
   return "main";
 }
 
+function isLowAndSlowMetadata(item: PlannerCutInput): boolean {
+  const requiredZones = item.planningMetadata?.requiredZones ?? [];
+  const preferredZones = item.planningMetadata?.preferredZones ?? [];
+  return (
+    requiredZones.includes("smoke_low") ||
+    requiredZones.includes("indirect_low") ||
+    preferredZones.includes("smoke_low") ||
+    preferredZones.includes("indirect_low")
+  );
+}
+
 function inferHint(item: PlannerCutInput, role: ParrilladaItemRole): string {
   const metadata = item.planningMetadata;
-  if (role === "longCook") return "Long cook";
+  if (role === "longCook") {
+    if (metadata?.timingSensitivity === "medium" || metadata?.timingSensitivity === "high") {
+      return "Higher timing risk";
+    }
+    if (isLowAndSlowMetadata(item)) return "Needs low and slow";
+    if ((metadata?.totalSessionMinutes ?? 0) >= 120) return "Start early";
+    return "Long cook";
+  }
   if (role === "side" || role === "fastFinish") return "Fast finish";
   if (metadata?.timingSensitivity === "high") return "Serve immediately";
   if (metadata?.canHoldWarm) return "Good for groups";
