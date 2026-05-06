@@ -6,3 +6,5 @@ export * from './capacity';
 export * from './scheduler';
 export * from './time';
 export * from './warnings';
+export * from './fixtures/demoItems';
+export * from './fixtures/demoGrills';
