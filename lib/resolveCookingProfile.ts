@@ -58,6 +58,7 @@ export type ResolvedCookingProfile = {
 const legacyCutsById = new Map(productCatalog.map((cut) => [cut.id, cut]));
 const generatedPrimaryToId = new Map<string, string>();
 const generatedAliasToId = new Map<string, string>();
+const generatedProfileDenylist = new Set<string>(["bone_in_ribeye"]);
 const canonicalCutOverrides: Record<string, string> = {
   "bone-in ribeye": "bone_in_ribeye",
   "cowboy steak": "bone_in_ribeye",
@@ -168,7 +169,8 @@ function parseThicknessCm(value: string | undefined) {
 
 function resolveGeneratedProfile(input: CookingInput) {
   const cutId = resolveAnyCutId(input.cut);
-  return cutId ? getGeneratedCutProfile(cutId) : undefined;
+  if (!cutId || generatedProfileDenylist.has(cutId)) return undefined;
+  return getGeneratedCutProfile(cutId);
 }
 
 function resolveLegacyCut(input: CookingInput) {

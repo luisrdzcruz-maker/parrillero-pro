@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "qa:parrillada": "tsx scripts/qa-parrillada-scheduler.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "qa:cooking": "tsx scripts/cooking-engine-qa.ts",
