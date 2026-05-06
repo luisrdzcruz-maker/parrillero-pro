@@ -1,7 +1,7 @@
 "use client";
 
 import ResultHeader from "@/components/ResultHeader";
-import { Button, BrandImageIcon, Panel } from "@/components/ui";
+import { BrandImageIcon, Panel } from "@/components/ui";
 import { resolveEquipmentIconKey, resolveMethodIconKey } from "@/lib/assets/equipmentMethodIconResolver";
 import { brandIconAssets } from "@/lib/brand/iconAssets";
 import {
@@ -106,7 +106,18 @@ export default function ResultHero({
         },
       ]
     : heroMetrics;
-  const canViewSteps = Boolean(resultBlocks?.PASOS || resultBlocks?.STEPS);
+  const timeMetric = heroMetricItems.find((item) => item.label === copy.resultHeroMetricTime);
+  const tempMetric =
+    heroMetricItems.find((item) => item.label === copy.resultHeroMetricTargetTemp) ??
+    heroMetricItems.find((item) => item.tone === "red");
+  const fireMetric = heroMetricItems.find((item) => item.label === copy.resultHeroFireSetup);
+  const methodMetric = method
+    ? {
+        label: lang === "es" ? "Método" : lang === "fi" ? "Menetelmä" : "Method",
+        value: method,
+        tone: "sky" as const,
+      }
+    : undefined;
 
   function getMetricClass(tone: MetricTone) {
     if (tone === "red") return "border-red-300/25 bg-red-500/[0.08] text-red-50 ring-red-200/[0.04]";
@@ -114,18 +125,37 @@ export default function ResultHero({
     return "border-orange-300/25 bg-orange-500/[0.09] text-orange-50 ring-orange-200/[0.05]";
   }
 
-  function handleViewSteps() {
-    if (typeof document === "undefined") return;
-    document.getElementById("result-steps")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  function renderControlMetric(item: { label: string; value: string; tone: MetricTone } | undefined, compact = false) {
+    if (!item?.value) return null;
+
+    return (
+      <div
+        className={`min-w-0 rounded-[1.15rem] border px-3 py-2.5 shadow-lg shadow-black/10 ring-1 ring-inset ${getMetricClass(item.tone)}`}
+      >
+        <p className="text-[9px] font-black uppercase tracking-[0.16em] text-current/58 sm:text-[10px]">
+          {item.label}
+        </p>
+        <p
+          className={`mt-1 font-black tracking-[-0.04em] text-white ${
+            compact
+              ? "truncate text-[clamp(0.95rem,3.6vw,1.2rem)] leading-tight"
+              : "text-[clamp(1.55rem,7vw,2rem)] leading-none sm:text-3xl"
+          }`}
+          title={item.value}
+        >
+          {item.value}
+        </p>
+      </div>
+    );
   }
 
   return (
-    <Panel as="section" className="relative mb-3 overflow-hidden p-4 sm:mb-5 sm:p-5" tone="hero">
+    <Panel as="section" className="relative mb-3 overflow-hidden p-3.5 sm:mb-5 sm:p-5" tone="hero">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400/50 to-transparent" />
       <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-orange-500/10 blur-3xl" />
       <div className="pointer-events-none absolute -left-8 bottom-0 h-28 w-28 rounded-full bg-orange-500/[0.06] blur-2xl" />
 
-      <div className="relative z-10 grid gap-4">
+      <div className="relative z-10 grid gap-3.5 sm:gap-4">
         <div className="min-w-0 space-y-3">
           <ResultHeader
             doneness={summary?.doneness || doneness}
@@ -142,86 +172,52 @@ export default function ResultHero({
             }}
           />
 
-          {heroMetricItems.length > 0 && (
-            <div className="grid grid-cols-3 gap-2">
-              {heroMetricItems.map((item) => {
-                const isFireMetric = item.label === copy.resultHeroFireSetup;
-                return (
-                <div
-                  key={item.label}
-                  className={`min-w-0 rounded-2xl border px-2.5 py-2.5 shadow-lg shadow-black/10 ring-1 ring-inset sm:p-3 ${getMetricClass(item.tone)}`}
-                >
-                  <p className="text-[9px] font-black uppercase tracking-[0.18em] text-current/70 sm:text-[10px]">
-                    {item.label}
-                  </p>
-                  <p
-                    className={`mt-1 font-black leading-none tracking-[-0.04em] text-white ${
-                      isFireMetric
-                        ? "truncate text-[clamp(0.95rem,4vw,1.45rem)]"
-                        : "text-[clamp(1.35rem,6vw,1.8rem)] sm:text-3xl"
-                    }`}
-                    title={item.value}
-                  >
-                    {item.value}
-                  </p>
-                </div>
-                );
-              })}
-            </div>
-          )}
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] sm:items-end">
-          <div className="grid gap-2 sm:col-start-2">
-            {actions.onStartCooking && (
-              <button
-                type="button"
-                onClick={actions.onStartCooking}
-                className="group flex min-h-[56px] w-full items-center justify-between gap-3 rounded-[1.35rem] border border-orange-200/40 bg-gradient-to-br from-orange-300 via-orange-500 to-orange-600 px-3.5 py-3 text-left text-slate-950 shadow-[0_16px_34px_rgba(234,88,12,0.26)] ring-1 ring-inset ring-white/20 transition-all duration-200 hover:border-orange-100/70 hover:brightness-105 active:scale-[0.99]"
-              >
-                <span className="flex min-w-0 items-center gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-slate-950/15 bg-slate-950/18 shadow-inner ring-1 ring-white/20">
-                    <BrandImageIcon
-                      src={brandIconAssets.navLive}
-                      alt=""
-                      size="sm"
-                      shape="plain"
-                      aria-hidden="true"
-                      className="h-7 w-7 rounded-md drop-shadow-[0_0_10px_rgba(0,0,0,0.24)]"
-                    />
-                  </span>
-                  <span className="min-w-0 text-[15px] font-black leading-tight sm:text-base">
-                    {copy.resultActionsLiveCta || t.startCooking}
-                  </span>
-                </span>
-                <span
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-950/13 text-slate-950 ring-1 ring-inset ring-slate-950/12 transition-transform duration-200 group-hover:translate-x-0.5"
-                  aria-hidden="true"
-                >
-                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none">
-                    <path
-                      d="M7.5 4.75L12.75 10L7.5 15.25"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                    />
-                  </svg>
-                </span>
-              </button>
-            )}
+        <div className="grid grid-cols-2 gap-2 xl:grid-cols-4 xl:grid-rows-2">
+          {renderControlMetric(timeMetric)}
+          {renderControlMetric(tempMetric)}
 
-            {canViewSteps && (
-              <Button
-                className="min-h-[46px] rounded-[1.25rem] text-sm font-black"
-                fullWidth
-                onClick={handleViewSteps}
-                variant="secondary"
+          {actions.onStartCooking && (
+            <button
+              type="button"
+              onClick={actions.onStartCooking}
+              className="group col-span-2 flex min-h-[66px] w-full items-center justify-between gap-3 rounded-[1.35rem] border border-orange-200/45 bg-gradient-to-br from-orange-200 via-orange-500 to-orange-600 px-3.5 py-3.5 text-left text-slate-950 shadow-[0_18px_38px_rgba(234,88,12,0.34)] ring-1 ring-inset ring-white/25 transition-all duration-200 hover:border-orange-100/70 hover:brightness-105 active:scale-[0.99] xl:row-span-2 xl:min-h-[132px] xl:flex-col xl:items-start xl:justify-between xl:p-4"
+            >
+              <span className="flex min-w-0 items-center gap-3 xl:block">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-950/15 bg-slate-950/18 shadow-inner ring-1 ring-white/20 xl:h-12 xl:w-12">
+                  <BrandImageIcon
+                    src={brandIconAssets.navLive}
+                    alt=""
+                    size="sm"
+                    shape="plain"
+                    aria-hidden="true"
+                    className="h-7 w-7 rounded-md drop-shadow-[0_0_10px_rgba(0,0,0,0.24)]"
+                  />
+                </span>
+                <span className="min-w-0 text-[15px] font-black leading-tight xl:mt-3 xl:block xl:text-xl">
+                  {copy.resultActionsLiveCta || t.startCooking}
+                </span>
+              </span>
+              <span
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-950/13 text-slate-950 ring-1 ring-inset ring-slate-950/12 transition-transform duration-200 group-hover:translate-x-0.5 xl:self-end"
+                aria-hidden="true"
               >
-                {copy.resultHeroViewSteps}
-              </Button>
-            )}
-          </div>
+                <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none">
+                  <path
+                    d="M7.5 4.75L12.75 10L7.5 15.25"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                  />
+                </svg>
+              </span>
+            </button>
+          )}
+
+          {renderControlMetric(fireMetric, true)}
+          {renderControlMetric(methodMetric, true)}
         </div>
       </div>
     </Panel>

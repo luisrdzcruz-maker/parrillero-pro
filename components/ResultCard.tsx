@@ -40,9 +40,9 @@ function getVariantLabel(
   const isFi = lang === "fi";
   switch (variant) {
     case "primary":
-      return isEs ? "Pasos de coccion" : isFi ? "Kypsennysvaiheet" : "Cooking steps";
+      return isEs ? "Pasos ejecutables" : isFi ? "Toteutettavat vaiheet" : "Executable steps";
     case "tip":
-      return isEs ? "Error critico" : isFi ? "Kriittinen virhe" : "Critical error";
+      return isEs ? "Guia critica" : isFi ? "Kriittinen ohje" : "Critical guidance";
     case "summary":
       return isEs ? "Tiempos · Temperatura" : isFi ? "Ajat · Lampotila" : "Times · Temperature";
     case "setup":
@@ -57,6 +57,10 @@ function getVariantLabel(
 function parseStepLine(line: string): { number: string; text: string } | null {
   const match = line.match(/^(\d+)[.)]\s+(.+)/);
   return match ? { number: match[1], text: match[2] } : null;
+}
+
+function stripLinePrefix(line: string) {
+  return line.replace(/^(?:[-•*]\s+|\d+[.)]\s+)/, "").trim();
 }
 
 // ─── ResultCardHeader ─────────────────────────────────────────────────────────
@@ -149,7 +153,7 @@ function ResultCardContent({
   // For the PASOS/STEPS card: detect numbered steps and give each its own row
   if (isPrimary && lines.some((l) => parseStepLine(l) !== null)) {
     return (
-      <div className="mt-5 space-y-2.5 border-t border-white/5 pt-4">
+      <div className="mt-4 space-y-2.5 border-t border-white/5 pt-4">
         {lines.map((line, index) => {
           const step = parseStepLine(line);
 
@@ -157,19 +161,21 @@ function ResultCardContent({
             return (
               <div
                 key={`${line}-${index}`}
-                className="flex items-start gap-3 rounded-2xl border border-white/[0.07] bg-black/20 px-4 py-3.5 shadow-inner shadow-black/10 ring-1 ring-inset ring-white/[0.03]"
+                className="flex items-start gap-3 rounded-2xl border border-white/[0.07] bg-black/20 px-3.5 py-3 shadow-inner shadow-black/10 ring-1 ring-inset ring-white/[0.03] sm:px-4 sm:py-3.5"
               >
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-500/25 text-[11px] font-black text-orange-300 ring-1 ring-inset ring-orange-400/20">
                   {step.number}
                 </span>
-                <p className="flex-1 text-base leading-relaxed text-slate-100">{step.text}</p>
+                <p className="flex-1 text-[15px] leading-relaxed text-slate-100 sm:text-base">
+                  {step.text}
+                </p>
               </div>
             );
           }
 
           return (
-            <p key={`${line}-${index}`} className="px-1 text-sm leading-relaxed text-slate-400">
-              {line}
+            <p key={`${line}-${index}`} className="px-1 text-sm font-medium leading-relaxed text-slate-400">
+              {stripLinePrefix(line)}
             </p>
           );
         })}
@@ -177,22 +183,34 @@ function ResultCardContent({
     );
   }
 
-  // Default: single scrollable block
-  return (
-    <div className={isTip ? "mt-4" : "mt-5 border-t border-white/5 pt-4"}>
-      <div
-        className={`space-y-2.5 rounded-2xl border border-white/[0.06] bg-black/15 shadow-inner shadow-black/10 ring-1 ring-inset ring-white/[0.03] ${
-          isPrimary
-            ? "p-4 text-base leading-7 text-slate-100"
-            : isTip
-              ? "border-red-300/35 bg-[radial-gradient(circle_at_0%_0%,rgba(248,113,113,0.16),transparent_34%),rgba(127,29,29,0.18)] p-4 text-sm font-bold leading-6 text-red-50 ring-red-200/[0.06]"
-              : "p-4 text-sm leading-relaxed text-slate-300"
-        }`}
-      >
+  if (isTip) {
+    return (
+      <div className="mt-4 space-y-2.5">
         {lines.map((line, index) => (
-          <p key={`${line}-${index}`} className="whitespace-pre-wrap">
-            {line}
-          </p>
+          <div
+            key={`${line}-${index}`}
+            className="flex items-start gap-3 rounded-2xl border border-red-300/30 bg-[radial-gradient(circle_at_0%_0%,rgba(248,113,113,0.16),transparent_34%),rgba(127,29,29,0.16)] px-3.5 py-3 text-sm font-bold leading-6 text-red-50 shadow-inner shadow-black/10 ring-1 ring-inset ring-red-200/[0.06]"
+          >
+            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-red-200 shadow-[0_0_12px_rgba(254,202,202,0.38)]" />
+            <p className="whitespace-pre-wrap">{stripLinePrefix(line)}</p>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 border-t border-white/5 pt-4">
+      <div className="space-y-2.5">
+        {lines.map((line, index) => (
+          <div
+            key={`${line}-${index}`}
+            className={`rounded-2xl border border-white/[0.06] bg-black/15 px-3.5 py-3 shadow-inner shadow-black/10 ring-1 ring-inset ring-white/[0.03] ${
+              isPrimary ? "text-base leading-7 text-slate-100" : "text-sm leading-relaxed text-slate-300"
+            }`}
+          >
+            <p className="whitespace-pre-wrap">{stripLinePrefix(line)}</p>
+          </div>
         ))}
       </div>
     </div>
