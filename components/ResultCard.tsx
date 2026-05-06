@@ -563,6 +563,9 @@ export default function ResultCard({
   setup,
   variant = "default",
 }: ResultCardProps) {
+  const [stepsOpen, setStepsOpen] = useState(false);
+  const closeSteps = useCallback(() => setStepsOpen(false), []);
+
   if (!content?.trim()) return null;
 
   const icon = getResultCardIcon(title);
@@ -572,8 +575,6 @@ export default function ResultCard({
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean);
-  const [stepsOpen, setStepsOpen] = useState(false);
-  const closeSteps = useCallback(() => setStepsOpen(false), []);
   const isPrimary = variant === "primary";
 
   return (
