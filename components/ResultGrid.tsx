@@ -1,15 +1,8 @@
 "use client";
 
-import Image from "next/image";
-import { useState } from "react";
 import { AppIcon, Badge, Card, Grid } from "@/components/ui";
-import { resolveMethodIconKey } from "@/lib/assets/equipmentMethodIconResolver";
 import { ds } from "@/lib/design-system";
-import {
-  detectSetupFromText,
-  SETUP_VISUAL_FALLBACK,
-  type SetupType,
-} from "@/lib/setupVisualMap";
+import { detectSetupFromText, type SetupType } from "@/lib/setupVisualMap";
 import { formatTitle, getGrillManagerLineClass, getShoppingItems } from "@/lib/uiHelpers";
 import { localizeResultSurfaceCopy, sanitizeCriticalErrorCopy } from "@/lib/i18n/surfaceFallbacks";
 import {
@@ -19,8 +12,8 @@ import {
   type ResultLang,
   type ResultSummary,
 } from "@/lib/results/resultSummary";
-import { buildSetupVisualResult, getSetupOverlayChipClass } from "@/lib/results/setupVisualResult";
 import ResultCard from "@/components/ResultCard";
+import ResultGuidanceToggles from "@/components/results/ResultGuidanceToggles";
 import ResultTimeline from "./ResultTimeline";
 
 type Blocks = ResultBlocks;
@@ -39,104 +32,7 @@ type ResultItem =
 
 // Spans the full 2-column grid on md+ and also on mobile (single-column grids ignore col-span)
 const fullWidthPanel = `${ds.panel.result} transition-all duration-200 col-span-full`;
-const inlineFallbackImage =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='700' viewBox='0 0 1200 700'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='30%25' r='70%25'%3E%3Cstop offset='0%25' stop-color='%23f97316' stop-opacity='.45'/%3E%3Cstop offset='60%25' stop-color='%230f172a'/%3E%3Cstop offset='100%25' stop-color='%23020617'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='1200' height='700' fill='url(%23g)'/%3E%3Cpath d='M280 470h640' stroke='%23fb923c' stroke-width='18' stroke-linecap='round' opacity='.55'/%3E%3Cpath d='M340 405h520' stroke='%23fed7aa' stroke-width='10' stroke-linecap='round' opacity='.38'/%3E%3Ccircle cx='600' cy='300' r='105' fill='%23f97316' opacity='.18'/%3E%3C/svg%3E";
 export type { ResultSummary };
-
-function SetupVisualImage({ src }: { src: string }) {
-  const [fallbackStep, setFallbackStep] = useState<"none" | "asset" | "inline">("none");
-  const imageSrc =
-    fallbackStep === "inline"
-      ? inlineFallbackImage
-      : fallbackStep === "asset"
-        ? SETUP_VISUAL_FALLBACK
-        : src;
-
-  function handleImageError() {
-    setFallbackStep((current) =>
-      current === "none" && src !== SETUP_VISUAL_FALLBACK ? "asset" : "inline",
-    );
-  }
-
-  return (
-    <Image
-      src={imageSrc}
-      alt=""
-      fill
-      sizes="(min-width: 768px) 896px, 100vw"
-      className="object-cover"
-      onError={handleImageError}
-    />
-  );
-}
-
-function SetupVisualAnchor({
-  content,
-  equipment,
-  lang,
-  setup,
-}: {
-  content?: string;
-  equipment?: string;
-  lang: ResultLang;
-  setup?: SetupType;
-}) {
-  const setupVisual = buildSetupVisualResult({
-    content,
-    equipment,
-    lang,
-    setup,
-  });
-  if (!setupVisual) return null;
-  const { setupImage, overlayChips, setupLine, setupVisualLabel } = setupVisual;
-
-  return (
-    <section className="relative col-span-full overflow-hidden rounded-[2rem] border border-orange-300/20 bg-slate-950 shadow-2xl shadow-black/30 ring-1 ring-inset ring-white/[0.04]">
-      <div className="relative h-64 w-full sm:h-80">
-        <SetupVisualImage key={setupImage} src={setupImage} />
-      </div>
-
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_4%,rgba(251,146,60,0.22),transparent_28%),radial-gradient(circle_at_28%_0%,rgba(56,189,248,0.13),transparent_24%),linear-gradient(135deg,rgba(2,6,23,0.88)_0%,rgba(2,6,23,0.5)_26%,rgba(2,6,23,0.12)_48%,transparent_68%)]"
-      />
-
-      <div className="pointer-events-none absolute left-0 top-0 flex max-w-[82%] flex-wrap items-start gap-2 p-4 sm:max-w-[70%] sm:p-5">
-        {overlayChips.map((chip) => {
-          const chipIcon = resolveMethodIconKey(chip.label);
-
-          return (
-            <span
-              key={`${chip.tone}-${chip.label}`}
-              className={`${getSetupOverlayChipClass(chip.tone)} inline-flex items-center gap-1.5`}
-            >
-              {chipIcon ? (
-                <AppIcon
-                  category={chipIcon.category}
-                  iconKey={chipIcon.key}
-                  alt=""
-                  size="sm"
-                  aria-hidden="true"
-                  className="h-3.5 w-3.5 opacity-85"
-                />
-              ) : null}
-              {chip.label}
-            </span>
-          );
-        })}
-      </div>
-
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950 via-slate-950/82 to-transparent p-4 pt-16 sm:p-5 sm:pt-20">
-        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300/90">
-          {setupVisualLabel}
-        </p>
-        <p className="mt-1 line-clamp-2 max-w-2xl text-sm font-semibold leading-relaxed text-white">
-          {setupLine}
-        </p>
-      </div>
-    </section>
-  );
-}
 
 export function buildResultSummary(blocks: Blocks, keys: string[], lang: ResultLang = "es"): ResultSummary {
   const summary = buildResultSummaryHelper(blocks, keys, lang);
@@ -298,16 +194,6 @@ function ResultLoadingState({ text }: { text: string }) {
   );
 }
 
-function PrepGuidanceInline({ line }: { line?: string }) {
-  if (!line?.trim()) return null;
-
-  return (
-    <div className="col-span-full rounded-[1.25rem] border border-orange-300/15 bg-orange-500/[0.06] px-3.5 py-3 shadow-lg shadow-black/10 ring-1 ring-inset ring-orange-200/[0.04]">
-      <p className="text-sm font-semibold leading-relaxed text-orange-50/90">{line}</p>
-    </div>
-  );
-}
-
 function findBlockKey(keys: string[], candidates: string[]) {
   return keys.find((key) => candidates.includes(key.toUpperCase()));
 }
@@ -322,6 +208,16 @@ function getStepDurationTotal(blocks: Blocks, keys: string[]) {
   );
 
   return totalMinutes > 0 ? `${totalMinutes} min` : "";
+}
+
+function getAvoidGuidanceContent(blocks: Blocks, keys: string[], lang: ResultLang) {
+  const errorKey = findBlockKey(keys, ["ERROR", "ERROR CLAVE", "KEY ERROR"]);
+  if (!errorKey) return "";
+
+  return localizeResultSurfaceCopy(
+    sanitizeCriticalErrorCopy(sanitizeUserFacingGuidance(blocks[errorKey], lang), lang),
+    lang,
+  );
 }
 
 function getLocalizedBlockTitle(key: string, lang: "es" | "en" | "fi") {
@@ -356,25 +252,6 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en"
   const grillManagerItems: ResultItem[] = [];
   const shoppingItems: ResultItem[] = [];
   const secondaryItems: ResultItem[] = [];
-
-  if (errorKey) {
-    const errorTitle =
-      lang === "es"
-        ? "Error que arruina este corte"
-        : lang === "fi"
-          ? "Virhe joka pilaa taman leikkauksen"
-          : "Error that ruins this cut";
-    coreItems.push({
-      key: errorKey,
-      title: errorTitle,
-      content: localizeResultSurfaceCopy(
-        sanitizeCriticalErrorCopy(sanitizeUserFacingGuidance(blocks[errorKey], lang), lang),
-        lang,
-      ),
-      type: "card",
-      variant: "tip",
-    });
-  }
 
   if (stepsKey) {
     coreItems.push({
@@ -460,17 +337,20 @@ export default function ResultGrid({
 }) {
   const items = getOrderedResultItems(blocks, keys, lang);
   const setupKey = findBlockKey(keys, ["SETUP", "CONFIGURACION", "CONFIGURACIÓN"]);
+  const setupContent = setupKey ? blocks[setupKey] : undefined;
+  const setup = setupContent ? detectSetupFromText(setupContent) : undefined;
+  const avoidContent = getAvoidGuidanceContent(blocks, keys, lang);
 
   return (
     <Grid className="mx-auto max-w-5xl gap-4 md:gap-5" variant="cards">
-      <SetupVisualAnchor
-        content={setupKey ? blocks[setupKey] : undefined}
+      <ResultGuidanceToggles
+        avoidContent={avoidContent}
         equipment={equipment}
         lang={lang}
-        setup={setupKey ? detectSetupFromText(blocks[setupKey]) : undefined}
+        prepGuidanceLine={prepGuidanceLine}
+        setup={setup}
+        setupContent={setupContent}
       />
-
-      <PrepGuidanceInline line={prepGuidanceLine} />
 
       {items.map((item) => {
         if (item.type === "timeline") {
@@ -494,7 +374,7 @@ export default function ResultGrid({
           );
         }
 
-        return (
+        const card = (
           <div
             key={item.key}
             className={item.variant === "primary" ? "col-span-full" : undefined}
@@ -510,6 +390,8 @@ export default function ResultGrid({
             />
           </div>
         );
+
+        return card;
       })}
 
       {!loading && keys.length === 0 && <ResultEmptyState text={t.noResult} />}
