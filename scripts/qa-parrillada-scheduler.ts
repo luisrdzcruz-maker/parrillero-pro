@@ -8,15 +8,21 @@ import {
   type PlannerResult,
 } from "../lib/planning";
 
+type ScenarioOrigin = "explicit" | "generated";
+
 type Scenario = {
   name: string;
   items: PlannerResult["request"]["items"];
   metadataCoverageRequired?: boolean;
+  origin: ScenarioOrigin;
+  familyName?: string;
 };
 
 type ScenarioSkip = {
   name: string;
   reason: string;
+  origin: ScenarioOrigin;
+  familyName?: string;
 };
 
 type CatalogItem = PlannerResult["request"]["items"][number];
@@ -34,6 +40,7 @@ type GeneratedScenarioFamily = {
 const FIXED_SERVE_AT_ISO = "2030-05-01T18:00:00.000Z";
 const FIXED_NOW_ISO = "2030-05-01T12:00:00.000Z";
 const ACTIVE_COOK_TYPES = new Set<PlannerPhase["type"]>(["cook", "sear", "flip", "check"]);
+const ALLOWED_NON_POSITIVE_DURATION_TYPES = new Set<PlannerPhase["type"]>(["buffer"]);
 
 class QaError extends Error {
   constructor(
@@ -48,8 +55,47 @@ function formatPhase(phase: PlannerPhase): string {
   return `${phase.startIso} | ${phase.type} | ${phase.displayName} | ${phase.durationMinutes}m | ${phase.zone}`;
 }
 
+function formatScenarioItem(item: PlannerResult["request"]["items"][number]): string {
+  const presentation = getParrilladaItemPresentation(item);
+  const metadata = item.planningMetadata;
+  return [
+    `${item.cutId}`,
+    `id=${item.id}`,
+    `animal=${item.animal}`,
+    `category=${presentation.category}`,
+    `role=${presentation.role}`,
+    `visibility=${presentation.visibility}`,
+    `timing=${metadata?.timingSensitivity ?? "missing"}`,
+    `canHold=${metadata?.canHoldWarm ?? "missing"}`,
+    `metadataSource=${metadata?.source ?? "missing"}`,
+    `metadataConfidence=${metadata?.confidence ?? "missing"}`,
+  ].join(" | ");
+}
+
+function formatWarning(warning: PlannerResult["warnings"][number]): string {
+  return `${warning.severity} | ${warning.code} | ${warning.title} | ${warning.message}`;
+}
+
+function asQaError(error: unknown): QaError {
+  if (error instanceof QaError) return error;
+  if (error instanceof Error) return new QaError(error.message);
+  return new QaError(String(error));
+}
+
 function assert(condition: boolean, message: string, phaseContext: PlannerPhase[] = []): asserts condition {
   if (!condition) throw new QaError(message, phaseContext);
+}
+
+function validateNoMismatchedCutIdFallback(result: PlannerResult): void {
+  const requestedCutByItemId = new Map(result.request.items.map((item) => [item.id, item.cutId]));
+  for (const normalized of result.items) {
+    const requestedCutId = requestedCutByItemId.get(normalized.id);
+    assert(Boolean(requestedCutId), `normalized item ${normalized.id} is missing from request`);
+    assert(
+      normalized.cutId === requestedCutId,
+      `item ${normalized.id} silently fell back to mismatched cutId (${requestedCutId} -> ${normalized.cutId})`,
+    );
+  }
 }
 
 function validatePlanSanity(result: PlannerResult): void {
@@ -73,7 +119,12 @@ function validatePlanSanity(result: PlannerResult): void {
   }
 
   for (const phase of phases) {
-    assert(phase.durationMinutes > 0, `phase has non-positive duration: ${phase.id}`, [phase]);
+    const allowsNonPositive = ALLOWED_NON_POSITIVE_DURATION_TYPES.has(phase.type);
+    assert(
+      phase.durationMinutes > 0 || allowsNonPositive,
+      `phase has non-positive duration: ${phase.id} (${phase.type})`,
+      [phase],
+    );
   }
 
   const preheat = phases.find((phase) => phase.type === "preheat" && phase.itemId === "global");
@@ -126,21 +177,6 @@ function validatePlanSanity(result: PlannerResult): void {
     const deltaMinutes = Math.abs(Math.round((serveStartMs - requestedServeMs) / 60000));
     assert(deltaMinutes <= 5, "serve action is too far from requested serve time", [serve]);
   }
-}
-
-function pickItemsByCutId(
-  allItems: PlannerResult["request"]["items"],
-  cutIds: string[],
-  scenarioName: string,
-): PlannerResult["request"]["items"] {
-  const picked = cutIds
-    .map((cutId) => allItems.find((item) => item.cutId === cutId))
-    .filter((item): item is PlannerResult["request"]["items"][number] => Boolean(item));
-  if (picked.length !== cutIds.length) {
-    const missing = cutIds.filter((cutId) => !allItems.find((item) => item.cutId === cutId));
-    throw new QaError(`${scenarioName}: missing catalog items [${missing.join(", ")}]`);
-  }
-  return picked;
 }
 
 function tryPickItemsByCutId(
@@ -230,6 +266,8 @@ function buildGeneratedScenario(
         skip: {
           name: family.name,
           reason: `needs ${selector.min}+ ${selector.label} item(s), found ${matches.length}`,
+          origin: "generated",
+          familyName: family.name,
         },
       };
     }
@@ -245,6 +283,8 @@ function buildGeneratedScenario(
       skip: {
         name: family.name,
         reason: `scenario size ${chosen.length} outside Lite bounds (2-4)`,
+          origin: "generated",
+          familyName: family.name,
       },
     };
   }
@@ -254,22 +294,26 @@ function buildGeneratedScenario(
       name: family.name,
       items: chosen,
       metadataCoverageRequired: true,
+      origin: "generated",
+      familyName: family.name,
     },
   };
 }
 
 function main(): void {
   const demoScenarios: Scenario[] = [
-    { name: "picanha + asparagus", items: DEMO_PARRILLADA_SCENARIOS.picanhaAsparagus },
+    { name: "picanha + asparagus", items: DEMO_PARRILLADA_SCENARIOS.picanhaAsparagus, origin: "explicit" },
     {
       name: "picanha + secreto iberico + asparagus",
       items: DEMO_PARRILLADA_SCENARIOS.picanhaSecretoAsparagus,
+      origin: "explicit",
     },
     {
       name: "chicken wings + secreto iberico + asparagus",
       items: DEMO_PARRILLADA_SCENARIOS.wingsSecretoAsparagus,
+      origin: "explicit",
     },
-    { name: "default 4-item demo menu", items: DEMO_PARRILLADA_SCENARIOS.defaultLite4 },
+    { name: "default 4-item demo menu", items: DEMO_PARRILLADA_SCENARIOS.defaultLite4, origin: "explicit" },
   ];
   const catalog = buildCatalogBackedParrilladaLiteItems();
   const skippedScenarios: ScenarioSkip[] = [];
@@ -285,29 +329,50 @@ function main(): void {
     name: string,
     cutIds: string[],
     metadataCoverageRequired = true,
+    familyName?: string,
   ): void => {
     const items = tryPickItemsByCutId(catalog.items, cutIds);
     if (!items) {
       const missingReason = buildMissingCutReason(cutIds, catalog.items, skippedByCandidateId);
-      skippedScenarios.push({ name, reason: `missing/unsafe catalog items [${missingReason}]` });
+      skippedScenarios.push({
+        name,
+        reason: `missing/unsafe catalog items [${missingReason}]`,
+        origin: "explicit",
+        familyName,
+      });
       return;
     }
-    catalogScenarios.push({ name, items, metadataCoverageRequired });
+    catalogScenarios.push({ name, items, metadataCoverageRequired, origin: "explicit", familyName });
   };
 
-  const pushScenarioIfTimelineSane = (name: string, cutIds: string[], metadataCoverageRequired = true): void => {
+  const pushScenarioIfTimelineSane = (
+    name: string,
+    cutIds: string[],
+    metadataCoverageRequired = true,
+    familyName?: string,
+  ): void => {
     const items = tryPickItemsByCutId(catalog.items, cutIds);
     if (!items) {
       const missingReason = buildMissingCutReason(cutIds, catalog.items, skippedByCandidateId);
-      skippedScenarios.push({ name, reason: `missing/unsafe catalog items [${missingReason}]` });
+      skippedScenarios.push({
+        name,
+        reason: `missing/unsafe catalog items [${missingReason}]`,
+        origin: "explicit",
+        familyName,
+      });
       return;
     }
     const sanity = isTimelineSaneForScenario(items);
     if (!sanity.ok) {
-      skippedScenarios.push({ name, reason: `timeline sanity check failed (${sanity.reason})` });
+      skippedScenarios.push({
+        name,
+        reason: `timeline sanity check failed (${sanity.reason})`,
+        origin: "explicit",
+        familyName,
+      });
       return;
     }
-    catalogScenarios.push({ name, items, metadataCoverageRequired });
+    catalogScenarios.push({ name, items, metadataCoverageRequired, origin: "explicit", familyName });
   };
 
   pushScenarioIfAvailable("catalog: beef + vegetable mix", ["striploin", "t_bone", "bell_peppers", "mushrooms"]);
@@ -348,6 +413,13 @@ function main(): void {
   );
 
   const sortedCatalogItems = sortCatalogItems(catalog.items);
+  const isCategory = (item: CatalogItem, category: "beef" | "pork" | "chicken" | "fish" | "vegetables" | "sausages") =>
+    getParrilladaItemPresentation(item).category === category;
+  const isRole = (item: CatalogItem, role: "main" | "side" | "starter" | "fastFinish" | "longCook") =>
+    getParrilladaItemPresentation(item).role === role;
+  const isVisibility = (item: CatalogItem, visibility: "recommended" | "standard" | "advanced") =>
+    getParrilladaItemPresentation(item).visibility === visibility;
+
   const generatedFamilies: GeneratedScenarioFamily[] = [
     {
       name: "generated: beef + vegetable",
@@ -441,6 +513,59 @@ function main(): void {
       ],
     },
     {
+      name: "generated: recommended main + recommended side",
+      selectors: [
+        {
+          label: "recommended main",
+          min: 1,
+          take: 1,
+          predicate: (item) => isVisibility(item, "recommended") && isRole(item, "main"),
+        },
+        {
+          label: "recommended side",
+          min: 1,
+          take: 1,
+          predicate: (item) =>
+            isVisibility(item, "recommended") &&
+            (isRole(item, "side") || isRole(item, "starter") || isRole(item, "fastFinish")),
+        },
+      ],
+    },
+    {
+      name: "generated: standard main + vegetable",
+      selectors: [
+        {
+          label: "standard main",
+          min: 1,
+          take: 1,
+          predicate: (item) => isVisibility(item, "standard") && isRole(item, "main"),
+        },
+        {
+          label: "vegetable side",
+          min: 1,
+          take: 1,
+          predicate: (item) => isCategory(item, "vegetables"),
+        },
+      ],
+    },
+    {
+      name: "generated: advanced long-cook + vegetable",
+      selectors: [
+        {
+          label: "advanced long-cook",
+          min: 1,
+          take: 1,
+          predicate: (item) => isVisibility(item, "advanced") && isRole(item, "longCook"),
+        },
+        {
+          label: "vegetable side",
+          min: 1,
+          take: 1,
+          predicate: (item) => isCategory(item, "vegetables"),
+        },
+      ],
+    },
+    {
       name: "generated: advanced long-cook + fast finish",
       selectors: [
         {
@@ -461,7 +586,7 @@ function main(): void {
       ],
     },
     {
-      name: "generated: timing-sensitive + flexible",
+      name: "generated: timing-sensitive item + flexible item",
       selectors: [
         {
           label: "timing-sensitive",
@@ -480,7 +605,7 @@ function main(): void {
       ],
     },
     {
-      name: "generated: holdable main + delicate side",
+      name: "generated: holdable main + delicate/fast item",
       selectors: [
         {
           label: "holdable main",
@@ -505,88 +630,136 @@ function main(): void {
         },
       ],
     },
+    {
+      name: "generated: early-start item + side",
+      selectors: [
+        {
+          label: "early-start item",
+          min: 1,
+          take: 1,
+          predicate: (item) => getParrilladaItemPresentation(item).requiresEarlyStart,
+        },
+        {
+          label: "side item",
+          min: 1,
+          take: 1,
+          predicate: (item) => isRole(item, "side"),
+        },
+      ],
+    },
+    {
+      name: "generated: safety-critical item + vegetable",
+      selectors: [
+        {
+          label: "safety-critical item",
+          min: 1,
+          take: 1,
+          predicate: (item) => (item.planningMetadata?.riskTags ?? []).includes("safety_critical"),
+        },
+        {
+          label: "vegetable side",
+          min: 1,
+          take: 1,
+          predicate: (item) => isCategory(item, "vegetables"),
+        },
+      ],
+    },
   ];
 
   const generatedScenarios: Scenario[] = [];
   for (const family of generatedFamilies) {
     const built = buildGeneratedScenario(family, sortedCatalogItems);
     if (built.skip) {
-      skippedScenarios.push(built.skip);
+      skippedScenarios.push({ ...built.skip, origin: "generated", familyName: family.name });
       continue;
     }
     if (built.scenario) generatedScenarios.push(built.scenario);
   }
 
-  const compatibilityCatalogScenarios: Scenario[] = [
-    {
-      name: "catalog: ribeye + asparagus",
-      items: pickItemsByCutId(catalog.items, ["ribeye", "asparagus"], "catalog: ribeye + asparagus"),
+  const compatibilityCatalogScenarios: Scenario[] = [];
+  const pushCompatibilityScenarioIfAvailable = (name: string, cutIds: string[]): void => {
+    const items = tryPickItemsByCutId(catalog.items, cutIds);
+    if (!items) {
+      const missingReason = buildMissingCutReason(cutIds, catalog.items, skippedByCandidateId);
+      skippedScenarios.push({
+        name,
+        reason: `missing/unsafe catalog items [${missingReason}]`,
+        origin: "explicit",
+        familyName: "compatibility",
+      });
+      return;
+    }
+    compatibilityCatalogScenarios.push({
+      name,
+      items,
       metadataCoverageRequired: true,
-    },
-    {
-      name: "catalog: picanha + iberian_secreto + asparagus",
-      items: pickItemsByCutId(
-        catalog.items,
-        ["picanha", "iberian_secreto", "asparagus"],
-        "catalog: picanha + iberian_secreto + asparagus",
-      ),
-      metadataCoverageRequired: true,
-    },
-    {
-      name: "catalog: chicken_wing + corn_on_cob",
-      items: pickItemsByCutId(catalog.items, ["chicken_wing", "corn_on_cob"], "catalog: chicken_wing + corn_on_cob"),
-      metadataCoverageRequired: true,
-    },
-    {
-      name: "catalog: salmon + asparagus + corn_on_cob",
-      items: pickItemsByCutId(
-        catalog.items,
-        ["salmon", "asparagus", "corn_on_cob"],
-        "catalog: salmon + asparagus + corn_on_cob",
-      ),
-      metadataCoverageRequired: true,
-    },
-    {
-      name: "catalog: default 4-item menu",
-      items: pickItemsByCutId(
-        catalog.items,
-        ["picanha", "iberian_secreto", "chicken_wing", "asparagus"],
-        "catalog: default 4-item menu",
-      ),
-      metadataCoverageRequired: true,
-    },
-  ];
-  const scenarios = [...demoScenarios, ...catalogScenarios, ...generatedScenarios, ...compatibilityCatalogScenarios];
+      origin: "explicit",
+      familyName: "compatibility",
+    });
+  };
+  pushCompatibilityScenarioIfAvailable("catalog: ribeye + asparagus", ["ribeye", "asparagus"]);
+  pushCompatibilityScenarioIfAvailable("catalog: picanha + iberian_secreto + asparagus", [
+    "picanha",
+    "iberian_secreto",
+    "asparagus",
+  ]);
+  pushCompatibilityScenarioIfAvailable("catalog: chicken_wing + corn_on_cob", ["chicken_wing", "corn_on_cob"]);
+  pushCompatibilityScenarioIfAvailable("catalog: salmon + asparagus + corn_on_cob", [
+    "salmon",
+    "asparagus",
+    "corn_on_cob",
+  ]);
+  pushCompatibilityScenarioIfAvailable("catalog: default 4-item menu", [
+    "picanha",
+    "iberian_secreto",
+    "chicken_wing",
+    "asparagus",
+  ]);
+
+  const explicitScenarios = [...demoScenarios, ...catalogScenarios, ...compatibilityCatalogScenarios];
+  const scenarios = [...explicitScenarios, ...generatedScenarios];
 
   let passed = 0;
+  let failed = 0;
   const coveredCutIds = new Set<string>();
   const coveredAdvancedCutIds = new Set<string>();
+  const coveredRecommendedCutIds = new Set<string>();
+  const coveredStandardCutIds = new Set<string>();
   const warningSeverityCounts = { info: 0, warning: 0, critical: 0 };
+  const familySkipReasons = new Map<string, string[]>();
   console.log("Parrillada scheduler QA");
   console.log("-----------------------");
   if (skippedScenarios.length > 0) {
-    skippedScenarios.forEach((skip) => console.log(`SKIP | ${skip.name} | ${skip.reason}`));
+    skippedScenarios.forEach((skip) => {
+      const familyLabel = skip.familyName ?? skip.name;
+      familySkipReasons.set(familyLabel, [...(familySkipReasons.get(familyLabel) ?? []), skip.reason]);
+      console.log(`SKIP | ${skip.name} | ${skip.reason}`);
+    });
+    console.log("");
   }
 
-  let failed = false;
   for (const scenario of scenarios) {
-    validateLiteItemCount(scenario.name, scenario.items);
-    const result = scheduleParrillada({
-      items: scenario.items,
-      serveAtIso: FIXED_SERVE_AT_ISO,
-      nowIso: FIXED_NOW_ISO,
-      strategy: "balanced",
-      grillCapacity: NAPOLEON_ROGUE_525_LITE,
-      allowHolding: true,
-      maxPlanLookbackMinutes: 480,
-    });
-
+    let result: PlannerResult | null = null;
     try {
+      validateLiteItemCount(scenario.name, scenario.items);
+      result = scheduleParrillada({
+        items: scenario.items,
+        serveAtIso: FIXED_SERVE_AT_ISO,
+        nowIso: FIXED_NOW_ISO,
+        strategy: "balanced",
+        grillCapacity: NAPOLEON_ROGUE_525_LITE,
+        allowHolding: true,
+        maxPlanLookbackMinutes: 480,
+      });
       validatePlanSanity(result);
+      validateNoMismatchedCutIdFallback(result);
       if (scenario.metadataCoverageRequired) validateMetadataCoverage(scenario.items);
       scenario.items.forEach((item) => {
+        const presentation = getParrilladaItemPresentation(item);
         coveredCutIds.add(item.cutId);
-        if (getParrilladaItemPresentation(item).visibility === "advanced") coveredAdvancedCutIds.add(item.cutId);
+        if (presentation.visibility === "advanced") coveredAdvancedCutIds.add(item.cutId);
+        if (presentation.visibility === "recommended") coveredRecommendedCutIds.add(item.cutId);
+        if (presentation.visibility === "standard") coveredStandardCutIds.add(item.cutId);
       });
       result.warnings.forEach((warning) => {
         warningSeverityCounts[warning.severity] += 1;
@@ -596,31 +769,56 @@ function main(): void {
         `PASS | ${scenario.name} | items=${result.items.length} | actions=${result.phases.length} | confidence=${result.summary.confidence} | warnings=${result.warnings.length}`,
       );
     } catch (error) {
-      const qaError = error as QaError;
+      const qaError = asQaError(error);
+      failed += 1;
       console.log(
-        `FAIL | ${scenario.name} | items=${result.items.length} | actions=${result.phases.length} | confidence=${result.summary.confidence} | warnings=${result.warnings.length}`,
+        `FAIL | ${scenario.name} | origin=${scenario.origin} | items=${scenario.items.length} | actions=${result?.phases.length ?? 0} | confidence=${result?.summary.confidence ?? "n/a"} | warnings=${result?.warnings.length ?? 0}`,
       );
-      console.log(`  Rule: ${qaError.message}`);
-      const context = qaError.phaseContext.length > 0 ? qaError.phaseContext : result.phases.slice(0, 8);
-      console.log("  Relevant actions:");
-      context.forEach((phase) => console.log(`  - ${formatPhase(phase)}`));
+      console.log(`  Failed assertion: ${qaError.message}`);
+      console.log("  Relevant items:");
+      scenario.items.forEach((item) => console.log(`  - ${formatScenarioItem(item)}`));
+      const context = qaError.phaseContext.length > 0 ? qaError.phaseContext : (result?.phases.slice(0, 12) ?? []);
+      console.log("  Relevant timeline/phases:");
+      if (context.length === 0) {
+        console.log("  - none");
+      } else {
+        context.forEach((phase) => console.log(`  - ${formatPhase(phase)}`));
+      }
+      console.log("  Warnings:");
+      if (!result || result.warnings.length === 0) {
+        console.log("  - none");
+      } else {
+        result.warnings.forEach((warning) => console.log(`  - ${formatWarning(warning)}`));
+      }
+      console.log(`  Confidence: ${result?.summary.confidence ?? "n/a"}`);
       process.exitCode = 1;
-      failed = true;
-      break;
     }
   }
 
   console.log("");
   console.log("Parrillada QA summary");
   console.log("---------------------");
-  console.log(`Scenarios passed: ${passed}/${scenarios.length}`);
+  console.log(`Scenarios passed: ${passed}`);
   console.log(`Scenarios skipped: ${skippedScenarios.length}`);
+  console.log(`Scenarios failed: ${failed}`);
+  console.log(`Explicit scenarios: ${explicitScenarios.length}`);
+  console.log(`Generated scenarios: ${generatedScenarios.length}`);
   console.log(`Included items covered: ${coveredCutIds.size}`);
   console.log(`Advanced items covered: ${coveredAdvancedCutIds.size}`);
+  console.log(`Recommended coverage count: ${coveredRecommendedCutIds.size}`);
+  console.log(`Standard coverage count: ${coveredStandardCutIds.size}`);
+  console.log(`Advanced coverage count: ${coveredAdvancedCutIds.size}`);
   console.log(
     `Warnings by severity (info/warning/critical): ${warningSeverityCounts.info}/${warningSeverityCounts.warning}/${warningSeverityCounts.critical}`,
   );
-  if (!failed && passed === scenarios.length) console.log("Parrillada QA passed.");
+  if (familySkipReasons.size > 0) {
+    console.log("Skipped family reasons:");
+    for (const [family, reasons] of familySkipReasons.entries()) {
+      const compactReasons = Array.from(new Set(reasons));
+      console.log(`- ${family}: ${compactReasons.join(" | ")}`);
+    }
+  }
+  if (failed === 0 && passed === scenarios.length) console.log("Parrillada QA passed.");
 }
 
 main();
