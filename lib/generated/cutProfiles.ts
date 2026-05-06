@@ -143,6 +143,73 @@ export const generatedCutProfiles = [
     "setupVisualKeyEn": "two zone fire and cast iron grate at high heat"
   },
   {
+    "id": "bone_in_ribeye",
+    "animalId": "beef",
+    "category": "steak",
+    "canonicalNameEn": "Bone-in ribeye / Chuletón",
+    "displayNameEn": "Bone-in ribeye / Chuletón",
+    "displayNameEsEs": "Chuletón",
+    "displayNameEsAr": "Chuletón",
+    "zone": "rib",
+    "anatomicalArea": "rib",
+    "inputProfileId": "beef-steak",
+    "defaultThicknessCm": 3,
+    "showThickness": true,
+    "allowedMethods": [
+      "reverse_sear",
+      "grill_direct",
+      "grill_indirect"
+    ],
+    "defaultMethod": "reverse_sear",
+    "allowedDoneness": [
+      "rare",
+      "medium_rare",
+      "medium"
+    ],
+    "style": "reverse",
+    "cookingStyle": "reverse",
+    "fireZone": "mixed",
+    "timeType": "per_cm",
+    "defaultDoneness": "medium_rare",
+    "confidenceLevel": "high",
+    "restingMinutes": 8,
+    "estimatedTimeMinPerCm": 6,
+    "targetTempC": 54,
+    "shortDescriptionEn": "Thick bone-in ribeye cut.",
+    "criticalWarningEn": "overcooking near the bone while chasing crust",
+    "errorEn": "overcooking near the bone while chasing crust",
+    "aliasesEn": [
+      "chuleton",
+      "chuletón",
+      "bone_in_chuleton",
+      "bone-in ribeye",
+      "cowboy steak",
+      "ribeye on the bone",
+      "bone-in entrecote"
+    ],
+    "aliasesMixed": [
+      "chuleton",
+      "chuletón",
+      "bone_in_chuleton",
+      "bone-in ribeye",
+      "cowboy steak",
+      "ribeye on the bone",
+      "bone-in entrecote"
+    ],
+    "notesEn": "Thick bone-in ribeye cut.",
+    "tipsEn": [
+      "premium",
+      "thick",
+      "bone-in",
+      "separate muscles from bone then slice against the grain"
+    ],
+    "criticalMistakeEn": "overcooking near the bone while chasing crust",
+    "cuttingDirectionEn": "separate muscles from bone then slice against the grain",
+    "proTipEn": "warm through indirectly and probe away from bone before final sear",
+    "textureResultEn": "rosy center with rendered edge and deep crust",
+    "setupVisualKeyEn": "two zone grill with indirect warm-up and direct finish"
+  },
+  {
     "id": "striploin",
     "animalId": "beef",
     "category": "steak",

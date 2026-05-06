@@ -3,6 +3,7 @@ import type { GeneratedCutProfile } from "@/lib/generated/cutProfiles";
 
 const cutSelectionIconKeysByCutId: Partial<Record<string, CutIconKey>> = {
   ribeye: "beef/ribeye",
+  bone_in_ribeye: "beef/ribeye",
   striploin: "beef/strip-steak",
   tenderloin: "beef/tenderloin",
   picanha: "beef/picanha",
