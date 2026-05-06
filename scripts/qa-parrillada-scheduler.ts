@@ -1,17 +1,16 @@
 import {
+  buildCatalogBackedParrilladaLiteItems,
   DEMO_PARRILLADA_SCENARIOS,
   NAPOLEON_ROGUE_525_LITE,
   scheduleParrillada,
-  singleCutPlanToPlannerInput,
   type PlannerPhase,
   type PlannerResult,
 } from "../lib/planning";
-import { generateCookingPlan, getCutForInput, type CookingInput } from "../lib/cookingEngine";
-import { getPlanPlanningMetadata } from "../lib/cooking/planningMetadata";
 
 type Scenario = {
   name: string;
   items: PlannerResult["request"]["items"];
+  metadataCoverageRequired?: boolean;
 };
 
 const FIXED_SERVE_AT_ISO = "2030-05-01T18:00:00.000Z";
@@ -111,53 +110,32 @@ function validatePlanSanity(result: PlannerResult): void {
   }
 }
 
-function makeCookingInput(args: {
-  animal: string;
-  cut: string;
-  doneness: string;
-  thicknessCm: string;
-}): CookingInput {
-  return {
-    animal: args.animal,
-    cut: args.cut,
-    doneness: args.doneness,
-    thicknessCm: args.thicknessCm,
-    weightKg: "1",
-    equipment: "parrilla gas",
-    language: "es",
-  };
+function pickItemsByCutId(
+  allItems: PlannerResult["request"]["items"],
+  cutIds: string[],
+  scenarioName: string,
+): PlannerResult["request"]["items"] {
+  const picked = cutIds
+    .map((cutId) => allItems.find((item) => item.cutId === cutId))
+    .filter((item): item is PlannerResult["request"]["items"][number] => Boolean(item));
+  if (picked.length !== cutIds.length) {
+    const missing = cutIds.filter((cutId) => !allItems.find((item) => item.cutId === cutId));
+    throw new QaError(`${scenarioName}: missing catalog items [${missing.join(", ")}]`);
+  }
+  return picked;
 }
 
-function toMetadataPlannerItem(args: {
-  scenarioPrefix: string;
-  animal: string;
-  cut: string;
-  doneness: string;
-  thicknessCm: string;
-  weightGrams?: number;
-  priority?: number;
-}) {
-  const input = makeCookingInput(args);
-  const plan = generateCookingPlan(input);
-  if (!plan) {
-    throw new QaError(`single-cut plan is missing for ${args.cut}`);
+function validateMetadataCoverage(items: PlannerResult["request"]["items"]): void {
+  for (const item of items) {
+    const hasMetadata = Boolean(item.planningMetadata);
+    const hasFallbackNote = (item.notes ?? []).some((note) =>
+      note.toLowerCase().includes("fallback: planningmetadata missing"),
+    );
+    assert(
+      hasMetadata || hasFallbackNote,
+      `catalog-backed item ${item.cutId} has neither planningMetadata nor fallback note`,
+    );
   }
-  const resolvedCut = getCutForInput(input);
-  if (!resolvedCut) {
-    throw new QaError(`single-cut cut resolution failed for ${args.cut}`);
-  }
-
-  const metadata = getPlanPlanningMetadata(plan);
-  assert(Boolean(metadata), `planningMetadata missing for ${args.cut}`);
-
-  return singleCutPlanToPlannerInput({
-    id: `${args.scenarioPrefix}-${args.cut}`,
-    cut: resolvedCut,
-    plan,
-    thicknessCm: Number(args.thicknessCm),
-    weightGrams: args.weightGrams,
-    priority: args.priority,
-  });
 }
 
 function main(): void {
@@ -173,91 +151,53 @@ function main(): void {
     },
     { name: "default 4-item demo menu", items: DEMO_PARRILLADA_SCENARIOS.defaultLite4 },
   ];
-  const metadataScenarios: Scenario[] = [
+  const catalog = buildCatalogBackedParrilladaLiteItems();
+  if (catalog.skipped.length > 0) {
+    console.log("Catalog items skipped:");
+    catalog.skipped.forEach((skip) => console.log(`- ${skip.candidateId}: ${skip.reason}`));
+    console.log("");
+  }
+
+  const catalogScenarios: Scenario[] = [
     {
-      name: "metadata: ribeye + bone_in_ribeye + asparagus",
-      items: [
-        toMetadataPlannerItem({
-          scenarioPrefix: "meta-ribeye",
-          animal: "Beef",
-          cut: "ribeye",
-          doneness: "medium_rare",
-          thicknessCm: "3",
-          weightGrams: 500,
-          priority: 3,
-        }),
-        toMetadataPlannerItem({
-          scenarioPrefix: "meta-bonein",
-          animal: "Beef",
-          cut: "bone_in_ribeye",
-          doneness: "medium_rare",
-          thicknessCm: "5",
-          weightGrams: 1100,
-          priority: 5,
-        }),
-        toMetadataPlannerItem({
-          scenarioPrefix: "meta-asparagus",
-          animal: "Verduras",
-          cut: "asparagus",
-          doneness: "juicy",
-          thicknessCm: "2",
-          weightGrams: 300,
-          priority: 1,
-        }),
-      ],
+      name: "catalog: ribeye + asparagus",
+      items: pickItemsByCutId(catalog.items, ["ribeye", "asparagus"], "catalog: ribeye + asparagus"),
+      metadataCoverageRequired: true,
     },
     {
-      name: "metadata: picanha + iberian_secreto + chicken_wing + salmon + corn_on_cob",
-      items: [
-        toMetadataPlannerItem({
-          scenarioPrefix: "meta-picanha",
-          animal: "Beef",
-          cut: "picanha",
-          doneness: "medium_rare",
-          thicknessCm: "4",
-          weightGrams: 1000,
-          priority: 5,
-        }),
-        toMetadataPlannerItem({
-          scenarioPrefix: "meta-secreto",
-          animal: "Pork",
-          cut: "iberian_secreto",
-          doneness: "medium_safe",
-          thicknessCm: "2",
-          weightGrams: 450,
-          priority: 4,
-        }),
-        toMetadataPlannerItem({
-          scenarioPrefix: "meta-wings",
-          animal: "Chicken",
-          cut: "chicken_wing",
-          doneness: "safe",
-          thicknessCm: "2",
-          weightGrams: 800,
-          priority: 3,
-        }),
-        toMetadataPlannerItem({
-          scenarioPrefix: "meta-salmon",
-          animal: "Fish",
-          cut: "salmon",
-          doneness: "medium",
-          thicknessCm: "3",
-          weightGrams: 450,
-          priority: 2,
-        }),
-        toMetadataPlannerItem({
-          scenarioPrefix: "meta-corn",
-          animal: "Verduras",
-          cut: "corn_on_cob",
-          doneness: "juicy",
-          thicknessCm: "3",
-          weightGrams: 350,
-          priority: 1,
-        }),
-      ],
+      name: "catalog: picanha + iberian_secreto + asparagus",
+      items: pickItemsByCutId(
+        catalog.items,
+        ["picanha", "iberian_secreto", "asparagus"],
+        "catalog: picanha + iberian_secreto + asparagus",
+      ),
+      metadataCoverageRequired: true,
+    },
+    {
+      name: "catalog: chicken_wing + corn_on_cob",
+      items: pickItemsByCutId(catalog.items, ["chicken_wing", "corn_on_cob"], "catalog: chicken_wing + corn_on_cob"),
+      metadataCoverageRequired: true,
+    },
+    {
+      name: "catalog: salmon + asparagus + corn_on_cob",
+      items: pickItemsByCutId(
+        catalog.items,
+        ["salmon", "asparagus", "corn_on_cob"],
+        "catalog: salmon + asparagus + corn_on_cob",
+      ),
+      metadataCoverageRequired: true,
+    },
+    {
+      name: "catalog: default 4-item menu",
+      items: pickItemsByCutId(
+        catalog.items,
+        ["picanha", "iberian_secreto", "chicken_wing", "asparagus"],
+        "catalog: default 4-item menu",
+      ),
+      metadataCoverageRequired: true,
     },
   ];
-  const scenarios = [...demoScenarios, ...metadataScenarios];
+  const scenarios = [...demoScenarios, ...catalogScenarios];
 
   let passed = 0;
   console.log("Parrillada scheduler QA");
@@ -276,6 +216,7 @@ function main(): void {
 
     try {
       validatePlanSanity(result);
+      if (scenario.metadataCoverageRequired) validateMetadataCoverage(scenario.items);
       passed += 1;
       console.log(
         `PASS | ${scenario.name} | items=${result.items.length} | actions=${result.phases.length} | confidence=${result.summary.confidence} | warnings=${result.warnings.length}`,

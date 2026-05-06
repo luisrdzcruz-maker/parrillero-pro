@@ -4,7 +4,12 @@ import { useMemo, useState } from 'react';
 import type { PlannerResult } from '../../lib/planning';
 import { NAPOLEON_ROGUE_525_LITE } from '../../lib/planning/fixtures/demoGrills';
 import { DEMO_PARRILLADA_ITEMS } from '../../lib/planning/fixtures/demoItems';
-import { scheduleParrillada, type PlannerCutInput, type SchedulerStrategy } from '../../lib/planning';
+import {
+  buildCatalogBackedParrilladaLiteItems,
+  scheduleParrillada,
+  type PlannerCutInput,
+  type SchedulerStrategy,
+} from '../../lib/planning';
 import { ParrilladaTimelineFinal } from './ParrilladaTimelineFinal';
 import { ParrilladaWarningsFinal } from './ParrilladaWarningsFinal';
 
@@ -60,7 +65,10 @@ function resolveNextStepMessage({
 }
 
 export function ParrilladaSchedulerScreen() {
-  const [selectedItems, setSelectedItems] = useState<PlannerCutInput[]>(DEMO_PARRILLADA_ITEMS.slice(0, MAX_ITEMS));
+  const catalogSource = useMemo(() => buildCatalogBackedParrilladaLiteItems(), []);
+  const availableItems = catalogSource.items.length >= MIN_ITEMS ? catalogSource.items : DEMO_PARRILLADA_ITEMS;
+  const usingFallbackItems = catalogSource.items.length < MIN_ITEMS;
+  const [selectedItems, setSelectedItems] = useState<PlannerCutInput[]>(availableItems.slice(0, MAX_ITEMS));
   const [serveAtLocal, setServeAtLocal] = useState(defaultServeAtLocal());
   const [strategy, setStrategy] = useState<SchedulerStrategy>('balanced');
   const [sessionNowMs] = useState(() => Date.now());
@@ -130,9 +138,15 @@ export function ParrilladaSchedulerScreen() {
               <option value="quality_first">Quality first</option>
               <option value="low_stress">Low stress</option>
             </select>
-            <p className="text-xs text-white/55">Optimizes order and overlap for this demo menu.</p>
+            <p className="text-xs text-white/55">Optimizes order and overlap for this menu.</p>
           </label>
         </section>
+
+        {usingFallbackItems && (
+          <section className="rounded-2xl border border-amber-300/25 bg-amber-500/10 px-3 py-2.5 text-sm text-amber-100">
+            Catalog-backed items are temporarily unavailable. Showing demo fallback items.
+          </section>
+        )}
 
         <section className="grid grid-cols-2 gap-2 rounded-3xl border border-white/10 bg-white/[0.04] p-3 text-sm sm:grid-cols-3 sm:p-4">
           <article className="rounded-2xl border border-white/10 bg-black/20 p-2.5">
@@ -177,7 +191,7 @@ export function ParrilladaSchedulerScreen() {
             </p>
           </div>
           <div className="grid gap-2 md:grid-cols-2">
-            {DEMO_PARRILLADA_ITEMS.map((item) => {
+            {availableItems.map((item) => {
               const active = selectedItems.some((entry) => entry.id === item.id);
               const atLimit = !active && selectedCount >= MAX_ITEMS;
               return (
