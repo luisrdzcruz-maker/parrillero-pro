@@ -125,6 +125,16 @@ function pickItemsByCutId(
   return picked;
 }
 
+function tryPickItemsByCutId(
+  allItems: PlannerResult["request"]["items"],
+  cutIds: string[],
+): PlannerResult["request"]["items"] | null {
+  const picked = cutIds
+    .map((cutId) => allItems.find((item) => item.cutId === cutId))
+    .filter((item): item is PlannerResult["request"]["items"][number] => Boolean(item));
+  return picked.length === cutIds.length ? picked : null;
+}
+
 function validateMetadataCoverage(items: PlannerResult["request"]["items"]): void {
   for (const item of items) {
     const hasMetadata = Boolean(item.planningMetadata);
@@ -158,7 +168,35 @@ function main(): void {
     console.log("");
   }
 
-  const catalogScenarios: Scenario[] = [
+  const catalogScenarios: Scenario[] = [];
+  const pushScenarioIfAvailable = (
+    name: string,
+    cutIds: string[],
+    metadataCoverageRequired = true,
+  ): void => {
+    const items = tryPickItemsByCutId(catalog.items, cutIds);
+    if (!items) {
+      const missing = cutIds.filter((cutId) => !catalog.items.some((item) => item.cutId === cutId));
+      console.log(`SKIP | ${name} | missing catalog items [${missing.join(", ")}]`);
+      return;
+    }
+    catalogScenarios.push({ name, items, metadataCoverageRequired });
+  };
+
+  pushScenarioIfAvailable("catalog: beef + vegetable mix", ["striploin", "t_bone", "bell_peppers", "mushrooms"]);
+  pushScenarioIfAvailable("catalog: pork + vegetable mix", ["pork_loin", "iberian_presa", "potato_halves"]);
+  pushScenarioIfAvailable("catalog: chicken + side mix", ["chicken_leg_quarter", "chicken_wing", "corn_on_cob"]);
+  pushScenarioIfAvailable("catalog: fish + vegetable mix", ["salmon", "asparagus", "eggplant_slices"]);
+  pushScenarioIfAvailable(
+    "catalog: default expanded 4-item menu",
+    ["striploin", "iberian_presa", "chicken_wing", "bell_peppers"],
+  );
+  pushScenarioIfAvailable(
+    "catalog: advanced long-cook mix",
+    ["brisket", "short_ribs", "pork_belly", "potato_halves"],
+  );
+
+  const compatibilityCatalogScenarios: Scenario[] = [
     {
       name: "catalog: ribeye + asparagus",
       items: pickItemsByCutId(catalog.items, ["ribeye", "asparagus"], "catalog: ribeye + asparagus"),
@@ -197,7 +235,7 @@ function main(): void {
       metadataCoverageRequired: true,
     },
   ];
-  const scenarios = [...demoScenarios, ...catalogScenarios];
+  const scenarios = [...demoScenarios, ...catalogScenarios, ...compatibilityCatalogScenarios];
 
   let passed = 0;
   console.log("Parrillada scheduler QA");
