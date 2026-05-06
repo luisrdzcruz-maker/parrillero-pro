@@ -38,13 +38,14 @@ import {
 } from "@/components/results/CookingResultScreen";
 import { SavedCooksScreen } from "@/components/cooks/SavedCooksScreen";
 import LiveCookingScreen, { type LiveStep } from "@/components/live/LiveCookingScreen";
+import { ParrilladaSchedulerScreen } from "@/components/parrillada";
 import { ProModal } from "@/components/pro/ProModal";
 import { isPro } from "@/lib/proStatus";
 import {
   OnboardingSlides,
 } from "@/components/onboarding/OnboardingSlides";
 import { ONBOARDING_STORAGE_KEY } from "@/lib/storageKeys";
-import { PlanHub, type PlanMode } from "@/components/planning/PlanHub";
+import { type PlanMode } from "@/components/planning/PlanHub";
 import { Button, Grid } from "@/components/ui";
 import { track } from "@/lib/analytics";
 import type { DonenessId, ProductCut } from "@/lib/cookingCatalog";
@@ -1831,6 +1832,21 @@ ERROR
     router.push(targetUrl);
   }
 
+  // TODO: remove legacy planning state/actions after scheduler demo fully replaces PlanHub flows.
+  void [
+    setPlanMode,
+    setPlanProduct,
+    planGenerated,
+    setParrilladaPeople,
+    setServeTime,
+    setParrilladaProducts,
+    setParrilladaSides,
+    generatePlanExperience,
+    editPlanExperience,
+    copyCurrentPlan,
+    shareCurrentPlan,
+  ];
+
   // ── Onboarding gate ─────────────────────────────────────────────────────────
   // Render a dark placeholder while localStorage hasn't been checked yet.
   // Body background matches so there is zero visible flash.
@@ -1920,43 +1936,8 @@ ERROR
         )}
 
         {mode === "plan" && (
-          <PlanHub
-            blocks={blocks}
-            difficulty={difficulty}
-            equipment={equipment}
-            lang={lang}
-            loading={loading}
-            menuMeats={menuMeats}
-            onCopy={copyCurrentPlan}
-            onEdit={editPlanExperience}
-            onGenerate={generatePlanExperience}
-            onSave={async () => {
-              await saveCurrentMenu();
-            }}
-            onShare={shareCurrentPlan}
-            people={people}
-            parrilladaPeople={parrilladaPeople}
-            parrilladaProducts={parrilladaProducts}
-            parrilladaSides={parrilladaSides}
-            planGenerated={planGenerated}
-            planMode={planMode}
-            planProduct={planProduct}
-            saveMenuMessage={saveMenuMessage}
-            saveMenuStatus={saveMenuStatus}
-            serveTime={serveTime}
-            setDifficulty={setDifficulty}
-            setEquipment={setEquipment}
-            setMenuMeats={setMenuMeats}
-            setPeople={setPeople}
-            setParrilladaPeople={setParrilladaPeople}
-            setParrilladaProducts={setParrilladaProducts}
-            setParrilladaSides={setParrilladaSides}
-            setPlanMode={setPlanMode}
-            setPlanProduct={setPlanProduct}
-            setServeTime={setServeTime}
-            setSides={setSides}
-            sides={sides}
-          />
+          // TODO: Replace demo screen with production parrillada flow once catalog integration is ready.
+          <ParrilladaSchedulerScreen />
         )}
 
         {mode === "coccion" && (
@@ -2130,63 +2111,8 @@ ERROR
         )}
 
         {mode === "parrillada" && (
-          <Grid variant="split">
-            <div className={ds.panel.form}>
-              <h2 className="text-xl font-bold">{t.parrilladaPro}</h2>
-
-              <Input
-                label={t.people}
-                value={parrilladaPeople}
-                onChange={setParrilladaPeople}
-                placeholder="Ej: 6"
-              />
-              <Input
-                label={t.serveTime}
-                value={serveTime}
-                onChange={setServeTime}
-                placeholder="Ej: 18:00"
-              />
-              <Input
-                label={t.products}
-                value={parrilladaProducts}
-                onChange={setParrilladaProducts}
-                placeholder="Ej: costillas, chuletón, secreto"
-              />
-              <Input
-                label={t.sides}
-                value={parrilladaSides}
-                onChange={setParrilladaSides}
-                placeholder="Ej: patatas, ensalada, chimichurri"
-              />
-              <Select
-                label={t.equipment}
-                value={equipment}
-                onChange={setEquipment}
-                options={equipmentOptions}
-              />
-
-              <Button className="px-5 py-4 font-bold" fullWidth onClick={generateParrillada}>
-                {t.createParrillada}
-              </Button>
-            </div>
-
-            <ResultCards
-              blocks={blocks}
-              loading={loading}
-              checkedItems={checkedItems}
-              onSaveMenu={
-                Object.keys(blocks).length > 0
-                  ? async () => {
-                      await saveCurrentMenu();
-                    }
-                  : undefined
-              }
-              saveMenuMessage={saveMenuMessage}
-              saveMenuStatus={saveMenuStatus}
-              setCheckedItems={setCheckedItems}
-              t={t}
-            />
-          </Grid>
+          // TODO: Replace demo screen with production parrillada flow once catalog integration is ready.
+          <ParrilladaSchedulerScreen />
         )}
 
         {mode === "guardados" && (

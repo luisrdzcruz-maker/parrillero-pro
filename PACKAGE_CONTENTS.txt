@@ -1,0 +1,25 @@
+Parrillada Final Scheduler Package
+
+lib/planning/types.ts
+lib/planning/time.ts
+lib/planning/planningProfiles.ts
+lib/planning/profileResolver.ts
+lib/planning/estimation.ts
+lib/planning/capacity.ts
+lib/planning/warnings.ts
+lib/planning/scheduler.ts
+lib/planning/index.ts
+lib/planning/fixtures/demoGrills.ts
+lib/planning/fixtures/demoItems.ts
+lib/planning/adapters/cookingCatalogAdapter.ts
+components/parrillada/parrilladaUiTypes.ts
+components/parrillada/ParrilladaTimelineFinal.tsx
+components/parrillada/ParrilladaWarningsFinal.tsx
+components/parrillada/ParrilladaSchedulerScreen.tsx
+components/parrillada/index.ts
+scripts/demo-final-scheduler.ts
+app-snippets/page-integration-example.tsx
+docs/final-scheduler-architecture.md
+docs/final-scheduler-integration-plan.md
+prompts/CURSOR_INTEGRATE_FINAL_PARRILLADA_SCHEDULER.md
+README.md
