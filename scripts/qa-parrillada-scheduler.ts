@@ -148,6 +148,13 @@ function validateMetadataCoverage(items: PlannerResult["request"]["items"]): voi
   }
 }
 
+function validateLiteItemCount(name: string, items: PlannerResult["request"]["items"]): void {
+  assert(
+    items.length >= 2 && items.length <= 4,
+    `${name}: Parrillada Lite scenario must include 2-4 items`,
+  );
+}
+
 function main(): void {
   const demoScenarios: Scenario[] = [
     { name: "picanha + asparagus", items: DEMO_PARRILLADA_SCENARIOS.picanhaAsparagus },
@@ -194,6 +201,26 @@ function main(): void {
   pushScenarioIfAvailable(
     "catalog: advanced long-cook mix",
     ["brisket", "short_ribs", "pork_belly", "potato_halves"],
+  );
+  pushScenarioIfAvailable(
+    "catalog: advanced long-cook + side",
+    ["brisket", "potato_halves"],
+  );
+  pushScenarioIfAvailable(
+    "catalog: ribs + vegetable",
+    ["baby_back_ribs", "spare_ribs", "corn_on_cob"],
+  );
+  pushScenarioIfAvailable(
+    "catalog: whole chicken + side",
+    ["whole_chicken", "asparagus"],
+  );
+  pushScenarioIfAvailable(
+    "catalog: pork belly + side",
+    ["pork_belly", "bell_peppers"],
+  );
+  pushScenarioIfAvailable(
+    "catalog: pork belly slices + side",
+    ["pork_belly_slices", "asparagus"],
   );
 
   const compatibilityCatalogScenarios: Scenario[] = [
@@ -242,6 +269,7 @@ function main(): void {
   console.log("-----------------------");
 
   for (const scenario of scenarios) {
+    validateLiteItemCount(scenario.name, scenario.items);
     const result = scheduleParrillada({
       items: scenario.items,
       serveAtIso: FIXED_SERVE_AT_ISO,
