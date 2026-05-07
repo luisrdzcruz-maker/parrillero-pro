@@ -6,6 +6,11 @@ import { ParrilladaLiveScreen } from '@/components/parrillada/ParrilladaLiveScre
 import { ParrilladaReviewScreen } from '@/components/parrillada/ParrilladaReviewScreen';
 import { ParrilladaSetupScreen } from '@/components/parrillada/ParrilladaSetupScreen';
 import {
+  plannerCutInputToParrilladaItem,
+  plannerResultToLiveActionIds,
+  plannerResultToParrilladaPlanCompatibility,
+} from '@/components/parrillada/adapters/parrilladaPlannerViewAdapter';
+import {
   parrilladaPlanCopy,
   recentParrilladaPlans,
 } from '@/components/parrillada/mock/parrilladaMockData';
@@ -13,17 +18,10 @@ import {
   buildCatalogBackedParrilladaLiteItems,
   buildParrilladaLivePlanFromResult,
   getParrilladaModeProfile,
-  getParrilladaItemPresentation,
   NAPOLEON_ROGUE_525_LITE,
   scheduleParrillada,
-  type GrillZoneType,
-  type ParrilladaItem,
   type ParrilladaMode,
-  type ParrilladaPlan,
-  type ParrilladaWarning,
   type PlannerCutInput,
-  type PlannerPhase,
-  type PlannerResult,
   type SchedulerStrategy,
 } from '@/lib/planning';
 
@@ -60,91 +58,6 @@ function tryLocalDateTimeToIso(value: string): string | null {
     0,
   );
   return Number.isNaN(localDate.getTime()) ? null : localDate.toISOString();
-}
-
-function formatClock(iso: string): string {
-  return new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
-}
-
-function mapPlannerZone(zone: PlannerPhase['zone']): GrillZoneType {
-  if (zone === 'resting' || zone === 'holding') return 'resting';
-  if (zone === 'direct_high' || zone === 'direct_medium') return 'direct';
-  return 'indirect';
-}
-
-function mapPlannerItemToParrilladaItem(item: PlannerCutInput): ParrilladaItem {
-  const presentation = getParrilladaItemPresentation(item);
-  return {
-    id: item.id,
-    cutId: item.cutId,
-    displayName: item.displayName,
-    category: presentation.categoryLabel,
-    role:
-      presentation.role === 'fastFinish'
-        ? 'finish_last'
-        : presentation.role === 'starter'
-          ? 'secondary'
-          : presentation.role === 'side'
-            ? 'side'
-            : presentation.role === 'longCook'
-              ? 'hold_warm'
-              : 'main',
-    estimatedMinutes: item.planningMetadata?.activeCookMinutes ?? 20,
-    canHoldWarm: item.planningMetadata?.canHoldWarm,
-    maxHoldMinutes: item.planningMetadata?.maxHoldMinutes,
-    timingSensitivity: item.planningMetadata?.timingSensitivity,
-    riskFlags: item.planningMetadata?.riskTags,
-  };
-}
-
-function plannerResultToParrilladaPlan(result: PlannerResult, mode: ParrilladaMode): ParrilladaPlan {
-  const timeline = result.executionTimelineGroups.length > 0
-    ? result.executionTimelineGroups.map((group) => {
-        const groupZone: GrillZoneType =
-          group.zone === 'mixed'
-            ? 'indirect'
-            : group.zone === 'resting' || group.zone === 'holding'
-              ? 'resting'
-              : group.zone === 'direct_high' || group.zone === 'direct_medium'
-                ? 'direct'
-                : 'indirect';
-        return {
-          id: group.id,
-          timeLabel: formatClock(group.startIso),
-          itemId: group.items[0]?.itemId,
-          title: group.title,
-          subtitle: group.instruction,
-          zone: groupZone,
-          durationMinutes: Math.max(1, group.endMinute - group.startMinute),
-          isServeTarget: group.groupType === 'serve',
-        };
-      })
-    : result.phases.map((phase) => ({
-        id: phase.id,
-        timeLabel: formatClock(phase.startIso),
-        itemId: phase.itemId !== 'global' ? phase.itemId : undefined,
-        title: `${phase.displayName} - ${phase.type}`,
-        subtitle: phase.notes?.[0],
-        zone: mapPlannerZone(phase.zone),
-        durationMinutes: Math.max(1, phase.endMinute - phase.startMinute),
-        isServeTarget: phase.type === 'serve',
-      }));
-  const warnings: ParrilladaWarning[] = result.warnings.map((warning) => ({
-    id: warning.id,
-    severity: warning.severity,
-    title: warning.title,
-    description: warning.message,
-  }));
-  return {
-    id: `planner-${result.request.serveAtIso}`,
-    mode,
-    title: mode === 'pro' ? 'Parrillada Pro' : 'Parrillada Lite',
-    items: result.request.items.map(mapPlannerItemToParrilladaItem),
-    serveTargetLabel: formatClock(result.request.serveAtIso),
-    complexity: result.summary.confidence === 'low' ? 'high' : result.summary.confidence === 'medium' ? 'medium' : 'low',
-    warnings,
-    timeline,
-  };
 }
 
 export function ParrilladaSchedulerScreen() {
@@ -185,9 +98,9 @@ export function ParrilladaSchedulerScreen() {
     () => (plannerResult ? buildParrilladaLivePlanFromResult(plannerResult, currentLiveActionId) : null),
     [plannerResult, currentLiveActionId],
   );
-  const setupItems = useMemo(() => selectedItems.map(mapPlannerItemToParrilladaItem), [selectedItems]);
+  const setupItems = useMemo(() => selectedItems.map(plannerCutInputToParrilladaItem), [selectedItems]);
   const reviewPlan = useMemo(
-    () => (plannerResult ? plannerResultToParrilladaPlan(plannerResult, mode) : null),
+    () => (plannerResult ? plannerResultToParrilladaPlanCompatibility(plannerResult, mode) : null),
     [plannerResult, mode],
   );
 
@@ -218,9 +131,7 @@ export function ParrilladaSchedulerScreen() {
 
   function handleMarkDone() {
     if (!livePlan) return;
-    const sourceActions = plannerResult?.executionTimelineGroups.length
-      ? plannerResult.executionTimelineGroups.map((group) => group.id)
-      : plannerResult?.phases.map((phase) => phase.id) ?? [];
+    const sourceActions = plannerResult ? plannerResultToLiveActionIds(plannerResult) : [];
     const currentIndex = sourceActions.findIndex((actionId) => actionId === livePlan.currentAction.id);
     const nextStep = sourceActions[currentIndex + 1];
     if (!nextStep) return;

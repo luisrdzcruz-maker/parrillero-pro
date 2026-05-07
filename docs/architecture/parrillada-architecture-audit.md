@@ -63,6 +63,14 @@ Primary source-of-truth chain in current implementation:
 4. `scheduleParrillada()` as planning authority for phases, warnings, conflicts, summary.
 5. `buildExecutionTimelineGroups()` as grouped execution authority for Review/Live projection.
 
+Canonical runtime contract for Review/Live:
+
+- `PlannerResult` is the runtime source for review and live states.
+- `PlannerResult.executionTimelineGroups` is the primary execution layer for UI actions.
+- `ParrilladaPlan` is a compatibility projection only (for legacy card/prop surfaces).
+- Runtime projection helpers are centralized in `components/parrillada/adapters/parrilladaPlannerViewAdapter.ts`.
+- Live preview must use `buildParrilladaLivePlanFromResult()` as the canonical path.
+
 Derived layers:
 
 - `ParrilladaPlan` objects in scheduler screen are compatibility/projection objects.

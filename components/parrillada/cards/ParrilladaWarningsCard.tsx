@@ -4,6 +4,8 @@ import { BrandImageIcon } from '@/components/ui/BrandImageIcon';
 import { getWarningIcon } from '@/components/parrillada/icons/parrilladaIconResolver';
 import type { ParrilladaWarning } from '@/lib/planning';
 
+// Legacy compatibility card. Production Review UI uses ParrilladaWarningsFinal.
+
 type ParrilladaWarningsCardProps = {
   warnings: ParrilladaWarning[];
 };

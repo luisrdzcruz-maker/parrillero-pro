@@ -23,6 +23,10 @@ function buildAction(step: ParrilladaTimelineStep): ParrilladaLiveAction {
   };
 }
 
+/**
+ * @deprecated Compatibility path for legacy ParrilladaPlan consumers.
+ * Canonical runtime path is buildParrilladaLivePlanFromResult().
+ */
 export function buildParrilladaLivePlan(plan: ParrilladaPlan, currentStepId?: string): ParrilladaLivePlan {
   const timeline = buildParrilladaTimeline(plan);
   const currentIndex = Math.max(
@@ -103,6 +107,7 @@ export function buildParrilladaLivePlanFromResult(
   result: PlannerResult,
   currentActionId?: string,
 ): ParrilladaLivePlan {
+  // Canonical runtime path: planner result + grouped execution actions.
   const groupBasedActions = result.executionTimelineGroups.map(actionFromExecutionGroup);
   const phaseBasedActions = result.phases
     .filter((phase) => phase.type === 'preheat' || phase.type === 'cook' || phase.type === 'hold' || phase.type === 'serve')

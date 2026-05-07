@@ -1,13 +1,16 @@
 'use client';
 
 import { BrandImageIcon } from '@/components/ui/BrandImageIcon';
+import {
+  plannerResultToCriticalStep,
+  plannerResultToReviewZoneStatus,
+} from '@/components/parrillada/adapters/parrilladaPlannerViewAdapter';
 import { ParrilladaHeroCard } from '@/components/parrillada/cards/ParrilladaHeroCard';
 import { GrillZoneStatusCard } from '@/components/parrillada/cards/GrillZoneStatusCard';
 import { getParrilladaItemIcon, getZoneIcon } from '@/components/parrillada/icons/parrilladaIconResolver';
 import { ParrilladaTimelineFinal } from '@/components/parrillada/ParrilladaTimelineFinal';
 import { ParrilladaWarningsFinal } from '@/components/parrillada/ParrilladaWarningsFinal';
-import { buildParrilladaTimeline, getParrilladaCriticalStep } from '@/lib/planning';
-import type { GrillZoneType, ParrilladaPlan, PlannerResult } from '@/lib/planning';
+import type { ParrilladaPlan, PlannerResult } from '@/lib/planning';
 
 type ParrilladaReviewScreenProps = {
   plan: ParrilladaPlan;
@@ -17,17 +20,9 @@ type ParrilladaReviewScreenProps = {
   onStartLive: () => void;
 };
 
-const reviewZones: GrillZoneType[] = ['direct', 'indirect', 'resting'];
-
 export function ParrilladaReviewScreen({ plan, plannerResult, ctaLabel, onBack, onStartLive }: ParrilladaReviewScreenProps) {
-  const timeline = buildParrilladaTimeline(plan);
-  const criticalStep = getParrilladaCriticalStep(plan);
-
-  const zoneStatus = reviewZones.map((zone) => ({
-    zone,
-    label: zone,
-    activeCount: timeline.filter((step) => step.zone === zone).length,
-  }));
+  const criticalStep = plannerResultToCriticalStep(plannerResult);
+  const zoneStatus = plannerResultToReviewZoneStatus(plannerResult);
 
   const criticalItem = criticalStep?.itemId ? plan.items.find((item) => item.id === criticalStep.itemId) : undefined;
 
