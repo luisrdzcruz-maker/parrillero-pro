@@ -1,29 +1,150 @@
 'use client';
 
+import { useMemo, useState } from 'react';
+import { BrandImageIcon } from '@/components/ui/BrandImageIcon';
+import { getParrilladaItemIcon } from '@/components/parrillada/icons/parrilladaIconResolver';
 import type { ParrilladaItem } from '@/lib/planning';
+import type { PlannerCutInput } from '@/lib/planning';
 import { ParrilladaItemRow } from './ParrilladaItemRow';
 
 type ParrilladaMenuBuilderCardProps = {
   items: ParrilladaItem[];
+  availableItems: PlannerCutInput[];
+  selectedItemIds: Set<string>;
+  maxItems: number;
+  onToggleCatalogItem: (item: PlannerCutInput) => void;
 };
 
-export function ParrilladaMenuBuilderCard({ items }: ParrilladaMenuBuilderCardProps) {
+function animalLabel(value: PlannerCutInput['animal']): string {
+  if (value === 'beef') return 'Beef';
+  if (value === 'pork') return 'Pork';
+  if (value === 'chicken') return 'Chicken';
+  if (value === 'fish') return 'Fish';
+  if (value === 'seafood') return 'Seafood';
+  if (value === 'lamb') return 'Lamb';
+  if (value === 'vegetable') return 'Vegetables';
+  return 'Other';
+}
+
+export function ParrilladaMenuBuilderCard({
+  items,
+  availableItems,
+  selectedItemIds,
+  maxItems,
+  onToggleCatalogItem,
+}: ParrilladaMenuBuilderCardProps) {
+  const [selectorOpen, setSelectorOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const itemLimitReached = items.length >= maxItems;
+
+  const groupedItems = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    const filtered = query
+      ? availableItems.filter((item) => item.displayName.toLowerCase().includes(query))
+      : availableItems;
+    const grouped = new Map<string, PlannerCutInput[]>();
+    filtered.forEach((item) => {
+      const key = animalLabel(item.animal);
+      grouped.set(key, [...(grouped.get(key) ?? []), item]);
+    });
+    return [...grouped.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [availableItems, search]);
+
   return (
     <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-2 flex items-center justify-between">
         <div>
           <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Menu Builder</p>
-          <h3 className="mt-1 text-base font-semibold text-white">Selected items</h3>
+          <h3 className="mt-1 text-base font-semibold text-white">Build your selection</h3>
         </div>
         <span className="rounded-full border border-white/10 bg-black/25 px-2.5 py-1 text-xs font-semibold text-white/70">
-          {items.length} items
+          {items.length}/{maxItems}
         </span>
       </div>
 
-      <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setSelectorOpen((current) => !current)}
+          className="rounded-xl border border-white/10 bg-black/25 px-3 py-1.5 text-xs font-semibold text-white/85 transition hover:border-white/25"
+        >
+          {selectorOpen ? 'Close selector' : 'Choose cuts'}
+        </button>
+        {itemLimitReached ? (
+          <p className="text-xs text-amber-100">Lite supports up to {maxItems} items.</p>
+        ) : null}
+      </div>
+
+      {selectorOpen ? (
+        <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-2.5">
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search cut"
+            className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none placeholder:text-white/35 focus:border-orange-300/50"
+          />
+
+          <div className="mt-2.5 max-h-72 space-y-2 overflow-y-auto pr-1">
+            {groupedItems.map(([groupLabel, groupItems]) => (
+              <section key={groupLabel} className="rounded-xl border border-white/10 bg-white/[0.03] p-2">
+                <div className="mb-1.5 flex items-center justify-between">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">{groupLabel}</p>
+                  <span className="text-[10px] text-white/45">{groupItems.length}</span>
+                </div>
+                <div className="space-y-1.5">
+                  {groupItems.map((item) => {
+                    const selected = selectedItemIds.has(item.id);
+                    const disabled = !selected && itemLimitReached;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => onToggleCatalogItem(item)}
+                        className={`flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition ${
+                          selected
+                            ? 'border-orange-300/50 bg-orange-500/15 text-orange-100'
+                            : disabled
+                              ? 'cursor-not-allowed border-white/10 bg-black/20 text-white/35'
+                              : 'border-white/10 bg-black/20 text-white/85 hover:border-white/25'
+                        }`}
+                      >
+                        <BrandImageIcon
+                          src={getParrilladaItemIcon(item.cutId) ?? '/icons/ui/meat-selection.webp'}
+                          alt=""
+                          size="sm"
+                          shape="soft"
+                          aria-hidden="true"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold">{item.displayName}</p>
+                          <p className="text-[11px] text-white/55">{animalLabel(item.animal)}</p>
+                        </div>
+                        <span className="text-xs font-semibold">{selected ? 'Selected' : 'Add'}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
+            {groupedItems.length === 0 ? (
+              <p className="rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-xs text-white/60">
+                No cuts match this search.
+              </p>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      <div className="mt-3 space-y-2">
         {items.map((item) => (
           <ParrilladaItemRow key={item.id} item={item} />
         ))}
+        {items.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-white/15 bg-black/20 px-3 py-2 text-xs text-white/60">
+            Pick at least 2 items to build a valid parrillada plan.
+          </p>
+        ) : null}
       </div>
     </section>
   );

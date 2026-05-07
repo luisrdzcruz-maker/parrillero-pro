@@ -5,14 +5,28 @@ import type { ParrilladaMode } from '@/lib/planning';
 type ServeStrategyCardProps = {
   mode: ParrilladaMode;
   strategy: 'asap' | 'time';
+  serveAtLocal: string;
+  hasValidServeTime: boolean;
+  startsInPast: boolean;
+  onServeAtLocalChange: (value: string) => void;
+  onSetEarliestServeTime?: () => void;
   onChange: (strategy: 'asap' | 'time') => void;
 };
 
-export function ServeStrategyCard({ mode, strategy, onChange }: ServeStrategyCardProps) {
+export function ServeStrategyCard({
+  mode,
+  strategy,
+  serveAtLocal,
+  hasValidServeTime,
+  startsInPast,
+  onServeAtLocalChange,
+  onSetEarliestServeTime,
+  onChange,
+}: ServeStrategyCardProps) {
   return (
     <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
       <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Serve Strategy</p>
-      <h3 className="mt-1 text-base font-semibold text-white">Lite by default, Pro metadata ready</h3>
+      <h3 className="mt-1 text-base font-semibold text-white">When should everything be ready?</h3>
 
       <div className="mt-3 grid grid-cols-2 gap-2">
         <button
@@ -39,10 +53,37 @@ export function ServeStrategyCard({ mode, strategy, onChange }: ServeStrategyCar
         </button>
       </div>
 
+      {strategy === 'time' ? (
+        <label className="mt-3 block space-y-1.5">
+          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-white/45">Serve time</span>
+          <input
+            className="w-full rounded-2xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white outline-none focus:border-orange-300/60"
+            type="datetime-local"
+            value={serveAtLocal}
+            onChange={(event) => onServeAtLocalChange(event.target.value)}
+          />
+        </label>
+      ) : null}
+
+      {!hasValidServeTime ? (
+        <p className="mt-2 text-xs text-amber-200">Choose a valid serve time to generate a plan.</p>
+      ) : null}
+
+      {startsInPast && onSetEarliestServeTime ? (
+        <div className="mt-2.5 rounded-xl border border-amber-300/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+          <p>Current serve target starts in the past.</p>
+          <button
+            type="button"
+            onClick={onSetEarliestServeTime}
+            className="mt-2 rounded-lg border border-amber-200/40 bg-amber-400/15 px-2.5 py-1 text-[11px] font-semibold text-amber-50"
+          >
+            Set earliest valid time
+          </button>
+        </div>
+      ) : null}
+
       <p className="mt-3 text-xs text-white/55">
-        {mode === 'pro'
-          ? 'Advanced serve window controls are available in Pro and remain collapsed by default.'
-          : 'Pro serve window metadata is preserved in contracts, while Lite keeps controls compact.'}
+        {mode === 'pro' ? 'Advanced controls stay collapsed by default.' : 'Lite keeps controls compact and focused.'}
       </p>
     </section>
   );
