@@ -10,4 +10,15 @@ export * from './fixtures/demoItems';
 export * from './fixtures/demoGrills';
 export * from './adapters/cookingCatalogAdapter';
 export * from './catalogItems';
-export * from './parrilladaEligibility';
+export { getParrilladaItemPresentation } from './parrilladaEligibility';
+export type {
+  ParrilladaItemCategory,
+  ParrilladaItemComplexity,
+  ParrilladaItemPresentation,
+  ParrilladaItemVisibility,
+  ParrilladaItemRole as ParrilladaEligibilityRole,
+} from './parrilladaEligibility';
+export * from './parrilladaBatchTimeline';
+export * from './parrilladaTimeline';
+export * from './parrilladaWarnings';
+export * from './parrilladaLivePlan';

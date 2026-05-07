@@ -1,6 +1,6 @@
 'use client';
 
-import type { PlannerPhase, PlannerResult } from '../../lib/planning';
+import type { ExecutionTimelineGroup, PlannerPhase, PlannerResult } from '../../lib/planning';
 
 function formatTime(iso: string): string {
   return new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
@@ -37,6 +37,30 @@ function phaseLabel(type: PlannerPhase['type']): string {
 
 function compactInstruction(phase: PlannerPhase): string {
   return phase.notes?.[0] ?? 'Follow this phase as scheduled.';
+}
+
+function compactExecutionInstruction(group: ExecutionTimelineGroup): string {
+  if (group.safetyNotes.length > 0) return `${group.instruction} ${group.safetyNotes[0]}`;
+  return group.instruction;
+}
+
+function executionZoneLabel(group: ExecutionTimelineGroup): string {
+  if (group.zone === 'mixed') return 'mixed zones';
+  return zoneLabel(group.zone);
+}
+
+function executionHeatLabel(group: ExecutionTimelineGroup): string {
+  return group.heat === 'mixed' ? 'mixed heat' : `${group.heat} heat`;
+}
+
+function itemQuantityLabel(group: ExecutionTimelineGroup): string | null {
+  if (group.items.length === 0) return null;
+  return group.items
+    .map((item) => {
+      const qty = item.quantity > 1 ? `x${item.quantity}` : null;
+      return qty ? `${item.displayName} ${qty}` : item.displayName;
+    })
+    .join(' + ');
 }
 
 function ensureFinalServeRow(phases: PlannerPhase[], result: PlannerResult): PlannerPhase[] {
@@ -78,6 +102,7 @@ export function ParrilladaTimelineFinal({ result }: { result: PlannerResult | nu
 
   const phases = ensureFinalServeRow(result.phases, result);
   const groups = groupByStartTime(phases);
+  const executionGroups = result.executionTimelineGroups ?? [];
 
   return (
     <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-3 shadow-xl sm:p-4">
@@ -93,6 +118,36 @@ export function ParrilladaTimelineFinal({ result }: { result: PlannerResult | nu
       </div>
 
       <div className="space-y-2">
+        {executionGroups.length > 0 && (
+          <article className="rounded-2xl border border-orange-300/20 bg-orange-500/10 p-2.5">
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-100/80">
+              Grouped execution actions
+            </p>
+            <div className="space-y-2">
+              {executionGroups.map((group) => (
+                <div key={group.id} className="rounded-xl border border-white/10 bg-black/20 p-2.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="rounded-full bg-orange-500/15 px-2 py-0.5 text-[11px] font-medium text-orange-100">
+                      {formatTime(group.startIso)}
+                    </span>
+                    <span className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-white/70">
+                      {group.groupType.replaceAll('_', ' ')}
+                    </span>
+                    <span className="text-sm font-semibold text-white">{group.title}</span>
+                  </div>
+                  <p className="mt-1 text-xs text-white/55">
+                    {executionZoneLabel(group)} · {executionHeatLabel(group)} · until {formatTime(group.endIso)}
+                  </p>
+                  {itemQuantityLabel(group) && (
+                    <p className="mt-1 text-xs text-orange-100/85">{itemQuantityLabel(group)}</p>
+                  )}
+                  <p className="mt-1.5 text-sm text-white/80">{compactExecutionInstruction(group)}</p>
+                </div>
+              ))}
+            </div>
+          </article>
+        )}
+
         {groups.map((group) => (
           <article key={group.time} className="rounded-2xl border border-white/10 bg-black/20 p-2.5">
             <div className="mb-2 flex items-center gap-2">

@@ -1,4 +1,4 @@
-import type { PlanningProfile } from './types';
+import type { ParrilladaMode, PlanningProfile } from './types';
 
 export const DEFAULT_PLANNING_PROFILES: PlanningProfile[] = [
   {
@@ -291,3 +291,32 @@ export const CUT_PROFILE_OVERRIDES: Record<string, string> = {
   mushrooms: 'vegetable-side-flexible',
   chorizo: 'sausage-starter-flexible',
 };
+
+export type ParrilladaModeProfile = {
+  mode: ParrilladaMode;
+  maxItems: number;
+  defaultComplexity: 'low' | 'medium' | 'high';
+  supportsAdvancedControls: boolean;
+  description: string;
+};
+
+export const PARRILLADA_MODE_PROFILES: Record<ParrilladaMode, ParrilladaModeProfile> = {
+  lite: {
+    mode: 'lite',
+    maxItems: 4,
+    defaultComplexity: 'medium',
+    supportsAdvancedControls: false,
+    description: 'Simple setup with compact controls and direct execution flow.',
+  },
+  pro: {
+    mode: 'pro',
+    maxItems: 8,
+    defaultComplexity: 'high',
+    supportsAdvancedControls: true,
+    description: 'Expanded controls for serve windows, zone balancing, and risk management.',
+  },
+};
+
+export function getParrilladaModeProfile(mode: ParrilladaMode): ParrilladaModeProfile {
+  return PARRILLADA_MODE_PROFILES[mode];
+}

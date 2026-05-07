@@ -4,6 +4,7 @@ import {
   getParrilladaItemPresentation,
   NAPOLEON_ROGUE_525_LITE,
   scheduleParrillada,
+  type ExecutionTimelineGroup,
   type PlannerPhase,
   type PlannerResult,
 } from "../lib/planning";
@@ -16,6 +17,7 @@ type Scenario = {
   metadataCoverageRequired?: boolean;
   origin: ScenarioOrigin;
   familyName?: string;
+  expectations?: ScenarioExpectations;
 };
 
 type ScenarioSkip = {
@@ -26,6 +28,14 @@ type ScenarioSkip = {
 };
 
 type CatalogItem = PlannerResult["request"]["items"][number];
+
+type ScenarioExpectations = {
+  groupedTimelineRequired?: boolean;
+  expectHoldableEarlyGroup?: boolean;
+  expectSensitiveFinishNearServe?: boolean;
+  expectPoultrySafetyAction?: boolean;
+  expectNoUnsafePoultryVegetableGrouping?: boolean;
+};
 
 type GeneratedScenarioFamily = {
   name: string;
@@ -74,6 +84,14 @@ function formatScenarioItem(item: PlannerResult["request"]["items"][number]): st
 
 function formatWarning(warning: PlannerResult["warnings"][number]): string {
   return `${warning.severity} | ${warning.code} | ${warning.title} | ${warning.message}`;
+}
+
+function formatExecutionGroup(group: ExecutionTimelineGroup): string {
+  const items =
+    group.items.length === 0
+      ? "-"
+      : group.items.map((item) => `${item.displayName}x${item.quantity}`).join(", ");
+  return `${group.startIso} | ${group.groupType} | ${group.title} | ${group.zone} | ${group.heat} | items=${items}`;
 }
 
 function asQaError(error: unknown): QaError {
@@ -179,6 +197,84 @@ function validatePlanSanity(result: PlannerResult): void {
   }
 }
 
+function validateExecutionTimeline(result: PlannerResult, expectations?: ScenarioExpectations): void {
+  const groups = result.executionTimelineGroups;
+  assert(Array.isArray(groups), "execution timeline groups are missing");
+  assert(groups.length > 0, "execution timeline groups are empty");
+
+  for (let i = 1; i < groups.length; i += 1) {
+    const prev = groups[i - 1];
+    const curr = groups[i];
+    const startsDecreasing = curr.startMinute < prev.startMinute;
+    const endsDecreasingOnSameStart =
+      curr.startMinute === prev.startMinute && curr.endMinute < prev.endMinute;
+    assert(!startsDecreasing && !endsDecreasingOnSameStart, "execution timeline groups are not sorted");
+  }
+
+  for (const group of groups) {
+    assert(group.endMinute > group.startMinute, `execution timeline group has non-positive duration: ${group.id}`);
+  }
+
+  const hasServeGroup = groups.some((group) => group.groupType === "serve");
+  assert(hasServeGroup, "execution timeline is missing final serve group");
+
+  const preheat = result.phases.find((phase) => phase.type === "preheat" && phase.itemId === "global");
+  const firstCook = result.phases
+    .filter((phase) => ACTIVE_COOK_TYPES.has(phase.type))
+    .sort((a, b) => a.startMinute - b.startMinute)[0];
+  if (preheat && firstCook) {
+    assert(preheat.endMinute <= firstCook.startMinute, "preheat ends after first cook phase");
+  }
+
+  if (expectations?.groupedTimelineRequired) {
+    assert(groups.length >= 3, "grouped execution timeline should have multiple grouped actions");
+  }
+
+  if (expectations?.expectHoldableEarlyGroup) {
+    const holdableGroup = groups.find((group) => group.groupType === "start_holdable_items");
+    const sensitiveGroup = groups.find((group) => group.groupType === "finish_sensitive_items");
+    assert(Boolean(holdableGroup), "expected holdable start group is missing");
+    if (holdableGroup && sensitiveGroup) {
+      assert(
+        holdableGroup.startMinute <= sensitiveGroup.startMinute,
+        "holdable group should not start after sensitive finish group",
+      );
+    }
+  }
+
+  if (expectations?.expectSensitiveFinishNearServe) {
+    const sensitiveGroups = groups.filter((group) => group.groupType === "finish_sensitive_items");
+    const serveGroups = groups.filter((group) => group.groupType === "serve");
+    assert(sensitiveGroups.length > 0, "expected sensitive finish group is missing");
+    assert(serveGroups.length > 0, "serve group is missing for sensitive finish assertion");
+    const latestSensitiveEnd = Math.max(...sensitiveGroups.map((group) => group.endMinute));
+    const earliestServeStart = Math.min(...serveGroups.map((group) => group.startMinute));
+    assert(
+      latestSensitiveEnd >= earliestServeStart - 20,
+      "sensitive finish group should be near serve time",
+    );
+  }
+
+  if (expectations?.expectPoultrySafetyAction) {
+    const hasBurnOff = groups.some((group) => group.groupType === "clean_or_burn_off_zone");
+    assert(hasBurnOff, "expected clean/burn-off action is missing");
+  }
+
+  if (expectations?.expectNoUnsafePoultryVegetableGrouping) {
+    for (const group of groups) {
+      const hasPoultry = group.items.some((item) => item.behavior.foodSafetyGroup === "raw_poultry");
+      const hasProduceOrReady = group.items.some(
+        (item) =>
+          item.behavior.foodSafetyGroup === "vegetable" || item.behavior.foodSafetyGroup === "ready_to_eat",
+      );
+      assert(
+        !(hasPoultry && hasProduceOrReady),
+        `unsafe poultry + produce grouping detected in execution group ${group.id}`,
+      );
+    }
+  }
+}
+
 function tryPickItemsByCutId(
   allItems: PlannerResult["request"]["items"],
   cutIds: string[],
@@ -187,6 +283,19 @@ function tryPickItemsByCutId(
     .map((cutId) => allItems.find((item) => item.cutId === cutId))
     .filter((item): item is PlannerResult["request"]["items"][number] => Boolean(item));
   return picked.length === cutIds.length ? picked : null;
+}
+
+function withQuantity(
+  item: PlannerResult["request"]["items"][number],
+  quantity: number,
+  unit: PlannerResult["request"]["items"][number]["unit"] = "pieces",
+): PlannerResult["request"]["items"][number] {
+  return {
+    ...item,
+    quantity,
+    unit,
+    physicalPortionCount: quantity,
+  };
 }
 
 function validateMetadataCoverage(items: PlannerResult["request"]["items"]): void {
@@ -716,7 +825,111 @@ function main(): void {
     "asparagus",
   ]);
 
-  const explicitScenarios = [...demoScenarios, ...catalogScenarios, ...compatibilityCatalogScenarios];
+  const batchScenarios: Scenario[] = [];
+  const pushBatchScenarioIfAvailable = (
+    name: string,
+    cutIds: string[],
+    build: (items: PlannerResult["request"]["items"]) => PlannerResult["request"]["items"],
+    expectations: ScenarioExpectations,
+  ): void => {
+    const items = tryPickItemsByCutId(catalog.items, cutIds);
+    if (!items) {
+      const missingReason = buildMissingCutReason(cutIds, catalog.items, skippedByCandidateId);
+      skippedScenarios.push({
+        name,
+        reason: `missing/unsafe catalog items [${missingReason}]`,
+        origin: "explicit",
+        familyName: "batch",
+      });
+      return;
+    }
+    batchScenarios.push({
+      name,
+      items: build(items),
+      metadataCoverageRequired: true,
+      origin: "explicit",
+      familyName: "batch",
+      expectations,
+    });
+  };
+
+  pushBatchScenarioIfAvailable(
+    "batch: 2 ribeyes + 6 sausages + 4 corn",
+    ["ribeye", "sausages", "corn_on_cob"],
+    (items) => [
+      withQuantity(items[0], 2, "pieces"),
+      withQuantity(items[1], 6, "pieces"),
+      withQuantity(items[2], 4, "pieces"),
+    ],
+    {
+      groupedTimelineRequired: true,
+      expectHoldableEarlyGroup: true,
+      expectSensitiveFinishNearServe: true,
+    },
+  );
+
+  pushBatchScenarioIfAvailable(
+    "batch: sausages + corn + peppers",
+    ["sausages", "corn_on_cob", "bell_peppers"],
+    (items) => [withQuantity(items[0], 6), withQuantity(items[1], 4), withQuantity(items[2], 3)],
+    {
+      groupedTimelineRequired: true,
+      expectHoldableEarlyGroup: true,
+    },
+  );
+
+  pushBatchScenarioIfAvailable(
+    "batch: premium steak + holdable sides",
+    ["ribeye", "corn_on_cob", "potato_halves"],
+    (items) => [withQuantity(items[0], 2), withQuantity(items[1], 4), withQuantity(items[2], 2, "tray")],
+    {
+      groupedTimelineRequired: true,
+      expectHoldableEarlyGroup: true,
+      expectSensitiveFinishNearServe: true,
+    },
+  );
+
+  pushBatchScenarioIfAvailable(
+    "batch: chicken wings + asparagus + corn",
+    ["chicken_wing", "asparagus", "corn_on_cob"],
+    (items) => [
+      { ...withQuantity(items[0], 3), fixedStartTime: "2030-05-01T17:20:00.000Z" },
+      { ...withQuantity(items[1], 2), fixedZone: "direct_medium" },
+      { ...withQuantity(items[2], 4), fixedZone: "direct_medium" },
+    ],
+    {
+      groupedTimelineRequired: true,
+      expectPoultrySafetyAction: true,
+      expectNoUnsafePoultryVegetableGrouping: true,
+    },
+  );
+
+  pushBatchScenarioIfAvailable(
+    "batch: raw poultry + vegetable safety",
+    ["chicken_wing", "bell_peppers"],
+    (items) => [
+      { ...withQuantity(items[0], 2), fixedStartTime: "2030-05-01T17:20:00.000Z" },
+      { ...withQuantity(items[1], 3), fixedZone: "direct_medium" },
+    ],
+    {
+      groupedTimelineRequired: true,
+      expectPoultrySafetyAction: true,
+      expectNoUnsafePoultryVegetableGrouping: true,
+    },
+  );
+
+  pushBatchScenarioIfAvailable(
+    "batch: sensitive cuts finish last",
+    ["ribeye", "salmon", "corn_on_cob"],
+    (items) => [withQuantity(items[0], 2), withQuantity(items[1], 2), withQuantity(items[2], 4)],
+    {
+      groupedTimelineRequired: true,
+      expectSensitiveFinishNearServe: true,
+      expectHoldableEarlyGroup: true,
+    },
+  );
+
+  const explicitScenarios = [...demoScenarios, ...catalogScenarios, ...compatibilityCatalogScenarios, ...batchScenarios];
   const scenarios = [...explicitScenarios, ...generatedScenarios];
 
   let passed = 0;
@@ -752,6 +965,7 @@ function main(): void {
         maxPlanLookbackMinutes: 480,
       });
       validatePlanSanity(result);
+      validateExecutionTimeline(result, scenario.expectations);
       validateNoMismatchedCutIdFallback(result);
       if (scenario.metadataCoverageRequired) validateMetadataCoverage(scenario.items);
       scenario.items.forEach((item) => {
@@ -783,6 +997,12 @@ function main(): void {
         console.log("  - none");
       } else {
         context.forEach((phase) => console.log(`  - ${formatPhase(phase)}`));
+      }
+      console.log("  Relevant execution groups:");
+      if (!result || result.executionTimelineGroups.length === 0) {
+        console.log("  - none");
+      } else {
+        result.executionTimelineGroups.slice(0, 12).forEach((group) => console.log(`  - ${formatExecutionGroup(group)}`));
       }
       console.log("  Warnings:");
       if (!result || result.warnings.length === 0) {

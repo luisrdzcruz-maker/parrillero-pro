@@ -1,5 +1,6 @@
 import { detectZoneConflicts, hasConflict, pickSupportedZone } from './capacity';
 import { normalizePlannerInput } from './estimation';
+import { buildExecutionTimelineGroups } from './parrilladaBatchTimeline';
 import { addMinutesIso, sortPhases } from './time';
 import { buildPlannerWarnings } from './warnings';
 import type {
@@ -169,9 +170,22 @@ function buildItemPhases(args: {
   return phases;
 }
 
+function requestItemsFromMenuLines(request: PlannerRequest): PlannerRequest['items'] {
+  if (!request.menuLines || request.menuLines.length === 0) return request.items;
+  return request.menuLines.map((line, index) => ({
+    ...line.item,
+    id: line.item.id || `menu-line-${line.id}-${index}`,
+    quantity: line.quantity,
+    unit: line.unit,
+    physicalPortionCount: line.physicalPortionCount ?? line.item.physicalPortionCount,
+    notes: [...(line.item.notes ?? []), ...(line.notes ?? [])],
+  }));
+}
+
 export function scheduleParrillada(request: PlannerRequest): PlannerResult {
   const strategy = request.strategy ?? 'balanced';
-  const items = request.items.map((input) => normalizePlannerInput(input));
+  const inputItems = requestItemsFromMenuLines(request);
+  const items = inputItems.map((input) => normalizePlannerInput(input));
   const sortedItems = [...items].sort((a, b) => itemSortScore(b, strategy) - itemSortScore(a, strategy));
   const phases: PlannerPhase[] = [];
 
@@ -205,17 +219,18 @@ export function scheduleParrillada(request: PlannerRequest): PlannerResult {
 
   const sortedPhases = sortPhases(phases);
   const conflicts = detectZoneConflicts(sortedPhases, request.grillCapacity);
-  const warnings = buildPlannerWarnings({ request: { ...request, strategy }, items, phases: sortedPhases, conflicts });
+  const normalizedRequest = { ...request, items: inputItems, strategy };
+  const warnings = buildPlannerWarnings({ request: normalizedRequest, items, phases: sortedPhases, conflicts });
   const planStartMinute = Math.min(...sortedPhases.map((phase) => phase.startMinute));
   const planEndMinute = Math.max(...sortedPhases.map((phase) => phase.endMinute));
   const criticalWarnings = warnings.filter((warning) => warning.severity === 'critical').length;
   const warningCount = warnings.filter((warning) => warning.severity === 'warning').length;
-
-  return {
+  const result: PlannerResult = {
     ok: criticalWarnings === 0,
-    request: { ...request, strategy },
+    request: normalizedRequest,
     items,
     phases: sortedPhases,
+    executionTimelineGroups: [],
     warnings,
     conflicts,
     summary: {
@@ -228,4 +243,6 @@ export function scheduleParrillada(request: PlannerRequest): PlannerResult {
       confidence: criticalWarnings > 0 ? 'low' : warningCount > 2 ? 'medium' : 'high',
     },
   };
+  result.executionTimelineGroups = buildExecutionTimelineGroups(result);
+  return result;
 }
