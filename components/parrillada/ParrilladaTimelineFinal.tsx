@@ -63,6 +63,10 @@ function itemQuantityLabel(group: ExecutionTimelineGroup): string | null {
     .join(' + ');
 }
 
+function formatActionMeta(group: ExecutionTimelineGroup): string {
+  return `${executionZoneLabel(group)} · ${executionHeatLabel(group)} · until ${formatTime(group.endIso)}`;
+}
+
 function ensureFinalServeRow(phases: PlannerPhase[], result: PlannerResult): PlannerPhase[] {
   if (phases.some((phase) => phase.type === 'serve')) return phases;
   const serveTime = result.request.serveAtIso;
@@ -132,11 +136,9 @@ export function ParrilladaTimelineFinal({ result }: { result: PlannerResult | nu
                     </span>
                     <span className="text-sm font-semibold text-white">{group.title}</span>
                   </div>
-                  <p className="mt-0.5 text-xs text-white/55">
-                    {executionZoneLabel(group)} · {executionHeatLabel(group)} · until {formatTime(group.endIso)}
-                  </p>
                   <details className="mt-1">
                     <summary className="cursor-pointer text-[11px] text-white/50">Details</summary>
+                    <p className="mt-1 text-xs text-white/60">{formatActionMeta(group)}</p>
                     {itemQuantityLabel(group) ? (
                       <p className="mt-1 text-xs text-orange-100/85">{itemQuantityLabel(group)}</p>
                     ) : null}
