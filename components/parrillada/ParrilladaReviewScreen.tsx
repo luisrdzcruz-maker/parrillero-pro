@@ -25,16 +25,16 @@ export function ParrilladaReviewScreen({ plan, plannerResult, ctaLabel, onBack, 
   const zoneStatus = plannerResultToReviewZoneStatus(plannerResult);
 
   const criticalItem = criticalStep?.itemId ? plan.items.find((item) => item.id === criticalStep.itemId) : undefined;
+  const keyExecutionHint = criticalStep ? `Start first: ${criticalStep.title}` : undefined;
 
   return (
     <section className="space-y-3">
-      <ParrilladaHeroCard plan={plan} />
+      <ParrilladaHeroCard plan={plan} keyExecutionHint={keyExecutionHint} />
 
       <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
-        <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Critical Path</p>
-        <h3 className="mt-1 text-base font-semibold text-white">Start first</h3>
+        <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Main sequence</p>
         {criticalStep ? (
-          <div className="mt-3 flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5">
+          <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5">
             <BrandImageIcon
               src={
                 criticalItem
@@ -46,8 +46,8 @@ export function ParrilladaReviewScreen({ plan, plannerResult, ctaLabel, onBack, 
               shape="soft"
               aria-hidden="true"
             />
-            <div>
-              <p className="text-sm font-semibold text-white">{criticalStep.title}</p>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-white">{criticalStep.title}</p>
               <p className="text-xs text-white/55">
                 {criticalStep.timeLabel}
                 {criticalStep.zone ? ` · ${criticalStep.zone}` : ''}
@@ -58,8 +58,20 @@ export function ParrilladaReviewScreen({ plan, plannerResult, ctaLabel, onBack, 
       </section>
 
       <ParrilladaTimelineFinal result={plannerResult} />
-      <GrillZoneStatusCard zones={zoneStatus} />
-      <ParrilladaWarningsFinal result={plannerResult} />
+
+      <details className="rounded-3xl border border-white/10 bg-white/[0.04] p-3">
+        <summary className="cursor-pointer text-sm font-semibold text-white">Zone status</summary>
+        <div className="mt-2">
+          <GrillZoneStatusCard zones={zoneStatus} />
+        </div>
+      </details>
+
+      <details className="rounded-3xl border border-white/10 bg-white/[0.04] p-3">
+        <summary className="cursor-pointer text-sm font-semibold text-white">Warnings</summary>
+        <div className="mt-2">
+          <ParrilladaWarningsFinal result={plannerResult} />
+        </div>
+      </details>
 
       <div className="grid grid-cols-2 gap-2">
         <button

@@ -118,75 +118,80 @@ export function ParrilladaTimelineFinal({ result }: { result: PlannerResult | nu
       </div>
 
       <div className="space-y-2">
-        {executionGroups.length > 0 && (
+        {executionGroups.length > 0 ? (
           <article className="rounded-2xl border border-orange-300/20 bg-orange-500/10 p-2.5">
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-100/80">
               Grouped execution actions
             </p>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {executionGroups.map((group) => (
-                <div key={group.id} className="rounded-xl border border-white/10 bg-black/20 p-2.5">
+                <div key={group.id} className="rounded-xl border border-white/10 bg-black/20 px-2.5 py-2">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className="rounded-full bg-orange-500/15 px-2 py-0.5 text-[11px] font-medium text-orange-100">
                       {formatTime(group.startIso)}
                     </span>
-                    <span className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-white/70">
-                      {group.groupType.replaceAll('_', ' ')}
-                    </span>
                     <span className="text-sm font-semibold text-white">{group.title}</span>
                   </div>
-                  <p className="mt-1 text-xs text-white/55">
+                  <p className="mt-0.5 text-xs text-white/55">
                     {executionZoneLabel(group)} · {executionHeatLabel(group)} · until {formatTime(group.endIso)}
                   </p>
-                  {itemQuantityLabel(group) && (
-                    <p className="mt-1 text-xs text-orange-100/85">{itemQuantityLabel(group)}</p>
-                  )}
-                  <p className="mt-1.5 text-sm text-white/80">{compactExecutionInstruction(group)}</p>
+                  <details className="mt-1">
+                    <summary className="cursor-pointer text-[11px] text-white/50">Details</summary>
+                    {itemQuantityLabel(group) ? (
+                      <p className="mt-1 text-xs text-orange-100/85">{itemQuantityLabel(group)}</p>
+                    ) : null}
+                    <p className="mt-1 text-xs text-white/75">{compactExecutionInstruction(group)}</p>
+                  </details>
                 </div>
               ))}
             </div>
           </article>
-        )}
+        ) : null}
 
-        {groups.map((group) => (
-          <article key={group.time} className="rounded-2xl border border-white/10 bg-black/20 p-2.5">
-            <div className="mb-2 flex items-center gap-2">
-              <span className="rounded-full bg-orange-500/15 px-2 py-1 text-xs font-semibold text-orange-100">
-                {formatTime(group.time)}
-              </span>
-              {group.phases.length > 1 && (
-                <span className="text-[11px] text-white/50">{group.phases.length} parallel actions</span>
-              )}
-            </div>
-            <div className="space-y-2">
-              {group.phases.map((phase) => (
-                <div key={phase.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-2.5">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="rounded-full bg-orange-500/15 px-2 py-0.5 text-[11px] font-medium text-orange-100">
-                      {phaseLabel(phase.type)}
-                    </span>
-                    <span className="text-sm font-semibold text-white">{phase.displayName}</span>
-                    <span className="text-xs text-white/50">{formatDuration(phase.durationMinutes)}</span>
-                  </div>
-                  <p className="mt-1 text-xs text-white/55">
-                    {zoneLabel(phase.zone)} · until {formatTime(phase.endIso)}
-                  </p>
-                  <p className="mt-1.5 text-sm text-white/80">{compactInstruction(phase)}</p>
-                  {phase.notes && phase.notes.length > 1 && (
-                    <details className="mt-1">
-                      <summary className="cursor-pointer text-xs text-white/55">More details</summary>
-                      <ul className="mt-1 space-y-1 text-xs text-white/70">
-                        {phase.notes.slice(1).map((note) => (
-                          <li key={note}>- {note}</li>
-                        ))}
-                      </ul>
-                    </details>
+        <details className="rounded-2xl border border-white/10 bg-black/20 p-2.5">
+          <summary className="cursor-pointer text-sm font-semibold text-white">Detailed phase timeline</summary>
+          <div className="mt-2 space-y-2">
+            {groups.map((group) => (
+              <article key={group.time} className="rounded-2xl border border-white/10 bg-white/[0.03] p-2.5">
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="rounded-full bg-orange-500/15 px-2 py-1 text-xs font-semibold text-orange-100">
+                    {formatTime(group.time)}
+                  </span>
+                  {group.phases.length > 1 && (
+                    <span className="text-[11px] text-white/50">{group.phases.length} parallel actions</span>
                   )}
                 </div>
-              ))}
-            </div>
-          </article>
-        ))}
+                <div className="space-y-2">
+                  {group.phases.map((phase) => (
+                    <div key={phase.id} className="rounded-xl border border-white/10 bg-black/20 p-2.5">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="rounded-full bg-orange-500/15 px-2 py-0.5 text-[11px] font-medium text-orange-100">
+                          {phaseLabel(phase.type)}
+                        </span>
+                        <span className="text-sm font-semibold text-white">{phase.displayName}</span>
+                        <span className="text-xs text-white/50">{formatDuration(phase.durationMinutes)}</span>
+                      </div>
+                      <p className="mt-1 text-xs text-white/55">
+                        {zoneLabel(phase.zone)} · until {formatTime(phase.endIso)}
+                      </p>
+                      <p className="mt-1.5 text-sm text-white/80">{compactInstruction(phase)}</p>
+                      {phase.notes && phase.notes.length > 1 && (
+                        <details className="mt-1">
+                          <summary className="cursor-pointer text-xs text-white/55">More details</summary>
+                          <ul className="mt-1 space-y-1 text-xs text-white/70">
+                            {phase.notes.slice(1).map((note) => (
+                              <li key={note}>- {note}</li>
+                            ))}
+                          </ul>
+                        </details>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+        </details>
       </div>
     </section>
   );
