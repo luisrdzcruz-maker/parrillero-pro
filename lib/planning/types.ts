@@ -46,6 +46,25 @@ export type PlanningMetadataSource = 'single-cut-engine' | 'fallback';
 export type PlanningMetadataConfidence = 'high' | 'medium' | 'low';
 export type PlanningZoneDemand = 'low' | 'medium' | 'high';
 export type PlanningMetadataTimingSensitivity = 'low' | 'medium' | 'high';
+export type ParrilladaMenuLineUnit = 'pieces' | 'kg' | 'servings' | 'tray';
+export type ParrilladaHoldBehavior = 'can_hold_indirect' | 'short_hold_only' | 'serve_immediately' | 'do_not_hold';
+export type ParrilladaFinishPriority = 'early' | 'middle' | 'finish_last';
+export type ParrilladaHeatFragility = 'low' | 'medium' | 'high';
+export type ParrilladaFoodSafetyGroup =
+  | 'raw_beef'
+  | 'raw_pork'
+  | 'raw_poultry'
+  | 'raw_fish'
+  | 'vegetable'
+  | 'ready_to_eat';
+export type ExecutionTimelineGroupType =
+  | 'setup'
+  | 'start_holdable_items'
+  | 'move_to_indirect'
+  | 'clean_or_burn_off_zone'
+  | 'finish_sensitive_items'
+  | 'serve'
+  | 'other';
 
 export interface PlanningMetadata {
   version: 1;
@@ -115,6 +134,8 @@ export interface PlannerCutInput {
   displayName: string;
   animal: PlanningAnimal;
   quantity?: number;
+  unit?: ParrilladaMenuLineUnit;
+  physicalPortionCount?: number;
   servings?: number;
   doneness?: DonenessLevel;
   weightGrams?: number;
@@ -125,6 +146,15 @@ export interface PlannerCutInput {
   profileId?: string;
   planningMetadata?: PlanningMetadata;
   priority?: number;
+  notes?: string[];
+}
+
+export interface ParrilladaMenuLine {
+  id: string;
+  item: PlannerCutInput;
+  quantity: number;
+  unit: ParrilladaMenuLineUnit;
+  physicalPortionCount?: number;
   notes?: string[];
 }
 
@@ -139,6 +169,7 @@ export interface NormalizedPlannerItem extends PlannerCutInput {
 
 export interface PlannerRequest {
   items: PlannerCutInput[];
+  menuLines?: ParrilladaMenuLine[];
   serveAtIso: string;
   grillCapacity: GrillCapacity;
   strategy?: SchedulerStrategy;
@@ -194,11 +225,46 @@ export interface ZoneConflict {
   phaseIds: string[];
 }
 
+export interface ParrilladaItemBehavior {
+  holdBehavior: ParrilladaHoldBehavior;
+  finishPriority: ParrilladaFinishPriority;
+  heatFragility: ParrilladaHeatFragility;
+  foodSafetyGroup: ParrilladaFoodSafetyGroup;
+}
+
+export interface ExecutionTimelineGroupItem {
+  itemId: string;
+  cutId: string;
+  displayName: string;
+  quantity: number;
+  unit: ParrilladaMenuLineUnit;
+  physicalPortionCount?: number;
+  behavior: ParrilladaItemBehavior;
+}
+
+export interface ExecutionTimelineGroup {
+  id: string;
+  startMinute: number;
+  endMinute: number;
+  startIso: string;
+  endIso: string;
+  title: string;
+  groupType: ExecutionTimelineGroupType;
+  items: ExecutionTimelineGroupItem[];
+  zone: PlanningZone | 'mixed';
+  heat: 'low' | 'medium' | 'high' | 'mixed';
+  instruction: string;
+  safetyNotes: string[];
+  details?: string[];
+  phaseIds: string[];
+}
+
 export interface PlannerResult {
   ok: boolean;
   request: PlannerRequest;
   items: NormalizedPlannerItem[];
   phases: PlannerPhase[];
+  executionTimelineGroups: ExecutionTimelineGroup[];
   warnings: PlannerWarning[];
   conflicts: ZoneConflict[];
   summary: {
@@ -217,4 +283,83 @@ export interface MinuteReservation {
   zone: PlanningZone;
   phaseId: string;
   demand: number;
+}
+
+export type ParrilladaMode = 'lite' | 'pro';
+
+export type ParrilladaItemRole = 'main' | 'secondary' | 'side' | 'finish_last' | 'hold_warm';
+
+export type GrillZoneType = 'direct' | 'indirect' | 'resting' | 'holding';
+
+export type ParrilladaWarningSeverity = 'info' | 'watch' | 'warning' | 'critical';
+
+export interface ParrilladaItem {
+  id: string;
+  cutId?: string;
+  displayName: string;
+  category?: string;
+  role: ParrilladaItemRole;
+  estimatedMinutes: number;
+  zonePreference?: GrillZoneType[];
+  canHoldWarm?: boolean;
+  maxHoldMinutes?: number;
+  timingSensitivity?: 'low' | 'medium' | 'high';
+  riskFlags?: string[];
+}
+
+export interface ParrilladaTimelineStep {
+  id: string;
+  timeLabel: string;
+  itemId?: string;
+  title: string;
+  subtitle?: string;
+  zone?: GrillZoneType;
+  durationMinutes?: number;
+  isServeTarget?: boolean;
+}
+
+export interface ParrilladaWarning {
+  id: string;
+  severity: ParrilladaWarningSeverity;
+  title: string;
+  description: string;
+  suggestedAction?: string;
+}
+
+export interface ParrilladaPlan {
+  id: string;
+  mode: ParrilladaMode;
+  title: string;
+  items: ParrilladaItem[];
+  serveTargetLabel: string;
+  complexity: 'low' | 'medium' | 'high';
+  warnings: ParrilladaWarning[];
+  timeline: ParrilladaTimelineStep[];
+}
+
+export interface ParrilladaLiveAction {
+  id: string;
+  statusLabel: string;
+  instruction: string;
+  zone?: GrillZoneType;
+  durationLabel?: string;
+  actionType?: 'move' | 'flip' | 'rest' | 'serve' | 'check';
+}
+
+export interface ParrilladaLivePlan {
+  planId: string;
+  currentAction: ParrilladaLiveAction;
+  upNextAction?: ParrilladaLiveAction;
+  zoneStatus: Array<{
+    zone: GrillZoneType;
+    activeCount: number;
+    label: string;
+  }>;
+  activeItems: Array<{
+    itemId: string;
+    displayName: string;
+    cutId?: string;
+    phase: string;
+    timeRemainingLabel: string;
+  }>;
 }
