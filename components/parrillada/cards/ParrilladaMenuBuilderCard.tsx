@@ -15,6 +15,8 @@ type ParrilladaMenuBuilderCardProps = {
   onToggleCatalogItem: (item: PlannerCutInput) => void;
 };
 
+type MenuFilter = 'all' | 'beef' | 'pork' | 'chicken' | 'fish' | 'vegetable';
+
 function animalLabel(value: PlannerCutInput['animal']): string {
   if (value === 'beef') return 'Beef';
   if (value === 'pork') return 'Pork';
@@ -26,6 +28,21 @@ function animalLabel(value: PlannerCutInput['animal']): string {
   return 'Other';
 }
 
+const MENU_FILTERS: Array<{ id: MenuFilter; label: string }> = [
+  { id: 'all', label: 'All' },
+  { id: 'beef', label: 'Beef' },
+  { id: 'pork', label: 'Pork' },
+  { id: 'chicken', label: 'Chicken' },
+  { id: 'fish', label: 'Fish' },
+  { id: 'vegetable', label: 'Vegetable' },
+];
+
+function matchesFilter(item: PlannerCutInput, filter: MenuFilter): boolean {
+  if (filter === 'all') return true;
+  if (filter === 'fish') return item.animal === 'fish' || item.animal === 'seafood';
+  return item.animal === filter;
+}
+
 export function ParrilladaMenuBuilderCard({
   items,
   availableItems,
@@ -35,20 +52,20 @@ export function ParrilladaMenuBuilderCard({
 }: ParrilladaMenuBuilderCardProps) {
   const [selectorOpen, setSelectorOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [activeFilter, setActiveFilter] = useState<MenuFilter>('all');
   const itemLimitReached = items.length >= maxItems;
 
   const groupedItems = useMemo(() => {
     const query = search.trim().toLowerCase();
-    const filtered = query
-      ? availableItems.filter((item) => item.displayName.toLowerCase().includes(query))
-      : availableItems;
+    const byFilter = availableItems.filter((item) => matchesFilter(item, activeFilter));
+    const filtered = query ? byFilter.filter((item) => item.displayName.toLowerCase().includes(query)) : byFilter;
     const grouped = new Map<string, PlannerCutInput[]>();
     filtered.forEach((item) => {
       const key = animalLabel(item.animal);
       grouped.set(key, [...(grouped.get(key) ?? []), item]);
     });
     return [...grouped.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  }, [availableItems, search]);
+  }, [availableItems, search, activeFilter]);
 
   return (
     <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
@@ -83,6 +100,25 @@ export function ParrilladaMenuBuilderCard({
             placeholder="Search cut"
             className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none placeholder:text-white/35 focus:border-orange-300/50"
           />
+          <div className="mt-2 flex gap-1.5 overflow-x-auto pb-0.5">
+            {MENU_FILTERS.map((filter) => {
+              const selected = activeFilter === filter.id;
+              return (
+                <button
+                  key={filter.id}
+                  type="button"
+                  onClick={() => setActiveFilter(filter.id)}
+                  className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
+                    selected
+                      ? 'border-orange-300/50 bg-orange-500/15 text-orange-100'
+                      : 'border-white/10 bg-black/25 text-white/70 hover:border-white/20'
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              );
+            })}
+          </div>
 
           <div className="mt-2.5 max-h-72 space-y-2 overflow-y-auto pr-1">
             {groupedItems.map(([groupLabel, groupItems]) => (
