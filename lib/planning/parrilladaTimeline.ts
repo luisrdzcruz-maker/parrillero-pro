@@ -1,5 +1,8 @@
 import type { ParrilladaPlan, ParrilladaTimelineStep } from './types';
 
+// Legacy compatibility helpers for ParrilladaPlan projections.
+// Canonical runtime timeline contract is PlannerResult.executionTimelineGroups.
+
 function parseTimelineMinute(value: string): number {
   const normalized = value.trim().toLowerCase();
   const match = normalized.match(/(\d{1,2})[:.](\d{2})\s*(am|pm)?/);
@@ -18,6 +21,7 @@ export function buildParrilladaTimeline(plan: ParrilladaPlan): ParrilladaTimelin
   return [...plan.timeline].sort((a, b) => parseTimelineMinute(a.timeLabel) - parseTimelineMinute(b.timeLabel));
 }
 
+/** @deprecated Use PlannerResult execution timeline adapters instead. */
 export function getParrilladaCriticalStep(plan: ParrilladaPlan): ParrilladaTimelineStep | undefined {
   const timeline = buildParrilladaTimeline(plan);
   return timeline.find((step) => !step.isServeTarget && Boolean(step.itemId));

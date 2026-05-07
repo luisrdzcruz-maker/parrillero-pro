@@ -4,6 +4,8 @@ import { BrandImageIcon } from '@/components/ui/BrandImageIcon';
 import { getParrilladaItemIcon, getZoneIcon } from '@/components/parrillada/icons/parrilladaIconResolver';
 import type { ParrilladaPlan, ParrilladaTimelineStep } from '@/lib/planning';
 
+// Legacy compatibility card. Production Review UI uses ParrilladaTimelineFinal.
+
 type ParrilladaTimelineCardProps = {
   plan: ParrilladaPlan;
   timeline: ParrilladaTimelineStep[];
