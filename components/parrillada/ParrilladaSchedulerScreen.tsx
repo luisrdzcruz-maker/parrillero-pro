@@ -25,8 +25,18 @@ import {
   type SchedulerStrategy,
 } from '@/lib/planning';
 
-type ParrilladaFlowStep = 'entry' | 'setup' | 'review' | 'live';
+export type ParrilladaFlowStep = 'entry' | 'setup' | 'review' | 'live';
 const LITE_MIN_ITEMS = 2;
+
+export type ParrilladaSchedulerScreenProps = {
+  /**
+   * When provided, the flow step is controlled by the caller. Pair with `onStepChange`
+   * to integrate with URL-driven navigation. When omitted, the component falls back
+   * to internal state (legacy behavior).
+   */
+  step?: ParrilladaFlowStep;
+  onStepChange?: (next: ParrilladaFlowStep) => void;
+};
 
 function toLocalInputValue(date: Date): string {
   const year = date.getFullYear();
@@ -60,8 +70,16 @@ function tryLocalDateTimeToIso(value: string): string | null {
   return Number.isNaN(localDate.getTime()) ? null : localDate.toISOString();
 }
 
-export function ParrilladaSchedulerScreen() {
-  const [step, setStep] = useState<ParrilladaFlowStep>('entry');
+export function ParrilladaSchedulerScreen({
+  step: controlledStep,
+  onStepChange,
+}: ParrilladaSchedulerScreenProps = {}) {
+  const isControlled = controlledStep !== undefined && onStepChange !== undefined;
+  const [internalStep, setInternalStep] = useState<ParrilladaFlowStep>('entry');
+  const step = isControlled ? controlledStep : internalStep;
+  const setStep = isControlled
+    ? onStepChange
+    : setInternalStep;
   const [mode, setMode] = useState<ParrilladaMode>('lite');
   const [serveAtLocal, setServeAtLocal] = useState(defaultServeAtLocal());
   const [strategy, setStrategy] = useState<SchedulerStrategy>('balanced');

@@ -18,10 +18,14 @@ export type CookingNavContext = {
   thickness?: string;
 };
 
+export type ParrilladaFlowStep = "entry" | "setup" | "review" | "live";
+
 export type ParsedNav = {
   mode: Mode;
   cookingStep: CookingWizardStep;
   cookingContext: CookingNavContext;
+  parrilladaStep?: ParrilladaFlowStep;
+  planStep?: ParrilladaFlowStep;
 };
 
 const ALLOWED_MODES: readonly Mode[] = [
@@ -41,6 +45,13 @@ const ALLOWED_COOKING_STEPS: readonly CookingWizardStep[] = [
   "result",
 ];
 
+const ALLOWED_PARRILLADA_STEPS: readonly ParrilladaFlowStep[] = [
+  "entry",
+  "setup",
+  "review",
+  "live",
+];
+
 const animalLabelsById: Record<string, AnimalLabel> = Object.fromEntries(
   Object.entries(animalIdsByLabel).map(([label, id]) => [id, label]),
 ) as Record<string, AnimalLabel>;
@@ -58,6 +69,16 @@ export function isAllowedCookingStep(
   value: string | null,
 ): value is CookingWizardStep {
   return value != null && ALLOWED_COOKING_STEPS.includes(value as CookingWizardStep);
+}
+
+export function isAllowedParrilladaStep(
+  value: string | null | undefined,
+): value is ParrilladaFlowStep {
+  return value != null && ALLOWED_PARRILLADA_STEPS.includes(value as ParrilladaFlowStep);
+}
+
+function parseParrilladaStep(value: string | null | undefined): ParrilladaFlowStep {
+  return isAllowedParrilladaStep(value) ? value : "entry";
 }
 
 export function parseCookingAnimal(value: string | null): AnimalLabel | undefined {
@@ -166,7 +187,11 @@ export function parseNavFromSearch(search: string): ParsedNav {
           : invalidStepFallback
       : inferredStep;
 
-  return { mode, cookingStep, cookingContext };
+  const parrilladaStep =
+    mode === "parrillada" ? parseParrilladaStep(params.get("parrilladaStep")) : undefined;
+  const planStep = mode === "plan" ? parseParrilladaStep(params.get("planStep")) : undefined;
+
+  return { mode, cookingStep, cookingContext, parrilladaStep, planStep };
 }
 
 export function isCutSelectionFilterContextChangeOnly(
@@ -195,11 +220,17 @@ export function buildSearchFromNav(
   cookingStep: CookingWizardStep,
   cookingContext: CookingNavContext = {},
   lang?: Lang,
+  subStep?: ParrilladaFlowStep,
 ): string {
   const params = new URLSearchParams();
   params.set("mode", mode);
   const safeLang = parseLangParam(lang);
   if (safeLang) params.set("lang", safeLang);
+  if (mode === "parrillada") {
+    params.set("parrilladaStep", isAllowedParrilladaStep(subStep) ? subStep : "entry");
+  } else if (mode === "plan") {
+    params.set("planStep", isAllowedParrilladaStep(subStep) ? subStep : "entry");
+  }
   if (mode === "coccion") {
     params.set("step", cookingStep);
     if (cookingContext.animal && (cookingStep !== "cut" || Boolean(cookingContext.cut))) {

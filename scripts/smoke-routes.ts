@@ -10,6 +10,11 @@
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 
+import {
+  buildSearchFromNav,
+  parseNavFromSearch,
+  type ParrilladaFlowStep,
+} from "@/lib/navigation/appNavState";
 import { buildLiveUrl, type LiveParams } from "@/lib/navigation/buildLiveUrl";
 import { parseLiveParams } from "@/lib/navigation/parseLiveParams";
 
@@ -54,7 +59,24 @@ const RAW_URL_FIXTURES = [
   "?mode=coccion&animal=beef&cutId=ribeye&doneness=medium_rare&thickness=3",
   "?mode=cocina&animal=beef&cutId=ribeye&doneness=medium_rare&thickness=3&lang=es",
   "?mode=parrillada",
+  "?mode=parrillada&parrilladaStep=entry",
+  "?mode=parrillada&parrilladaStep=setup",
+  "?mode=parrillada&parrilladaStep=review",
+  "?mode=parrillada&parrilladaStep=live",
+  "?mode=plan",
+  "?mode=plan&planStep=setup",
+  "?mode=plan&planStep=review",
   "?mode=guardados",
+];
+
+const PARRILLADA_STEP_FIXTURES: Array<{ mode: "parrillada" | "plan"; step: ParrilladaFlowStep }> = [
+  { mode: "parrillada", step: "entry" },
+  { mode: "parrillada", step: "setup" },
+  { mode: "parrillada", step: "review" },
+  { mode: "parrillada", step: "live" },
+  { mode: "plan", step: "entry" },
+  { mode: "plan", step: "setup" },
+  { mode: "plan", step: "review" },
 ];
 
 function probePageFile(relPath: string): Probe {
@@ -99,6 +121,20 @@ function probeRoundTrip(label: string, params: LiveParams): Probe {
     : { name: `URL round-trip: ${label}`, ok: false, detail: issues.join("; ") };
 }
 
+function probeParrilladaStepRoundTrip(mode: "parrillada" | "plan", step: ParrilladaFlowStep): Probe {
+  const search = buildSearchFromNav(mode, "animal", {}, undefined, step);
+  const parsed = parseNavFromSearch(search);
+  const issues: string[] = [];
+  if (parsed.mode !== mode) issues.push(`mode: expected ${mode}, got ${parsed.mode}`);
+  const recovered = mode === "parrillada" ? parsed.parrilladaStep : parsed.planStep;
+  if (recovered !== step) {
+    issues.push(`step: expected ${step}, got ${recovered ?? "undefined"}`);
+  }
+  return issues.length === 0
+    ? { name: `${mode} step round-trip: ${step}`, ok: true }
+    : { name: `${mode} step round-trip: ${step}`, ok: false, detail: issues.join("; ") };
+}
+
 function probeRawParse(raw: string): Probe {
   try {
     const parsed = parseLiveParams(raw);
@@ -125,6 +161,10 @@ function main() {
 
   for (const raw of RAW_URL_FIXTURES) {
     probes.push(probeRawParse(raw));
+  }
+
+  for (const fixture of PARRILLADA_STEP_FIXTURES) {
+    probes.push(probeParrilladaStepRoundTrip(fixture.mode, fixture.step));
   }
 
   let passed = 0;

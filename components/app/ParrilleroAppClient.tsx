@@ -44,6 +44,8 @@ import {
   buildGuardadosModeProps,
   buildHomeModeProps,
   buildMenuModeProps,
+  buildParrilladaModeProps,
+  buildPlanModeProps,
 } from "@/components/app/utils/modeProps";
 import { asRecord, parsePositiveInt } from "@/components/app/utils/text";
 import { type Mode } from "@/components/navigation/AppHeader";
@@ -96,6 +98,7 @@ import {
   type CookingNavContext,
   type ParsedNav,
 } from "@/lib/navigation/appNavState";
+import type { ParrilladaFlowStep } from "@/components/parrillada";
 import type { GeneratedAnimalId } from "@/lib/generated/cutProfiles";
 import { animalIdsByLabel, type AnimalLabel } from "@/lib/media/animalMedia";
 import {
@@ -142,6 +145,8 @@ function ParrilleroAppContent() {
 
   const [mode, setMode] = useState<Mode>("inicio");
   const [cookingStep, setCookingStep] = useState<CookingWizardStep>("animal");
+  const [parrilladaStep, setParrilladaStep] = useState<ParrilladaFlowStep>("entry");
+  const [planStep, setPlanStep] = useState<ParrilladaFlowStep>("entry");
 
   const [animal, setAnimal] = useState<AnimalLabel>("Vacuno");
   const [cut, setCut] = useState("");
@@ -343,6 +348,7 @@ function ParrilleroAppContent() {
     requestedCookingStep: CookingWizardStep,
     requestedMethod: "push" | "replace",
     cookingContext: CookingNavContext = {},
+    subStep?: ParrilladaFlowStep,
   ) => {
     const nextMode = isAllowedMode(requestedMode) ? requestedMode : "inicio";
     const requestedStep =
@@ -365,14 +371,25 @@ function ParrilleroAppContent() {
         nextCookingStep = "details";
       }
     }
+    const nextSubStep: ParrilladaFlowStep | undefined =
+      nextMode === "parrillada" || nextMode === "plan"
+        ? (subStep ?? "entry")
+        : undefined;
     const currentNav =
       typeof window === "undefined"
         ? { mode: "inicio" as Mode, cookingStep: "animal" as CookingWizardStep, cookingContext: {} as CookingNavContext }
         : parseNavFromSearch(window.location.search);
+    const currentSubStep =
+      currentNav.mode === "parrillada"
+        ? currentNav.parrilladaStep
+        : currentNav.mode === "plan"
+          ? currentNav.planStep
+          : undefined;
     const modeChanged = nextMode !== currentNav.mode;
     const stepChanged = nextCookingStep !== currentNav.cookingStep;
     const contextChanged = !isSameCookingContext(nextCookingContext, currentNav.cookingContext);
-    const navChanged = modeChanged || stepChanged || contextChanged;
+    const subStepChanged = nextSubStep !== currentSubStep;
+    const navChanged = modeChanged || stepChanged || contextChanged || subStepChanged;
     const isCutSelectionContextOnlyChange =
       currentNav.mode === "coccion" &&
       nextMode === "coccion" &&
@@ -406,9 +423,11 @@ function ParrilleroAppContent() {
 
     setMode(nextMode);
     setCookingStep(nextCookingStep);
+    if (nextMode === "parrillada" && nextSubStep) setParrilladaStep(nextSubStep);
+    if (nextMode === "plan" && nextSubStep) setPlanStep(nextSubStep);
 
     if (typeof window === "undefined") return;
-    const search = buildSearchFromNav(nextMode, nextCookingStep, nextCookingContext, lang);
+    const search = buildSearchFromNav(nextMode, nextCookingStep, nextCookingContext, lang, nextSubStep);
     const url = `${window.location.pathname}${search}${window.location.hash}`;
     const beforeSnapshot = {
       historyLength: window.history.length,
@@ -581,7 +600,13 @@ function ParrilleroAppContent() {
         router.push(detailUrl);
         hasCutSelectionPreviewHistoryRef.current = true;
       } else {
-        commitNav(nav.mode, nav.cookingStep, "replace", nav.cookingContext);
+        const navSubStep =
+          nav.mode === "parrillada"
+            ? nav.parrilladaStep
+            : nav.mode === "plan"
+              ? nav.planStep
+              : undefined;
+        commitNav(nav.mode, nav.cookingStep, "replace", nav.cookingContext, navSubStep);
       }
       navInitializedRef.current = true;
     });
@@ -601,6 +626,8 @@ function ParrilleroAppContent() {
       syncCutSelectionPreviewFromNav(nav);
       setMode(nav.mode);
       setCookingStep(nav.cookingStep);
+      if (nav.parrilladaStep) setParrilladaStep(nav.parrilladaStep);
+      if (nav.planStep) setPlanStep(nav.planStep);
       if (nav.cookingStep !== "result") setLoading(false);
       if (nav.mode !== "guardados") setSelectedSavedMenu(null);
       window.requestAnimationFrame(() => {
@@ -638,6 +665,8 @@ function ParrilleroAppContent() {
       syncCutSelectionPreviewFromNav(nav);
       setMode(nav.mode);
       setCookingStep(nav.cookingStep);
+      if (nav.parrilladaStep) setParrilladaStep(nav.parrilladaStep);
+      if (nav.planStep) setPlanStep(nav.planStep);
       if (nav.cookingStep !== "result") setLoading(false);
       if (nav.mode !== "guardados") setSelectedSavedMenu(null);
       isApplyingPopRef.current = false;
@@ -1335,6 +1364,16 @@ ERROR
             onPublishMenu: publishMenu,
             onUnpublishMenu: unpublishMenu,
             onStartCookingFromSavedCooks: () => navigateMode("coccion"),
+          })}
+          // eslint-disable-next-line react-hooks/refs
+          parrillada={buildParrilladaModeProps({
+            step: parrilladaStep,
+            onStepChange: (next) => commitNav("parrillada", "animal", "push", {}, next),
+          })}
+          // eslint-disable-next-line react-hooks/refs
+          plan={buildPlanModeProps({
+            step: planStep,
+            onStepChange: (next) => commitNav("plan", "animal", "push", {}, next),
           })}
         />
     </AppShellChrome>

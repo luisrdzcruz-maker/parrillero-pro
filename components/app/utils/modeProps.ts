@@ -11,6 +11,9 @@ import type { HomeModeScreenProps } from "@/components/app/modes/HomeModeScreen"
 import type { CoccionModeScreenProps } from "@/components/app/modes/CoccionModeScreen";
 import type { MenuModeScreenProps } from "@/components/app/modes/MenuModeScreen";
 import type { GuardadosModeScreenProps } from "@/components/app/modes/GuardadosModeScreen";
+import type { ParrilladaModeScreenProps } from "@/components/app/modes/ParrilladaModeScreen";
+import type { PlanModeScreenProps } from "@/components/app/modes/PlanModeScreen";
+import type { ParrilladaFlowStep } from "@/components/parrillada";
 import type { Mode } from "@/components/navigation/AppHeader";
 import type { GeneratedAnimalId, GeneratedCutProfile } from "@/lib/generated/cutProfiles";
 import type { AppText, Lang } from "@/lib/i18n/texts";
@@ -248,6 +251,30 @@ export type BuildGuardadosModePropsArgs = {
   onUnpublishMenu: (menu: SavedMenu) => void;
   onStartCookingFromSavedCooks: () => void;
 };
+
+export type BuildParrilladaModePropsArgs = {
+  step: ParrilladaFlowStep;
+  onStepChange: (next: ParrilladaFlowStep) => void;
+};
+
+export function buildParrilladaModeProps(args: BuildParrilladaModePropsArgs): ParrilladaModeScreenProps {
+  return {
+    step: args.step,
+    onStepChange: args.onStepChange,
+  };
+}
+
+export type BuildPlanModePropsArgs = {
+  step: ParrilladaFlowStep;
+  onStepChange: (next: ParrilladaFlowStep) => void;
+};
+
+export function buildPlanModeProps(args: BuildPlanModePropsArgs): PlanModeScreenProps {
+  return {
+    step: args.step,
+    onStepChange: args.onStepChange,
+  };
+}
 
 export function buildGuardadosModeProps(args: BuildGuardadosModePropsArgs): GuardadosModeScreenProps {
   return {
