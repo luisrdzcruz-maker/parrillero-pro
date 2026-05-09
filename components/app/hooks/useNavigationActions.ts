@@ -73,6 +73,13 @@ export function useNavigationActions({
     if ((nextMode === "plan" || nextMode === "parrillada") && !isPro()) {
       openPlanningProModal();
     }
+    // Mode-root back hierarchy (B4.1): a bottom-nav / tab mode switch should
+    // normalize history so the new root has Home — not the previous technical
+    // state — as its back target. Replace the current entry with Home before
+    // pushing the new root when transitioning between non-inicio modes.
+    if (mode !== "inicio" && nextMode !== "inicio") {
+      commitNav("inicio", "animal", "replace");
+    }
     commitNav(nextMode, nextStep, "push");
   }
 
