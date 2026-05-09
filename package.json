@@ -13,6 +13,7 @@
     "format:check": "prettier --check .",
     "qa:cooking": "tsx scripts/cooking-engine-qa.ts",
     "qa:flow": "tsx scripts/cooking-flow-qa.ts",
+    "smoke": "tsx scripts/smoke-routes.ts",
     "snapshots:cooking": "tsx scripts/cooking-snapshots.ts",
     "snapshots:cooking:update": "tsx scripts/cooking-snapshots.ts --update",
     "generate:assets": "node scripts/generate-assets.mjs",

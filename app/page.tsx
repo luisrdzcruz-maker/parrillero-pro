@@ -72,6 +72,7 @@ import { getDonenessSurfaceLabel, sanitizeCriticalErrorCopy } from "@/lib/i18n/s
 import { texts, type Lang } from "@/lib/i18n/texts";
 import {
   createLiveCookingPayload,
+  readLiveCookingPayload,
   saveLiveCookingPayload,
 } from "@/lib/liveCookingPlan";
 import { buildLiveUrl } from "@/lib/navigation/buildLiveUrl";
@@ -603,6 +604,7 @@ function HomeContent() {
     liveCurrentIndex,
     liveRemaining,
     livePaused,
+    liveStarted,
     liveCookComplete,
     togglePause,
     goToNextStep,
@@ -1003,6 +1005,26 @@ function HomeContent() {
       isApplyingPopRef.current = false;
     };
   }, [searchParamsKey, applyCookingNavContext]);
+
+  // Result-step fallback hydration: applyCookingNavContext clears `blocks` whenever
+  // the cooking context changes (animal/cut/doneness/thickness). After a hard reload
+  // mid-Live and a navigation back to Result, that wipes the result blocks even
+  // though sessionStorage still holds them. Re-hydrate from the live payload here,
+  // gated on a canonical-cut match so we never surface stale plans under a different cut.
+  useEffect(() => {
+    if (mode !== "coccion" || cookingStep !== "result") return;
+    if (Object.keys(blocks).length > 0) return;
+    if (typeof window === "undefined") return;
+
+    const payload = readLiveCookingPayload();
+    if (!payload?.blocks || Object.keys(payload.blocks).length === 0) return;
+    if (cut && payload.input.cut !== cut) return;
+
+    // Pulling result blocks from sessionStorage (external store) on a user-driven
+    // mode/step transition; not a prop sync, so the rule's anti-pattern does not apply.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setBlocks(payload.blocks);
+  }, [mode, cookingStep, blocks, cut]);
 
   useEffect(() => {
     if (process.env.NODE_ENV === "production") return;
@@ -1818,6 +1840,8 @@ ERROR
 
   function handleLivePlanNavigation() {
     if (typeof window === "undefined") return;
+    // Result-block re-hydration after reload-in-Live happens in the Result-step
+    // fallback effect above (it survives applyCookingNavContext's blocks wipe).
     const { animal, cutId, doneness, thickness } = parseLiveParams(window.location.search);
     const targetUrl =
       animal && cutId
@@ -1885,6 +1909,7 @@ ERROR
                 currentIndex={liveCurrentIndex}
                 remaining={liveRemaining}
                 paused={livePaused}
+                started={liveStarted}
                 context={liveContext}
                 lang={lang}
                 onBack={handleLivePlanNavigation}

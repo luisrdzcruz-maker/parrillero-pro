@@ -1,3 +1,5 @@
+// DEPRECATED — early design experiment. Kept for reference only; not part of the active product flow.
+// See docs/deprecated-routes.md. Do not link from production UI. noindex is set in app/v4/layout.tsx.
 "use client";
 
 import Link from "next/link";

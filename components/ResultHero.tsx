@@ -12,6 +12,13 @@ import {
   getResultHeroSessionTotalMetric,
   type MetricTone,
 } from "@/lib/results/resultMetrics";
+import {
+  formatResultRationale,
+  getResultRationale,
+  getResultRationaleHideLabel,
+  getResultRationaleLabel,
+  getResultRationaleShowLabel,
+} from "@/lib/results/resultRationale";
 import { getResultStepDurationTotal, type ResultSummary } from "@/lib/results/resultSummary";
 import { texts } from "@/lib/i18n/texts";
 
@@ -121,6 +128,16 @@ export default function ResultHero({
   const setup = setupContent ? detectSetupFromText(setupContent) : undefined;
   const [setupOpen, setSetupOpen] = useState(false);
   const closeSetup = useCallback(() => setSetupOpen(false), []);
+  const rationaleIntent = getResultRationale({
+    summary,
+    blocks: resultBlocks,
+    doneness: summary?.doneness || doneness,
+  });
+  const rationale = formatResultRationale(rationaleIntent, lang);
+  const [rationaleOpen, setRationaleOpen] = useState(false);
+  const rationaleLabel = getResultRationaleLabel(lang);
+  const rationaleShowLabel = getResultRationaleShowLabel(lang);
+  const rationaleHideLabel = getResultRationaleHideLabel(lang);
 
   function getMetricClass(tone: MetricTone) {
     if (tone === "red") return "border-red-300/25 bg-red-500/[0.08] text-red-50 ring-red-200/[0.04]";
@@ -245,6 +262,40 @@ export default function ResultHero({
             )}
 
             {renderFireSetupButton()}
+          </div>
+
+          <div className="rounded-[1.15rem] border border-orange-200/15 bg-slate-950/35 px-3.5 py-3 ring-1 ring-inset ring-white/5">
+            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-orange-100/55 sm:text-[10px]">
+              {rationaleLabel}
+            </p>
+            <p className="mt-1 text-[13px] leading-snug text-white/90 sm:text-sm">
+              {rationale.headline}
+            </p>
+            {rationale.details.length > 0 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setRationaleOpen((open) => !open)}
+                  aria-expanded={rationaleOpen}
+                  className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-orange-200/80 transition hover:text-orange-100"
+                >
+                  {rationaleOpen ? rationaleHideLabel : rationaleShowLabel}
+                  <span aria-hidden="true" className={`transition-transform ${rationaleOpen ? "rotate-180" : ""}`}>
+                    {"▾"}
+                  </span>
+                </button>
+                {rationaleOpen && (
+                  <ul className="mt-2 space-y-1 text-[12px] leading-snug text-white/75 sm:text-[13px]">
+                    {rationale.details.map((detail, index) => (
+                      <li key={index} className="flex gap-2">
+                        <span aria-hidden="true" className="mt-1 h-1 w-1 shrink-0 rounded-full bg-orange-300/70" />
+                        <span>{detail}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
           </div>
         </div>
       </Panel>
