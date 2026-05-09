@@ -10,11 +10,7 @@ import type { AppText, Lang } from "@/lib/i18n/texts";
 
 type GuardadosTab = "plans" | "cooks";
 
-export type GuardadosModeScreenProps = {
-  lang: Lang;
-  t: AppText;
-  guardadosTab: GuardadosTab;
-  onGuardadosTabChange: (tab: GuardadosTab) => void;
+export type SavedPlansPanelProps = {
   checkedItems: Record<string, boolean>;
   setCheckedItems: (value: Record<string, boolean>) => void;
   savedMenus: SavedMenu[];
@@ -32,7 +28,19 @@ export type GuardadosModeScreenProps = {
   onCookAgainReview: (menu: SavedMenu) => void;
   onPublishMenu: (menu: SavedMenu) => void;
   onUnpublishMenu: (menu: SavedMenu) => void;
-  onStartCookingFromSavedCooks: () => void;
+};
+
+export type SavedCooksPanelProps = {
+  onStartCooking: () => void;
+};
+
+export type GuardadosModeScreenProps = {
+  lang: Lang;
+  t: AppText;
+  guardadosTab: GuardadosTab;
+  onGuardadosTabChange: (tab: GuardadosTab) => void;
+  plans: SavedPlansPanelProps;
+  cooks: SavedCooksPanelProps;
 };
 
 export function GuardadosModeScreen({
@@ -40,24 +48,8 @@ export function GuardadosModeScreen({
   t,
   guardadosTab,
   onGuardadosTabChange,
-  checkedItems,
-  setCheckedItems,
-  savedMenus,
-  selectedSavedMenu,
-  shareMessage,
-  shareMessageMenuId,
-  shareStatus,
-  sharingMenuId,
-  onClearSelectedSavedMenu,
-  onCopyShareLink,
-  onCopySavedMenu,
-  onDeleteMenu,
-  onLoadMenu,
-  onCookAgainLive,
-  onCookAgainReview,
-  onPublishMenu,
-  onUnpublishMenu,
-  onStartCookingFromSavedCooks,
+  plans,
+  cooks,
 }: GuardadosModeScreenProps) {
   return (
     <div>
@@ -89,31 +81,29 @@ export function GuardadosModeScreen({
 
       {guardadosTab === "plans" && (
         <CookingResultScreen
-          checkedItems={checkedItems}
+          checkedItems={plans.checkedItems}
           lang={lang}
-          menus={savedMenus}
-          selectedMenu={selectedSavedMenu}
-          shareMessage={shareMessage}
-          shareMessageMenuId={shareMessageMenuId}
-          shareStatus={shareStatus}
-          sharingMenuId={sharingMenuId}
-          onBack={onClearSelectedSavedMenu}
-          onCopyLink={onCopyShareLink}
-          onCopy={onCopySavedMenu}
-          onDelete={onDeleteMenu}
-          onOpen={onLoadMenu}
-          onCookAgainLive={onCookAgainLive}
-          onCookAgainReview={onCookAgainReview}
-          onPublish={onPublishMenu}
-          onUnpublish={onUnpublishMenu}
-          setCheckedItems={setCheckedItems}
+          menus={plans.savedMenus}
+          selectedMenu={plans.selectedSavedMenu}
+          shareMessage={plans.shareMessage}
+          shareMessageMenuId={plans.shareMessageMenuId}
+          shareStatus={plans.shareStatus}
+          sharingMenuId={plans.sharingMenuId}
+          onBack={plans.onClearSelectedSavedMenu}
+          onCopyLink={plans.onCopyShareLink}
+          onCopy={plans.onCopySavedMenu}
+          onDelete={plans.onDeleteMenu}
+          onOpen={plans.onLoadMenu}
+          onCookAgainLive={plans.onCookAgainLive}
+          onCookAgainReview={plans.onCookAgainReview}
+          onPublish={plans.onPublishMenu}
+          onUnpublish={plans.onUnpublishMenu}
+          setCheckedItems={plans.setCheckedItems}
           t={t}
         />
       )}
 
-      {guardadosTab === "cooks" && (
-        <SavedCooksScreen onStartCooking={onStartCookingFromSavedCooks} />
-      )}
+      {guardadosTab === "cooks" && <SavedCooksScreen onStartCooking={cooks.onStartCooking} />}
     </div>
   );
 }

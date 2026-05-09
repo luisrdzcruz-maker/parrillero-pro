@@ -1,60 +1,80 @@
 ﻿"use client";
 
 import {
-  publishGeneratedMenu,
   saveGeneratedMenu,
-  unpublishGeneratedMenu,
 } from "@/app/actions/savedMenus";
 import {
   type CookingSizePreset,
   type CookingWeightRange,
   type Blocks,
   type CookingWizardStep,
-  type SaveMenuStatus,
-  type SelectOption,
   type VegetableFormat,
 } from "@/components/cooking/CookingWizard";
 import { getInputProfileForCut } from "@/lib/cooking/inputProfiles";
+import { ActiveModeRenderer } from "@/components/app/ActiveModeRenderer";
 import { AppShellChrome } from "@/components/app/AppShellChrome";
+import { CocinaModeScreen } from "@/components/app/modes/CocinaModeScreen";
+import {
+  getSafeBlocksForSave,
+  hasSavableBlocks,
+  parseMenuReply,
+  parseResponse,
+} from "@/components/app/utils/blocks";
+import {
+  animalLabelsById,
+  getAnimalPreview,
+  getCutDescription,
+  getCutItems,
+  getCutName,
+  getDonenessSelectOptions,
+  getInitialDoneness,
+  parseSavedCookConfig,
+  toLiveDoneness,
+  type CutItem,
+} from "@/components/app/utils/cookingDomain";
+import {
+  LANG_STORAGE_KEY,
+  engineLang,
+  localeForLang,
+  parseLangParam,
+} from "@/components/app/utils/i18n";
+import {
+  MOCK_LIVE_STEPS,
+  persistSavedCook,
+} from "@/components/app/utils/liveSession";
+import { asRecord, parsePositiveInt } from "@/components/app/utils/text";
 import { type Mode } from "@/components/navigation/AppHeader";
 import {
   buildText,
   copySavedMenu,
-  isLocalSavedMenu,
   type SavedMenu,
   type SavedMenuType,
-  type ShareStatus,
 } from "@/components/results/CookingResultScreen";
-import { ActiveModeRenderer } from "@/components/app/ActiveModeRenderer";
-import { CocinaModeScreen } from "@/components/app/modes/CocinaModeScreen";
-import { type LiveStep } from "@/components/live/LiveCookingScreen";
 import { isPro } from "@/lib/proStatus";
+import { useOnboardingGate } from "@/components/app/hooks/useOnboardingGate";
+import { useProModalController } from "@/components/app/hooks/useProModalController";
+import { useSavedMenusController } from "@/components/app/hooks/useSavedMenusController";
+import { useSwipeNavigation } from "@/components/app/hooks/useSwipeNavigation";
 import {
   OnboardingSlides,
 } from "@/components/onboarding/OnboardingSlides";
-import { ONBOARDING_STORAGE_KEY } from "@/lib/storageKeys";
-import { type PlanMode } from "@/components/planning/PlanHub";
+import { useMenuComposerState } from "@/components/app/hooks/useMenuComposerState";
 import { track } from "@/lib/analytics";
-import type { DonenessId, ProductCut } from "@/lib/cookingCatalog";
 import {
   generateCookingPlan as generateLocalCookingPlan,
   generateCookingSteps as generateLocalCookingSteps,
   getCutById,
-  getCutsByAnimal,
   getDonenessOptions,
   shouldShowThickness,
 } from "@/lib/cookingRules";
-import {
-  getAllowedDonenessForCut,
-  getDefaultDonenessForCut,
-} from "@/lib/temperatureModeProfiles";
+import type { DonenessId } from "@/lib/cookingCatalog";
+import { cutImages } from "@/lib/media/cutImages";
 import {
   mapBeefLargeWeightPresetToKg,
   mapSizePresetToThickness,
   mapThicknessToSizePreset,
   mapWeightRangeToKg,
 } from "@/lib/cooking/inputMapping";
-import { getDonenessSurfaceLabel, sanitizeCriticalErrorCopy } from "@/lib/i18n/surfaceFallbacks";
 import { texts, type Lang } from "@/lib/i18n/texts";
 import {
   createLiveCookingPayload,
@@ -82,27 +102,16 @@ import {
 import { parseLiveParams } from "@/lib/navigation/parseLiveParams";
 import type { GeneratedAnimalId, GeneratedCutProfile } from "@/lib/generated/cutProfiles";
 import { animalIdsByLabel, type AnimalLabel } from "@/lib/media/animalMedia";
-import { cutImages } from "@/lib/media/cutImages";
 import {
   REQUIRED_COOKING_BLOCKS,
   REQUIRED_COOKING_BLOCKS_EN,
-  REQUIRED_MENU_BLOCKS,
   REQUIRED_PARRILLADA_BLOCKS,
   normalizeBlocks,
 } from "@/lib/parser/normalizeBlocks";
-import { parseBlocks } from "@/lib/parser/parseBlocks";
 import { generateParrilladaPlan } from "@/lib/parrilladaEngine";
 import { useLiveCookingSession } from "@/hooks/useLiveCookingSession";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, type TouchEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-
-type EngineLang = "es" | "en";
-
-type SwipeDirection = "back" | "forward";
-type TouchPoint = {
-  x: number;
-  y: number;
-};
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type SavedMenuActionMenu = {
   id: string;
@@ -113,346 +122,10 @@ type SavedMenuActionMenu = {
   share_slug?: string | null;
 };
 
-const LIVE_DONENESS_VALUES: DonenessId[] = [
-  "rare",
-  "medium_rare",
-  "medium",
-  "medium_well",
-  "well_done",
-  "juicy_safe",
-  "medium_safe",
-  "safe",
-  "juicy",
-];
-const LANG_STORAGE_KEY = "parrillero_lang";
-
-function getPlanTextDefaults(lang: Lang) {
-  if (lang === "en") {
-    return {
-      planProduct: "ribeye",
-      menuMeats: "ribeye, secreto iberico",
-      sides: "potatoes, salad, chimichurri",
-      parrilladaProducts: "ribs, ribeye, secreto iberico, corn",
-      parrilladaSides: "potatoes, salad, chimichurri",
-    };
-  }
-
-  if (lang === "fi") {
-    return {
-      planProduct: "ribeye",
-      menuMeats: "ribeye, secreto iberico",
-      sides: "perunat, salaatti, chimichurri",
-      parrilladaProducts: "ribsit, ribeye, secreto iberico, maissi",
-      parrilladaSides: "perunat, salaatti, chimichurri",
-    };
-  }
-
-  return {
-    planProduct: "chuletón",
-    menuMeats: "chuletón, secreto ibérico",
-    sides: "patatas, ensalada, chimichurri",
-    parrilladaProducts: "costillas, chuletón, secreto ibérico, maíz",
-    parrilladaSides: "patatas, ensalada, chimichurri",
-  };
-}
-
 type SaveGeneratedMenuResponse =
   | { ok: true; menu: SavedMenuActionMenu }
   | { ok: false; error?: string }
   | SavedMenuActionMenu;
-
-type PublishSavedMenuResponse =
-  | {
-      ok: true;
-      menu: {
-        id: string;
-        is_public: boolean;
-        share_slug: string | null;
-      };
-    }
-  | { ok: false; error?: string };
-
-type CutItem = {
-  id: string;
-  name: string;
-  image: string;
-  description: string;
-};
-
-type SavedCookConfig = {
-  animal: AnimalLabel;
-  cut: string;
-  weight: string;
-  thickness: string;
-  doneness: string;
-  equipment: string;
-  lang: Lang;
-};
-
-function asRecord(value: unknown): Record<string, unknown> | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  return value as Record<string, unknown>;
-}
-
-function asText(value: unknown) {
-  if (typeof value === "string") return value.trim();
-  if (typeof value === "number") return `${value}`;
-  return "";
-}
-
-function parseSavedLang(value: unknown): Lang {
-  const text = asText(value);
-  if (text === "en" || text === "fi" || text === "es") return text;
-  return "es";
-}
-
-function parseLangParam(value: string | null | undefined): Lang | null {
-  if (value === "en" || value === "fi" || value === "es") return value;
-  return null;
-}
-
-function parseSavedAnimal(value: unknown, fallback: AnimalLabel): AnimalLabel {
-  const text = asText(value);
-  if (text && text in animalIdsByLabel) return text as AnimalLabel;
-  return fallback;
-}
-
-function toLiveDoneness(value: string): DonenessId | undefined {
-  return LIVE_DONENESS_VALUES.includes(value as DonenessId) ? (value as DonenessId) : undefined;
-}
-
-function parseSavedCookConfig(
-  menu: SavedMenu,
-  fallback: {
-    animal: AnimalLabel;
-    equipment: string;
-    doneness: string;
-    weight: string;
-    thickness: string;
-    lang: Lang;
-  },
-): SavedCookConfig | null {
-  const data = asRecord(menu.data);
-  if (!data) return null;
-  const inputs = asRecord(data.inputs) ?? data;
-  const cut = asText(inputs.cut);
-  if (!cut) return null;
-
-  return {
-    animal: parseSavedAnimal(inputs.animal, fallback.animal),
-    cut,
-    weight: asText(inputs.weight) || fallback.weight,
-    thickness: asText(inputs.thickness) || fallback.thickness,
-    doneness: asText(inputs.doneness) || fallback.doneness,
-    equipment: asText(inputs.equipment) || fallback.equipment,
-    lang: parseSavedLang(data.lang ?? inputs.lang ?? fallback.lang),
-  };
-}
-
-function engineLang(lang: Lang): EngineLang {
-  return lang === "es" ? "es" : "en";
-}
-
-function getInitialDoneness(animal: AnimalLabel, cutId?: string) {
-  const cut = cutId ? getCutById(cutId) : undefined;
-  if (cut) return getDefaultDonenessForCut(cut);
-
-  return getDonenessOptions(animalIdsByLabel[animal])[0]?.id ?? "";
-}
-
-function getDonenessSelectOptions(animal: AnimalLabel, lang: Lang, cutId?: string): SelectOption[] {
-  const cut = cutId ? getCutById(cutId) : undefined;
-  const allowed = cut ? getAllowedDonenessForCut(cut) : getDonenessOptions(animalIdsByLabel[animal]).map((option) => option.id);
-  const optionsById = new Map(getDonenessOptions(animalIdsByLabel[animal]).map((option) => [option.id, option]));
-
-  return allowed.flatMap((id) => {
-    const option = optionsById.get(id);
-    if (!option) return [];
-    return {
-    value: option.id,
-    label: lang === "fi" ? getDonenessSurfaceLabel(option.id, "fi") : option.names[lang],
-    };
-  });
-}
-
-function catalogLang(lang: Lang) {
-  return lang;
-}
-
-function getCutName(cut: ProductCut, lang: Lang) {
-  return cut.names[catalogLang(lang)] ?? cut.names.es;
-}
-
-function getCutDescription(cut: ProductCut, lang: Lang) {
-  const localizedNote = cut.notes?.[catalogLang(lang)];
-  if (localizedNote) return sanitizeCriticalErrorCopy(localizedNote, lang);
-  return sanitizeCriticalErrorCopy(cut.error[engineLang(lang)] ?? "", lang);
-}
-
-function getCutItems(animal: AnimalLabel, lang: Lang): CutItem[] {
-  return getCutsByAnimal(animalIdsByLabel[animal]).map((cut) => ({
-    id: cut.id,
-    name: getCutName(cut, lang),
-    image: cutImages[cut.id] ?? "/images/vacuno/ribeye-cooked.webp",
-    description: getCutDescription(cut, lang),
-  }));
-}
-
-function getAnimalPreview(animal: AnimalLabel, lang: Lang) {
-  return getCutItems(animal, lang)
-    .slice(0, 2)
-    .map((cut) => cut.name)
-    .join(", ");
-}
-
-function isInteractiveSwipeTarget(target: EventTarget | null) {
-  if (!(target instanceof HTMLElement)) return false;
-
-  return Boolean(target.closest("input, select, textarea, a, label"));
-}
-
-function isMobileSwipeViewport() {
-  if (typeof window === "undefined") return false;
-
-  return window.innerWidth < 768;
-}
-
-function parseResponse(text: string): Blocks {
-  const blocks: Blocks = {};
-  const sections = text.split(/\n(?=[A-ZÁÉÍÓÚ]+)/);
-
-  sections.forEach((section) => {
-    const [title, ...rest] = section.trim().split("\n");
-    const content = rest.join("\n").trim();
-    if (title && content) blocks[title.trim()] = content;
-  });
-
-  return blocks;
-}
-
-function parseMenuReply(reply: string): Blocks {
-  const parsed = parseBlocks(reply);
-  const normalized = normalizeBlocks(parsed, REQUIRED_MENU_BLOCKS, "generated_menu");
-
-  return normalized;
-}
-
-function hasSavableBlocks(currentBlocks: unknown): currentBlocks is Blocks {
-  if (!currentBlocks || typeof currentBlocks !== "object" || Array.isArray(currentBlocks)) return false;
-
-  return Object.entries(currentBlocks).some(
-    ([key, value]) =>
-      key.trim().toUpperCase() !== "ERR" &&
-      typeof value === "string" &&
-      Boolean(value.trim()) &&
-      value.trim().toUpperCase() !== "ERR",
-  );
-}
-
-function getSafeBlocksForSave(currentBlocks: Blocks, savedType: SavedMenuType): Blocks {
-  const sanitized = Object.fromEntries(
-    Object.entries(currentBlocks).filter(([key]) => key.trim().toUpperCase() !== "ERR"),
-  ) as Blocks;
-
-  const required =
-    savedType === "cooking_plan"
-      ? REQUIRED_COOKING_BLOCKS
-      : savedType === "parrillada_plan"
-        ? REQUIRED_PARRILLADA_BLOCKS
-        : REQUIRED_MENU_BLOCKS;
-
-  return normalizeBlocks(sanitized, required, savedType);
-}
-
-function localeForLang(lang: Lang) {
-  if (lang === "en") return "en-US";
-  if (lang === "fi") return "fi-FI";
-  return "es-ES";
-}
-
-function parsePositiveInt(value: string) {
-  const parsed = Number.parseInt(value, 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-}
-
-const MOCK_LIVE_STEPS: LiveStep[] = [
-  {
-    id: "preheat",
-    label: "Calienta la parrilla.\nMáxima potencia.",
-    duration: 300,
-    zone: "Directo",
-    tempTarget: 230,
-    notes: "Tapa cerrada. Espera a que alcance temperatura.",
-  },
-  {
-    id: "sear1",
-    label: "Sella.\nLado 1.",
-    duration: 240,
-    zone: "Directo",
-    tempTarget: 230,
-    notes: "No la muevas. Déjala hasta que se despegue sola.",
-  },
-  {
-    id: "sear2",
-    label: "Sella.\nLado 2.",
-    duration: 240,
-    zone: "Directo",
-    tempTarget: 230,
-    notes: "Busca costra dorada y uniforme en toda la superficie.",
-  },
-  {
-    id: "indirect",
-    label: "Cocción indirecta.\nFuego bajo.",
-    duration: 420,
-    zone: "Indirecto",
-    tempTarget: 150,
-    notes: "Tapa cerrada. Deja que el calor circule sin llama directa.",
-  },
-  {
-    id: "rest",
-    label: "Reposa.\nNo cortes aún.",
-    duration: 360,
-    zone: "Reposo",
-    tempTarget: null,
-    notes: "Los jugos se redistribuyen. Vale la pena esperar.",
-  },
-  {
-    id: "serve",
-    label: "Listo.\nSirve ahora.",
-    duration: 0,
-    zone: "Servir",
-    tempTarget: null,
-    notes: null,
-  },
-];
-
-const SAVED_COOKS_KEY = "parrillero_saved_cooks_v1";
-type SavedCookEntry = {
-  id: string;
-  savedAt: string;
-  context: string;
-  steps: LiveStep[];
-};
-
-function persistSavedCook(steps: LiveStep[], context: string | undefined) {
-  if (typeof window === "undefined") return;
-  try {
-    const existing: SavedCookEntry[] = JSON.parse(localStorage.getItem(SAVED_COOKS_KEY) ?? "[]");
-    const entry: SavedCookEntry = {
-      id: `cook_${Date.now()}`,
-      savedAt: new Date().toISOString(),
-      context: context ?? "",
-      steps,
-    };
-    localStorage.setItem(SAVED_COOKS_KEY, JSON.stringify([entry, ...existing].slice(0, 20)));
-  } catch {
-    // Ignore localStorage failures.
-  }
-}
-
-const animalLabelsById: Record<string, AnimalLabel> = Object.fromEntries(
-  Object.entries(animalIdsByLabel).map(([label, id]) => [id, label]),
-) as Record<string, AnimalLabel>;
 
 function ParrilleroAppContent() {
   const router = useRouter();
@@ -460,24 +133,7 @@ function ParrilleroAppContent() {
   const urlLang = parseLangParam(searchParams.get("lang"));
   const searchParamsKey = searchParams.toString();
 
-  // ── Onboarding gate ─────────────────────────────────────────────────────────
-  // null  = not yet resolved (server render + first paint — avoids hydration mismatch)
-  // true  = show onboarding
-  // false = go straight to the app
-  //
-  // IMPORTANT: localStorage reads must be guarded because server render has no window.
-  const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
-  const [showProModal, setShowProModal] = useState<false | "planning">(false);
-  const [showCookCompleteProModal, setShowCookCompleteProModal] = useState(false);
-  const cookCompleteModalFiredRef = useRef(false);
-
-  useEffect(() => {
-    const raf = window.requestAnimationFrame(() => {
-      const done = localStorage.getItem(ONBOARDING_STORAGE_KEY) === "1";
-      setShowOnboarding(!done);
-    });
-    return () => window.cancelAnimationFrame(raf);
-  }, []);
+  const { showOnboarding, dismissOnboarding } = useOnboardingGate();
 
   const [lang, setLang] = useState<Lang>(() => {
     if (urlLang) return urlLang;
@@ -488,7 +144,6 @@ function ParrilleroAppContent() {
     return "es";
   });
   const t = texts[lang];
-  const planTextDefaults = getPlanTextDefaults(lang);
 
   const [mode, setMode] = useState<Mode>("inicio");
   const [cookingStep, setCookingStep] = useState<CookingWizardStep>("animal");
@@ -504,35 +159,60 @@ function ParrilleroAppContent() {
   const [doneness, setDoneness] = useState("rare");
   const [equipment, setEquipment] = useState("parrilla gas");
 
-  const [people, setPeople] = useState("4");
-  const [eventType, setEventType] = useState("cena con amigos");
-  const [menuMeats, setMenuMeats] = useState(planTextDefaults.menuMeats);
-  const [sides, setSides] = useState(planTextDefaults.sides);
-  const [budget, setBudget] = useState("200");
-  const [difficulty, setDifficulty] = useState("medio");
-  const [planMode, setPlanMode] = useState<PlanMode>("rapido");
   const [guardadosTab, setGuardadosTab] = useState<"plans" | "cooks">("plans");
-  const [planProduct, setPlanProduct] = useState(planTextDefaults.planProduct);
-  const [planGenerated, setPlanGenerated] = useState(false);
 
-  const [parrilladaPeople, setParrilladaPeople] = useState("6");
-  const [serveTime, setServeTime] = useState("18:00");
-  const [parrilladaProducts, setParrilladaProducts] = useState(planTextDefaults.parrilladaProducts);
-  const [parrilladaSides, setParrilladaSides] = useState(planTextDefaults.parrilladaSides);
+  const {
+    people,
+    setPeople,
+    eventType,
+    setEventType,
+    menuMeats,
+    setMenuMeats,
+    sides,
+    setSides,
+    budget,
+    setBudget,
+    difficulty,
+    setDifficulty,
+    planMode,
+    setPlanMode,
+    planProduct,
+    setPlanProduct,
+    planGenerated,
+    setPlanGenerated,
+    parrilladaPeople,
+    setParrilladaPeople,
+    serveTime,
+    setServeTime,
+    parrilladaProducts,
+    setParrilladaProducts,
+    parrilladaSides,
+    setParrilladaSides,
+  } = useMenuComposerState(lang);
 
   const [blocks, setBlocks] = useState<Blocks>({});
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
-  const [savedMenus, setSavedMenus] = useState<SavedMenu[]>([]);
-  const [selectedSavedMenu, setSelectedSavedMenu] = useState<SavedMenu | null>(null);
   const [loading, setLoading] = useState(false);
-  const [saveMenuStatus, setSaveMenuStatus] = useState<SaveMenuStatus>("idle");
-  const [saveMenuMessage, setSaveMenuMessage] = useState("");
-  const [shareStatus, setShareStatus] = useState<ShareStatus>("idle");
-  const [shareMessage, setShareMessage] = useState("");
-  const [shareMessageMenuId, setShareMessageMenuId] = useState<string | null>(null);
-  const [sharingMenuId, setSharingMenuId] = useState<string | null>(null);
+  const {
+    savedMenus,
+    selectedSavedMenu,
+    saveMenuStatus,
+    saveMenuMessage,
+    shareStatus,
+    shareMessage,
+    shareMessageMenuId,
+    sharingMenuId,
+    setSelectedSavedMenu,
+    setSaveMenuStatus,
+    setSaveMenuMessage,
+    updateSavedMenus,
+    resetSaveMenuState,
+    deleteMenu,
+    publishMenu,
+    unpublishMenu,
+    copyShareLink,
+  } = useSavedMenusController();
 
-  const touchStartRef = useRef<TouchPoint | null>(null);
   const isApplyingPopRef = useRef(false);
   const navInitializedRef = useRef(false);
   const hasCutSelectionPreviewHistoryRef = useRef(false);
@@ -596,6 +276,14 @@ function ParrilleroAppContent() {
     jumpToStep,
   } = liveSession;
 
+  const {
+    showProModal,
+    showCookCompleteProModal,
+    openPlanningProModal,
+    closeProModal,
+    closeCookCompleteProModal,
+  } = useProModalController({ liveCookComplete });
+
   const getAdaptiveDetailDefaults = useCallback((selectedCutId: string | undefined, selectedAnimal: AnimalLabel) => {
     const cutMeta = selectedCutId ? getCutById(selectedCutId) : undefined;
     const inputProfile = cutMeta
@@ -651,13 +339,9 @@ function ParrilleroAppContent() {
     if (contextChanged) {
       setBlocks({});
       setCheckedItems({});
-      setSaveMenuStatus("idle");
-      setSaveMenuMessage("");
-      setShareStatus("idle");
-      setShareMessage("");
-      setShareMessageMenuId(null);
+      resetSaveMenuState();
     }
-  }, [resetAdaptiveDetailInputs]);
+  }, [resetAdaptiveDetailInputs, resetSaveMenuState]);
 
   const commitNav = useCallback((
     requestedMode: Mode,
@@ -865,28 +549,6 @@ function ParrilleroAppContent() {
     commitNav("coccion", "result", "push", navContext);
   }
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const stored = localStorage.getItem("parrillero_saved_menus");
-    if (!stored) return;
-
-    let cancelled = false;
-    queueMicrotask(() => {
-      if (cancelled) return;
-
-      try {
-        setSavedMenus(JSON.parse(stored) as SavedMenu[]);
-      } catch {
-        // Ignore malformed legacy localStorage data.
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   // ── Browser history + URL nav init ─────────────────────────────────────────
   // Parse mode/step from query params, initialize local nav state, then
   // canonicalize URL with replaceState so the first entry is always normalized.
@@ -952,7 +614,7 @@ function ParrilleroAppContent() {
     }
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
-  }, [applyCookingNavContext]);
+  }, [applyCookingNavContext, setSelectedSavedMenu]);
 
   useEffect(() => {
     if (isApplyingPopRef.current) return;
@@ -989,7 +651,7 @@ function ParrilleroAppContent() {
       window.cancelAnimationFrame(frame);
       isApplyingPopRef.current = false;
     };
-  }, [searchParamsKey, applyCookingNavContext]);
+  }, [searchParamsKey, applyCookingNavContext, setSelectedSavedMenu]);
 
   // Result-step fallback hydration: applyCookingNavContext clears `blocks` whenever
   // the cooking context changes (animal/cut/doneness/thickness). After a hard reload
@@ -1039,28 +701,6 @@ function ParrilleroAppContent() {
       cookingStep,
     };
   }, [animal, cut, doneness, thickness, mode, cookingStep]);
-
-  useEffect(() => {
-    if (!liveCookComplete || cookCompleteModalFiredRef.current || isPro()) return;
-    cookCompleteModalFiredRef.current = true;
-    const id = window.setTimeout(() => setShowCookCompleteProModal(true), 2000);
-    return () => window.clearTimeout(id);
-  }, [liveCookComplete]);
-
-  function updateSavedMenus(nextMenus: SavedMenu[]) {
-    setSavedMenus(nextMenus);
-    if (typeof window === "undefined") return;
-
-    localStorage.setItem("parrillero_saved_menus", JSON.stringify(nextMenus));
-  }
-
-  function resetSaveMenuState() {
-    setSaveMenuStatus("idle");
-    setSaveMenuMessage("");
-    setShareStatus("idle");
-    setShareMessage("");
-    setShareMessageMenuId(null);
-  }
 
   async function saveCurrentMenu(): Promise<SavedMenu | null> {
     if (typeof window === "undefined") return null;
@@ -1178,11 +818,6 @@ function ParrilleroAppContent() {
       setSaveMenuMessage(t.menuSaveError);
       return null;
     }
-  }
-
-  function deleteMenu(id: string) {
-    updateSavedMenus(savedMenus.filter((menu) => menu.id !== id));
-    if (selectedSavedMenu?.id === id) setSelectedSavedMenu(null);
   }
 
   function loadMenu(menu: SavedMenu) {
@@ -1309,96 +944,6 @@ function ParrilleroAppContent() {
         lang: rebuilt.config.lang,
       }),
     );
-  }
-
-  function updateSharedMenu(updatedMenu: SavedMenu) {
-    const nextMenus = savedMenus.map((menu) => (menu.id === updatedMenu.id ? updatedMenu : menu));
-    updateSavedMenus(nextMenus);
-    if (selectedSavedMenu?.id === updatedMenu.id) setSelectedSavedMenu(updatedMenu);
-  }
-
-  async function publishMenu(menu: SavedMenu) {
-    if (isLocalSavedMenu(menu)) {
-      setShareStatus("error");
-      setShareMessage("Este plan solo está guardado en este dispositivo. Guárdalo en la nube para compartir.");
-      setShareMessageMenuId(menu.id);
-      return;
-    }
-
-    setSharingMenuId(menu.id);
-    setShareStatus("publishing");
-    setShareMessage("");
-    setShareMessageMenuId(menu.id);
-
-    try {
-      const result = (await publishGeneratedMenu(menu.id)) as PublishSavedMenuResponse;
-      if (!result.ok) {
-        setShareStatus("error");
-        setShareMessage(result.error || "No se pudo publicar el plan");
-        return;
-      }
-
-      const published = result.menu;
-      const updatedMenu = {
-        ...menu,
-        is_public: published.is_public,
-        share_slug: published.share_slug,
-      };
-      updateSharedMenu(updatedMenu);
-      setShareStatus("idle");
-      setShareMessage("Plan publicado. Link listo para compartir.");
-
-      if (published.share_slug && typeof window !== "undefined" && navigator.clipboard) {
-        try {
-          await navigator.clipboard.writeText(`${window.location.origin}/share/${published.share_slug}`);
-          setShareStatus("copied");
-          setShareMessage("Link copiado");
-        } catch {
-          setShareStatus("idle");
-          setShareMessage("Plan publicado. Link listo para compartir.");
-        }
-      }
-    } catch {
-      setShareStatus("error");
-      setShareMessage("No se pudo publicar el plan");
-    } finally {
-      setSharingMenuId(null);
-    }
-  }
-
-  async function unpublishMenu(menu: SavedMenu) {
-    if (isLocalSavedMenu(menu)) return;
-
-    setSharingMenuId(menu.id);
-    setShareStatus("publishing");
-    setShareMessage("");
-    setShareMessageMenuId(menu.id);
-
-    try {
-      const unpublished = await unpublishGeneratedMenu(menu.id);
-      const updatedMenu = {
-        ...menu,
-        is_public: unpublished.is_public,
-        share_slug: unpublished.share_slug,
-      };
-      updateSharedMenu(updatedMenu);
-      setShareStatus("idle");
-      setShareMessage("Plan privado");
-    } catch {
-      setShareStatus("error");
-      setShareMessage("No se pudo cambiar la privacidad");
-    } finally {
-      setSharingMenuId(null);
-    }
-  }
-
-  async function copyShareLink(menu: SavedMenu) {
-    if (typeof window === "undefined" || !navigator.clipboard || !menu.share_slug) return;
-
-    await navigator.clipboard.writeText(`${window.location.origin}/share/${menu.share_slug}`);
-    setShareStatus("copied");
-    setShareMessage("Link copiado");
-    setShareMessageMenuId(menu.id);
   }
 
   function handleAnimalChange(selectedAnimal: AnimalLabel) {
@@ -1763,7 +1308,7 @@ ERROR
     if (nextMode !== "guardados") setSelectedSavedMenu(null);
     // Soft Pro prompt for multi-item planning (non-blocking — navigation still proceeds)
     if ((nextMode === "plan" || nextMode === "parrillada") && !isPro()) {
-      setShowProModal("planning");
+      openPlanningProModal();
     }
     commitNav(nextMode, nextStep, "push");
   }
@@ -1776,52 +1321,28 @@ ERROR
     navigateMode(nextMode);
   }
 
-  function handleSwipeNavigation(direction: SwipeDirection) {
-    if (direction === "back") {
-      if (typeof window !== "undefined") {
-        window.history.back();
+  const { handleTouchStart, handleTouchEnd } = useSwipeNavigation({
+    onSwipe: (direction) => {
+      if (direction === "back") {
+        if (typeof window !== "undefined") {
+          window.history.back();
+        }
+        return;
       }
-      return;
-    }
 
-    if (mode !== "coccion") return;
+      if (mode !== "coccion") return;
 
-    if (cookingStep === "animal" && animal) {
-      commitNav("coccion", "cut", "push", { animal });
-      return;
-    }
+      if (cookingStep === "animal" && animal) {
+        commitNav("coccion", "cut", "push", { animal });
+        return;
+      }
 
-    if (cookingStep === "cut" && selectedCut) {
-      commitNav("coccion", "details", "push", getCurrentCookingNavContext());
-    }
-  }
+      if (cookingStep === "cut" && selectedCut) {
+        commitNav("coccion", "details", "push", getCurrentCookingNavContext());
+      }
+    },
+  });
 
-  function handleTouchStart(event: TouchEvent<HTMLElement>) {
-    if (!isMobileSwipeViewport() || isInteractiveSwipeTarget(event.target)) {
-      touchStartRef.current = null;
-      return;
-    }
-
-    const touch = event.touches[0];
-    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
-  }
-
-  function handleTouchEnd(event: TouchEvent<HTMLElement>) {
-    const start = touchStartRef.current;
-    touchStartRef.current = null;
-
-    if (!start || !isMobileSwipeViewport() || isInteractiveSwipeTarget(event.target)) return;
-
-    const touch = event.changedTouches[0];
-    const deltaX = touch.clientX - start.x;
-    const deltaY = touch.clientY - start.y;
-    const horizontalDistance = Math.abs(deltaX);
-    const verticalDistance = Math.abs(deltaY);
-
-    if (horizontalDistance < 60 || horizontalDistance <= verticalDistance) return;
-
-    handleSwipeNavigation(deltaX > 0 ? "back" : "forward");
-  }
 
   function handleLivePlanNavigation() {
     if (typeof window === "undefined") return;
@@ -1866,7 +1387,7 @@ ERROR
   if (showOnboarding) {
     return (
       <OnboardingSlides
-        onDone={() => setShowOnboarding(false)}
+        onDone={dismissOnboarding}
       />
     );
   }
@@ -1883,7 +1404,7 @@ ERROR
         liveStarted={liveStarted}
         liveContext={liveContext}
         showCookCompleteProModal={showCookCompleteProModal}
-        onCloseCookCompleteProModal={() => setShowCookCompleteProModal(false)}
+        onCloseCookCompleteProModal={closeCookCompleteProModal}
         onBack={handleLivePlanNavigation}
         onPause={togglePause}
         onCompleteStep={goToNextStep}
@@ -1901,7 +1422,7 @@ ERROR
       mode={mode}
       t={t}
       showProModal={showProModal}
-      onCloseProModal={() => setShowProModal(false)}
+      onCloseProModal={closeProModal}
       isCutSelectionShell={isCutSelectionShell}
       isCutSelectionSheetOpen={isCutSelectionSheetOpen}
       onTouchStart={handleTouchStart}
@@ -1923,68 +1444,72 @@ ERROR
             cookingStep,
             lang,
             t,
-            selectedAnimalId: animalIdsByLabel[animal] as GeneratedAnimalId,
-            selectedCutId: cut || null,
-            isAnimalPreselected: Boolean(parseCookingAnimal(searchParams.get("animal"))),
-            onCutSelectionAnimalChange: handleCutSelectionAnimalChange,
-            onCutSelectionPreviewChange: handleCutSelectionPreviewChange,
-            onCutSelectionStartCooking: handleCutSelectionStartCooking,
-            animal,
-            cut,
-            cuts,
-            selectedCut,
-            currentDonenessOptions,
-            doneness,
-            equipment,
-            thickness,
-            showThickness,
-            advancedThicknessEnabled,
-            sizePreset,
-            weightRange,
-            vegetableFormat,
-            loading,
-            blocks,
-            checkedItems,
-            saveMenuStatus,
-            saveMenuMessage,
-            getAnimalPreview,
-            onAnimalChange: handleAnimalChange,
-            onCutChange: handleCutChange,
-            onCookingStepChange: navigateCookingStep,
-            onAdvancedThicknessEnabledChange: (value) => {
-              setAdvancedThicknessEnabled(value);
-              resetSaveMenuState();
+            cutSelection: {
+              selectedAnimalId: animalIdsByLabel[animal] as GeneratedAnimalId,
+              selectedCutId: cut || null,
+              isAnimalPreselected: Boolean(parseCookingAnimal(searchParams.get("animal"))),
+              onAnimalChange: handleCutSelectionAnimalChange,
+              onPreviewCutChange: handleCutSelectionPreviewChange,
+              onStartCooking: handleCutSelectionStartCooking,
             },
-            onDonenessChange: (value) => {
-              setDoneness(value);
-              resetSaveMenuState();
-            },
-            onEquipmentChange: (value) => {
-              setEquipment(value);
-              resetSaveMenuState();
-            },
-            onSizePresetChange: (value) => {
-              setSizePreset(value);
-              setThickness(mapSizePresetToThickness(value));
-              resetSaveMenuState();
-            },
-            onThicknessChange: (value) => {
-              setThickness(value);
-              setSizePreset(mapThicknessToSizePreset(value));
-              resetSaveMenuState();
-            },
-            onVegetableFormatChange: (value) => {
-              setVegetableFormat(value);
-              resetSaveMenuState();
-            },
-            onWeightRangeChange: (value) => {
-              setWeightRange(value);
-              resetSaveMenuState();
-            },
-            onCheckedItemsChange: setCheckedItems,
-            onGenerateCookingPlan: generateCookingPlan,
-            onSaveMenu: async () => {
-              await saveCurrentMenu();
+            wizard: {
+              animal,
+              cut,
+              cuts,
+              selectedCut,
+              currentDonenessOptions,
+              doneness,
+              equipment,
+              thickness,
+              showThickness,
+              advancedThicknessEnabled,
+              sizePreset,
+              weightRange,
+              vegetableFormat,
+              loading,
+              blocks,
+              checkedItems,
+              saveMenuStatus,
+              saveMenuMessage,
+              getAnimalPreview,
+              onAnimalChange: handleAnimalChange,
+              onCutChange: handleCutChange,
+              onCookingStepChange: navigateCookingStep,
+              onAdvancedThicknessEnabledChange: (value) => {
+                setAdvancedThicknessEnabled(value);
+                resetSaveMenuState();
+              },
+              onDonenessChange: (value) => {
+                setDoneness(value);
+                resetSaveMenuState();
+              },
+              onEquipmentChange: (value) => {
+                setEquipment(value);
+                resetSaveMenuState();
+              },
+              onSizePresetChange: (value) => {
+                setSizePreset(value);
+                setThickness(mapSizePresetToThickness(value));
+                resetSaveMenuState();
+              },
+              onThicknessChange: (value) => {
+                setThickness(value);
+                setSizePreset(mapThicknessToSizePreset(value));
+                resetSaveMenuState();
+              },
+              onVegetableFormatChange: (value) => {
+                setVegetableFormat(value);
+                resetSaveMenuState();
+              },
+              onWeightRangeChange: (value) => {
+                setWeightRange(value);
+                resetSaveMenuState();
+              },
+              onCheckedItemsChange: setCheckedItems,
+              onGenerateCookingPlan: generateCookingPlan,
+              onSaveMenu: async () => {
+                await saveCurrentMenu();
+              },
             },
           }}
           menu={{
@@ -2019,24 +1544,28 @@ ERROR
             t,
             guardadosTab,
             onGuardadosTabChange: setGuardadosTab,
-            checkedItems,
-            setCheckedItems,
-            savedMenus,
-            selectedSavedMenu,
-            shareMessage,
-            shareMessageMenuId,
-            shareStatus,
-            sharingMenuId,
-            onClearSelectedSavedMenu: () => setSelectedSavedMenu(null),
-            onCopyShareLink: copyShareLink,
-            onCopySavedMenu: copySavedMenu,
-            onDeleteMenu: deleteMenu,
-            onLoadMenu: loadMenu,
-            onCookAgainLive: startSavedCookLive,
-            onCookAgainReview: reviewSavedCook,
-            onPublishMenu: publishMenu,
-            onUnpublishMenu: unpublishMenu,
-            onStartCookingFromSavedCooks: () => navigateMode("coccion"),
+            plans: {
+              checkedItems,
+              setCheckedItems,
+              savedMenus,
+              selectedSavedMenu,
+              shareMessage,
+              shareMessageMenuId,
+              shareStatus,
+              sharingMenuId,
+              onClearSelectedSavedMenu: () => setSelectedSavedMenu(null),
+              onCopyShareLink: copyShareLink,
+              onCopySavedMenu: copySavedMenu,
+              onDeleteMenu: deleteMenu,
+              onLoadMenu: loadMenu,
+              onCookAgainLive: startSavedCookLive,
+              onCookAgainReview: reviewSavedCook,
+              onPublishMenu: publishMenu,
+              onUnpublishMenu: unpublishMenu,
+            },
+            cooks: {
+              onStartCooking: () => navigateMode("coccion"),
+            },
           }}
         />
     </AppShellChrome>

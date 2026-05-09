@@ -22,20 +22,16 @@ type CutItem = {
   description: string;
 };
 
-export type CoccionModeScreenProps = {
-  cookingStep: CookingWizardStep;
-  lang: Lang;
-  t: AppText;
-
-  // Cut selection
+export type CutSelectionPanelProps = {
   selectedAnimalId: GeneratedAnimalId;
   selectedCutId: string | null;
   isAnimalPreselected: boolean;
-  onCutSelectionAnimalChange: (animalId: GeneratedAnimalId) => void;
-  onCutSelectionPreviewChange: (cutId: string | null) => void;
-  onCutSelectionStartCooking: (profile: GeneratedCutProfile) => void;
+  onAnimalChange: (animalId: GeneratedAnimalId) => void;
+  onPreviewCutChange: (cutId: string | null) => void;
+  onStartCooking: (profile: GeneratedCutProfile) => void;
+};
 
-  // Cooking wizard inputs
+export type CookingWizardPanelProps = {
   animal: AnimalLabel;
   cut: string;
   cuts: CutItem[];
@@ -54,11 +50,7 @@ export type CoccionModeScreenProps = {
   checkedItems: Record<string, boolean>;
   saveMenuStatus: SaveMenuStatus;
   saveMenuMessage: string;
-
-  // Wizard helpers
   getAnimalPreview: (animal: AnimalLabel, lang: Lang) => string;
-
-  // Wizard handlers
   onAnimalChange: (selectedAnimal: AnimalLabel) => void;
   onCutChange: (selectedCutId: string) => void;
   onCookingStepChange: (step: CookingWizardStep, method?: "push" | "replace") => void;
@@ -74,100 +66,72 @@ export type CoccionModeScreenProps = {
   onSaveMenu: () => Promise<void>;
 };
 
+export type CoccionModeScreenProps = {
+  cookingStep: CookingWizardStep;
+  lang: Lang;
+  t: AppText;
+  cutSelection: CutSelectionPanelProps;
+  wizard: CookingWizardPanelProps;
+};
+
 export function CoccionModeScreen({
   cookingStep,
   lang,
   t,
-  selectedAnimalId,
-  selectedCutId,
-  isAnimalPreselected,
-  onCutSelectionAnimalChange,
-  onCutSelectionPreviewChange,
-  onCutSelectionStartCooking,
-  animal,
-  cut,
-  cuts,
-  selectedCut,
-  currentDonenessOptions,
-  doneness,
-  equipment,
-  thickness,
-  showThickness,
-  advancedThicknessEnabled,
-  sizePreset,
-  weightRange,
-  vegetableFormat,
-  loading,
-  blocks,
-  checkedItems,
-  saveMenuStatus,
-  saveMenuMessage,
-  getAnimalPreview,
-  onAnimalChange,
-  onCutChange,
-  onCookingStepChange,
-  onAdvancedThicknessEnabledChange,
-  onDonenessChange,
-  onEquipmentChange,
-  onSizePresetChange,
-  onThicknessChange,
-  onVegetableFormatChange,
-  onWeightRangeChange,
-  onCheckedItemsChange,
-  onGenerateCookingPlan,
-  onSaveMenu,
+  cutSelection,
+  wizard,
 }: CoccionModeScreenProps) {
   if (cookingStep === "cut") {
     return (
       <CutSelectionScreen
-        selectedAnimal={selectedAnimalId}
-        selectedCutId={selectedCutId}
+        selectedAnimal={cutSelection.selectedAnimalId}
+        selectedCutId={cutSelection.selectedCutId}
         lang={lang}
-        isAnimalPreselected={isAnimalPreselected}
-        onAnimalChange={onCutSelectionAnimalChange}
-        onPreviewCutChange={onCutSelectionPreviewChange}
-        onStartCooking={onCutSelectionStartCooking}
+        isAnimalPreselected={cutSelection.isAnimalPreselected}
+        onAnimalChange={cutSelection.onAnimalChange}
+        onPreviewCutChange={cutSelection.onPreviewCutChange}
+        onStartCooking={cutSelection.onStartCooking}
       />
     );
   }
 
   return (
     <CookingWizard
-      advancedThicknessEnabled={advancedThicknessEnabled}
-      animal={animal}
+      advancedThicknessEnabled={wizard.advancedThicknessEnabled}
+      animal={wizard.animal}
       cookingStep={cookingStep}
-      currentDonenessOptions={currentDonenessOptions}
-      cut={cut}
-      cuts={cuts}
-      equipment={equipment}
-      generateCookingPlan={onGenerateCookingPlan}
-      getAnimalPreview={getAnimalPreview}
-      handleAnimalChange={onAnimalChange}
-      handleCutChange={onCutChange}
+      currentDonenessOptions={wizard.currentDonenessOptions}
+      cut={wizard.cut}
+      cuts={wizard.cuts}
+      equipment={wizard.equipment}
+      generateCookingPlan={wizard.onGenerateCookingPlan}
+      getAnimalPreview={wizard.getAnimalPreview}
+      handleAnimalChange={wizard.onAnimalChange}
+      handleCutChange={wizard.onCutChange}
       lang={lang}
-      loading={loading}
-      selectedCut={selectedCut}
-      saveMenuMessage={saveMenuMessage}
-      saveMenuStatus={saveMenuStatus}
-      setCookingStep={onCookingStepChange}
-      setAdvancedThicknessEnabled={onAdvancedThicknessEnabledChange}
-      setDoneness={onDonenessChange}
-      setEquipment={onEquipmentChange}
-      setSizePreset={onSizePresetChange}
-      setThickness={onThicknessChange}
-      setVegetableFormat={onVegetableFormatChange}
-      setWeightRange={onWeightRangeChange}
-      sizePreset={sizePreset}
-      showThickness={showThickness}
-      onSaveMenu={onSaveMenu}
+      loading={wizard.loading}
+      selectedCut={wizard.selectedCut}
+      saveMenuMessage={wizard.saveMenuMessage}
+      saveMenuStatus={wizard.saveMenuStatus}
+      setCookingStep={wizard.onCookingStepChange}
+      setAdvancedThicknessEnabled={wizard.onAdvancedThicknessEnabledChange}
+      setDoneness={wizard.onDonenessChange}
+      setEquipment={wizard.onEquipmentChange}
+      setSizePreset={wizard.onSizePresetChange}
+      setThickness={wizard.onThicknessChange}
+      setVegetableFormat={wizard.onVegetableFormatChange}
+      setWeightRange={wizard.onWeightRangeChange}
+      sizePreset={wizard.sizePreset}
+      showThickness={wizard.showThickness}
+      onSaveMenu={wizard.onSaveMenu}
       t={t}
-      thickness={thickness}
-      vegetableFormat={vegetableFormat}
-      weightRange={weightRange}
-      doneness={doneness}
-      blocks={blocks}
-      checkedItems={checkedItems}
-      setCheckedItems={onCheckedItemsChange}
+      thickness={wizard.thickness}
+      vegetableFormat={wizard.vegetableFormat}
+      weightRange={wizard.weightRange}
+      doneness={wizard.doneness}
+      blocks={wizard.blocks}
+      checkedItems={wizard.checkedItems}
+      setCheckedItems={wizard.onCheckedItemsChange}
     />
   );
 }
