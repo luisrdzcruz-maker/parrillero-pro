@@ -32,8 +32,13 @@ import {
   generateCookingPlan as generateLocalCookingPlan,
   generateCookingSteps as generateLocalCookingSteps,
   getCutById,
+  shouldShowThickness,
 } from "@/lib/cookingRules";
 import type { Lang } from "@/lib/i18n/texts";
+import {
+  createLiveCookingPayload,
+  saveLiveCookingPayload,
+} from "@/lib/liveCookingPlan";
 import { animalIdsByLabel, type AnimalLabel } from "@/lib/media/animalMedia";
 import {
   REQUIRED_COOKING_BLOCKS,
@@ -88,6 +93,7 @@ export type UsePlanGenerationControllerArgs = {
   setBlocks: (value: Blocks) => void;
   setCheckedItems: (value: Record<string, boolean>) => void;
   setPlanGenerated: (value: boolean) => void;
+  setThickness: (value: string) => void;
   resetSaveMenuState: () => void;
   pushCookingResultHistoryWithContext: PushCookingResultHistory;
   saveCurrentMenu: () => Promise<SavedMenu | null>;
@@ -125,6 +131,7 @@ export function usePlanGenerationController(args: UsePlanGenerationControllerArg
     setBlocks,
     setCheckedItems,
     setPlanGenerated,
+    setThickness,
     resetSaveMenuState,
     pushCookingResultHistoryWithContext,
     saveCurrentMenu,
@@ -135,12 +142,13 @@ export function usePlanGenerationController(args: UsePlanGenerationControllerArg
     message: string,
     createCookSteps = false,
     parseAsMenu = false,
-  ): Promise<boolean> {
+  ): Promise<Blocks | null> {
     setLoading(true);
     setBlocks({});
     setCheckedItems({});
     resetSaveMenuState();
 
+    let normalized: Blocks;
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -153,13 +161,13 @@ export function usePlanGenerationController(args: UsePlanGenerationControllerArg
           track({ name: "cooking_failure", where: "ai_http", status: res.status });
         }
         setLoading(false);
-        return false;
+        return null;
       }
 
       const data = await res.json();
       const reply = typeof data.reply === "string" ? data.reply : "";
       const parsed = parseAsMenu ? parseMenuReply(reply) : parseResponse(reply);
-      const normalized = parseAsMenu
+      normalized = parseAsMenu
         ? parsed
         : normalizeBlocks(parsed, REQUIRED_COOKING_BLOCKS, "cooking_plan");
 
@@ -174,11 +182,11 @@ export function usePlanGenerationController(args: UsePlanGenerationControllerArg
         }
       }
       setLoading(false);
-      return false;
+      return null;
     }
 
     setLoading(false);
-    return true;
+    return normalized;
   }
 
   async function generateCookingPlan() {
@@ -227,12 +235,43 @@ export function usePlanGenerationController(args: UsePlanGenerationControllerArg
     const localPlan = generateLocalCookingPlan(input);
     const localSteps = generateLocalCookingSteps(input);
 
+    // Persist a single-cut Result payload to sessionStorage so a refresh on
+    // ?mode=coccion&step=result hydrates the plan instead of showing the
+    // empty placeholder. Reuses the existing LIVE_COOKING_STORAGE_KEY contract
+    // (the Phase A re-hydration effect already reads it).
+    const persistResultPayload = (resultBlocks: Blocks) => {
+      const payload = createLiveCookingPayload({
+        input: {
+          animal,
+          cut,
+          equipment,
+          doneness,
+          thickness: shouldShowThickness(cut) ? resolvedThicknessCm : "2",
+          lang,
+        },
+        blocks: resultBlocks,
+      });
+      saveLiveCookingPayload(payload);
+    };
+
+    // Align React `thickness` state with the resolved engine input. When
+    // inputProfile.showSizePreset === true the engine derives the effective
+    // thickness from `sizePreset` (mapSizePresetToThickness), which can differ
+    // from the React `thickness` state (the round-trip via mapThicknessToSizePreset
+    // is non-bijective). Without this sync, the URL/state would say "2" while
+    // the engine + persisted payload used "3.5", causing the Result-step
+    // re-hydration to reject the payload after refresh.
+    if (shouldShowThickness(cut) && thickness !== resolvedThicknessCm) {
+      setThickness(resolvedThicknessCm);
+    }
+
     if (localPlan && localSteps) {
       track({ name: "cooking_plan_result", path: "local" });
       const normalizedPlan = normalizeBlocks(localPlan, REQUIRED_COOKING_BLOCKS, "cooking_plan");
       setBlocks(normalizedPlan);
       setCheckedItems({});
       resetSaveMenuState();
+      persistResultPayload(normalizedPlan);
       pushCookingResultHistoryWithContext({
         doneness: input.doneness,
         thickness: resolvedThicknessCm,
@@ -241,7 +280,7 @@ export function usePlanGenerationController(args: UsePlanGenerationControllerArg
     }
 
     track({ name: "cooking_ai_fallback" });
-    const ok = await callAI(
+    const aiBlocks = await callAI(
       buildCookingPlanPrompt({
         animal,
         cutName: selectedCut?.name ?? cut,
@@ -255,8 +294,9 @@ export function usePlanGenerationController(args: UsePlanGenerationControllerArg
       }),
       true,
     );
-    if (ok) {
+    if (aiBlocks) {
       track({ name: "cooking_plan_result", path: "ai" });
+      persistResultPayload(aiBlocks);
     }
     pushCookingResultHistoryWithContext({
       doneness: input.doneness,
@@ -312,7 +352,7 @@ export function usePlanGenerationController(args: UsePlanGenerationControllerArg
     const sidesInput = planMode === "rapido" ? "guarnición simple" : sides;
     const difficultyInput = planMode === "rapido" ? "fácil" : difficulty;
 
-    const ok = await callAI(
+    const planBlocks = await callAI(
       buildPlanPrompt({
         planMode,
         people,
@@ -328,7 +368,7 @@ export function usePlanGenerationController(args: UsePlanGenerationControllerArg
       true,
     );
 
-    if (ok) setPlanGenerated(true);
+    if (planBlocks) setPlanGenerated(true);
   }
 
   function editPlanExperience() {

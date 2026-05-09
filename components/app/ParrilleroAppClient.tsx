@@ -500,7 +500,13 @@ function ParrilleroAppContent() {
     const fallbackThickness = fallbackContext?.thickness
       ? parsePositiveNumberParam(fallbackContext.thickness)
       : undefined;
-    const resolvedThickness = contextParams.thickness ?? fallbackThickness ?? (shouldShowThickness(sourceCutId) ? "2" : undefined);
+    // The explicit fallback (the EFFECTIVE input fed to the engine) wins over
+    // contextParams.thickness (derived from React state). State may not match
+    // what the engine actually used — e.g., when inputProfile.showSizePreset
+    // is true the engine derives the resolved thickness from `sizePreset`,
+    // and the raw `thickness` state can be stale or non-canonical.
+    // The Result URL must reflect the input that produced the displayed plan.
+    const resolvedThickness = fallbackThickness ?? contextParams.thickness ?? (shouldShowThickness(sourceCutId) ? "2" : undefined);
     const navContext: CookingNavContext = {
       animal: sourceAnimal,
       cut: sourceCutId,
@@ -640,8 +646,10 @@ function ParrilleroAppContent() {
   // Result-step fallback hydration: applyCookingNavContext clears `blocks` whenever
   // the cooking context changes (animal/cut/doneness/thickness). After a hard reload
   // mid-Live and a navigation back to Result, that wipes the result blocks even
-  // though sessionStorage still holds them. Re-hydrate from the live payload here,
-  // gated on a canonical-cut match so we never surface stale plans under a different cut.
+  // though sessionStorage still holds them. Also covers refresh-on-Result after a
+  // single-cut plan is generated (usePlanGenerationController writes the same payload).
+  // Re-hydrate from the live payload here, gated on cut + doneness + thickness so we
+  // never surface stale plans for the same cut under different params.
   useEffect(() => {
     if (mode !== "coccion" || cookingStep !== "result") return;
     if (Object.keys(blocks).length > 0) return;
@@ -651,11 +659,16 @@ function ParrilleroAppContent() {
     if (!payload?.blocks || Object.keys(payload.blocks).length === 0) return;
     if (cut && payload.input.cut !== cut) return;
 
+    const checkDoneness = !isVegetableContextAnimal(animal);
+    if (checkDoneness && doneness && payload.input.doneness !== doneness) return;
+    const checkThickness = Boolean(cut && shouldShowThickness(cut));
+    if (checkThickness && thickness && payload.input.thickness !== thickness) return;
+
     // Pulling result blocks from sessionStorage (external store) on a user-driven
     // mode/step transition; not a prop sync, so the rule's anti-pattern does not apply.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setBlocks(payload.blocks);
-  }, [mode, cookingStep, blocks, cut]);
+  }, [mode, cookingStep, blocks, cut, doneness, thickness, animal]);
 
   useEffect(() => {
     if (process.env.NODE_ENV === "production") return;
@@ -780,6 +793,7 @@ function ParrilleroAppContent() {
     setBlocks,
     setCheckedItems,
     setPlanGenerated,
+    setThickness,
     resetSaveMenuState,
     pushCookingResultHistoryWithContext,
     saveCurrentMenu,
