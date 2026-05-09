@@ -1,9 +1,6 @@
 ﻿"use client";
 
 import {
-  saveGeneratedMenu,
-} from "@/app/actions/savedMenus";
-import {
   type CookingSizePreset,
   type CookingWeightRange,
   type Blocks,
@@ -15,12 +12,6 @@ import { ActiveModeRenderer } from "@/components/app/ActiveModeRenderer";
 import { AppShellChrome } from "@/components/app/AppShellChrome";
 import { CocinaModeScreen } from "@/components/app/modes/CocinaModeScreen";
 import {
-  getSafeBlocksForSave,
-  hasSavableBlocks,
-  parseMenuReply,
-  parseResponse,
-} from "@/components/app/utils/blocks";
-import {
   getAnimalPreview,
   getCutDescription,
   getCutItems,
@@ -31,8 +22,6 @@ import {
 } from "@/components/app/utils/cookingDomain";
 import {
   LANG_STORAGE_KEY,
-  engineLang,
-  localeForLang,
   parseLangParam,
 } from "@/components/app/utils/i18n";
 import {
@@ -47,18 +36,14 @@ import {
   buildParrilladaModeProps,
   buildPlanModeProps,
 } from "@/components/app/utils/modeProps";
-import { asRecord, parsePositiveInt } from "@/components/app/utils/text";
 import { type Mode } from "@/components/navigation/AppHeader";
-import {
-  buildText,
-  copySavedMenu,
-  type SavedMenu,
-  type SavedMenuType,
-} from "@/components/results/CookingResultScreen";
+import { copySavedMenu } from "@/components/results/CookingResultScreen";
 import { useCookAgainController } from "@/components/app/hooks/useCookAgainController";
 import { useCookingInputHandlers } from "@/components/app/hooks/useCookingInputHandlers";
+import { useMenuSaveController } from "@/components/app/hooks/useMenuSaveController";
 import { useNavigationActions } from "@/components/app/hooks/useNavigationActions";
 import { useOnboardingGate } from "@/components/app/hooks/useOnboardingGate";
+import { usePlanGenerationController } from "@/components/app/hooks/usePlanGenerationController";
 import { useProModalController } from "@/components/app/hooks/useProModalController";
 import { useSavedMenusController } from "@/components/app/hooks/useSavedMenusController";
 import { useSwipeNavigation } from "@/components/app/hooks/useSwipeNavigation";
@@ -66,10 +51,7 @@ import {
   OnboardingSlides,
 } from "@/components/onboarding/OnboardingSlides";
 import { useMenuComposerState } from "@/components/app/hooks/useMenuComposerState";
-import { track } from "@/lib/analytics";
 import {
-  generateCookingPlan as generateLocalCookingPlan,
-  generateCookingSteps as generateLocalCookingSteps,
   getCutById,
   getDonenessOptions,
   shouldShowThickness,
@@ -77,10 +59,8 @@ import {
 import type { DonenessId } from "@/lib/cookingCatalog";
 import { cutImages } from "@/lib/media/cutImages";
 import {
-  mapBeefLargeWeightPresetToKg,
   mapSizePresetToThickness,
   mapThicknessToSizePreset,
-  mapWeightRangeToKg,
 } from "@/lib/cooking/inputMapping";
 import { texts, type Lang } from "@/lib/i18n/texts";
 import { readLiveCookingPayload } from "@/lib/liveCookingPlan";
@@ -101,29 +81,9 @@ import {
 import type { ParrilladaFlowStep } from "@/components/parrillada";
 import type { GeneratedAnimalId } from "@/lib/generated/cutProfiles";
 import { animalIdsByLabel, type AnimalLabel } from "@/lib/media/animalMedia";
-import {
-  REQUIRED_COOKING_BLOCKS,
-  REQUIRED_PARRILLADA_BLOCKS,
-  normalizeBlocks,
-} from "@/lib/parser/normalizeBlocks";
-import { generateParrilladaPlan } from "@/lib/parrilladaEngine";
 import { useLiveCookingSession } from "@/hooks/useLiveCookingSession";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-
-type SavedMenuActionMenu = {
-  id: string;
-  name: string;
-  created_at: string;
-  data?: Record<string, unknown>;
-  is_public?: boolean;
-  share_slug?: string | null;
-};
-
-type SaveGeneratedMenuResponse =
-  | { ok: true; menu: SavedMenuActionMenu }
-  | { ok: false; error?: string }
-  | SavedMenuActionMenu;
 
 function ParrilleroAppContent() {
   const router = useRouter();
@@ -726,123 +686,36 @@ function ParrilleroAppContent() {
     };
   }, [animal, cut, doneness, thickness, mode, cookingStep]);
 
-  async function saveCurrentMenu(): Promise<SavedMenu | null> {
-    if (typeof window === "undefined") return null;
-    if (!hasSavableBlocks(blocks)) {
-      setSaveMenuStatus("error");
-      setSaveMenuMessage(t.menuSaveError);
-      return null;
-    }
+  const { saveCurrentMenu } = useMenuSaveController({
+    lang,
+    t,
+    mode,
+    planMode,
+    animal,
+    cut,
+    selectedCut,
+    weight,
+    thickness,
+    doneness,
+    equipment,
+    parrilladaPeople,
+    serveTime,
+    parrilladaProducts,
+    parrilladaSides,
+    people,
+    eventType,
+    menuMeats,
+    sides,
+    budget,
+    difficulty,
+    planProduct,
+    blocks,
+    savedMenus,
+    setSaveMenuStatus,
+    setSaveMenuMessage,
+    updateSavedMenus,
+  });
 
-    const now = new Date();
-    const dateLabel = now.toLocaleDateString(localeForLang(lang));
-    const savedType: SavedMenuType =
-      mode === "coccion"
-        ? "cooking_plan"
-        : mode === "parrillada" || (mode === "plan" && planMode === "evento")
-          ? "parrillada_plan"
-          : "generated_menu";
-    const cutName = selectedCut?.name ?? cut;
-    const menuName =
-      savedType === "cooking_plan"
-        ? `Cocción - ${animal} ${cutName} - ${dateLabel}`
-        : savedType === "parrillada_plan"
-          ? `Parrillada - ${parrilladaPeople} personas - ${dateLabel}`
-          : `Menú BBQ - ${people} personas - ${dateLabel}`;
-    const peopleValue =
-      savedType === "cooking_plan"
-        ? null
-        : parsePositiveInt(savedType === "parrillada_plan" ? parrilladaPeople : people);
-    const planProducts = planMode === "rapido" ? planProduct : menuMeats;
-
-    setSaveMenuStatus("saving");
-    setSaveMenuMessage("");
-
-    try {
-      const safeBlocks = getSafeBlocksForSave(blocks, savedType);
-      if (Object.keys(safeBlocks).length === 0) {
-        setSaveMenuStatus("error");
-        setSaveMenuMessage(t.menuSaveError);
-        return null;
-      }
-
-      const inputs =
-        savedType === "cooking_plan"
-          ? {
-              animal,
-              cut,
-              cutName,
-              weight,
-              thickness,
-              doneness,
-              equipment,
-            }
-          : savedType === "parrillada_plan"
-            ? {
-                parrilladaPeople,
-                serveTime,
-                parrilladaProducts,
-                parrilladaSides,
-                equipment,
-              }
-            : {
-                people,
-                eventType,
-                planMode,
-                products: planProducts,
-                menuMeats: planProducts,
-                sides: planMode === "rapido" ? "guarnición simple" : sides,
-                budget,
-                difficulty: planMode === "rapido" ? "fácil" : difficulty,
-                equipment,
-              };
-
-      const savedMenuResult = (await saveGeneratedMenu({
-        name: menuName,
-        lang,
-        people: peopleValue,
-        data: {
-          type: savedType,
-          generatedAt: now.toISOString(),
-          inputs,
-          blocks: safeBlocks,
-        },
-      })) as SaveGeneratedMenuResponse;
-
-      if ("ok" in savedMenuResult && !savedMenuResult.ok) {
-        setSaveMenuStatus("error");
-        setSaveMenuMessage(savedMenuResult.error || t.menuSaveError);
-        return null;
-      }
-
-      const savedMenu = "ok" in savedMenuResult ? savedMenuResult.menu : savedMenuResult;
-
-      const newMenu: SavedMenu = {
-        id: savedMenu.id,
-        title: savedMenu.name,
-        date: new Date(savedMenu.created_at).toLocaleDateString(localeForLang(lang)),
-        blocks: safeBlocks,
-        data: asRecord(savedMenu.data) ?? {
-          type: savedType,
-          lang,
-          inputs,
-          blocks: safeBlocks,
-        },
-        type: savedType,
-        is_public: savedMenu.is_public ?? false,
-        share_slug: savedMenu.share_slug ?? null,
-      };
-
-      updateSavedMenus([newMenu, ...savedMenus.filter((menu) => menu.id !== newMenu.id)]);
-      setSaveMenuStatus("success");
-      setSaveMenuMessage(t.menuSaved);
-      return newMenu;
-    } catch {
-      setSaveMenuStatus("error");
-      setSaveMenuMessage(t.menuSaveError);
-      return null;
-    }
-  }
 
   const {
     handleAnimalChange,
@@ -868,254 +741,50 @@ function ParrilleroAppContent() {
     commitNav,
   });
 
-  async function callAI(
-    message: string,
-    createCookSteps = false,
-    parseAsMenu = false,
-  ): Promise<boolean> {
-    setLoading(true);
-    setBlocks({});
-    setCheckedItems({});
-    resetSaveMenuState();
-
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message }),
-      });
-
-      if (!res.ok) {
-        if (createCookSteps) {
-          track({ name: "cooking_failure", where: "ai_http", status: res.status });
-        }
-        setLoading(false);
-        return false;
-      }
-
-      const data = await res.json();
-      const reply = typeof data.reply === "string" ? data.reply : "";
-      const parsed = parseAsMenu ? parseMenuReply(reply) : parseResponse(reply);
-      const normalized = parseAsMenu
-        ? parsed
-        : normalizeBlocks(parsed, REQUIRED_COOKING_BLOCKS, "cooking_plan");
-
-      setBlocks(normalized);
-    } catch (e) {
-      if (createCookSteps) {
-        const msg = e instanceof Error ? e.message : String(e);
-        if (e instanceof TypeError) {
-          track({ name: "cooking_failure", where: "ai_network", message: msg });
-        } else {
-          track({ name: "cooking_failure", where: "ai_exception", message: msg });
-        }
-      }
-      setLoading(false);
-      return false;
-    }
-
-    setLoading(false);
-    return true;
-  }
-
-  async function generateCookingPlan() {
-    const cutMeta = getCutById(cut);
-    const inputProfile = cutMeta
-      ? getInputProfileForCut({
-          cutId: cutMeta.id,
-          animalId: cutMeta.animalId,
-          style: cutMeta.style,
-          inputProfileId: cutMeta.inputProfileId,
-        })
-      : getInputProfileForCut({
-          cutId: cut,
-          animalId: animalIdsByLabel[animal],
-          style: "fast",
-        });
-    const isVegetableCut = inputProfile.showVegetableFormat;
-    const isWholeChicken = cut === "pollo_entero";
-
-    const resolvedWeightKg =
-      inputProfile.showWeightRange
-        ? mapWeightRangeToKg(weightRange, isWholeChicken)
-        : inputProfile.showWeightPreset
-          ? mapBeefLargeWeightPresetToKg(weightRange)
-          : weight;
-
-    let resolvedThicknessCm = "2";
-    if (inputProfile.showSizePreset) {
-      resolvedThicknessCm = mapSizePresetToThickness(sizePreset);
-      if (inputProfile.allowAdvancedExactThickness && advancedThicknessEnabled && thickness.trim()) {
-        resolvedThicknessCm = thickness;
-      }
-    }
-
-    const input = {
-      animal,
-      cut,
-      weightKg: resolvedWeightKg,
-      thicknessCm: resolvedThicknessCm,
-      format: isVegetableCut ? vegetableFormat : undefined,
-      doneness,
-      equipment,
-      language: engineLang(lang),
-    };
-
-    const localPlan = generateLocalCookingPlan(input);
-    const localSteps = generateLocalCookingSteps(input);
-
-    if (localPlan && localSteps) {
-      track({ name: "cooking_plan_result", path: "local" });
-      const normalizedPlan = normalizeBlocks(localPlan, REQUIRED_COOKING_BLOCKS, "cooking_plan");
-      setBlocks(normalizedPlan);
-      setCheckedItems({});
-      resetSaveMenuState();
-      pushCookingResultHistoryWithContext({
-        doneness: input.doneness,
-        thickness: resolvedThicknessCm,
-      });
-      return;
-    }
-
-    track({ name: "cooking_ai_fallback" });
-    const ok = await callAI(
-      `
-Language: ${engineLang(lang) === "es" ? "Spanish" : "English"}.
-Animal: ${animal}
-Cut: ${selectedCut?.name ?? cut}
-Weight: ${resolvedWeightKg} kg
-Thickness: ${resolvedThicknessCm} cm
-Format: ${isVegetableCut ? vegetableFormat : "not relevant"}
-Doneness: ${doneness}
-Equipment: ${equipment}
-
-Return exact block titles:
-SETUP
-TIEMPOS
-TEMPERATURA
-PASOS
-ERROR
-`,
-      true,
-    );
-    if (ok) {
-      track({ name: "cooking_plan_result", path: "ai" });
-    }
-    pushCookingResultHistoryWithContext({
-      doneness: input.doneness,
-      thickness: resolvedThicknessCm,
-    });
-  }
-
-  async function generateMenuPlan() {
-    await callAI(`
-Language: ${engineLang(lang) === "es" ? "Spanish" : "English"}.
-
-Personas / People: ${people}
-Tipo de evento / Event type: ${eventType}
-Carnes/productos / Products: ${menuMeats}
-Acompañamientos / Sides: ${sides}
-Presupuesto / Budget: ${budget} €
-Nivel / Difficulty: ${difficulty}
-Equipo / Equipment: ${equipment}
-
-If Spanish:
-MENU
-CANTIDADES
-TIMING
-ORDEN
-COMPRA
-ERROR
-
-If English:
-MENU
-QUANTITIES
-TIMING
-ORDER
-SHOPPING
-ERROR
-`, false, true);
-  }
-
-  async function generatePlanExperience() {
-    setPlanGenerated(false);
-    setBlocks({});
-    setCheckedItems({});
-    resetSaveMenuState();
-
-    if (planMode === "evento") {
-      generateParrillada();
-      setPlanGenerated(true);
-      return;
-    }
-
-    const productInput = planMode === "rapido" ? planProduct : menuMeats;
-    const sidesInput = planMode === "rapido" ? "guarnición simple" : sides;
-    const difficultyInput = planMode === "rapido" ? "fácil" : difficulty;
-
-    const ok = await callAI(`
-Language: ${engineLang(lang) === "es" ? "Spanish" : "English"}.
-
-Plan mode: ${planMode}
-Personas / People: ${people}
-Tipo de evento / Event type: ${planMode === "rapido" ? "plan rápido" : eventType}
-Carnes/productos / Products: ${productInput}
-Acompañamientos / Sides: ${sidesInput}
-Presupuesto / Budget: ${budget} €
-Nivel / Difficulty: ${difficultyInput}
-Equipo / Equipment: ${equipment}
-
-If Spanish:
-MENU
-CANTIDADES
-TIMING
-ORDEN
-COMPRA
-ERROR
-
-If English:
-MENU
-QUANTITIES
-TIMING
-ORDER
-SHOPPING
-ERROR
-`, false, true);
-
-    if (ok) setPlanGenerated(true);
-  }
-
-  function editPlanExperience() {
-    setPlanGenerated(false);
-    resetSaveMenuState();
-  }
-
-  function copyCurrentPlan() {
-    if (typeof window === "undefined" || !navigator.clipboard) return;
-    navigator.clipboard.writeText(buildText(blocks));
-  }
-
-  async function shareCurrentPlan() {
-    const savedMenu = await saveCurrentMenu();
-    if (!savedMenu) return;
-
-    await publishMenu(savedMenu);
-  }
-
-  function generateParrillada() {
-    const plan = generateParrilladaPlan({
-      people: parrilladaPeople,
-      serveTime,
-      products: parrilladaProducts,
-      sides: parrilladaSides,
-      equipment,
-      language: engineLang(lang),
-    });
-
-    setBlocks(normalizeBlocks(plan, REQUIRED_PARRILLADA_BLOCKS, "parrillada_plan"));
-    setCheckedItems({});
-    resetSaveMenuState();
-  }
+  const {
+    callAI,
+    generateCookingPlan,
+    generateMenuPlan,
+    generateParrillada,
+    generatePlanExperience,
+    editPlanExperience,
+    copyCurrentPlan,
+    shareCurrentPlan,
+  } = usePlanGenerationController({
+    animal,
+    cut,
+    selectedCut,
+    weight,
+    thickness,
+    advancedThicknessEnabled,
+    sizePreset,
+    weightRange,
+    vegetableFormat,
+    doneness,
+    equipment,
+    blocks,
+    planMode,
+    people,
+    eventType,
+    menuMeats,
+    sides,
+    budget,
+    difficulty,
+    planProduct,
+    parrilladaPeople,
+    serveTime,
+    parrilladaProducts,
+    parrilladaSides,
+    lang,
+    setLoading,
+    setBlocks,
+    setCheckedItems,
+    setPlanGenerated,
+    resetSaveMenuState,
+    pushCookingResultHistoryWithContext,
+    saveCurrentMenu,
+    publishMenu,
+  });
 
   const {
     handleLanguageChange,
@@ -1194,6 +863,8 @@ ERROR
     setServeTime,
     setParrilladaProducts,
     setParrilladaSides,
+    callAI,
+    generateParrillada,
     generatePlanExperience,
     editPlanExperience,
     copyCurrentPlan,
