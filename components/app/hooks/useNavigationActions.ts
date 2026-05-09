@@ -12,7 +12,10 @@ import {
   buildCookingDetailsUrl,
   buildHomeUrl,
 } from "@/lib/navigation/cookingNavigation";
-import type { CookingNavContext } from "@/lib/navigation/appNavState";
+import {
+  buildSearchFromNav,
+  type CookingNavContext,
+} from "@/lib/navigation/appNavState";
 import { parseLiveParams } from "@/lib/navigation/parseLiveParams";
 
 type CommitNav = (
@@ -73,12 +76,16 @@ export function useNavigationActions({
     if ((nextMode === "plan" || nextMode === "parrillada") && !isPro()) {
       openPlanningProModal();
     }
-    // Mode-root back hierarchy (B4.1): a bottom-nav / tab mode switch should
-    // normalize history so the new root has Home — not the previous technical
-    // state — as its back target. Replace the current entry with Home before
-    // pushing the new root when transitioning between non-inicio modes.
-    if (mode !== "inicio" && nextMode !== "inicio") {
-      commitNav("inicio", "animal", "replace");
+    // Mode-root back hierarchy (B4.1): bypass Next router for the replace step
+    // because synchronous router.replace + router.push in one handler get
+    // coalesced — only the push lands. window.history.replaceState is immediate,
+    // so the subsequent commitNav push lands on top of a freshly-replaced Home
+    // entry. This produces history [..., Home, TargetModeRoot] so browser-back
+    // from the new mode root returns to Home, not the previous technical state.
+    if (mode !== "inicio" && nextMode !== "inicio" && typeof window !== "undefined") {
+      const homeSearch = buildSearchFromNav("inicio", "animal", {}, lang);
+      const homeUrl = `${window.location.pathname}${homeSearch}${window.location.hash}`;
+      window.history.replaceState(window.history.state, "", homeUrl);
     }
     commitNav(nextMode, nextStep, "push");
   }
