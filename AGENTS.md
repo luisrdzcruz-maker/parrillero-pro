@@ -51,6 +51,10 @@ Parrillero Pro is NOT:
 
 ## Approved visual direction — Hybrid Premium
 
+> **Visual spec:** the precise written implementation spec lives at [`docs/design/hybrid-premium-ui-spec.md`](docs/design/hybrid-premium-ui-spec.md).
+> When a UI decision needs detail (color tokens, component density, screen-by-screen direction, anti-patterns), consult that spec before this file.
+> Reference canvas images in `docs/design/hybrid-premium-canvas/` are local-only and gitignored — never import or copy them into product code.
+
 The approved design direction is **Hybrid Premium**.
 
 Base concept:
