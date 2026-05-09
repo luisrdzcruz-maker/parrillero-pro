@@ -9,8 +9,10 @@ import {
   buildLiveStepsFromPayload,
   buildLiveStepsSignature,
   hasDistinctLiveSteps,
+  hydrateLiveCookingTimer,
   LIVE_COOKING_STORAGE_KEY,
   readLiveCookingPayload,
+  writeLiveCookingTimer,
   type LiveCookingPlanPayload,
 } from "@/lib/liveCookingPlan";
 import {
@@ -202,11 +204,15 @@ export function useLiveCookingSession({
         });
       }
 
+      const hydratedTimer = safePayload?.timer
+        ? hydrateLiveCookingTimer(safePayload.timer, built.steps)
+        : null;
+
       setLiveSteps(built.steps);
       setLiveContext(safePayload ? built.context ?? liveFromUrl.context : liveFromUrl.cutId ? liveFromUrl.context : undefined);
-      setLiveCurrentIndex(0);
-      setLiveRemaining(built.steps[0]?.duration ?? 0);
-      setLivePaused(true);
+      setLiveCurrentIndex(hydratedTimer?.currentStepIndex ?? 0);
+      setLiveRemaining(hydratedTimer?.remainingSec ?? built.steps[0]?.duration ?? 0);
+      setLivePaused(hydratedTimer?.paused ?? true);
       setHasValidPlan(!built.usedFallback && built.steps.length > 0);
       setIsUsingFallbackPlan(built.usedFallback);
       setLiveClientReady(true);
@@ -222,6 +228,22 @@ export function useLiveCookingSession({
     }, 1000);
     return () => window.clearInterval(id);
   }, [mode, liveClientReady, livePaused, liveHasTimer]);
+
+  const liveRemainingRef = useRef(liveRemaining);
+  useEffect(() => {
+    liveRemainingRef.current = liveRemaining;
+  }, [liveRemaining]);
+
+  useEffect(() => {
+    if (mode !== "cocina" || !liveClientReady) return;
+    if (liveSteps.length === 0) return;
+    writeLiveCookingTimer({
+      currentStepIndex: liveCurrentIndex,
+      remainingAtLastWriteSec: liveRemainingRef.current,
+      paused: livePaused,
+      lastWriteMs: Date.now(),
+    });
+  }, [mode, liveClientReady, liveCurrentIndex, livePaused, liveSteps.length]);
 
   useEffect(() => {
     if (

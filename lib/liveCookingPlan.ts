@@ -21,6 +21,13 @@ export type LiveCookingInputSnapshot = {
   lang: "es" | "en" | "fi";
 };
 
+export type LiveCookingTimerState = {
+  currentStepIndex: number;
+  remainingAtLastWriteSec: number;
+  paused: boolean;
+  lastWriteMs: number;
+};
+
 export type LiveCookingPlanPayload = {
   version: 1;
   createdAt: string;
@@ -28,7 +35,10 @@ export type LiveCookingPlanPayload = {
   blocks: LiveCookingBlocks;
   signature: string;
   timeSemantics?: CookingTimeSemantics;
+  timer?: LiveCookingTimerState;
 };
+
+const TIMER_STALE_MS = 24 * 60 * 60 * 1000;
 
 type BuildLiveStepsResult = {
   steps: LiveStep[];
@@ -41,6 +51,68 @@ const FALLBACK_STEP_SECONDS = 180;
 
 function asText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function asLiveCookingTimerState(value: unknown): LiveCookingTimerState | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const record = value as Record<string, unknown>;
+  const currentStepIndex = Number(record.currentStepIndex);
+  const remainingAtLastWriteSec = Number(record.remainingAtLastWriteSec);
+  const lastWriteMs = Number(record.lastWriteMs);
+  const paused = record.paused === true;
+  if (
+    !Number.isFinite(currentStepIndex) ||
+    currentStepIndex < 0 ||
+    !Number.isFinite(remainingAtLastWriteSec) ||
+    remainingAtLastWriteSec < 0 ||
+    !Number.isFinite(lastWriteMs) ||
+    lastWriteMs <= 0
+  ) {
+    return undefined;
+  }
+  return {
+    currentStepIndex: Math.round(currentStepIndex),
+    remainingAtLastWriteSec: Math.max(0, Math.round(remainingAtLastWriteSec)),
+    paused,
+    lastWriteMs: Math.round(lastWriteMs),
+  };
+}
+
+export function isLiveCookingTimerStale(timer: LiveCookingTimerState, nowMs = Date.now()) {
+  if (timer.lastWriteMs > nowMs) return true;
+  return nowMs - timer.lastWriteMs > TIMER_STALE_MS;
+}
+
+export function hydrateLiveCookingTimer(
+  timer: LiveCookingTimerState,
+  steps: LiveStep[],
+  nowMs = Date.now(),
+): { currentStepIndex: number; remainingSec: number; paused: boolean } {
+  if (steps.length === 0) {
+    return { currentStepIndex: 0, remainingSec: 0, paused: timer.paused };
+  }
+
+  const deltaSec = timer.paused ? 0 : Math.max(0, (nowMs - timer.lastWriteMs) / 1000);
+  let currentStepIndex = Math.max(0, Math.min(steps.length - 1, timer.currentStepIndex));
+  let remaining = timer.remainingAtLastWriteSec - deltaSec;
+
+  let safety = steps.length + 2;
+  while (remaining <= 0 && currentStepIndex < steps.length - 1 && safety > 0) {
+    currentStepIndex += 1;
+    const next = steps[currentStepIndex];
+    remaining += next?.duration ?? 0;
+    safety -= 1;
+  }
+
+  if (remaining <= 0) {
+    return { currentStepIndex, remainingSec: 0, paused: false };
+  }
+
+  return {
+    currentStepIndex,
+    remainingSec: Math.max(0, Math.round(remaining)),
+    paused: timer.paused,
+  };
 }
 
 function asCookingTimeSemantics(value: unknown): CookingTimeSemantics | undefined {
@@ -282,18 +354,39 @@ export function readLiveCookingPayload(): LiveCookingPlanPayload | null {
   try {
     const parsed = JSON.parse(raw) as Partial<LiveCookingPlanPayload>;
     if (parsed.version !== 1 || !parsed.input || !parsed.blocks) return null;
+    const timeSemantics = asCookingTimeSemantics(parsed.timeSemantics);
+    const timer = asLiveCookingTimerState(parsed.timer);
     return {
       version: 1,
       createdAt: asText(parsed.createdAt) || new Date().toISOString(),
       input: parsed.input,
       blocks: normalizeBlocks(parsed.blocks),
       signature: asText(parsed.signature),
-      ...(asCookingTimeSemantics(parsed.timeSemantics)
-        ? { timeSemantics: asCookingTimeSemantics(parsed.timeSemantics) }
-        : {}),
+      ...(timeSemantics ? { timeSemantics } : {}),
+      ...(timer && !isLiveCookingTimerStale(timer) ? { timer } : {}),
     };
   } catch {
     return null;
+  }
+}
+
+export function writeLiveCookingTimer(timer: LiveCookingTimerState | null) {
+  if (typeof window === "undefined") return false;
+  const raw = window.sessionStorage.getItem(LIVE_COOKING_STORAGE_KEY);
+  if (!raw) return false;
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<LiveCookingPlanPayload>;
+    if (parsed.version !== 1 || !parsed.input || !parsed.blocks) return false;
+    if (timer) {
+      parsed.timer = timer;
+    } else {
+      delete parsed.timer;
+    }
+    window.sessionStorage.setItem(LIVE_COOKING_STORAGE_KEY, JSON.stringify(parsed));
+    return true;
+  } catch {
+    return false;
   }
 }
 

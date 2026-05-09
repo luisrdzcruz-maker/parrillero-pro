@@ -5,7 +5,17 @@ export type SetupEquipment = string;
 export type SetupType = string;
 
 export const setupVisualMap: Record<string, string> = {
-  "grill:two_zone": "/setup/setup_reverse_sear.webp"
+  "grill:two_zone": "/setup/setup_two_zone.webp",
+  "grill:reverse_sear": "/setup/setup_reverse_sear.webp",
+  "grill:two_zone_v1": "/setup/setup_two_zone_v1.webp",
+  "charcoal:two_zone": "/setup/setup_charcoal_two_zone.webp",
+  "fire:direct_heat": "/setup/setup_fire_direct_heat.webp",
+  "fire:indirect_heat": "/setup/setup_fire_indirect_heat.webp",
+  "fire:two_zone": "/setup/setup_fire_two_zone.webp",
+  "gas:direct_heat": "/setup/setup_gas_direct_heat.webp",
+  "gas:two_zone": "/setup/setup_gas_two_zone.webp",
+  "indoor:pan_oven": "/setup/setup_indoor_pan_oven.webp",
+  "kamado:indirect_deflector": "/setup/setup_kamado_indirect_deflector.webp"
 };
 
 export const SETUP_VISUAL_FALLBACK = "/setup/setup_two_zone.webp";

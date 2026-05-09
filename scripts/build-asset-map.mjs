@@ -91,6 +91,12 @@ function buildMapFileContent({ category, items, promptsPath }) {
       throw new Error(`Each item must include id: ${JSON.stringify(item)}`);
     }
     const key = buildKey(item);
+    if (visualEntries.has(key)) {
+      throw new Error(
+        `Duplicate map key "${key}" in ${relativePath(process.cwd(), promptsPath)}. ` +
+          `First seen: ${visualEntries.get(key)}, then: ${publicPath}/${item.id}.webp.`
+      );
+    }
     visualEntries.set(key, `${publicPath}/${item.id}.webp`);
   });
   const entries = Array.from(visualEntries.entries()).map(
@@ -121,7 +127,14 @@ function buildGeneratedSetupMapContent({ items, promptsPath }) {
   );
   const visualEntries = new Map();
   setupItems.forEach((item) => {
-    visualEntries.set(`${item.equipment}:${item.setup}`, `/setup/${item.id}.webp`);
+    const key = `${item.equipment}:${item.setup}`;
+    if (visualEntries.has(key)) {
+      throw new Error(
+        `Duplicate setup map key "${key}" in ${relativePath(process.cwd(), promptsPath)}. ` +
+          `First seen: ${visualEntries.get(key)}, then: /setup/${item.id}.webp.`
+      );
+    }
+    visualEntries.set(key, `/setup/${item.id}.webp`);
   });
   const entries = Array.from(visualEntries.entries()).map(
     ([key, visualPath]) => `  "${key}": "${visualPath}"`
@@ -218,7 +231,14 @@ function buildLegacySetupMapContent(items, root) {
 
   const visualEntries = new Map();
   setupItems.forEach((item) => {
-    visualEntries.set(`${item.equipment}:${item.setup}`, `/setup/${item.id}.webp`);
+    const key = `${item.equipment}:${item.setup}`;
+    if (visualEntries.has(key)) {
+      throw new Error(
+        `Duplicate setup map key "${key}" in data/assets/setup-prompts.json. ` +
+          `First seen: ${visualEntries.get(key)}, then: /setup/${item.id}.webp.`
+      );
+    }
+    visualEntries.set(key, `/setup/${item.id}.webp`);
   });
   const entries = Array.from(visualEntries.entries()).map(
     ([key, visualPath]) => `  "${key}": "${visualPath}"`
