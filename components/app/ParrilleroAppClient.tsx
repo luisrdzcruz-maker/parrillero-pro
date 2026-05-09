@@ -21,15 +21,12 @@ import {
   parseResponse,
 } from "@/components/app/utils/blocks";
 import {
-  animalLabelsById,
   getAnimalPreview,
   getCutDescription,
   getCutItems,
   getCutName,
   getDonenessSelectOptions,
   getInitialDoneness,
-  parseSavedCookConfig,
-  toLiveDoneness,
   type CutItem,
 } from "@/components/app/utils/cookingDomain";
 import {
@@ -42,6 +39,12 @@ import {
   MOCK_LIVE_STEPS,
   persistSavedCook,
 } from "@/components/app/utils/liveSession";
+import {
+  buildCoccionModeProps,
+  buildGuardadosModeProps,
+  buildHomeModeProps,
+  buildMenuModeProps,
+} from "@/components/app/utils/modeProps";
 import { asRecord, parsePositiveInt } from "@/components/app/utils/text";
 import { type Mode } from "@/components/navigation/AppHeader";
 import {
@@ -50,7 +53,9 @@ import {
   type SavedMenu,
   type SavedMenuType,
 } from "@/components/results/CookingResultScreen";
-import { isPro } from "@/lib/proStatus";
+import { useCookAgainController } from "@/components/app/hooks/useCookAgainController";
+import { useCookingInputHandlers } from "@/components/app/hooks/useCookingInputHandlers";
+import { useNavigationActions } from "@/components/app/hooks/useNavigationActions";
 import { useOnboardingGate } from "@/components/app/hooks/useOnboardingGate";
 import { useProModalController } from "@/components/app/hooks/useProModalController";
 import { useSavedMenusController } from "@/components/app/hooks/useSavedMenusController";
@@ -76,16 +81,8 @@ import {
   mapWeightRangeToKg,
 } from "@/lib/cooking/inputMapping";
 import { texts, type Lang } from "@/lib/i18n/texts";
-import {
-  createLiveCookingPayload,
-  readLiveCookingPayload,
-  saveLiveCookingPayload,
-} from "@/lib/liveCookingPlan";
-import { buildLiveUrl } from "@/lib/navigation/buildLiveUrl";
-import {
-  buildCookingDetailsUrl,
-  buildHomeUrl,
-} from "@/lib/navigation/cookingNavigation";
+import { readLiveCookingPayload } from "@/lib/liveCookingPlan";
+import { buildHomeUrl } from "@/lib/navigation/cookingNavigation";
 import {
   buildSearchFromNav,
   isAllowedCookingStep,
@@ -99,12 +96,10 @@ import {
   type CookingNavContext,
   type ParsedNav,
 } from "@/lib/navigation/appNavState";
-import { parseLiveParams } from "@/lib/navigation/parseLiveParams";
-import type { GeneratedAnimalId, GeneratedCutProfile } from "@/lib/generated/cutProfiles";
+import type { GeneratedAnimalId } from "@/lib/generated/cutProfiles";
 import { animalIdsByLabel, type AnimalLabel } from "@/lib/media/animalMedia";
 import {
   REQUIRED_COOKING_BLOCKS,
-  REQUIRED_COOKING_BLOCKS_EN,
   REQUIRED_PARRILLADA_BLOCKS,
   normalizeBlocks,
 } from "@/lib/parser/normalizeBlocks";
@@ -820,224 +815,29 @@ function ParrilleroAppContent() {
     }
   }
 
-  function loadMenu(menu: SavedMenu) {
-    setSelectedSavedMenu(menu);
-    resetSaveMenuState();
-    navigateMode("guardados");
-  }
-
-  function buildCookingPlanFromSavedConfig(menu: SavedMenu) {
-    const config = parseSavedCookConfig(menu, {
-      animal,
-      equipment,
-      doneness,
-      weight,
-      thickness,
-      lang,
-    });
-    if (!config) return null;
-
-    const thicknessForPlan = shouldShowThickness(config.cut) ? config.thickness : "2";
-    const localPlan = generateLocalCookingPlan({
-      animal: config.animal,
-      cut: config.cut,
-      weightKg: config.weight,
-      thicknessCm: thicknessForPlan,
-      doneness: config.doneness,
-      equipment: config.equipment,
-      language: engineLang(config.lang),
-    });
-    const localPlanRepeat = generateLocalCookingPlan({
-      animal: config.animal,
-      cut: config.cut,
-      weightKg: config.weight,
-      thicknessCm: thicknessForPlan,
-      doneness: config.doneness,
-      equipment: config.equipment,
-      language: engineLang(config.lang),
-    });
-    if (
-      localPlan &&
-      localPlanRepeat &&
-      JSON.stringify(localPlan) !== JSON.stringify(localPlanRepeat)
-    ) {
-      console.warn("[cook-again] Non-deterministic local cooking plan detected", config);
-    }
-
-    const requiredBlocks = config.lang === "en" ? REQUIRED_COOKING_BLOCKS_EN : REQUIRED_COOKING_BLOCKS;
-    const normalizedPlan = normalizeBlocks(
-      localPlan ?? menu.blocks,
-      requiredBlocks,
-      "cooking_plan",
-    );
-
-    return { config, blocks: normalizedPlan };
-  }
-
-  function reviewSavedCook(menu: SavedMenu) {
-    if (menu.type !== "cooking_plan") {
-      loadMenu(menu);
-      return;
-    }
-
-    const rebuilt = buildCookingPlanFromSavedConfig(menu);
-    if (!rebuilt) {
-      loadMenu(menu);
-      return;
-    }
-
-    setLang(rebuilt.config.lang);
-    setAnimal(rebuilt.config.animal);
-    setCut(rebuilt.config.cut);
-    setWeight(rebuilt.config.weight);
-    resetAdaptiveDetailInputs(rebuilt.config.cut, rebuilt.config.animal);
-    setThickness(rebuilt.config.thickness);
-    setSizePreset(mapThicknessToSizePreset(rebuilt.config.thickness));
-    setDoneness(rebuilt.config.doneness);
-    setEquipment(rebuilt.config.equipment);
-    setBlocks(rebuilt.blocks);
-    setCheckedItems({});
-    resetSaveMenuState();
-    setSelectedSavedMenu(null);
-    commitNav("coccion", "result", "push", {
-      animal: rebuilt.config.animal,
-      cut: rebuilt.config.cut,
-      doneness: rebuilt.config.doneness,
-      thickness: rebuilt.config.thickness,
-    });
-  }
-
-  function startSavedCookLive(menu: SavedMenu) {
-    const rebuilt = buildCookingPlanFromSavedConfig(menu);
-    if (!rebuilt) {
-      loadMenu(menu);
-      return;
-    }
-
-    const payload = createLiveCookingPayload({
-      input: {
-        animal: rebuilt.config.animal,
-        cut: rebuilt.config.cut,
-        equipment: rebuilt.config.equipment,
-        doneness: rebuilt.config.doneness,
-        thickness: shouldShowThickness(rebuilt.config.cut) ? rebuilt.config.thickness : "2",
-        lang: rebuilt.config.lang,
-      },
-      blocks: rebuilt.blocks,
-    });
-
-    if (!saveLiveCookingPayload(payload)) {
-      return;
-    }
-    const showThickness = shouldShowThickness(rebuilt.config.cut);
-    const liveThicknessRaw = Number(rebuilt.config.thickness);
-    const liveThickness =
-      showThickness && Number.isFinite(liveThicknessRaw) && liveThicknessRaw > 0
-        ? liveThicknessRaw
-        : undefined;
-    router.push(
-      buildLiveUrl({
-        animal: animalIdsByLabel[rebuilt.config.animal],
-        cutId: rebuilt.config.cut,
-        doneness: toLiveDoneness(rebuilt.config.doneness),
-        thickness: liveThickness,
-        lang: rebuilt.config.lang,
-      }),
-    );
-  }
-
-  function handleAnimalChange(selectedAnimal: AnimalLabel) {
-    setAnimal(selectedAnimal);
-    setCut("");
-    resetAdaptiveDetailInputs(undefined, selectedAnimal);
-    setDoneness(getInitialDoneness(selectedAnimal));
-    setBlocks({});
-    setCheckedItems({});
-    resetSaveMenuState();
-    const navMethod: "push" | "replace" =
-      mode === "coccion" && cookingStep === "cut" ? "replace" : "push";
-    commitNav("coccion", "cut", navMethod, { animal: selectedAnimal });
-    track({ name: "animal_selected", animal: selectedAnimal, lang });
-  }
-
-  function replaceCutSelectionAnimal(nextAnimal: AnimalLabel) {
-    commitNav("coccion", "cut", "replace", { animal: nextAnimal });
-  }
-
-  function handleCutSelectionAnimalChange(selectedAnimalId: GeneratedAnimalId) {
-    const selectedAnimal = animalLabelsById[selectedAnimalId] ?? animal;
-    if (selectedAnimal === animal) return;
-
-    setAnimal(selectedAnimal);
-    setCut("");
-    resetAdaptiveDetailInputs(undefined, selectedAnimal);
-    setDoneness(getInitialDoneness(selectedAnimal));
-    setBlocks({});
-    setCheckedItems({});
-    resetSaveMenuState();
-    replaceCutSelectionAnimal(selectedAnimal);
-    track({ name: "animal_selected", animal: selectedAnimal, lang });
-  }
-
-  function handleCutChange(selectedCutId: string) {
-    const defaults = getAdaptiveDetailDefaults(selectedCutId, animal);
-    const defaultThickness = mapSizePresetToThickness(defaults.sizePreset);
-    const defaultDoneness = getInitialDoneness(animal, selectedCutId);
-
-    setCut(selectedCutId);
-    resetAdaptiveDetailInputs(selectedCutId, animal);
-    setDoneness(defaultDoneness);
-    setBlocks({});
-    setCheckedItems({});
-    resetSaveMenuState();
-    commitNav("coccion", "details", "push", {
-      animal,
-      cut: selectedCutId,
-      ...(defaultDoneness ? { doneness: defaultDoneness } : {}),
-      thickness: defaultThickness,
-    });
-    track({ name: "cut_selected", animal, cutId: selectedCutId, lang });
-  }
-
-  function handleCutSelectionPreviewChange(nextCutId: string | null) {
-    if (nextCutId) {
-      setCut(nextCutId);
-      commitNav("coccion", "cut", "push", {
-        animal,
-        cut: nextCutId,
-      });
-      return;
-    }
-
-    setCut("");
-    commitNav("coccion", "cut", "replace", {});
-  }
-
-  function handleCutSelectionStartCooking(profile: GeneratedCutProfile) {
-    const selectedAnimal = animalLabelsById[profile.animalId] ?? animal;
-    const selectedDoneness = getInitialDoneness(selectedAnimal, profile.id);
-    const selectedThickness =
-      profile.showThickness && Number.isFinite(profile.defaultThicknessCm)
-        ? `${profile.defaultThicknessCm}`
-        : "2";
-
-    setAnimal(selectedAnimal);
-    setCut(profile.id);
-    resetAdaptiveDetailInputs(profile.id, selectedAnimal);
-    setDoneness(selectedDoneness);
-    setThickness(selectedThickness);
-    setSizePreset(mapThicknessToSizePreset(selectedThickness));
-    setBlocks({});
-    setCheckedItems({});
-    resetSaveMenuState();
-    commitNav("coccion", "details", "push", {
-      animal: selectedAnimal,
-      cut: profile.id,
-      doneness: selectedDoneness,
-      ...(profile.showThickness ? { thickness: selectedThickness } : {}),
-    });
-    track({ name: "cut_selected", animal: selectedAnimal, cutId: profile.id, lang });
-  }
+  const {
+    handleAnimalChange,
+    handleCutSelectionAnimalChange,
+    handleCutChange,
+    handleCutSelectionPreviewChange,
+    handleCutSelectionStartCooking,
+  } = useCookingInputHandlers({
+    animal,
+    lang,
+    mode,
+    cookingStep,
+    setAnimal,
+    setCut,
+    setDoneness,
+    setThickness,
+    setSizePreset,
+    setBlocks,
+    setCheckedItems,
+    resetSaveMenuState,
+    resetAdaptiveDetailInputs,
+    getAdaptiveDetailDefaults,
+    commitNav,
+  });
 
   async function callAI(
     message: string,
@@ -1288,38 +1088,51 @@ ERROR
     resetSaveMenuState();
   }
 
-  function handleLanguageChange(nextLang: Lang) {
-    setLang(nextLang);
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      params.set("lang", nextLang);
-      const query = params.toString();
-      router.replace(`${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`);
-    }
-    setBlocks({});
-    setCheckedItems({});
-    setPlanGenerated(false);
-    resetSaveMenuState();
-  }
+  const {
+    handleLanguageChange,
+    navigateMode,
+    handleHomePrimaryCtaClick,
+    handleModeChange,
+    handleLivePlanNavigation,
+  } = useNavigationActions({
+    mode,
+    cookingStep,
+    lang,
+    setLang,
+    setBlocks,
+    setCheckedItems,
+    setPlanGenerated,
+    resetSaveMenuState,
+    setSelectedSavedMenu,
+    openPlanningProModal,
+    commitNav,
+    router,
+  });
 
-  function navigateMode(nextMode: Mode) {
-    if (nextMode === mode) return;
-    const nextStep: CookingWizardStep = nextMode === "coccion" ? "cut" : cookingStep;
-    if (nextMode !== "guardados") setSelectedSavedMenu(null);
-    // Soft Pro prompt for multi-item planning (non-blocking — navigation still proceeds)
-    if ((nextMode === "plan" || nextMode === "parrillada") && !isPro()) {
-      openPlanningProModal();
-    }
-    commitNav(nextMode, nextStep, "push");
-  }
-
-  function handleHomePrimaryCtaClick() {
-    commitNav("coccion", "cut", "push");
-  }
-
-  function handleModeChange(nextMode: Mode) {
-    navigateMode(nextMode);
-  }
+  const { loadMenu, reviewSavedCook, startSavedCookLive } = useCookAgainController({
+    animal,
+    equipment,
+    doneness,
+    weight,
+    thickness,
+    lang,
+    setLang,
+    setAnimal,
+    setCut,
+    setWeight,
+    setThickness,
+    setSizePreset,
+    setDoneness,
+    setEquipment,
+    setBlocks,
+    setCheckedItems,
+    setSelectedSavedMenu,
+    resetSaveMenuState,
+    resetAdaptiveDetailInputs,
+    commitNav,
+    navigateMode,
+    router,
+  });
 
   const { handleTouchStart, handleTouchEnd } = useSwipeNavigation({
     onSwipe: (direction) => {
@@ -1342,25 +1155,6 @@ ERROR
       }
     },
   });
-
-
-  function handleLivePlanNavigation() {
-    if (typeof window === "undefined") return;
-    // Result-block re-hydration after reload-in-Live happens in the Result-step
-    // fallback effect above (it survives applyCookingNavContext's blocks wipe).
-    const { animal, cutId, doneness, thickness } = parseLiveParams(window.location.search);
-    const targetUrl =
-      animal && cutId
-        ? buildCookingDetailsUrl({
-            animal,
-            cutId,
-            doneness,
-            thickness: thickness !== undefined ? String(thickness) : undefined,
-            lang,
-          })
-        : buildHomeUrl(lang);
-    router.push(targetUrl);
-  }
 
   // TODO: remove legacy planning state/actions after scheduler demo fully replaces PlanHub flows.
   void [
@@ -1415,6 +1209,7 @@ ERROR
   }
 
   const isCutSelectionShell = mode === "coccion" && cookingStep === "cut";
+  const animalParamPreselected = Boolean(parseCookingAnimal(searchParams.get("animal")));
 
   return (
     <AppShellChrome
@@ -1432,87 +1227,65 @@ ERROR
 
         <ActiveModeRenderer
           mode={mode}
-          home={{
+          home={buildHomeModeProps({
             lang,
-            onLangChange: handleLanguageChange,
-            savedMenusCount: savedMenus.length,
             t,
+            savedMenusCount: savedMenus.length,
+            onLangChange: handleLanguageChange,
             onModeChange: handleModeChange,
             onPrimaryCtaClick: handleHomePrimaryCtaClick,
-          }}
-          coccion={{
+          })}
+          // ESLint react-hooks/refs falsely flags this pure builder call because the
+          // hook-returned handlers it receives close over refs internally; passing them as
+          // values is safe — they are only invoked from event handlers, never during render.
+          // eslint-disable-next-line react-hooks/refs
+          coccion={buildCoccionModeProps({
             cookingStep,
             lang,
             t,
-            cutSelection: {
-              selectedAnimalId: animalIdsByLabel[animal] as GeneratedAnimalId,
-              selectedCutId: cut || null,
-              isAnimalPreselected: Boolean(parseCookingAnimal(searchParams.get("animal"))),
-              onAnimalChange: handleCutSelectionAnimalChange,
-              onPreviewCutChange: handleCutSelectionPreviewChange,
-              onStartCooking: handleCutSelectionStartCooking,
+            selectedAnimalId: animalIdsByLabel[animal] as GeneratedAnimalId,
+            selectedCutId: cut || null,
+            isAnimalPreselected: animalParamPreselected,
+            onCutSelectionAnimalChange: handleCutSelectionAnimalChange,
+            onCutSelectionPreviewChange: handleCutSelectionPreviewChange,
+            onCutSelectionStartCooking: handleCutSelectionStartCooking,
+            animal,
+            cut,
+            cuts,
+            selectedCut,
+            currentDonenessOptions,
+            doneness,
+            equipment,
+            thickness,
+            showThickness,
+            advancedThicknessEnabled,
+            sizePreset,
+            weightRange,
+            vegetableFormat,
+            loading,
+            blocks,
+            checkedItems,
+            saveMenuStatus,
+            saveMenuMessage,
+            getAnimalPreview,
+            onAnimalChange: handleAnimalChange,
+            onCutChange: handleCutChange,
+            onCookingStepChange: navigateCookingStep,
+            setAdvancedThicknessEnabled,
+            setDoneness,
+            setEquipment,
+            setSizePreset,
+            setThickness,
+            setVegetableFormat,
+            setWeightRange,
+            resetSaveMenuState,
+            setCheckedItems,
+            onGenerateCookingPlan: generateCookingPlan,
+            onSaveMenu: async () => {
+              await saveCurrentMenu();
             },
-            wizard: {
-              animal,
-              cut,
-              cuts,
-              selectedCut,
-              currentDonenessOptions,
-              doneness,
-              equipment,
-              thickness,
-              showThickness,
-              advancedThicknessEnabled,
-              sizePreset,
-              weightRange,
-              vegetableFormat,
-              loading,
-              blocks,
-              checkedItems,
-              saveMenuStatus,
-              saveMenuMessage,
-              getAnimalPreview,
-              onAnimalChange: handleAnimalChange,
-              onCutChange: handleCutChange,
-              onCookingStepChange: navigateCookingStep,
-              onAdvancedThicknessEnabledChange: (value) => {
-                setAdvancedThicknessEnabled(value);
-                resetSaveMenuState();
-              },
-              onDonenessChange: (value) => {
-                setDoneness(value);
-                resetSaveMenuState();
-              },
-              onEquipmentChange: (value) => {
-                setEquipment(value);
-                resetSaveMenuState();
-              },
-              onSizePresetChange: (value) => {
-                setSizePreset(value);
-                setThickness(mapSizePresetToThickness(value));
-                resetSaveMenuState();
-              },
-              onThicknessChange: (value) => {
-                setThickness(value);
-                setSizePreset(mapThicknessToSizePreset(value));
-                resetSaveMenuState();
-              },
-              onVegetableFormatChange: (value) => {
-                setVegetableFormat(value);
-                resetSaveMenuState();
-              },
-              onWeightRangeChange: (value) => {
-                setWeightRange(value);
-                resetSaveMenuState();
-              },
-              onCheckedItemsChange: setCheckedItems,
-              onGenerateCookingPlan: generateCookingPlan,
-              onSaveMenu: async () => {
-                await saveCurrentMenu();
-              },
-            },
-          }}
-          menu={{
+          })}
+          menu={buildMenuModeProps({
             t,
             people,
             setPeople,
@@ -1538,35 +1311,31 @@ ERROR
             onSaveCurrentMenu: async () => {
               await saveCurrentMenu();
             },
-          }}
-          guardados={{
+          })}
+          guardados={buildGuardadosModeProps({
             lang,
             t,
             guardadosTab,
             onGuardadosTabChange: setGuardadosTab,
-            plans: {
-              checkedItems,
-              setCheckedItems,
-              savedMenus,
-              selectedSavedMenu,
-              shareMessage,
-              shareMessageMenuId,
-              shareStatus,
-              sharingMenuId,
-              onClearSelectedSavedMenu: () => setSelectedSavedMenu(null),
-              onCopyShareLink: copyShareLink,
-              onCopySavedMenu: copySavedMenu,
-              onDeleteMenu: deleteMenu,
-              onLoadMenu: loadMenu,
-              onCookAgainLive: startSavedCookLive,
-              onCookAgainReview: reviewSavedCook,
-              onPublishMenu: publishMenu,
-              onUnpublishMenu: unpublishMenu,
-            },
-            cooks: {
-              onStartCooking: () => navigateMode("coccion"),
-            },
-          }}
+            checkedItems,
+            setCheckedItems,
+            savedMenus,
+            selectedSavedMenu,
+            shareMessage,
+            shareMessageMenuId,
+            shareStatus,
+            sharingMenuId,
+            onClearSelectedSavedMenu: () => setSelectedSavedMenu(null),
+            onCopyShareLink: copyShareLink,
+            onCopySavedMenu: copySavedMenu,
+            onDeleteMenu: deleteMenu,
+            onLoadMenu: loadMenu,
+            onCookAgainLive: startSavedCookLive,
+            onCookAgainReview: reviewSavedCook,
+            onPublishMenu: publishMenu,
+            onUnpublishMenu: unpublishMenu,
+            onStartCookingFromSavedCooks: () => navigateMode("coccion"),
+          })}
         />
     </AppShellChrome>
   );
