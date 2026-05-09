@@ -24,6 +24,7 @@ type Props = {
   currentIndex: number;
   remaining: number;
   paused: boolean;
+  started?: boolean;
   context?: string;
   lang?: "es" | "en" | "fi";
   onBack?: () => void;
@@ -114,6 +115,7 @@ export default function LiveCookingScreen({
   currentIndex,
   remaining,
   paused,
+  started,
   context,
   lang,
   onBack,
@@ -128,7 +130,7 @@ export default function LiveCookingScreen({
   onSaveCook,
 }: Props) {
   const resolvedLang = lang ?? "es";
-  const [hasStarted, setHasStarted] = useState(false);
+  const hasStarted = started ?? false;
   const reduceMotion = usePrefersReducedMotion();
   const liveUrlState = useMemo(() => {
     if (typeof window === "undefined") {
@@ -204,7 +206,6 @@ export default function LiveCookingScreen({
 
   function handlePrimaryAction() {
     if (!hasStarted) {
-      setHasStarted(true);
       if (paused) onPause();
       return;
     }
@@ -215,9 +216,6 @@ export default function LiveCookingScreen({
   }
 
   function handlePauseToggle() {
-    if (!hasStarted) {
-      setHasStarted(true);
-    }
     onPause();
   }
 

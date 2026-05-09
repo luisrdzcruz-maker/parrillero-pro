@@ -48,6 +48,7 @@ type UseLiveCookingSessionResult = {
   liveCurrentIndex: number;
   liveRemaining: number;
   livePaused: boolean;
+  liveStarted: boolean;
   activeStep: LiveStep | undefined;
   liveIsLast: boolean;
   liveHasTimer: boolean;
@@ -167,6 +168,7 @@ export function useLiveCookingSession({
   const [liveCurrentIndex, setLiveCurrentIndex] = useState(0);
   const [liveRemaining, setLiveRemaining] = useState(0);
   const [livePaused, setLivePaused] = useState(true);
+  const [liveStarted, setLiveStarted] = useState(false);
   const [hasValidPlan, setHasValidPlan] = useState(false);
   const [isUsingFallbackPlan, setIsUsingFallbackPlan] = useState(true);
   const liveAdvanceRef = useRef(false);
@@ -213,6 +215,7 @@ export function useLiveCookingSession({
       setLiveCurrentIndex(hydratedTimer?.currentStepIndex ?? 0);
       setLiveRemaining(hydratedTimer?.remainingSec ?? built.steps[0]?.duration ?? 0);
       setLivePaused(hydratedTimer?.paused ?? true);
+      setLiveStarted(safePayload?.timer?.started ?? false);
       setHasValidPlan(!built.usedFallback && built.steps.length > 0);
       setIsUsingFallbackPlan(built.usedFallback);
       setLiveClientReady(true);
@@ -242,8 +245,9 @@ export function useLiveCookingSession({
       remainingAtLastWriteSec: liveRemainingRef.current,
       paused: livePaused,
       lastWriteMs: Date.now(),
+      started: liveStarted,
     });
-  }, [mode, liveClientReady, liveCurrentIndex, livePaused, liveSteps.length]);
+  }, [mode, liveClientReady, liveCurrentIndex, livePaused, liveStarted, liveSteps.length]);
 
   useEffect(() => {
     if (
@@ -274,10 +278,12 @@ export function useLiveCookingSession({
 
   const startCooking = useCallback(() => {
     setLivePaused(false);
+    setLiveStarted(true);
   }, []);
 
   const togglePause = useCallback(() => {
     setLivePaused((value) => !value);
+    setLiveStarted(true);
   }, []);
 
   const goToNextStep = useCallback(() => {
@@ -313,6 +319,7 @@ export function useLiveCookingSession({
     setLiveCurrentIndex(0);
     setLiveRemaining(liveSteps[0]?.duration ?? 0);
     setLivePaused(true);
+    setLiveStarted(false);
   }, [liveSteps]);
 
   return useMemo(
@@ -323,6 +330,7 @@ export function useLiveCookingSession({
       liveCurrentIndex,
       liveRemaining,
       livePaused,
+      liveStarted,
       activeStep,
       liveIsLast,
       liveHasTimer,
@@ -345,6 +353,7 @@ export function useLiveCookingSession({
       liveCurrentIndex,
       liveRemaining,
       livePaused,
+      liveStarted,
       activeStep,
       liveIsLast,
       liveHasTimer,

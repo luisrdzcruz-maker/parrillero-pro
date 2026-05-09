@@ -72,6 +72,7 @@ import { getDonenessSurfaceLabel, sanitizeCriticalErrorCopy } from "@/lib/i18n/s
 import { texts, type Lang } from "@/lib/i18n/texts";
 import {
   createLiveCookingPayload,
+  readLiveCookingPayload,
   saveLiveCookingPayload,
 } from "@/lib/liveCookingPlan";
 import { buildLiveUrl } from "@/lib/navigation/buildLiveUrl";
@@ -603,6 +604,7 @@ function HomeContent() {
     liveCurrentIndex,
     liveRemaining,
     livePaused,
+    liveStarted,
     liveCookComplete,
     togglePause,
     goToNextStep,
@@ -1818,6 +1820,16 @@ ERROR
 
   function handleLivePlanNavigation() {
     if (typeof window === "undefined") return;
+
+    // Reload-in-Live wipes the in-memory result blocks; restore from the live payload
+    // so the Result screen renders the full plan instead of the empty placeholder.
+    if (Object.keys(blocks).length === 0) {
+      const payload = readLiveCookingPayload();
+      if (payload?.blocks && Object.keys(payload.blocks).length > 0) {
+        setBlocks(payload.blocks);
+      }
+    }
+
     const { animal, cutId, doneness, thickness } = parseLiveParams(window.location.search);
     const targetUrl =
       animal && cutId
@@ -1885,6 +1897,7 @@ ERROR
                 currentIndex={liveCurrentIndex}
                 remaining={liveRemaining}
                 paused={livePaused}
+                started={liveStarted}
                 context={liveContext}
                 lang={lang}
                 onBack={handleLivePlanNavigation}

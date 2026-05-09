@@ -26,6 +26,7 @@ export type LiveCookingTimerState = {
   remainingAtLastWriteSec: number;
   paused: boolean;
   lastWriteMs: number;
+  started: boolean;
 };
 
 export type LiveCookingPlanPayload = {
@@ -75,6 +76,7 @@ function asLiveCookingTimerState(value: unknown): LiveCookingTimerState | undefi
     remainingAtLastWriteSec: Math.max(0, Math.round(remainingAtLastWriteSec)),
     paused,
     lastWriteMs: Math.round(lastWriteMs),
+    started: record.started === true,
   };
 }
 
