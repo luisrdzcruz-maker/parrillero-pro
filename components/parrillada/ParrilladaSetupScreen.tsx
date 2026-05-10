@@ -52,16 +52,13 @@ export function ParrilladaSetupScreen({
 
   return (
     <section className="space-y-3">
-      <header className="px-1">
-        <h2 className="text-lg font-semibold text-white">{title}</h2>
-        <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-white/65">
-          <span className="rounded-full border border-orange-300/30 bg-orange-500/10 px-2 py-0.5 uppercase tracking-[0.14em] text-orange-100">
-            {mode === 'pro' ? 'Pro' : 'Lite'}
-          </span>
-          <span className="rounded-full border border-white/10 bg-black/20 px-2 py-0.5">
-            {liteMinItems}–{liteMaxItems} items
-          </span>
-        </div>
+      <header className="flex items-center justify-between gap-3 px-1">
+        <h2 className="min-w-0 truncate text-lg font-semibold text-white">
+          {title} {mode === 'pro' ? 'Pro' : 'Lite'}
+        </h2>
+        <span className="shrink-0 rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[11px] font-semibold text-white/65 tabular-nums">
+          {liteMinItems}–{liteMaxItems} items
+        </span>
       </header>
 
       <ParrilladaMenuBuilderCard

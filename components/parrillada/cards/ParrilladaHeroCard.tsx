@@ -25,7 +25,7 @@ export function ParrilladaHeroCard({ plan, keyExecutionHint }: ParrilladaHeroCar
         </span>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+      <div className="mt-3 grid grid-cols-4 gap-1">
         <Metric label="Items" value={`${plan.items.length}`} />
         <Metric label="Serve" value={plan.serveTargetLabel} />
         <Metric label="Complexity" value={plan.complexity} />
@@ -58,10 +58,10 @@ function countUniqueZones(plan: ParrilladaPlan): number {
 function Metric({ label, value, tone = 'default' }: { label: string; value: string; tone?: MetricTone }) {
   const className =
     tone === 'amber'
-      ? 'rounded-2xl border border-amber-300/30 bg-amber-500/10 px-2.5 py-1.5'
-      : 'rounded-2xl border border-white/10 bg-black/20 px-2.5 py-1.5';
-  const labelClass = tone === 'amber' ? 'text-[10px] text-amber-200/85' : 'text-[10px] text-white/50';
-  const valueClass = tone === 'amber' ? 'mt-0.5 text-[13px] font-semibold text-amber-100' : 'mt-0.5 text-[13px] font-semibold text-white';
+      ? 'min-w-0 rounded-xl border border-amber-300/30 bg-amber-500/10 px-1.5 py-1.5'
+      : 'min-w-0 rounded-xl border border-white/10 bg-black/20 px-1.5 py-1.5';
+  const labelClass = tone === 'amber' ? 'truncate text-[9px] uppercase tracking-wide text-amber-200/85' : 'truncate text-[9px] uppercase tracking-wide text-white/50';
+  const valueClass = tone === 'amber' ? 'mt-0.5 truncate text-[13px] font-semibold text-amber-100' : 'mt-0.5 truncate text-[13px] font-semibold text-white';
 
   return (
     <article className={className}>

@@ -9,7 +9,7 @@ export const parrilladaPlanCopy = {
     recentTitle: 'Recent plans',
   },
   setup: {
-    title: 'Build your parrillada',
+    title: 'Build your Parrillada',
     subtitle: 'Stack simple cards now. Unlock advanced controls only when needed.',
     cta: 'Generate Parrillada Plan',
   },
