@@ -31,6 +31,11 @@ export const ds = {
     subtitle: "text-sm leading-6 text-slate-300 md:text-base",
     body: "text-sm leading-relaxed text-slate-200",
     muted: "text-sm text-slate-400",
+    metricEyebrow: "text-[9px] font-black uppercase tracking-[0.16em] sm:text-[10px]",
+    metricLarge:
+      "font-black tracking-[-0.04em] text-white text-[clamp(1.55rem,7vw,2rem)] leading-none sm:text-3xl",
+    metricCompact:
+      "font-black tracking-[-0.04em] text-white truncate text-[clamp(0.95rem,3.6vw,1.2rem)] leading-tight",
   },
 
   colors: {
@@ -68,6 +73,39 @@ export const ds = {
     glass:
       "rounded-2xl border border-white/10 bg-white/5 p-5 shadow-xl shadow-black/20 backdrop-blur",
     timer: "mt-6 rounded-3xl bg-slate-950 p-8 text-center",
+    row:
+      "flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3 transition hover:border-orange-500/40 hover:bg-orange-500/[0.06]",
+    rowSelected:
+      "border-orange-500/40 bg-orange-500/[0.08] shadow-[0_8px_24px_rgba(249,115,22,0.12)]",
+    metric:
+      "min-w-0 rounded-[1.15rem] border px-3 py-2.5 shadow-lg shadow-black/10 ring-1 ring-inset",
+  },
+
+  metricTone: {
+    orange: "border-orange-300/25 bg-orange-500/[0.09] text-orange-50 ring-orange-200/[0.05]",
+    red: "border-red-300/25 bg-red-500/[0.08] text-red-50 ring-red-200/[0.04]",
+    sky: "border-sky-300/20 bg-sky-500/[0.07] text-sky-50 ring-sky-200/[0.04]",
+  },
+
+  disclosure: {
+    summary:
+      "flex items-center justify-between gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-white/[0.04]",
+    chip:
+      "inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/[0.04] px-2.5 py-1 text-[11px] font-semibold text-slate-200 transition hover:border-orange-300/40 hover:bg-orange-500/10 hover:text-orange-100",
+    body: "mt-2 space-y-2 text-[13px] leading-relaxed text-slate-200",
+  },
+
+  liveBg: {
+    direct:
+      "radial-gradient(ellipse at 50% 0%, rgba(249,115,22,0.18), transparent 58%), linear-gradient(180deg, #050301, #030201)",
+    indirect:
+      "radial-gradient(ellipse at 50% 0%, rgba(56,189,248,0.16), transparent 58%), linear-gradient(180deg, #050608, #020203)",
+    rest:
+      "radial-gradient(ellipse at 50% 0%, rgba(250,204,21,0.16), transparent 58%), linear-gradient(180deg, #0a0703, #030201)",
+    urgent:
+      "radial-gradient(ellipse at 50% 0%, rgba(250,204,21,0.24), transparent 58%), linear-gradient(180deg, #0a0703, #030201)",
+    complete:
+      "radial-gradient(ellipse at 50% 0%, rgba(16,185,129,0.18), transparent 58%), linear-gradient(180deg, #020202, #040404)",
   },
 
   button: {
