@@ -127,26 +127,31 @@ function PrimaryActionTile({ action }: { action: QuickAction }) {
     <button
       type="button"
       onClick={(e) => action.onClick(e)}
-      className="group relative min-h-[142px] w-full touch-manipulation overflow-hidden rounded-[1.65rem] border border-orange-300/34 bg-[radial-gradient(circle_at_25%_0%,rgba(249,115,22,0.24),transparent_44%),linear-gradient(145deg,rgba(249,115,22,0.12),rgba(255,255,255,0.045))] px-3.5 py-4 text-left shadow-[0_18px_42px_rgba(249,115,22,0.11)] ring-1 ring-inset ring-orange-200/[0.04] transition-all duration-200 hover:border-orange-300/50 active:scale-[0.98] sm:min-h-[168px] sm:rounded-[1.9rem] sm:px-5 sm:py-5"
+      className="group relative min-h-[176px] w-full touch-manipulation overflow-hidden rounded-[1.5rem] border border-orange-300/55 bg-[radial-gradient(circle_at_30%_-10%,rgba(249,115,22,0.55),transparent_55%),linear-gradient(155deg,rgba(234,88,12,0.32)_0%,rgba(120,53,15,0.28)_38%,rgba(15,11,8,0.92)_100%)] px-4 pb-4 pt-5 text-left shadow-[0_28px_56px_rgba(0,0,0,0.6),0_18px_44px_rgba(249,115,22,0.28)] ring-1 ring-inset ring-orange-200/[0.12] transition-all duration-200 hover:border-orange-200/75 hover:shadow-[0_30px_60px_rgba(0,0,0,0.65),0_22px_52px_rgba(249,115,22,0.42)] active:scale-[0.98] sm:min-h-[208px] sm:rounded-[1.7rem] sm:px-5 sm:pb-5 sm:pt-6"
     >
-      <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-white/24 to-transparent" />
-      <div className="flex h-full flex-col justify-between gap-4">
-        {action.registryIcon ? (
-          <AppIcon
-            category={action.registryIcon.category}
-            iconKey={action.registryIcon.key}
-            alt=""
-            size="lg"
-            aria-hidden="true"
-            className="h-16 w-16 rounded-[1.35rem] border border-orange-300/22 bg-black/32 p-3 shadow-[0_12px_30px_rgba(249,115,22,0.18)] ring-1 ring-inset ring-white/[0.05] transition-transform duration-200 group-hover:scale-[1.03] sm:h-[4.5rem] sm:w-[4.5rem]"
-            fallback={<span className="text-xl" aria-hidden>{action.icon}</span>}
-          />
-        ) : (
-          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[1.35rem] border border-white/10 bg-black/24 text-3xl shadow-[0_10px_24px_rgba(0,0,0,0.24)]" aria-hidden>{action.icon}</span>
-        )}
+      <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-orange-200/55 to-transparent" />
+      <div className="pointer-events-none absolute -right-14 -top-16 h-40 w-40 rounded-full bg-orange-400/30 blur-3xl transition group-hover:bg-orange-400/45" />
+      <div className="pointer-events-none absolute -bottom-16 -left-10 h-32 w-32 rounded-full bg-orange-700/24 blur-3xl" />
+      <div className="relative flex h-full flex-col justify-between gap-4">
+        <div className="flex items-start justify-between gap-3">
+          {action.registryIcon ? (
+            <AppIcon
+              category={action.registryIcon.category}
+              iconKey={action.registryIcon.key}
+              alt=""
+              size="lg"
+              aria-hidden="true"
+              className="h-[4.25rem] w-[4.25rem] rounded-[1.35rem] border border-orange-300/40 bg-[#0a0503]/72 p-3 shadow-[0_14px_32px_rgba(249,115,22,0.36),inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-inset ring-white/[0.08] transition-transform duration-200 group-hover:scale-[1.04] sm:h-[5rem] sm:w-[5rem]"
+              fallback={<span className="text-xl" aria-hidden>{action.icon}</span>}
+            />
+          ) : (
+            <span className="flex h-[4.25rem] w-[4.25rem] shrink-0 items-center justify-center rounded-[1.35rem] border border-white/10 bg-black/40 text-3xl shadow-[0_10px_24px_rgba(0,0,0,0.36)]" aria-hidden>{action.icon}</span>
+          )}
+          <span aria-hidden="true" className="mt-1.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/40 text-[11px] font-black text-white/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:border-orange-200/55 group-hover:text-orange-100">→</span>
+        </div>
         <div className="min-w-0">
-          <p className="text-[15px] font-black leading-tight tracking-[-0.02em] text-white sm:text-lg">{action.title}</p>
-          <p className="mt-1.5 line-clamp-2 text-xs leading-snug text-slate-300/78 sm:text-sm sm:leading-relaxed">{action.description}</p>
+          <p className="text-[17px] font-black leading-[1.05] tracking-[-0.025em] text-white sm:text-[22px]">{action.title}</p>
+          <p className="mt-1.5 line-clamp-2 text-[11px] font-medium leading-snug text-orange-100/72 sm:text-[13px] sm:leading-relaxed">{action.description}</p>
         </div>
       </div>
     </button>
@@ -158,8 +163,9 @@ function SecondaryActionTile({ action }: { action: QuickAction }) {
     <button
       type="button"
       onClick={(e) => action.onClick(e)}
-      className="group relative flex min-h-[78px] w-full touch-manipulation items-center gap-3 overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.025] px-3.5 py-3 text-left ring-1 ring-inset ring-white/[0.025] transition-all duration-200 hover:border-white/15 hover:bg-white/[0.05] active:scale-[0.98] sm:min-h-[88px] sm:px-4 sm:py-3.5"
+      className="group relative flex min-h-[88px] w-full touch-manipulation items-center gap-3 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0a0807]/72 px-3.5 py-3 text-left shadow-[0_14px_32px_rgba(0,0,0,0.42)] ring-1 ring-inset ring-white/[0.04] backdrop-blur-xl transition-all duration-200 hover:border-orange-300/35 hover:bg-[#0d0a08]/82 active:scale-[0.98] sm:min-h-[100px] sm:px-4 sm:py-3.5"
     >
+      <div className="pointer-events-none absolute inset-x-3 top-0 h-px bg-gradient-to-r from-transparent via-white/12 to-transparent" />
       {action.registryIcon ? (
         <AppIcon
           category={action.registryIcon.category}
@@ -167,16 +173,17 @@ function SecondaryActionTile({ action }: { action: QuickAction }) {
           alt=""
           size="md"
           aria-hidden="true"
-          className="h-11 w-11 shrink-0 rounded-xl border border-white/10 bg-black/24 p-2 shadow-[0_8px_18px_rgba(0,0,0,0.22)] sm:h-12 sm:w-12"
+          className="h-12 w-12 shrink-0 rounded-xl border border-white/[0.08] bg-black/40 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_8px_18px_rgba(0,0,0,0.32)] transition group-hover:border-orange-300/30 sm:h-[3.25rem] sm:w-[3.25rem]"
           fallback={<span className="text-lg" aria-hidden>{action.icon}</span>}
         />
       ) : (
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-black/24 text-2xl shadow-[0_8px_18px_rgba(0,0,0,0.22)] sm:h-12 sm:w-12" aria-hidden>{action.icon}</span>
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-black/40 text-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_8px_18px_rgba(0,0,0,0.32)] sm:h-[3.25rem] sm:w-[3.25rem]" aria-hidden>{action.icon}</span>
       )}
       <div className="min-w-0 flex-1">
-        <p className="text-[13px] font-bold leading-tight tracking-[-0.01em] text-slate-100 sm:text-sm">{action.title}</p>
-        <p className="mt-0.5 line-clamp-1 text-[11px] leading-snug text-slate-400 sm:text-xs">{action.description}</p>
+        <p className="text-[14px] font-black leading-tight tracking-[-0.015em] text-white sm:text-[15px]">{action.title}</p>
+        <p className="mt-0.5 line-clamp-1 text-[11px] font-medium leading-snug text-slate-400 sm:text-xs">{action.description}</p>
       </div>
+      <span aria-hidden="true" className="ml-1 shrink-0 text-base font-black text-white/22 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-orange-200/55">→</span>
     </button>
   );
 }
@@ -193,7 +200,8 @@ function HomeSettingsStrip({
   onLangChange: (lang: Lang) => void;
 }) {
   return (
-    <section className="flex items-center justify-between gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 sm:px-5">
+    <section className="relative flex items-center justify-between gap-3 overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 ring-1 ring-inset ring-white/[0.04] backdrop-blur-xl sm:px-5">
+      <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-white/12 to-transparent" />
       <div className="min-w-0">
         <p className="truncate text-[10px] font-black uppercase tracking-[0.18em] text-white/62">
           {t.homeSettingsKicker}
@@ -206,7 +214,7 @@ function HomeSettingsStrip({
       <select
         value={lang}
         onChange={(e) => onLangChange(e.target.value as Lang)}
-        className="min-h-9 shrink-0 rounded-xl border border-white/[0.09] bg-slate-950/80 px-3 text-xs font-bold text-slate-100 shadow-inner shadow-black/30 outline-none transition focus:border-orange-400/60 focus:ring-2 focus:ring-orange-500/15"
+        className="min-h-9 shrink-0 rounded-xl border border-white/[0.1] bg-[#050302]/70 px-3 text-xs font-bold text-slate-100 shadow-inner shadow-black/40 outline-none transition focus:border-orange-400/60 focus:ring-2 focus:ring-orange-500/15"
       >
         <option value="es">🇪🇸 {t.homeLangSpanish}</option>
         <option value="en">🇬🇧 {t.homeLangEnglish}</option>
@@ -334,7 +342,6 @@ export function HomeScreen({
       )}
 
     <div className="relative mx-auto min-w-0 w-full max-w-2xl overflow-x-hidden pb-4 sm:pb-6 lg:max-w-3xl lg:pb-6">
-      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[34rem] rounded-[3rem] bg-[radial-gradient(circle_at_50%_0%,rgba(249,115,22,0.12),transparent_44%),linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0))]" />
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <FadeIn>
         <HeroSection t={t} />

@@ -188,10 +188,11 @@ export default function ResultHero({
 
   return (
     <>
-      <Panel as="section" className="relative mb-3 overflow-hidden p-3.5 sm:mb-5 sm:p-5" tone="hero">
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400/50 to-transparent" />
-        <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-orange-500/10 blur-3xl" />
-        <div className="pointer-events-none absolute -left-8 bottom-0 h-28 w-28 rounded-full bg-orange-500/[0.06] blur-2xl" />
+      <Panel as="section" className="relative mb-3 overflow-hidden p-4 sm:mb-5 sm:p-6" tone="hero">
+        <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-orange-300/85 to-transparent" />
+        <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-orange-500/[0.28] blur-3xl" />
+        <div className="pointer-events-none absolute -left-14 bottom-0 h-40 w-40 rounded-full bg-orange-700/[0.18] blur-3xl" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
         <div className="relative z-10 grid gap-3.5 sm:gap-4">
           <div className="min-w-0 space-y-3">
@@ -219,25 +220,25 @@ export default function ResultHero({
               <button
                 type="button"
                 onClick={actions.onStartCooking}
-                className="group col-span-2 flex min-h-[66px] w-full items-center justify-between gap-3 rounded-[1.35rem] border border-orange-200/45 bg-gradient-to-br from-orange-200 via-orange-500 to-orange-600 px-3.5 py-3.5 text-left text-slate-950 shadow-[0_18px_38px_rgba(234,88,12,0.34)] ring-1 ring-inset ring-white/25 transition-all duration-200 hover:border-orange-100/70 hover:brightness-105 active:scale-[0.99] xl:row-span-2 xl:min-h-[132px] xl:flex-col xl:items-start xl:justify-between xl:p-4"
+                className="group col-span-2 flex min-h-[78px] w-full items-center justify-between gap-3 rounded-[1.45rem] border border-orange-200/55 bg-gradient-to-br from-orange-200 via-orange-500 to-orange-600 px-4 py-4 text-left text-slate-950 shadow-[0_24px_52px_rgba(234,88,12,0.5)] ring-1 ring-inset ring-white/30 transition-all duration-200 hover:border-orange-100/80 hover:shadow-[0_28px_60px_rgba(234,88,12,0.62)] hover:brightness-105 active:scale-[0.99] xl:row-span-2 xl:min-h-[148px] xl:flex-col xl:items-start xl:justify-between xl:p-5"
               >
                 <span className="flex min-w-0 items-center gap-3 xl:block">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-950/15 bg-slate-950/18 shadow-inner ring-1 ring-white/20 xl:h-12 xl:w-12">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-slate-950/20 bg-slate-950/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] ring-1 ring-white/25 xl:h-14 xl:w-14">
                     <BrandImageIcon
                       src={brandIconAssets.navLive}
                       alt=""
                       size="sm"
                       shape="plain"
                       aria-hidden="true"
-                      className="h-7 w-7 rounded-md drop-shadow-[0_0_10px_rgba(0,0,0,0.24)]"
+                      className="h-7 w-7 rounded-md drop-shadow-[0_0_10px_rgba(0,0,0,0.28)] xl:h-8 xl:w-8"
                     />
                   </span>
-                  <span className="min-w-0 text-[15px] font-black leading-tight xl:mt-3 xl:block xl:text-xl">
+                  <span className="min-w-0 text-[17px] font-black leading-[1.05] tracking-[-0.02em] xl:mt-4 xl:block xl:text-[26px]">
                     {copy.resultActionsLiveCta || t.startCooking}
                   </span>
                 </span>
                 <span
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-950/13 text-slate-950 ring-1 ring-inset ring-slate-950/12 transition-transform duration-200 group-hover:translate-x-0.5 xl:self-end"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-950/18 text-slate-950 ring-1 ring-inset ring-slate-950/15 transition-transform duration-200 group-hover:translate-x-0.5 xl:self-end"
                   aria-hidden="true"
                 >
                   <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none">
@@ -246,7 +247,7 @@ export default function ResultHero({
                       stroke="currentColor"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth="2"
+                      strokeWidth="2.4"
                     />
                   </svg>
                 </span>

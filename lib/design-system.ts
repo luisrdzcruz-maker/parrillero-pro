@@ -55,23 +55,23 @@ export const ds = {
   },
 
   shell: {
-    page: "min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_18%_0%,rgba(249,115,22,0.13),transparent_32%),radial-gradient(circle_at_82%_12%,rgba(120,53,15,0.10),transparent_30%),linear-gradient(180deg,#050301_0%,#090807_42%,#030201_100%)] px-4 pb-28 pt-5 text-white",
+    page: "min-h-screen overflow-x-hidden bg-[radial-gradient(ellipse_at_50%_-6%,rgba(249,115,22,0.32),transparent_46%),radial-gradient(ellipse_at_18%_4%,rgba(234,88,12,0.18),transparent_38%),radial-gradient(ellipse_at_84%_10%,rgba(120,53,15,0.16),transparent_34%),linear-gradient(180deg,#0a0604_0%,#0b0907_30%,#050302_70%,#030201_100%)] px-4 pb-28 pt-5 text-white",
     container: "relative z-10 mx-auto max-w-6xl",
   },
 
   panel: {
-    form: "space-y-4 rounded-3xl border border-white/10 bg-white/[0.045] p-5 shadow-2xl shadow-black/20 ring-1 ring-inset ring-white/[0.035] backdrop-blur-xl",
-    card: "rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.07] to-white/[0.035] shadow-lg shadow-black/20 ring-1 ring-inset ring-white/[0.035] backdrop-blur",
+    form: "space-y-4 rounded-3xl border border-white/10 bg-white/[0.045] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.45)] ring-1 ring-inset ring-white/[0.06] backdrop-blur-xl",
+    card: "rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.07] to-white/[0.035] shadow-[0_18px_40px_rgba(0,0,0,0.35)] ring-1 ring-inset ring-white/[0.06] backdrop-blur",
     result:
-      "relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/95 to-slate-900/65 shadow-lg shadow-black/20 ring-1 ring-inset ring-white/[0.03]",
+      "relative overflow-hidden rounded-[1.65rem] border border-white/[0.08] bg-white/[0.045] shadow-[0_18px_40px_rgba(0,0,0,0.38)] ring-1 ring-inset ring-white/[0.06] backdrop-blur-xl",
     homeCard:
-      "group rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900/95 to-slate-900/60 p-6 text-left shadow-lg shadow-black/15 ring-1 ring-inset ring-white/[0.03] transition hover:-translate-y-1 hover:border-orange-500/40 hover:shadow-orange-500/10 active:scale-[0.99]",
-    hero: "overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900/95 via-slate-900/80 to-slate-950/95 shadow-2xl shadow-black/25 ring-1 ring-inset ring-white/[0.03]",
+      "group rounded-[1.65rem] border border-white/[0.08] bg-white/[0.045] p-6 text-left shadow-[0_18px_42px_rgba(0,0,0,0.4)] ring-1 ring-inset ring-white/[0.06] backdrop-blur-xl transition hover:-translate-y-1 hover:border-orange-300/40 hover:bg-white/[0.06] hover:shadow-[0_20px_46px_rgba(249,115,22,0.18)] active:scale-[0.99]",
+    hero: "relative overflow-hidden rounded-[1.85rem] border border-white/[0.1] bg-[linear-gradient(160deg,rgba(255,255,255,0.085)_0%,rgba(255,255,255,0.045)_30%,rgba(0,0,0,0.0)_60%,rgba(0,0,0,0.22)_100%)] shadow-[0_36px_72px_rgba(0,0,0,0.6)] ring-1 ring-inset ring-white/[0.08] backdrop-blur-xl",
     highlight: "rounded-2xl border border-orange-500/30 bg-orange-500/10 p-4",
     empty:
-      "rounded-3xl border border-white/10 bg-slate-900/75 p-6 text-slate-400 shadow-xl shadow-black/10",
+      "rounded-[1.65rem] border border-white/[0.08] bg-white/[0.03] p-6 text-slate-400 shadow-[0_14px_36px_rgba(0,0,0,0.32)] ring-1 ring-inset ring-white/[0.04] backdrop-blur",
     glass:
-      "rounded-2xl border border-white/10 bg-white/5 p-5 shadow-xl shadow-black/20 backdrop-blur",
+      "rounded-2xl border border-white/10 bg-white/5 p-5 shadow-xl shadow-black/30 backdrop-blur",
     timer: "mt-6 rounded-3xl bg-slate-950 p-8 text-center",
     row:
       "flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3 transition hover:border-orange-500/40 hover:bg-orange-500/[0.06]",
@@ -97,15 +97,15 @@ export const ds = {
 
   liveBg: {
     direct:
-      "radial-gradient(ellipse at 50% 0%, rgba(249,115,22,0.18), transparent 58%), linear-gradient(180deg, #050301, #030201)",
+      "radial-gradient(ellipse at 50% -4%, rgba(249,115,22,0.34), transparent 52%), radial-gradient(ellipse at 50% 100%, rgba(234,88,12,0.16), transparent 48%), linear-gradient(180deg, #0a0503, #050302 60%, #030201)",
     indirect:
-      "radial-gradient(ellipse at 50% 0%, rgba(56,189,248,0.16), transparent 58%), linear-gradient(180deg, #050608, #020203)",
+      "radial-gradient(ellipse at 50% -4%, rgba(56,189,248,0.28), transparent 52%), radial-gradient(ellipse at 50% 100%, rgba(14,165,233,0.12), transparent 48%), linear-gradient(180deg, #050a0d, #030608 60%, #020405)",
     rest:
-      "radial-gradient(ellipse at 50% 0%, rgba(250,204,21,0.16), transparent 58%), linear-gradient(180deg, #0a0703, #030201)",
+      "radial-gradient(ellipse at 50% -4%, rgba(250,204,21,0.26), transparent 52%), radial-gradient(ellipse at 50% 100%, rgba(245,158,11,0.12), transparent 48%), linear-gradient(180deg, #0d0904, #060402 60%, #030201)",
     urgent:
-      "radial-gradient(ellipse at 50% 0%, rgba(250,204,21,0.24), transparent 58%), linear-gradient(180deg, #0a0703, #030201)",
+      "radial-gradient(ellipse at 50% -4%, rgba(250,204,21,0.36), transparent 52%), radial-gradient(ellipse at 50% 100%, rgba(245,158,11,0.18), transparent 48%), linear-gradient(180deg, #100a04, #070502 60%, #030201)",
     complete:
-      "radial-gradient(ellipse at 50% 0%, rgba(16,185,129,0.18), transparent 58%), linear-gradient(180deg, #020202, #040404)",
+      "radial-gradient(ellipse at 50% -4%, rgba(16,185,129,0.30), transparent 52%), radial-gradient(ellipse at 50% 100%, rgba(5,150,105,0.14), transparent 48%), linear-gradient(180deg, #03080a, #020404 60%, #020303)",
   },
 
   button: {
@@ -160,7 +160,7 @@ export const ds = {
   },
 
   notice: {
-    info: "rounded-2xl border border-blue-500/20 bg-blue-500/10 p-3 text-xs text-blue-200 ring-1 ring-inset ring-blue-400/5",
+    info: "rounded-2xl border border-sky-400/25 bg-sky-500/[0.07] p-3 text-xs text-sky-200 ring-1 ring-inset ring-sky-300/[0.06]",
     success:
       "rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-200 shadow-lg shadow-black/10",
     error:
@@ -169,7 +169,7 @@ export const ds = {
 
   nav: {
     bottom:
-      "fixed bottom-0 left-0 right-0 border-t border-white/10 bg-slate-950/95 shadow-2xl shadow-black/40 backdrop-blur-xl",
+      "fixed bottom-0 left-0 right-0 border-t border-white/[0.08] bg-[#050302]/[0.82] shadow-[0_-10px_28px_rgba(0,0,0,0.32)] backdrop-blur-2xl",
     switcher:
       "fixed bottom-24 left-4 z-50 flex gap-1 rounded-full border border-white/10 bg-black/60 p-1.5 text-xs shadow-2xl shadow-black/30 backdrop-blur",
     switcherLink:

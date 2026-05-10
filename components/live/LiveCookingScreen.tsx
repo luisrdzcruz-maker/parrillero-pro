@@ -288,7 +288,7 @@ export default function LiveCookingScreen({
           </div>
         )}
 
-        <div className="shrink-0 rounded-[1.15rem] border border-white/[0.04] bg-black/15 px-3 py-2">
+        <div className="shrink-0 rounded-2xl border border-white/[0.035] bg-black/[0.32] px-2.5 py-1.5 opacity-82 backdrop-blur-md">
           <LiveTimeline
             currentIndex={currentStepIndex}
             lang={resolvedLang}
@@ -298,7 +298,8 @@ export default function LiveCookingScreen({
           />
         </div>
 
-        <div className="min-h-0 shrink">
+        <div className="relative min-h-0 shrink overflow-hidden rounded-[1.5rem] border border-white/[0.09] bg-[linear-gradient(160deg,rgba(255,255,255,0.06)_0%,rgba(255,255,255,0.025)_45%,rgba(0,0,0,0.32)_100%)] shadow-[0_28px_56px_rgba(0,0,0,0.55)] ring-1 ring-inset ring-white/[0.06] backdrop-blur-xl">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/22 to-transparent" />
           <LiveStepCard
             currentStep={currentStep}
             feedback={feedback}
@@ -310,7 +311,8 @@ export default function LiveCookingScreen({
         </div>
 
         {!isComplete && (
-          <div className="shrink-0">
+          <div className="relative shrink-0 overflow-hidden rounded-[1.5rem] border border-orange-300/[0.18] bg-[radial-gradient(ellipse_at_50%_-20%,rgba(249,115,22,0.18),transparent_60%),linear-gradient(160deg,rgba(255,255,255,0.04)_0%,rgba(0,0,0,0.4)_100%)] shadow-[0_24px_50px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] ring-1 ring-inset ring-orange-200/[0.08] backdrop-blur-xl">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-300/40 to-transparent" />
             <LiveTimer
               duration={currentStep.duration}
               remainingTime={currentStep.remainingTime}
@@ -323,7 +325,7 @@ export default function LiveCookingScreen({
           </div>
         )}
 
-        <div className="shrink-0">
+        <div className="shrink-0 opacity-92">
           <LiveExecutionGuide
             currentStep={currentStep}
             lang={resolvedLang}
@@ -332,7 +334,7 @@ export default function LiveCookingScreen({
         </div>
 
         {!isComplete && nextStep && (
-          <div className="shrink-0">
+          <div className="shrink-0 opacity-78">
             <LiveNextStepPreview nextStep={nextStep} lang={resolvedLang} />
           </div>
         )}

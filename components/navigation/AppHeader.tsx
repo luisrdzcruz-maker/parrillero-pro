@@ -79,7 +79,7 @@ export function DesktopModeTabs({
 
   return (
     <nav className="pointer-events-none mb-7 hidden justify-center lg:flex">
-      <div className="pointer-events-auto grid w-full max-w-[1180px] grid-cols-5 gap-2 rounded-full border border-white/[0.07] bg-black/30 p-1.5 ring-1 ring-inset ring-white/[0.03] backdrop-blur-xl xl:max-w-[1280px]">
+      <div className="pointer-events-auto grid w-full max-w-[1180px] grid-cols-5 gap-2 rounded-full border border-white/[0.09] bg-[#050302]/[0.78] p-1.5 ring-1 ring-inset ring-white/[0.06] shadow-[0_18px_42px_rgba(0,0,0,0.45)] backdrop-blur-2xl xl:max-w-[1280px]">
         <DesktopTab
           active={mode === "inicio"}
           label={t.start}
@@ -170,11 +170,12 @@ export function BottomNavigation({
   return (
     <nav
       aria-hidden={disabled}
-      className={`fixed inset-x-0 bottom-[max(0.5rem,env(safe-area-inset-bottom))] z-[70] w-full max-w-full overflow-x-hidden px-2.5 pb-0 pt-1.5 transition-opacity [transform:translateZ(0)] before:pointer-events-none before:absolute before:inset-x-0 before:-bottom-[max(0.5rem,env(safe-area-inset-bottom))] before:h-32 before:bg-gradient-to-t before:from-[#030201] before:via-[#030201]/84 before:to-transparent sm:px-3 lg:hidden ${
+      className={`fixed inset-x-0 bottom-[max(0.5rem,env(safe-area-inset-bottom))] z-[70] w-full max-w-full overflow-x-hidden px-2.5 pb-0 pt-1.5 transition-opacity [transform:translateZ(0)] before:pointer-events-none before:absolute before:inset-x-0 before:-bottom-[max(0.5rem,env(safe-area-inset-bottom))] before:h-36 before:bg-gradient-to-t before:from-[#030201] before:via-[#030201]/72 before:to-transparent sm:px-3 lg:hidden ${
         disabled ? "pointer-events-none opacity-0" : "pointer-events-none opacity-100"
       }`}
     >
-      <div className="pointer-events-auto relative mx-auto grid w-full max-w-[448px] min-w-0 grid-cols-5 items-center gap-1 overflow-hidden rounded-[2rem] border border-white/[0.09] bg-[#070503]/92 p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.55)] ring-1 ring-inset ring-white/[0.035] backdrop-blur-xl">
+      <div className="pointer-events-auto relative mx-auto grid w-full max-w-[448px] min-w-0 grid-cols-5 items-center gap-1 overflow-hidden rounded-[1.85rem] border border-white/[0.08] bg-[#050302]/[0.78] p-1.5 shadow-[0_-10px_28px_rgba(0,0,0,0.32),0_18px_44px_rgba(0,0,0,0.42)] ring-1 ring-inset ring-white/[0.06] backdrop-blur-2xl">
+        <div className="pointer-events-none absolute inset-x-3 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
         <Tab
           active={mode === "inicio"}
           label={t.start}
@@ -232,8 +233,8 @@ function Tab({
       title={label}
       className={
         active
-          ? "pointer-events-auto flex min-h-[54px] min-w-0 touch-manipulation items-center justify-center overflow-hidden rounded-[1.45rem] bg-gradient-to-br from-orange-200 via-orange-500 to-orange-600 px-1 py-2 text-black shadow-[0_10px_24px_rgba(249,115,22,0.32)] ring-1 ring-orange-100/55 transition-all duration-200 motion-reduce:transition-none active:scale-[0.97] motion-reduce:active:scale-100 active:brightness-95"
-          : "pointer-events-auto flex min-h-[54px] min-w-0 touch-manipulation items-center justify-center overflow-hidden rounded-[1.45rem] px-1 py-2 text-slate-200/82 transition-all duration-200 motion-reduce:transition-none hover:bg-white/[0.06] hover:text-slate-100 active:scale-[0.97] motion-reduce:active:scale-100 active:bg-white/10"
+          ? "pointer-events-auto flex min-h-[54px] min-w-0 touch-manipulation items-center justify-center overflow-hidden rounded-[1.45rem] bg-gradient-to-br from-orange-200 via-orange-500 to-orange-600 px-1 py-2 text-black shadow-[0_10px_28px_rgba(249,115,22,0.42)] ring-1 ring-orange-100/55 transition-all duration-200 motion-reduce:transition-none active:scale-[0.97] motion-reduce:active:scale-100 active:brightness-95"
+          : "pointer-events-auto flex min-h-[54px] min-w-0 touch-manipulation items-center justify-center overflow-hidden rounded-[1.45rem] px-1 py-2 text-slate-400 transition-all duration-200 motion-reduce:transition-none hover:bg-white/[0.05] hover:text-slate-200 active:scale-[0.97] motion-reduce:active:scale-100 active:bg-white/10"
       }
     >
       <NavIcon
@@ -282,7 +283,7 @@ function NavIcon({
       aria-hidden="true"
       fallback={fallback}
       className={`${className} rounded-md ${
-        active ? "opacity-100 drop-shadow-[0_0_10px_rgba(0,0,0,0.3)]" : "opacity-82 saturate-90"
+        active ? "opacity-100 drop-shadow-[0_0_10px_rgba(0,0,0,0.3)]" : "opacity-60 saturate-75"
       } transition duration-200`}
     />
   );

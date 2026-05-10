@@ -48,7 +48,7 @@ export function AppShellChrome({
       />
     )}
     <main
-      className={`${ds.shell.page} relative isolate mx-auto flex min-w-0 w-full max-w-none flex-col px-3 pt-2 before:pointer-events-none before:fixed before:inset-x-0 before:bottom-0 before:z-0 before:h-40 before:bg-gradient-to-t before:from-[#030201] before:via-[#030201]/85 before:to-transparent sm:px-4 sm:pt-5 lg:px-8 lg:pb-10 lg:pt-6 ${
+      className={`${ds.shell.page} relative isolate mx-auto flex min-w-0 w-full max-w-none flex-col px-3 pt-2 before:pointer-events-none before:fixed before:inset-x-0 before:top-0 before:z-0 before:h-[28rem] before:bg-[radial-gradient(ellipse_at_50%_-10%,rgba(249,115,22,0.16),transparent_55%)] after:pointer-events-none after:fixed after:inset-x-0 after:bottom-0 after:z-0 after:h-40 after:bg-gradient-to-t after:from-[#030201] after:via-[#030201]/82 after:to-transparent sm:px-4 sm:pt-5 lg:px-8 lg:pb-10 lg:pt-6 ${
         isCutSelectionShell
           ? "box-border h-[100dvh] min-h-0 overflow-y-hidden pb-[calc(6.5rem+env(safe-area-inset-bottom))] lg:h-auto lg:min-h-screen lg:overflow-y-visible"
           : "pb-[calc(7.5rem+env(safe-area-inset-bottom))]"
