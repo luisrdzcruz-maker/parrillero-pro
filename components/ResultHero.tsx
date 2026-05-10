@@ -7,7 +7,6 @@ import {
   CompactDisclosure,
   MetricTile,
   Panel,
-  getMetricToneClass,
 } from "@/components/ui";
 import { resolveEquipmentIconKey, resolveMethodIconKey } from "@/lib/assets/equipmentMethodIconResolver";
 import { brandIconAssets } from "@/lib/brand/iconAssets";
@@ -144,10 +143,6 @@ export default function ResultHero({
   const rationaleShowLabel = getResultRationaleShowLabel(lang);
   const rationaleHideLabel = getResultRationaleHideLabel(lang);
 
-  function getMetricClass(tone: MetricTone) {
-    return getMetricToneClass(tone);
-  }
-
   function renderControlMetric(item: { label: string; value: string; tone: MetricTone } | undefined, compact = false) {
     if (!item?.value) return null;
 
@@ -171,9 +166,13 @@ export default function ResultHero({
           pushResultOverlayHistory("setup");
           setSetupOpen(true);
         }}
-        className={`col-span-2 min-w-0 rounded-[1.15rem] border px-3 py-2.5 text-left shadow-lg shadow-black/10 ring-1 ring-inset transition hover:border-orange-200/45 hover:bg-orange-500/[0.13] active:scale-[0.99] xl:col-span-2 ${getMetricClass("orange")}`}
+        // Spec §3: only one solid ember CTA per screen. Start Live Cooking is
+        // the dominant ember below; this Fire/Setup affordance is a quieter
+        // secondary tile (neutral surface + warm eyebrow) so it does not
+        // compete with the primary action.
+        className="col-span-2 min-w-0 rounded-[1.15rem] border border-white/[0.09] bg-white/[0.035] px-3 py-2.5 text-left shadow-lg shadow-black/10 ring-1 ring-inset ring-white/[0.025] transition hover:border-orange-300/35 hover:bg-orange-500/[0.06] active:scale-[0.99] xl:col-span-2"
       >
-        <p className="text-[9px] font-black uppercase tracking-[0.16em] text-current/58 sm:text-[10px]">
+        <p className="text-[9px] font-black uppercase tracking-[0.16em] text-orange-300/80 sm:text-[10px]">
           {copy.resultHeroFireSetup}
         </p>
         <p

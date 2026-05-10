@@ -94,49 +94,90 @@ function HomeQuickActions({
   title: string;
   actions: QuickAction[];
 }) {
+  // Spec §7.1: 2 main actions (Start Cooking, Plan Parrillada/Menu) +
+  // 2 secondary actions (Saved, Live). Partition by `emphasized` to render
+  // a clear visual hierarchy: primary tiles dominate at the top; secondary
+  // tiles below, visually quieter and shorter.
+  const primary = actions.filter((action) => action.emphasized);
+  const secondary = actions.filter((action) => !action.emphasized);
+
   return (
-    <section className="relative">
+    <section className="relative space-y-2.5 sm:space-y-3">
       <p className="sr-only">{title}</p>
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
-        {actions.map((action) => (
-          <button
-            key={action.id}
-            type="button"
-            onClick={(e) => action.onClick(e)}
-            className={`group relative min-h-[142px] w-full touch-manipulation overflow-hidden rounded-[1.65rem] border px-3.5 py-4 text-left transition-all duration-200 active:scale-[0.98] sm:min-h-[168px] sm:rounded-[1.9rem] sm:px-5 sm:py-5 ${
-              action.emphasized
-                ? "border-orange-300/34 bg-[radial-gradient(circle_at_25%_0%,rgba(249,115,22,0.24),transparent_44%),linear-gradient(145deg,rgba(249,115,22,0.12),rgba(255,255,255,0.045))] shadow-[0_18px_42px_rgba(249,115,22,0.11)] ring-1 ring-inset ring-orange-200/[0.04] hover:border-orange-300/50"
-                : "border-white/[0.09] bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018))] shadow-[0_14px_34px_rgba(0,0,0,0.26)] ring-1 ring-inset ring-white/[0.035] hover:border-white/18 hover:bg-white/[0.06]"
-            }`}
-          >
-            <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-white/24 to-transparent" />
-            <div className="flex h-full flex-col justify-between gap-4">
-              {action.registryIcon ? (
-                <AppIcon
-                  category={action.registryIcon.category}
-                  iconKey={action.registryIcon.key}
-                  alt=""
-                  size="lg"
-                  aria-hidden="true"
-                  className={`h-16 w-16 rounded-[1.35rem] border p-3 transition-transform duration-200 group-hover:scale-[1.03] sm:h-[4.5rem] sm:w-[4.5rem] ${
-                    action.emphasized
-                      ? "border-orange-300/22 bg-black/32 shadow-[0_12px_30px_rgba(249,115,22,0.18)] ring-1 ring-inset ring-white/[0.05]"
-                      : "border-white/10 bg-black/24 shadow-[0_10px_24px_rgba(0,0,0,0.24)]"
-                  }`}
-                  fallback={<span className="text-xl" aria-hidden>{action.icon}</span>}
-                />
-              ) : (
-                <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[1.35rem] border border-white/10 bg-black/24 text-3xl shadow-[0_10px_24px_rgba(0,0,0,0.24)]" aria-hidden>{action.icon}</span>
-              )}
-              <div className="min-w-0">
-                <p className="text-[15px] font-black leading-tight tracking-[-0.02em] text-white sm:text-lg">{action.title}</p>
-                <p className="mt-1.5 line-clamp-2 text-xs leading-snug text-slate-300/78 sm:text-sm sm:leading-relaxed">{action.description}</p>
-              </div>
-            </div>
-          </button>
-        ))}
-      </div>
+      {primary.length > 0 && (
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+          {primary.map((action) => (
+            <PrimaryActionTile key={action.id} action={action} />
+          ))}
+        </div>
+      )}
+      {secondary.length > 0 && (
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+          {secondary.map((action) => (
+            <SecondaryActionTile key={action.id} action={action} />
+          ))}
+        </div>
+      )}
     </section>
+  );
+}
+
+function PrimaryActionTile({ action }: { action: QuickAction }) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => action.onClick(e)}
+      className="group relative min-h-[142px] w-full touch-manipulation overflow-hidden rounded-[1.65rem] border border-orange-300/34 bg-[radial-gradient(circle_at_25%_0%,rgba(249,115,22,0.24),transparent_44%),linear-gradient(145deg,rgba(249,115,22,0.12),rgba(255,255,255,0.045))] px-3.5 py-4 text-left shadow-[0_18px_42px_rgba(249,115,22,0.11)] ring-1 ring-inset ring-orange-200/[0.04] transition-all duration-200 hover:border-orange-300/50 active:scale-[0.98] sm:min-h-[168px] sm:rounded-[1.9rem] sm:px-5 sm:py-5"
+    >
+      <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-white/24 to-transparent" />
+      <div className="flex h-full flex-col justify-between gap-4">
+        {action.registryIcon ? (
+          <AppIcon
+            category={action.registryIcon.category}
+            iconKey={action.registryIcon.key}
+            alt=""
+            size="lg"
+            aria-hidden="true"
+            className="h-16 w-16 rounded-[1.35rem] border border-orange-300/22 bg-black/32 p-3 shadow-[0_12px_30px_rgba(249,115,22,0.18)] ring-1 ring-inset ring-white/[0.05] transition-transform duration-200 group-hover:scale-[1.03] sm:h-[4.5rem] sm:w-[4.5rem]"
+            fallback={<span className="text-xl" aria-hidden>{action.icon}</span>}
+          />
+        ) : (
+          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[1.35rem] border border-white/10 bg-black/24 text-3xl shadow-[0_10px_24px_rgba(0,0,0,0.24)]" aria-hidden>{action.icon}</span>
+        )}
+        <div className="min-w-0">
+          <p className="text-[15px] font-black leading-tight tracking-[-0.02em] text-white sm:text-lg">{action.title}</p>
+          <p className="mt-1.5 line-clamp-2 text-xs leading-snug text-slate-300/78 sm:text-sm sm:leading-relaxed">{action.description}</p>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function SecondaryActionTile({ action }: { action: QuickAction }) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => action.onClick(e)}
+      className="group relative flex min-h-[78px] w-full touch-manipulation items-center gap-3 overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.025] px-3.5 py-3 text-left ring-1 ring-inset ring-white/[0.025] transition-all duration-200 hover:border-white/15 hover:bg-white/[0.05] active:scale-[0.98] sm:min-h-[88px] sm:px-4 sm:py-3.5"
+    >
+      {action.registryIcon ? (
+        <AppIcon
+          category={action.registryIcon.category}
+          iconKey={action.registryIcon.key}
+          alt=""
+          size="md"
+          aria-hidden="true"
+          className="h-11 w-11 shrink-0 rounded-xl border border-white/10 bg-black/24 p-2 shadow-[0_8px_18px_rgba(0,0,0,0.22)] sm:h-12 sm:w-12"
+          fallback={<span className="text-lg" aria-hidden>{action.icon}</span>}
+        />
+      ) : (
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-black/24 text-2xl shadow-[0_8px_18px_rgba(0,0,0,0.22)] sm:h-12 sm:w-12" aria-hidden>{action.icon}</span>
+      )}
+      <div className="min-w-0 flex-1">
+        <p className="text-[13px] font-bold leading-tight tracking-[-0.01em] text-slate-100 sm:text-sm">{action.title}</p>
+        <p className="mt-0.5 line-clamp-1 text-[11px] leading-snug text-slate-400 sm:text-xs">{action.description}</p>
+      </div>
+    </button>
   );
 }
 
@@ -165,7 +206,7 @@ function HomeSettingsStrip({
       <select
         value={lang}
         onChange={(e) => onLangChange(e.target.value as Lang)}
-        className="min-h-9 shrink-0 rounded-xl border border-white/10 bg-black/40 px-2.5 text-xs font-bold text-slate-200 outline-none transition focus:border-orange-400/60"
+        className="min-h-9 shrink-0 rounded-xl border border-white/[0.09] bg-slate-950/80 px-3 text-xs font-bold text-slate-100 shadow-inner shadow-black/30 outline-none transition focus:border-orange-400/60 focus:ring-2 focus:ring-orange-500/15"
       >
         <option value="es">🇪🇸 {t.homeLangSpanish}</option>
         <option value="en">🇬🇧 {t.homeLangEnglish}</option>
@@ -229,6 +270,7 @@ export function HomeScreen({
       registryIcon: { category: "ui", key: "cooking-dashboard" },
       title: t.homeParrillada,
       description: t.homeParrilladaSub,
+      emphasized: true,
       onClick: () => onModeChange("plan"),
     },
     {

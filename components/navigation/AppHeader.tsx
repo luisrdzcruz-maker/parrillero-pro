@@ -79,7 +79,7 @@ export function DesktopModeTabs({
 
   return (
     <nav className="pointer-events-none mb-7 hidden justify-center lg:flex">
-      <div className="pointer-events-auto grid w-full max-w-[1180px] grid-cols-5 gap-2 rounded-full border border-white/10 bg-black/45 p-1.5 shadow-2xl shadow-black/30 backdrop-blur-xl xl:max-w-[1280px]">
+      <div className="pointer-events-auto grid w-full max-w-[1180px] grid-cols-5 gap-2 rounded-full border border-white/[0.07] bg-black/30 p-1.5 ring-1 ring-inset ring-white/[0.03] backdrop-blur-xl xl:max-w-[1280px]">
         <DesktopTab
           active={mode === "inicio"}
           label={t.start}
@@ -174,7 +174,7 @@ export function BottomNavigation({
         disabled ? "pointer-events-none opacity-0" : "pointer-events-none opacity-100"
       }`}
     >
-      <div className="pointer-events-auto relative mx-auto grid w-full max-w-[448px] min-w-0 grid-cols-5 items-center gap-1 overflow-hidden rounded-[2rem] border border-white/12 bg-[#080604]/90 p-1.5 shadow-[0_18px_60px_rgba(0,0,0,0.66),0_0_28px_rgba(249,115,22,0.08)] ring-1 ring-inset ring-white/[0.045] backdrop-blur-xl">
+      <div className="pointer-events-auto relative mx-auto grid w-full max-w-[448px] min-w-0 grid-cols-5 items-center gap-1 overflow-hidden rounded-[2rem] border border-white/[0.09] bg-[#070503]/92 p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.55)] ring-1 ring-inset ring-white/[0.035] backdrop-blur-xl">
         <Tab
           active={mode === "inicio"}
           label={t.start}
