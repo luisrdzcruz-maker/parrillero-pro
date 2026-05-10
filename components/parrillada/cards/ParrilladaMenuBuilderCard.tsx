@@ -83,28 +83,26 @@ export function ParrilladaMenuBuilderCard({
 
   return (
     <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
-      <div className="mb-2 flex items-center justify-between">
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Menu Builder</p>
-          <h3 className="mt-1 text-base font-semibold text-white">Build your selection</h3>
-        </div>
-        <span className="rounded-full border border-white/10 bg-black/25 px-2.5 py-1 text-xs font-semibold text-white/70">
+      <div className="mb-2.5 flex items-center justify-between gap-3">
+        <h3 className="text-base font-semibold text-white">Choose cuts</h3>
+        <span
+          className={`rounded-full border px-2.5 py-1 text-xs font-semibold tabular-nums ${
+            itemLimitReached
+              ? 'border-amber-300/30 bg-amber-500/15 text-amber-100'
+              : 'border-white/10 bg-black/25 text-white/70'
+          }`}
+        >
           {items.length}/{maxItems}
         </span>
       </div>
 
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setSelectorOpen(true)}
-          className="rounded-xl border border-white/10 bg-black/25 px-3 py-1.5 text-xs font-semibold text-white/85 transition hover:border-white/25"
-        >
-          Choose cuts
-        </button>
-        {itemLimitReached ? (
-          <p className="text-xs text-amber-100">Lite supports up to {maxItems} items.</p>
-        ) : null}
-      </div>
+      <button
+        type="button"
+        onClick={() => setSelectorOpen(true)}
+        className="rounded-xl border border-white/10 bg-black/25 px-3 py-1.5 text-xs font-semibold text-white/85 transition hover:border-white/25"
+      >
+        Add cuts
+      </button>
 
       <div className="mt-3 space-y-2">
         {items.map((item) => (

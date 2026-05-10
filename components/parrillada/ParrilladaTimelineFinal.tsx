@@ -1,6 +1,7 @@
 'use client';
 
 import type { ExecutionTimelineGroup, PlannerPhase, PlannerResult } from '../../lib/planning';
+import { getShortGroupLabel } from './utils/parrilladaTimelineLabels';
 
 function formatTime(iso: string): string {
   return new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
@@ -33,10 +34,6 @@ function phaseLabel(type: PlannerPhase['type']): string {
     buffer: 'Buffer',
   };
   return map[type];
-}
-
-function compactInstruction(phase: PlannerPhase): string {
-  return phase.notes?.[0] ?? 'Follow this phase as scheduled.';
 }
 
 function compactExecutionInstruction(group: ExecutionTimelineGroup): string {
@@ -110,83 +107,88 @@ export function ParrilladaTimelineFinal({ result }: { result: PlannerResult | nu
 
   return (
     <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-3 shadow-xl sm:p-4">
-      <div className="mb-3 flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-orange-200/70">Execution</p>
-          <h2 className="text-lg font-semibold text-white sm:text-xl">Timeline</h2>
-        </div>
-        <div className="rounded-2xl border border-white/10 bg-black/20 px-2.5 py-2 text-right">
-          <p className="text-[11px] text-white/50">Serve</p>
-          <p className="text-sm font-semibold text-white">{formatTime(result.request.serveAtIso)}</p>
+      <div className="mb-3 flex items-end justify-between gap-3">
+        <h2 className="text-lg font-semibold tracking-tight text-white sm:text-xl">Timeline</h2>
+        <div className="flex items-baseline gap-1.5 text-xs text-white/55">
+          <span>Serve</span>
+          <span className="text-sm font-semibold text-white tabular-nums">{formatTime(result.request.serveAtIso)}</span>
         </div>
       </div>
 
       <div className="space-y-2">
         {executionGroups.length > 0 ? (
-          <article className="rounded-2xl border border-orange-300/20 bg-orange-500/10 p-2.5">
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-100/80">
-              Grouped execution actions
-            </p>
+          <article className="rounded-2xl border border-white/10 bg-black/20 p-2.5">
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">Actions</p>
             <div className="space-y-1.5">
               {executionGroups.map((group) => (
-                <div key={group.id} className="rounded-xl border border-white/10 bg-black/20 px-2.5 py-2">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="rounded-full bg-orange-500/15 px-2 py-0.5 text-[11px] font-medium text-orange-100">
-                      {formatTime(group.startIso)}
+                <details
+                  key={group.id}
+                  className="group rounded-xl border border-white/[0.08] bg-black/25 transition open:border-orange-300/25 open:bg-orange-500/[0.06]"
+                >
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-2.5 py-2">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="shrink-0 text-[12px] font-semibold tabular-nums text-orange-100/85">
+                        {formatTime(group.startIso)}
+                      </span>
+                      <span className="truncate text-sm font-semibold text-white">{getShortGroupLabel(group)}</span>
+                    </div>
+                    <span
+                      aria-hidden="true"
+                      className="shrink-0 text-base font-black text-white/30 transition-transform duration-200 group-open:rotate-90 group-open:text-orange-200/75"
+                    >
+                      ›
                     </span>
-                    <span className="text-sm font-semibold text-white">{group.title}</span>
-                  </div>
-                  <details className="mt-1">
-                    <summary className="cursor-pointer text-[11px] text-white/50">Details</summary>
-                    <p className="mt-1 text-xs text-white/60">{formatActionMeta(group)}</p>
+                  </summary>
+                  <div className="space-y-1 border-t border-white/[0.06] px-2.5 pb-2 pt-1.5 text-xs text-white/65">
+                    <p>{formatActionMeta(group)}</p>
                     {itemQuantityLabel(group) ? (
-                      <p className="mt-1 text-xs text-orange-100/85">{itemQuantityLabel(group)}</p>
+                      <p className="text-orange-100/80">{itemQuantityLabel(group)}</p>
                     ) : null}
-                    <p className="mt-1 text-xs text-white/75">{compactExecutionInstruction(group)}</p>
-                  </details>
-                </div>
+                    <p className="text-white/75">{compactExecutionInstruction(group)}</p>
+                  </div>
+                </details>
               ))}
             </div>
           </article>
         ) : null}
 
-        <details className="rounded-2xl border border-white/10 bg-black/20 p-2.5">
-          <summary className="cursor-pointer text-sm font-semibold text-white">Detailed phase timeline</summary>
-          <div className="mt-2 space-y-2">
+        <details className="group rounded-2xl border border-white/10 bg-black/20 transition open:bg-black/30">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-2.5 py-2">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">All phases</span>
+            <span
+              aria-hidden="true"
+              className="text-base font-black text-white/30 transition-transform duration-200 group-open:rotate-90 group-open:text-orange-200/70"
+            >
+              ›
+            </span>
+          </summary>
+          <div className="space-y-2 border-t border-white/[0.06] px-2.5 pb-2 pt-2">
             {groups.map((group) => (
-              <article key={group.time} className="rounded-2xl border border-white/10 bg-white/[0.03] p-2.5">
-                <div className="mb-2 flex items-center gap-2">
-                  <span className="rounded-full bg-orange-500/15 px-2 py-1 text-xs font-semibold text-orange-100">
+              <article key={group.time} className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-2">
+                <div className="mb-1.5 flex items-center gap-2">
+                  <span className="text-[12px] font-semibold tabular-nums text-orange-100/85">
                     {formatTime(group.time)}
                   </span>
                   {group.phases.length > 1 && (
-                    <span className="text-[11px] text-white/50">{group.phases.length} parallel actions</span>
+                    <span className="text-[11px] text-white/45">{group.phases.length} parallel</span>
                   )}
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {group.phases.map((phase) => (
-                    <div key={phase.id} className="rounded-xl border border-white/10 bg-black/20 p-2.5">
+                    <div key={phase.id} className="rounded-lg border border-white/[0.06] bg-black/20 p-2">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="rounded-full bg-orange-500/15 px-2 py-0.5 text-[11px] font-medium text-orange-100">
+                        <span className="rounded-full bg-orange-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-orange-100">
                           {phaseLabel(phase.type)}
                         </span>
-                        <span className="text-sm font-semibold text-white">{phase.displayName}</span>
-                        <span className="text-xs text-white/50">{formatDuration(phase.durationMinutes)}</span>
+                        <span className="text-[13px] font-semibold text-white">{phase.displayName}</span>
+                        <span className="text-[11px] text-white/45 tabular-nums">{formatDuration(phase.durationMinutes)}</span>
                       </div>
-                      <p className="mt-1 text-xs text-white/55">
+                      <p className="mt-0.5 text-[11px] text-white/50">
                         {zoneLabel(phase.zone)} · until {formatTime(phase.endIso)}
                       </p>
-                      <p className="mt-1.5 text-sm text-white/80">{compactInstruction(phase)}</p>
-                      {phase.notes && phase.notes.length > 1 && (
-                        <details className="mt-1">
-                          <summary className="cursor-pointer text-xs text-white/55">More details</summary>
-                          <ul className="mt-1 space-y-1 text-xs text-white/70">
-                            {phase.notes.slice(1).map((note) => (
-                              <li key={note}>- {note}</li>
-                            ))}
-                          </ul>
-                        </details>
-                      )}
+                      {phase.notes && phase.notes.length > 0 ? (
+                        <p className="mt-1 text-xs text-white/72">{phase.notes[0]}</p>
+                      ) : null}
                     </div>
                   ))}
                 </div>

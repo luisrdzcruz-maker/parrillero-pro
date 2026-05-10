@@ -2,7 +2,12 @@
 
 import { useCallback, useState } from "react";
 import ResultHeader from "@/components/ResultHeader";
-import { BrandImageIcon, Panel } from "@/components/ui";
+import {
+  BrandImageIcon,
+  CompactDisclosure,
+  MetricTile,
+  Panel,
+} from "@/components/ui";
 import { resolveEquipmentIconKey, resolveMethodIconKey } from "@/lib/assets/equipmentMethodIconResolver";
 import { brandIconAssets } from "@/lib/brand/iconAssets";
 import { pushResultOverlayHistory, SetupDetailSurface } from "@/components/results/ResultGuidancePanel";
@@ -63,6 +68,7 @@ export default function ResultHero({
   resultKeys,
   lang = "es",
   onEdit,
+  saveMenuStatus,
   summary,
   t,
 }: {
@@ -134,38 +140,20 @@ export default function ResultHero({
     doneness: summary?.doneness || doneness,
   });
   const rationale = formatResultRationale(rationaleIntent, lang);
-  const [rationaleOpen, setRationaleOpen] = useState(false);
   const rationaleLabel = getResultRationaleLabel(lang);
   const rationaleShowLabel = getResultRationaleShowLabel(lang);
   const rationaleHideLabel = getResultRationaleHideLabel(lang);
-
-  function getMetricClass(tone: MetricTone) {
-    if (tone === "red") return "border-red-300/25 bg-red-500/[0.08] text-red-50 ring-red-200/[0.04]";
-    if (tone === "sky") return "border-sky-300/20 bg-sky-500/[0.07] text-sky-50 ring-sky-200/[0.04]";
-    return "border-orange-300/25 bg-orange-500/[0.09] text-orange-50 ring-orange-200/[0.05]";
-  }
 
   function renderControlMetric(item: { label: string; value: string; tone: MetricTone } | undefined, compact = false) {
     if (!item?.value) return null;
 
     return (
-      <div
-        className={`min-w-0 rounded-[1.15rem] border px-3 py-2.5 shadow-lg shadow-black/10 ring-1 ring-inset ${getMetricClass(item.tone)}`}
-      >
-        <p className="text-[9px] font-black uppercase tracking-[0.16em] text-current/58 sm:text-[10px]">
-          {item.label}
-        </p>
-        <p
-          className={`mt-1 font-black tracking-[-0.04em] text-white ${
-            compact
-              ? "truncate text-[clamp(0.95rem,3.6vw,1.2rem)] leading-tight"
-              : "text-[clamp(1.55rem,7vw,2rem)] leading-none sm:text-3xl"
-          }`}
-          title={item.value}
-        >
-          {item.value}
-        </p>
-      </div>
+      <MetricTile
+        label={item.label}
+        value={item.value}
+        tone={item.tone}
+        compact={compact}
+      />
     );
   }
 
@@ -179,9 +167,13 @@ export default function ResultHero({
           pushResultOverlayHistory("setup");
           setSetupOpen(true);
         }}
-        className={`col-span-2 min-w-0 rounded-[1.15rem] border px-3 py-2.5 text-left shadow-lg shadow-black/10 ring-1 ring-inset transition hover:border-orange-200/45 hover:bg-orange-500/[0.13] active:scale-[0.99] xl:col-span-2 ${getMetricClass("orange")}`}
+        // Spec §3: only one solid ember CTA per screen. Start Live Cooking is
+        // the dominant ember below; this Fire/Setup affordance is a quieter
+        // secondary tile (neutral surface + warm eyebrow) so it does not
+        // compete with the primary action.
+        className="col-span-2 min-w-0 rounded-[1.15rem] border border-white/[0.09] bg-white/[0.035] px-3 py-2.5 text-left shadow-lg shadow-black/10 ring-1 ring-inset ring-white/[0.025] transition hover:border-orange-300/35 hover:bg-orange-500/[0.06] active:scale-[0.99] xl:col-span-2"
       >
-        <p className="text-[9px] font-black uppercase tracking-[0.16em] text-current/58 sm:text-[10px]">
+        <p className="text-[9px] font-black uppercase tracking-[0.16em] text-orange-300/80 sm:text-[10px]">
           {copy.resultHeroFireSetup}
         </p>
         <p
@@ -196,10 +188,11 @@ export default function ResultHero({
 
   return (
     <>
-      <Panel as="section" className="relative mb-3 overflow-hidden p-3.5 sm:mb-5 sm:p-5" tone="hero">
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400/50 to-transparent" />
-        <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-orange-500/10 blur-3xl" />
-        <div className="pointer-events-none absolute -left-8 bottom-0 h-28 w-28 rounded-full bg-orange-500/[0.06] blur-2xl" />
+      <Panel as="section" className="relative mb-3 overflow-hidden p-4 sm:mb-5 sm:p-6" tone="hero">
+        <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-orange-300/85 to-transparent" />
+        <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-orange-500/[0.28] blur-3xl" />
+        <div className="pointer-events-none absolute -left-14 bottom-0 h-40 w-40 rounded-full bg-orange-700/[0.18] blur-3xl" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
         <div className="relative z-10 grid gap-3.5 sm:gap-4">
           <div className="min-w-0 space-y-3">
@@ -227,25 +220,25 @@ export default function ResultHero({
               <button
                 type="button"
                 onClick={actions.onStartCooking}
-                className="group col-span-2 flex min-h-[66px] w-full items-center justify-between gap-3 rounded-[1.35rem] border border-orange-200/45 bg-gradient-to-br from-orange-200 via-orange-500 to-orange-600 px-3.5 py-3.5 text-left text-slate-950 shadow-[0_18px_38px_rgba(234,88,12,0.34)] ring-1 ring-inset ring-white/25 transition-all duration-200 hover:border-orange-100/70 hover:brightness-105 active:scale-[0.99] xl:row-span-2 xl:min-h-[132px] xl:flex-col xl:items-start xl:justify-between xl:p-4"
+                className="group col-span-2 flex min-h-[78px] w-full items-center justify-between gap-3 rounded-[1.45rem] border border-orange-200/55 bg-gradient-to-br from-orange-200 via-orange-500 to-orange-600 px-4 py-4 text-left text-slate-950 shadow-[0_24px_52px_rgba(234,88,12,0.5)] ring-1 ring-inset ring-white/30 transition-all duration-200 hover:border-orange-100/80 hover:shadow-[0_28px_60px_rgba(234,88,12,0.62)] hover:brightness-105 active:scale-[0.99] xl:row-span-2 xl:min-h-[148px] xl:flex-col xl:items-start xl:justify-between xl:p-5"
               >
                 <span className="flex min-w-0 items-center gap-3 xl:block">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-950/15 bg-slate-950/18 shadow-inner ring-1 ring-white/20 xl:h-12 xl:w-12">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-slate-950/20 bg-slate-950/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] ring-1 ring-white/25 xl:h-14 xl:w-14">
                     <BrandImageIcon
                       src={brandIconAssets.navLive}
                       alt=""
                       size="sm"
                       shape="plain"
                       aria-hidden="true"
-                      className="h-7 w-7 rounded-md drop-shadow-[0_0_10px_rgba(0,0,0,0.24)]"
+                      className="h-7 w-7 rounded-md drop-shadow-[0_0_10px_rgba(0,0,0,0.28)] xl:h-8 xl:w-8"
                     />
                   </span>
-                  <span className="min-w-0 text-[15px] font-black leading-tight xl:mt-3 xl:block xl:text-xl">
+                  <span className="min-w-0 text-[17px] font-black leading-[1.05] tracking-[-0.02em] xl:mt-4 xl:block xl:text-[26px]">
                     {copy.resultActionsLiveCta || t.startCooking}
                   </span>
                 </span>
                 <span
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-950/13 text-slate-950 ring-1 ring-inset ring-slate-950/12 transition-transform duration-200 group-hover:translate-x-0.5 xl:self-end"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-950/18 text-slate-950 ring-1 ring-inset ring-slate-950/15 transition-transform duration-200 group-hover:translate-x-0.5 xl:self-end"
                   aria-hidden="true"
                 >
                   <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none">
@@ -254,7 +247,7 @@ export default function ResultHero({
                       stroke="currentColor"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth="2"
+                      strokeWidth="2.4"
                     />
                   </svg>
                 </span>
@@ -264,39 +257,73 @@ export default function ResultHero({
             {renderFireSetupButton()}
           </div>
 
-          <div className="rounded-[1.15rem] border border-orange-200/15 bg-slate-950/35 px-3.5 py-3 ring-1 ring-inset ring-white/5">
-            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-orange-100/55 sm:text-[10px]">
-              {rationaleLabel}
-            </p>
-            <p className="mt-1 text-[13px] leading-snug text-white/90 sm:text-sm">
-              {rationale.headline}
-            </p>
-            {rationale.details.length > 0 && (
-              <>
+          {(actions.onSave || actions.onShare) && (
+            <div className="flex w-full flex-col gap-2 sm:flex-row sm:gap-2.5">
+              {actions.onSave && (
                 <button
                   type="button"
-                  onClick={() => setRationaleOpen((open) => !open)}
-                  aria-expanded={rationaleOpen}
-                  className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-orange-200/80 transition hover:text-orange-100"
+                  onClick={() => {
+                    void actions.onSave?.();
+                  }}
+                  disabled={saveMenuStatus === "saving"}
+                  className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-orange-400/40 hover:bg-white/[0.08] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {rationaleOpen ? rationaleHideLabel : rationaleShowLabel}
-                  <span aria-hidden="true" className={`transition-transform ${rationaleOpen ? "rotate-180" : ""}`}>
-                    {"▾"}
-                  </span>
+                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                    <path
+                      d="M5 4.5h8.5L16 7v8.5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1Z"
+                      stroke="currentColor"
+                      strokeWidth="1.4"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M7 4.5v3.25h6V4.5"
+                      stroke="currentColor"
+                      strokeWidth="1.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <span>{saveMenuStatus === "saving" ? t.saving : t.save}</span>
                 </button>
-                {rationaleOpen && (
-                  <ul className="mt-2 space-y-1 text-[12px] leading-snug text-white/75 sm:text-[13px]">
-                    {rationale.details.map((detail, index) => (
-                      <li key={index} className="flex gap-2">
-                        <span aria-hidden="true" className="mt-1 h-1 w-1 shrink-0 rounded-full bg-orange-300/70" />
-                        <span>{detail}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </>
-            )}
-          </div>
+              )}
+
+              {actions.onShare && (
+                <button
+                  type="button"
+                  onClick={actions.onShare}
+                  className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-orange-400/40 hover:bg-white/[0.08] active:scale-[0.99]"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                    <path
+                      d="M13.5 6.5a2 2 0 1 0-1.94-2.5L7.7 6.1a2 2 0 1 0 0 3.8l3.86 2.1a2 2 0 1 0 .57-1.05L8.27 8.85a2.01 2.01 0 0 0 0-1.7l3.86-2.1c.34.28.79.45 1.37.45Z"
+                      stroke="currentColor"
+                      strokeWidth="1.4"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <span>{t.share}</span>
+                </button>
+              )}
+            </div>
+          )}
+
+          <CompactDisclosure
+            label={rationaleLabel}
+            summary={rationale.headline}
+            showLabel={rationaleShowLabel}
+            hideLabel={rationaleHideLabel}
+          >
+            {rationale.details.length > 0 ? (
+              <ul className="mt-2 space-y-1 text-[12px] leading-snug text-white/75 sm:text-[13px]">
+                {rationale.details.map((detail, index) => (
+                  <li key={index} className="flex gap-2">
+                    <span aria-hidden="true" className="mt-1 h-1 w-1 shrink-0 rounded-full bg-orange-300/70" />
+                    <span>{detail}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </CompactDisclosure>
         </div>
       </Panel>
 

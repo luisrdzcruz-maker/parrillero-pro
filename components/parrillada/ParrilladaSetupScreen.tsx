@@ -16,7 +16,6 @@ type ParrilladaSetupScreenProps = {
   hasValidServeTime: boolean;
   strategy: SchedulerStrategy;
   title: string;
-  subtitle: string;
   ctaLabel: string;
   onServeAtLocalChange: (value: string) => void;
   onStrategyChange: (value: SchedulerStrategy) => void;
@@ -39,7 +38,6 @@ export function ParrilladaSetupScreen({
   hasValidServeTime,
   strategy,
   title,
-  subtitle,
   ctaLabel,
   onServeAtLocalChange,
   onStrategyChange,
@@ -54,12 +52,13 @@ export function ParrilladaSetupScreen({
 
   return (
     <section className="space-y-3">
-      <header className="px-1">
-        <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Setup</p>
-        <h2 className="mt-1 text-lg font-semibold text-white">{title}</h2>
-        <p className="mt-1 text-xs text-white/55">
-          Select {liteMinItems}-{liteMaxItems} items. {subtitle}
-        </p>
+      <header className="flex items-center justify-between gap-3 px-1">
+        <h2 className="min-w-0 truncate text-lg font-semibold text-white">
+          {title} {mode === 'pro' ? 'Pro' : 'Lite'}
+        </h2>
+        <span className="shrink-0 rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[11px] font-semibold text-white/65 tabular-nums">
+          {liteMinItems}–{liteMaxItems} items
+        </span>
       </header>
 
       <ParrilladaMenuBuilderCard
@@ -70,7 +69,6 @@ export function ParrilladaSetupScreen({
         onToggleCatalogItem={onToggleCatalogItem}
       />
       <ServeStrategyCard
-        mode={mode}
         strategy={strategyValue}
         serveAtLocal={serveAtLocal}
         hasValidServeTime={hasValidServeTime}
