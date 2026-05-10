@@ -68,6 +68,7 @@ export default function ResultHero({
   resultKeys,
   lang = "es",
   onEdit,
+  saveMenuStatus,
   summary,
   t,
 }: {
@@ -254,6 +255,56 @@ export default function ResultHero({
 
             {renderFireSetupButton()}
           </div>
+
+          {(actions.onSave || actions.onShare) && (
+            <div className="flex w-full flex-col gap-2 sm:flex-row sm:gap-2.5">
+              {actions.onSave && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    void actions.onSave?.();
+                  }}
+                  disabled={saveMenuStatus === "saving"}
+                  className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-orange-400/40 hover:bg-white/[0.08] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                    <path
+                      d="M5 4.5h8.5L16 7v8.5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1Z"
+                      stroke="currentColor"
+                      strokeWidth="1.4"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M7 4.5v3.25h6V4.5"
+                      stroke="currentColor"
+                      strokeWidth="1.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <span>{saveMenuStatus === "saving" ? t.saving : t.save}</span>
+                </button>
+              )}
+
+              {actions.onShare && (
+                <button
+                  type="button"
+                  onClick={actions.onShare}
+                  className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-orange-400/40 hover:bg-white/[0.08] active:scale-[0.99]"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                    <path
+                      d="M13.5 6.5a2 2 0 1 0-1.94-2.5L7.7 6.1a2 2 0 1 0 0 3.8l3.86 2.1a2 2 0 1 0 .57-1.05L8.27 8.85a2.01 2.01 0 0 0 0-1.7l3.86-2.1c.34.28.79.45 1.37.45Z"
+                      stroke="currentColor"
+                      strokeWidth="1.4"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <span>{t.share}</span>
+                </button>
+              )}
+            </div>
+          )}
 
           <CompactDisclosure
             label={rationaleLabel}
