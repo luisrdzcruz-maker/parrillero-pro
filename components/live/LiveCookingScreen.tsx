@@ -7,6 +7,7 @@ import {
   type LiveZone,
   type UrgencyLevel,
 } from "@/hooks/useLiveCooking";
+import { ds } from "@/lib/design-system";
 import { parseLiveParams } from "@/lib/navigation/parseLiveParams";
 import LiveExecutionGuide from "./LiveExecutionGuide";
 import LiveHeader from "./LiveHeader";
@@ -57,38 +58,23 @@ const DOT_CLASS: Record<LivePhase, string> = {
 };
 
 function getBgStyle(phase: LivePhase, zone?: LiveZone | null): CSSProperties {
+  // Phase tints centralized in ds.liveBg.* (lib/design-system.ts) per
+  // docs/design/hybrid-premium-ui-spec.md §11. Inline gradients used to live
+  // here; consolidating reduces drift between Live and any future surfaces
+  // that need the same phase-aware background.
   if (phase === "complete") {
-    return {
-      backgroundImage:
-        "radial-gradient(ellipse at 50% 0%, rgba(16,185,129,0.18), transparent 58%), linear-gradient(180deg, #020202, #040404)",
-    };
+    return { backgroundImage: ds.liveBg.complete };
   }
-
   if (phase === "urgent") {
-    return {
-      backgroundImage:
-        "radial-gradient(ellipse at 50% 16%, rgba(234,179,8,0.22), transparent 58%), linear-gradient(180deg, #020202, #040404)",
-    };
+    return { backgroundImage: ds.liveBg.urgent };
   }
-
   if (zone === "rest") {
-    return {
-      backgroundImage:
-        "radial-gradient(ellipse at 50% 0%, rgba(59,130,246,0.16), transparent 58%), linear-gradient(180deg, #020202, #040404)",
-    };
+    return { backgroundImage: ds.liveBg.rest };
   }
-
   if (zone === "indirect") {
-    return {
-      backgroundImage:
-        "radial-gradient(ellipse at 50% 12%, rgba(249,115,22,0.15), transparent 55%), linear-gradient(180deg, #020202, #040404)",
-    };
+    return { backgroundImage: ds.liveBg.indirect };
   }
-
-  return {
-    backgroundImage:
-      "radial-gradient(ellipse at 50% 16%, rgba(239,68,68,0.18), transparent 58%), radial-gradient(ellipse at 50% 100%, rgba(249,115,22,0.10), transparent 44%), linear-gradient(180deg, #020202, #040404)",
-  };
+  return { backgroundImage: ds.liveBg.direct };
 }
 
 function usePrefersReducedMotion() {
@@ -302,7 +288,7 @@ export default function LiveCookingScreen({
           </div>
         )}
 
-        <div className="shrink-0 rounded-[1.15rem] border border-white/[0.06] bg-black/20 px-3 py-2">
+        <div className="shrink-0 rounded-[1.15rem] border border-white/[0.04] bg-black/15 px-3 py-2">
           <LiveTimeline
             currentIndex={currentStepIndex}
             lang={resolvedLang}
@@ -322,6 +308,20 @@ export default function LiveCookingScreen({
             urgency={urgency}
           />
         </div>
+
+        {!isComplete && (
+          <div className="shrink-0">
+            <LiveTimer
+              duration={currentStep.duration}
+              remainingTime={currentStep.remainingTime}
+              progress={currentStep.progress}
+              phase={phase}
+              lang={resolvedLang}
+              reduceMotion={reduceMotion}
+              urgency={urgency}
+            />
+          </div>
+        )}
 
         <div className="shrink-0">
           <LiveExecutionGuide
@@ -370,20 +370,6 @@ export default function LiveCookingScreen({
           </div>
         )}
 
-        {!isComplete && (
-          <div className="shrink-0">
-            <LiveTimer
-              duration={currentStep.duration}
-              remainingTime={currentStep.remainingTime}
-              progress={currentStep.progress}
-              phase={phase}
-              lang={resolvedLang}
-              reduceMotion={reduceMotion}
-              urgency={urgency}
-            />
-          </div>
-        )}
-
         {(resolvedContext || onReset) && (
           <div className="mt-auto flex min-h-6 shrink-0 items-center justify-center gap-3">
             {resolvedContext && (
@@ -402,7 +388,7 @@ export default function LiveCookingScreen({
         )}
       </main>
 
-      <nav className="shrink-0 border-t border-white/[0.08] bg-black/[0.72] px-3.5 py-2 shadow-[0_-18px_42px_rgba(0,0,0,0.38)] backdrop-blur-xl pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+      <nav className="shrink-0 border-t border-white/[0.07] bg-black/[0.78] px-3.5 py-2 shadow-[0_-12px_30px_rgba(0,0,0,0.32)] backdrop-blur-xl pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         <p className="mb-1 text-center text-[9px] font-black uppercase tracking-[0.2em] text-white/28">
           {liveText.nextAction}
         </p>
