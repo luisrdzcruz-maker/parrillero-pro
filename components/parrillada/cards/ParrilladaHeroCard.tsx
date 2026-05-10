@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import type { ParrilladaPlan } from '@/lib/planning';
 
 type ParrilladaHeroCardProps = {
@@ -7,38 +8,80 @@ type ParrilladaHeroCardProps = {
   keyExecutionHint?: string;
 };
 
+type MetricTone = 'default' | 'amber';
+
 export function ParrilladaHeroCard({ plan, keyExecutionHint }: ParrilladaHeroCardProps) {
+  const isPro = plan.mode === 'pro';
+  const warningsCount = plan.warnings.length;
+  const holdsCount = plan.items.filter((item) => item.canHoldWarm === true).length;
+  const zonesCount = countUniqueZones(plan);
+
   return (
     <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-orange-500/[0.07] p-4">
-      <p className="text-[11px] uppercase tracking-[0.18em] text-orange-200/75">Parrillada</p>
-      <h2 className="mt-1 text-xl font-semibold text-white">Your Parrillada Plan</h2>
+      <div className="flex items-start justify-between gap-3">
+        <h2 className="text-xl font-semibold tracking-tight text-white">Parrillada Plan</h2>
+        <span className="shrink-0 rounded-full border border-orange-300/35 bg-orange-500/15 px-2.5 py-0.5 text-[11px] font-black uppercase tracking-[0.14em] text-orange-100">
+          {isPro ? 'Pro' : 'Lite'}
+        </span>
+      </div>
 
       <div className="mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
         <Metric label="Items" value={`${plan.items.length}`} />
-        <Metric label="Serve target" value={plan.serveTargetLabel} />
+        <Metric label="Serve" value={plan.serveTargetLabel} />
         <Metric label="Complexity" value={plan.complexity} />
-        <Metric label="Warnings" value={`${plan.warnings.length}`} />
+        <Metric
+          label="Warnings"
+          value={`${warningsCount}`}
+          tone={warningsCount > 0 ? 'amber' : 'default'}
+        />
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
-        <span className="inline-flex rounded-full border border-orange-300/30 bg-orange-500/15 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-orange-100">
-          {plan.mode} variant
-        </span>
         {keyExecutionHint ? (
-          <span className="inline-flex rounded-full border border-white/15 bg-black/20 px-2.5 py-1 text-xs font-semibold text-white/85">
-            {keyExecutionHint}
-          </span>
+          <Chip tone="orange">{keyExecutionHint}</Chip>
         ) : null}
+        {isPro && zonesCount > 0 ? <Chip tone="neutral">{zonesCount} zones</Chip> : null}
+        {isPro && holdsCount > 0 ? <Chip tone="neutral">{holdsCount} holds</Chip> : null}
       </div>
     </section>
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function countUniqueZones(plan: ParrilladaPlan): number {
+  const zones = new Set<string>();
+  plan.items.forEach((item) => {
+    item.zonePreference?.forEach((zone) => zones.add(zone));
+  });
+  return zones.size;
+}
+
+function Metric({ label, value, tone = 'default' }: { label: string; value: string; tone?: MetricTone }) {
+  const className =
+    tone === 'amber'
+      ? 'rounded-2xl border border-amber-300/30 bg-amber-500/10 px-2.5 py-1.5'
+      : 'rounded-2xl border border-white/10 bg-black/20 px-2.5 py-1.5';
+  const labelClass = tone === 'amber' ? 'text-[10px] text-amber-200/85' : 'text-[10px] text-white/50';
+  const valueClass = tone === 'amber' ? 'mt-0.5 text-[13px] font-semibold text-amber-100' : 'mt-0.5 text-[13px] font-semibold text-white';
+
   return (
-    <article className="rounded-2xl border border-white/10 bg-black/20 px-2.5 py-1.5">
-      <p className="text-[10px] text-white/50">{label}</p>
-      <p className="mt-0.5 text-[13px] font-semibold text-white">{value}</p>
+    <article className={className}>
+      <p className={labelClass}>{label}</p>
+      <p className={valueClass}>{value}</p>
     </article>
+  );
+}
+
+function Chip({ children, tone }: { children: ReactNode; tone: 'orange' | 'neutral' }) {
+  if (tone === 'orange') {
+    return (
+      <span className="inline-flex rounded-full border border-orange-300/30 bg-orange-500/12 px-2.5 py-1 text-[11px] font-semibold text-orange-100">
+        {children}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex rounded-full border border-white/12 bg-black/20 px-2.5 py-1 text-[11px] font-semibold text-white/80">
+      {children}
+    </span>
   );
 }

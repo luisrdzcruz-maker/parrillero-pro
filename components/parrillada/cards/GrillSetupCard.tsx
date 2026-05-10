@@ -19,10 +19,9 @@ function zoneTone(zone: GrillZoneType): string {
 export function GrillSetupCard() {
   return (
     <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
-      <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Grill Setup</p>
-      <h3 className="mt-1 text-base font-semibold text-white">Zone layout</h3>
+      <h3 className="text-base font-semibold text-white">Zones</h3>
 
-      <div className="mt-3 grid grid-cols-3 gap-2">
+      <div className="mt-2.5 grid grid-cols-3 gap-2">
         {zones.map(({ zone, label, detail }) => (
           <div key={zone} className={`rounded-2xl border px-2 py-2 ${zoneTone(zone)}`}>
             <div className="flex items-center gap-2">

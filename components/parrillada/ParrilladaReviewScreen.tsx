@@ -25,7 +25,11 @@ export function ParrilladaReviewScreen({ plan, plannerResult, ctaLabel, onBack, 
   const zoneStatus = plannerResultToReviewZoneStatus(plannerResult);
 
   const criticalItem = criticalStep?.itemId ? plan.items.find((item) => item.id === criticalStep.itemId) : undefined;
-  const keyExecutionHint = criticalStep ? `Start first: ${criticalStep.title}` : undefined;
+  const keyExecutionHint = criticalItem
+    ? `First · ${criticalItem.displayName}`
+    : criticalStep
+      ? `First · ${criticalStep.title}`
+      : undefined;
 
   return (
     <section className="space-y-3">

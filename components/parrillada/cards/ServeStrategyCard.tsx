@@ -1,9 +1,6 @@
 'use client';
 
-import type { ParrilladaMode } from '@/lib/planning';
-
 type ServeStrategyCardProps = {
-  mode: ParrilladaMode;
   strategy: 'asap' | 'time';
   serveAtLocal: string;
   hasValidServeTime: boolean;
@@ -14,7 +11,6 @@ type ServeStrategyCardProps = {
 };
 
 export function ServeStrategyCard({
-  mode,
   strategy,
   serveAtLocal,
   hasValidServeTime,
@@ -25,10 +21,9 @@ export function ServeStrategyCard({
 }: ServeStrategyCardProps) {
   return (
     <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
-      <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Serve Strategy</p>
-      <h3 className="mt-1 text-base font-semibold text-white">When should everything be ready?</h3>
+      <h3 className="text-base font-semibold text-white">Serve time</h3>
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
+      <div className="mt-2.5 grid grid-cols-2 gap-2">
         <button
           type="button"
           onClick={() => onChange('asap')}
@@ -81,10 +76,6 @@ export function ServeStrategyCard({
           </button>
         </div>
       ) : null}
-
-      <p className="mt-3 text-xs text-white/55">
-        {mode === 'pro' ? 'Advanced controls stay collapsed by default.' : 'Lite keeps controls compact and focused.'}
-      </p>
     </section>
   );
 }

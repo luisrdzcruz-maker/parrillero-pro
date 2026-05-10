@@ -183,7 +183,6 @@ export function ParrilladaSchedulerScreen({
             hasValidServeTime={hasValidServeTime}
             strategy={strategy}
             title={parrilladaPlanCopy.setup.title}
-            subtitle={`${modeProfile.mode.toUpperCase()} mode`}
             ctaLabel={parrilladaPlanCopy.setup.cta}
             onServeAtLocalChange={setServeAtLocal}
             onStrategyChange={setStrategy}
