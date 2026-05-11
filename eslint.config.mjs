@@ -4,7 +4,11 @@ import nextTs from "eslint-config-next/typescript";
 
 const eslintConfig = defineConfig([
   {
-    ignores: ["scripts/process-images.cjs"],
+    ignores: [
+      "scripts/process-images.cjs",
+      // Local-only design scratch — gitignored, not part of product code.
+      "docs/design/_scratch/**",
+    ],
   },
   ...nextVitals,
   ...nextTs,
