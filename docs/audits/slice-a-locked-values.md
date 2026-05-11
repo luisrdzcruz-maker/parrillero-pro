@@ -99,15 +99,25 @@ ds.motion = {
 
 ## 8. Lint rule (proposal §8 verbatim)
 
-Implemented as a Node script at `scripts/lint-tokens.mjs`, invoked via `npm run lint:tokens`. ESLint custom plugins are deferred (not worth the wiring for a regex check). Patterns and scope match proposal §8 exactly:
+Implemented as a Node script at `scripts/lint-tokens.mjs`, invoked via `npm run lint:tokens`. This is the intended permanent home for the rule, **not a stopgap before an ESLint plugin** — the check is a regex match over file source, AST traversal is overkill, and a standalone script is faster to run in CI and doesn't fight ESLint's own plugin lifecycle. Promote to a real ESLint plugin only if someone specifically needs IDE inline-warning integration.
+
+Patterns and scope match proposal §8 exactly:
 
 - Scope: `components/**/*.tsx` and `app/**/*.tsx`.
 - Exempt: `lib/design-system.ts`, `app/globals.css`, every file in `lib/` or `node_modules/`.
-- Opt-out: `// allow-arbitrary: <reason>` (in TS context) or `{/* allow-arbitrary: <reason> */}` (in JSX context) on the same line as the violation or the immediately preceding line.
+- Opt-out: any of these three forms, on the same line as the violation or the immediately preceding line:
+  - `// allow-arbitrary: <reason>` (TS line comment)
+  - `/* allow-arbitrary: <reason> */` (block comment — universal, but renders as text if placed at JSX-children position)
+  - `{/* allow-arbitrary: <reason> */}` (JSX expression — required at JSX-children position)
 
 ## 9. Existing-violation amnesty
 
-Option **(a)** — scripted pre-slice-a amnesty pass. Every line in `components/**/*.tsx` and `app/**/*.tsx` that the lint rule would flag has been annotated with an `allow-arbitrary: pre-slice-a` opt-out on the previous line (`{/* */}` form in JSX context, `//` form in TS context). The amnesty is its own commit on the Slice A PR for reviewer clarity.
+Option **(a)** — scripted pre-slice-a amnesty pass. Every line in `components/**/*.tsx` and `app/**/*.tsx` that the lint rule would flag has been annotated with an `allow-arbitrary: pre-slice-a` opt-out on the previous line. The amnesty script picks the right comment form per context:
+
+- `{/* allow-arbitrary: pre-slice-a */}` when the violation line opens a JSX child (the previous non-blank line ends with `>` or `}` and the current line starts with `<` or `{`).
+- `/* allow-arbitrary: pre-slice-a */` everywhere else (after `return (`, between JSX attributes, inside JS expressions, etc.).
+
+The `//` line-comment form is **accepted by the lint rule but never emitted by amnesty** — the script biases toward block-comment forms because they're valid in more contexts. Two markers were hand-fixed where the heuristic mismatched JSX-children context (`components/live/StepCard.tsx`, `components/parrillada/cards/ParrilladaItemRow.tsx`). The amnesty is its own commit on the Slice A PR for reviewer clarity.
 
 **Why parole, not blessing.** Every `pre-slice-a` marker is a grep target. Slices B and D should remove the marker and migrate the underlying value to a `ds.*` token whenever they touch the line. CI tracks the count and flags growth (no new `pre-slice-a` markers should ever appear after Slice A merges).
 
