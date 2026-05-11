@@ -76,6 +76,7 @@ export function ProModal({ lang, trigger, onUpgrade, onDismiss }: Props) {
       />
 
       {/* Card — slides up on mobile, centered on desktop */}
+      {/* allow-arbitrary: pre-slice-a */}
       <div className="relative z-10 w-full max-w-sm rounded-t-[2rem] border border-white/[0.08] bg-[#0c0c0e] px-6 pb-[max(2rem,env(safe-area-inset-bottom))] pt-8 shadow-[0_-24px_80px_rgba(0,0,0,0.7)] sm:rounded-[2rem] sm:pb-8">
 
         {/* Top glow */}
@@ -90,6 +91,7 @@ export function ProModal({ lang, trigger, onUpgrade, onDismiss }: Props) {
         <button
           type="button"
           onClick={onDismiss}
+          /* allow-arbitrary: pre-slice-a */
           className="absolute right-5 top-5 rounded-full border border-white/10 bg-white/[0.06] p-1.5 text-[10px] font-bold text-white/40 transition hover:text-white/65 active:scale-[0.96]"
           aria-label={t.proModalCloseAria}
         >
@@ -107,11 +109,14 @@ export function ProModal({ lang, trigger, onUpgrade, onDismiss }: Props) {
                 transform: "scale(2.2)",
               }}
             />
+            {/* allow-arbitrary: pre-slice-a */}
             <span className="relative text-[42px]">🔥</span>
           </div>
+          {/* allow-arbitrary: pre-slice-a */}
           <h2 className="text-[22px] font-black leading-tight text-white">
             {t.proModalTitle}
           </h2>
+          {/* allow-arbitrary: pre-slice-a */}
           <p className="mt-2 text-[13px] font-semibold leading-relaxed text-white/50">
             {getSubtitle(trigger, t)}
           </p>
@@ -126,10 +131,13 @@ export function ProModal({ lang, trigger, onUpgrade, onDismiss }: Props) {
                 {b.icon}
               </span>
               <div className="min-w-0 pt-0.5">
+                {/* allow-arbitrary: pre-slice-a */}
                 <p className="text-[13px] font-black text-white/90">{b.title}</p>
+                {/* allow-arbitrary: pre-slice-a */}
                 <p className="text-[11.5px] font-semibold text-white/40">{b.sub}</p>
               </div>
               {/* Check */}
+              {/* allow-arbitrary: pre-slice-a */}
               <span className="ml-auto shrink-0 text-[13px] font-black text-emerald-400">✓</span>
             </li>
           ))}
@@ -139,6 +147,7 @@ export function ProModal({ lang, trigger, onUpgrade, onDismiss }: Props) {
         <button
           type="button"
           onClick={handleUpgrade}
+          /* allow-arbitrary: pre-slice-a */
           className="w-full min-h-[3.25rem] rounded-2xl bg-orange-500 text-[15px] font-black text-black shadow-[0_6px_32px_rgba(249,115,22,0.45)] transition active:scale-[0.97] active:bg-orange-600 hover:bg-orange-400"
         >
           {t.proModalPrimaryCta}
@@ -147,6 +156,7 @@ export function ProModal({ lang, trigger, onUpgrade, onDismiss }: Props) {
         <button
           type="button"
           onClick={onDismiss}
+          /* allow-arbitrary: pre-slice-a */
           className="mt-3 w-full py-2.5 text-[13px] font-semibold text-white/35 transition hover:text-white/55 active:scale-[0.98]"
         >
           {t.proModalSecondaryCta}

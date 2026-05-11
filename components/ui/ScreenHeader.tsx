@@ -43,6 +43,7 @@ export function ScreenHeader({
       {leading ? <div className="shrink-0">{leading}</div> : null}
       <div className="min-w-0 flex-1">
         {eyebrow ? (
+          /* allow-arbitrary: pre-slice-a */
           <p className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-300/85 sm:text-[11px]">
             {eyebrow}
           </p>

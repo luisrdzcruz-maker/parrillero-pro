@@ -18,6 +18,7 @@ function zoneTone(zone: GrillZoneType): string {
 
 export function GrillSetupCard() {
   return (
+    /* allow-arbitrary: pre-slice-a */
     <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
       <h3 className="text-base font-semibold text-white">Zones</h3>
 
@@ -34,6 +35,7 @@ export function GrillSetupCard() {
               />
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-white">{label}</p>
+                {/* allow-arbitrary: pre-slice-a */}
                 <p className="truncate text-[10px] text-white/55">{detail}</p>
               </div>
             </div>

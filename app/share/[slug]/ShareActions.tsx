@@ -35,6 +35,7 @@ export default function ShareActions({ text }: { text: string }) {
       <button
         type="button"
         onClick={copyPlan}
+        /* allow-arbitrary: pre-slice-a */
         className="min-h-[52px] rounded-2xl border border-white/10 bg-white/[0.06] px-5 text-sm font-black text-white shadow-lg shadow-black/20 transition hover:bg-white/[0.09] active:scale-[0.98]"
       >
         {copied ? "Copiado ✓" : "Copiar plan"}

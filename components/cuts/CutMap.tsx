@@ -15,9 +15,11 @@ export function CutMap({ animal, lang, selectedZone, onZoneChange }: CutMapProps
   const zones = getAvailableCategories(animal);
 
   return (
+    /* allow-arbitrary: pre-slice-a */
     <section className="overflow-hidden rounded-[1.8rem] border border-white/10 bg-white/[0.04] p-4 shadow-2xl shadow-black/20 backdrop-blur-xl">
       <div className="flex items-start justify-between gap-4">
         <div>
+          {/* allow-arbitrary: pre-slice-a */}
           <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300">
             {lang === "es" ? "Filtro por zona" : lang === "fi" ? "Aluesuodatin" : "Zone filter"}
           </p>
@@ -36,6 +38,7 @@ export function CutMap({ animal, lang, selectedZone, onZoneChange }: CutMapProps
           <button
             type="button"
             onClick={() => onZoneChange(null)}
+            /* allow-arbitrary: pre-slice-a */
             className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-zinc-200 transition active:scale-[0.97]"
           >
             {lang === "es" ? "Limpiar" : lang === "fi" ? "Tyhjennä" : "Clear"}
@@ -53,11 +56,14 @@ export function CutMap({ animal, lang, selectedZone, onZoneChange }: CutMapProps
               onClick={() => onZoneChange(isActive ? null : zone)}
               className={`rounded-2xl border p-4 text-left transition active:scale-[0.98] ${
                 isActive
+                  /* allow-arbitrary: pre-slice-a */
                   ? "border-orange-400 bg-orange-500 text-black shadow-[0_16px_50px_rgba(249,115,22,0.24)]"
+                  /* allow-arbitrary: pre-slice-a */
                   : "border-white/10 bg-black/25 text-zinc-200 hover:border-orange-400/45 hover:bg-white/[0.07]"
               }`}
             >
               <span className="block text-sm font-black">{getCategoryLabel(zone, lang)}</span>
+              {/* allow-arbitrary: pre-slice-a */}
               <span className={`mt-1 block text-[11px] ${isActive ? "text-black/60" : "text-zinc-500"}`}>
                 {lang === "es" ? "Toca para filtrar" : lang === "fi" ? "Napauta suodattaaksesi" : "Tap to filter"}
               </span>

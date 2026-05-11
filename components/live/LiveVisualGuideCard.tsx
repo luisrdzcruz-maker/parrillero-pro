@@ -19,6 +19,7 @@ export default function LiveVisualGuideCard({ guide }: Props) {
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/15 to-black/5" />
 
         {guide.type === "serve_cut" && (
+          /* allow-arbitrary: pre-slice-a */
           <div className="absolute inset-x-8 top-1/2 h-px -rotate-12 bg-emerald-300/80 shadow-[0_0_18px_rgba(110,231,183,0.55)]">
             <span className="absolute -right-1 -top-1.5 h-3 w-3 rotate-45 border-r-2 border-t-2 border-emerald-300" />
           </div>
@@ -28,6 +29,7 @@ export default function LiveVisualGuideCard({ guide }: Props) {
           {guide.chips.map((chip) => (
             <span
               key={chip}
+              /* allow-arbitrary: pre-slice-a */
               className="rounded-full border border-white/12 bg-black/55 px-2 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-white/78 backdrop-blur"
             >
               {chip}
@@ -37,16 +39,20 @@ export default function LiveVisualGuideCard({ guide }: Props) {
       </div>
 
       <div className="px-3.5 py-3">
+        {/* allow-arbitrary: pre-slice-a */}
         <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/35">
           Guía visual
         </p>
+        {/* allow-arbitrary: pre-slice-a */}
         <p className="mt-1 text-[14px] font-black leading-tight text-white/90">
           {guide.title}
         </p>
+        {/* allow-arbitrary: pre-slice-a */}
         <p className="mt-1.5 text-[12px] font-semibold leading-relaxed text-white/58">
           {guide.action}
         </p>
         {guide.tip && (
+          /* allow-arbitrary: pre-slice-a */
           <p className="mt-2 rounded-xl border border-white/[0.06] bg-white/[0.035] px-3 py-2 text-[11.5px] font-semibold leading-relaxed text-white/48">
             {guide.tip}
           </p>

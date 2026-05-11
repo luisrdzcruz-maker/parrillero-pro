@@ -20,6 +20,7 @@ export function ParrilladaHeroCard({ plan, keyExecutionHint }: ParrilladaHeroCar
     <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-orange-500/[0.07] p-4">
       <div className="flex items-start justify-between gap-3">
         <h2 className="text-xl font-semibold tracking-tight text-white">Parrillada Plan</h2>
+        {/* allow-arbitrary: pre-slice-a */}
         <span className="shrink-0 rounded-full border border-orange-300/35 bg-orange-500/15 px-2.5 py-0.5 text-[11px] font-black uppercase tracking-[0.14em] text-orange-100">
           {isPro ? 'Pro' : 'Lite'}
         </span>
@@ -60,7 +61,9 @@ function Metric({ label, value, tone = 'default' }: { label: string; value: stri
     tone === 'amber'
       ? 'min-w-0 rounded-xl border border-amber-300/30 bg-amber-500/10 px-1.5 py-1.5'
       : 'min-w-0 rounded-xl border border-white/10 bg-black/20 px-1.5 py-1.5';
+  /* allow-arbitrary: pre-slice-a */
   const labelClass = tone === 'amber' ? 'truncate text-[9px] uppercase tracking-wide text-amber-200/85' : 'truncate text-[9px] uppercase tracking-wide text-white/50';
+  /* allow-arbitrary: pre-slice-a */
   const valueClass = tone === 'amber' ? 'mt-0.5 truncate text-[13px] font-semibold text-amber-100' : 'mt-0.5 truncate text-[13px] font-semibold text-white';
 
   return (
@@ -74,12 +77,14 @@ function Metric({ label, value, tone = 'default' }: { label: string; value: stri
 function Chip({ children, tone }: { children: ReactNode; tone: 'orange' | 'neutral' }) {
   if (tone === 'orange') {
     return (
+      /* allow-arbitrary: pre-slice-a */
       <span className="inline-flex rounded-full border border-orange-300/30 bg-orange-500/12 px-2.5 py-1 text-[11px] font-semibold text-orange-100">
         {children}
       </span>
     );
   }
   return (
+    /* allow-arbitrary: pre-slice-a */
     <span className="inline-flex rounded-full border border-white/12 bg-black/20 px-2.5 py-1 text-[11px] font-semibold text-white/80">
       {children}
     </span>

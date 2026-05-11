@@ -25,9 +25,12 @@ export function ParrilladaLiveScreen({
 
   return (
     <section className="space-y-3">
+      {/* allow-arbitrary: pre-slice-a */}
       <header className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
+        {/* allow-arbitrary: pre-slice-a */}
         <p className="text-[11px] uppercase tracking-[0.18em] text-orange-200/70">Live</p>
         <h2 className="mt-1 text-xl font-semibold text-white">{title}</h2>
+        {/* allow-arbitrary: pre-slice-a */}
         <p className="mt-1 text-sm text-white/65">Focus on the next action. Keep execution calm and precise.</p>
         <p className="mt-1 text-xs text-white/50">Preview projection from grouped planner timeline (read-only foundation).</p>
       </header>
@@ -35,9 +38,12 @@ export function ParrilladaLiveScreen({
       <LiveCommandCard action={currentAction} ctaLabel={markDoneLabel} onMarkDone={onMarkDone} />
 
       {livePlan.upNextAction ? (
+        /* allow-arbitrary: pre-slice-a */
         <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
+          {/* allow-arbitrary: pre-slice-a */}
           <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Up Next</p>
           <p className="mt-1 text-sm font-semibold text-white">{livePlan.upNextAction.instruction}</p>
+          {/* allow-arbitrary: pre-slice-a */}
           <p className="mt-1 text-xs text-white/55">
             {livePlan.upNextAction.zone ? `${livePlan.upNextAction.zone} zone` : 'coordination'}
             {livePlan.upNextAction.durationLabel ? ` · ${livePlan.upNextAction.durationLabel}` : ''}
@@ -47,7 +53,9 @@ export function ParrilladaLiveScreen({
 
       <GrillZoneStatusCard zones={livePlan.zoneStatus} />
 
+      {/* allow-arbitrary: pre-slice-a */}
       <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
+        {/* allow-arbitrary: pre-slice-a */}
         <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Active Items</p>
         <div className="mt-3 space-y-2">
           {livePlan.activeItems.map((item) => (
@@ -61,8 +69,10 @@ export function ParrilladaLiveScreen({
               />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-white">{item.displayName}</p>
+                {/* allow-arbitrary: pre-slice-a */}
                 <p className="text-xs text-white/55">{item.phase}</p>
               </div>
+              {/* allow-arbitrary: pre-slice-a */}
               <span className="rounded-full border border-white/10 bg-black/25 px-2.5 py-1 text-xs font-semibold text-white/75">
                 {item.timeRemainingLabel}
               </span>
@@ -71,8 +81,11 @@ export function ParrilladaLiveScreen({
         </div>
       </section>
 
+      {/* allow-arbitrary: pre-slice-a */}
       <section className="rounded-3xl border border-dashed border-white/20 bg-white/[0.02] px-4 py-3">
+        {/* allow-arbitrary: pre-slice-a */}
         <p className="text-sm font-semibold text-white/80">{adjustPlanLabel}</p>
+        {/* allow-arbitrary: pre-slice-a */}
         <p className="mt-1 text-xs text-white/55">Reserved for future Pro optimizer adjustments.</p>
       </section>
     </section>

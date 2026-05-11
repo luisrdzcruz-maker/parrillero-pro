@@ -47,13 +47,16 @@ export function CompactDisclosure({
 
   return (
     <div
+      /* allow-arbitrary: pre-slice-a */
       className={`rounded-[1.15rem] border border-orange-200/15 bg-slate-950/35 px-3.5 py-3 ring-1 ring-inset ring-white/5${
         className ? ` ${className}` : ""
       }`}
     >
+      {/* allow-arbitrary: pre-slice-a */}
       <p className="text-[9px] font-black uppercase tracking-[0.16em] text-orange-100/55 sm:text-[10px]">
         {label}
       </p>
+      {/* allow-arbitrary: pre-slice-a */}
       <p className="mt-1 text-[13px] leading-snug text-white/90 sm:text-sm">{summary}</p>
       {children ? (
         <>
@@ -61,6 +64,7 @@ export function CompactDisclosure({
             type="button"
             onClick={() => setOpen((current) => !current)}
             aria-expanded={open}
+            /* allow-arbitrary: pre-slice-a */
             className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-orange-200/80 transition hover:text-orange-100"
           >
             {open ? hideLabel : showLabel}

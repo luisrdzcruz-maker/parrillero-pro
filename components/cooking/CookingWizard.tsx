@@ -371,6 +371,7 @@ function DetailsBackButton({ label, onBack }: { label: string; onBack: () => voi
     <button
       type="button"
       onClick={onBack}
+      /* allow-arbitrary: pre-slice-a */
       className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.07] text-lg font-black leading-none text-white shadow-lg shadow-black/20 backdrop-blur transition-all duration-200 hover:bg-white/12 active:scale-95"
       aria-label={label}
       title={label}
@@ -489,7 +490,9 @@ function FeaturedCutCard({
       onClick={onClick}
       className={
         active
+          /* allow-arbitrary: pre-slice-a */
           ? "group relative w-full touch-manipulation select-none overflow-hidden rounded-[1.75rem] border border-orange-300/90 bg-zinc-950 text-left shadow-[0_22px_64px_rgba(255,106,0,0.30)] ring-2 ring-orange-400/35 transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/70 active:scale-[0.99]"
+          /* allow-arbitrary: pre-slice-a */
           : "group relative w-full touch-manipulation select-none overflow-hidden rounded-[1.75rem] border border-white/10 bg-zinc-950 text-left shadow-[0_14px_42px_rgba(0,0,0,0.35)] transition-all duration-200 ease-out hover:border-[#FF6A00]/45 hover:shadow-[0_20px_52px_rgba(255,106,0,0.16)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/50 active:scale-[0.99]"
       }
     >
@@ -542,6 +545,7 @@ function FeaturedCutCard({
             alt={cut.name}
             size="xl"
             shape="soft"
+            /* allow-arbitrary: pre-slice-a */
             className="absolute left-3 top-3 z-10 h-16 w-16 rounded-[1.25rem] bg-black/45 shadow-lg shadow-black/30 backdrop-blur-sm sm:h-20 sm:w-20"
           />
         )}
@@ -550,12 +554,14 @@ function FeaturedCutCard({
         <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 lg:max-w-[65%]">
           {/* Featured badge + tags */}
           <div className="mb-3 flex flex-wrap items-center gap-2">
+            {/* allow-arbitrary: pre-slice-a */}
             <span className="rounded-full border border-orange-400/35 bg-orange-500/18 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-orange-300">
               ⭐ Recomendado para empezar
             </span>
             {tags.map((tag) => (
               <span
                 key={tag}
+                /* allow-arbitrary: pre-slice-a */
                 className="rounded-full border border-white/12 bg-black/50 px-2 py-0.5 text-[10px] font-bold text-white/55 backdrop-blur-sm"
               >
                 {tag}
@@ -563,9 +569,11 @@ function FeaturedCutCard({
             ))}
           </div>
 
+          {/* allow-arbitrary: pre-slice-a */}
           <h3 className="text-2xl font-black leading-tight tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)] sm:text-3xl">
             {cut.name}
           </h3>
+          {/* allow-arbitrary: pre-slice-a */}
           <p className="mt-1.5 line-clamp-2 max-w-md text-sm leading-5 text-slate-200/75">
             {cut.description}
           </p>
@@ -609,7 +617,9 @@ function CutCard({
       onClick={onClick}
       className={
         active
+          /* allow-arbitrary: pre-slice-a */
           ? "group relative touch-manipulation select-none overflow-hidden rounded-[1.75rem] border border-orange-300/90 bg-zinc-950 text-left shadow-[0_22px_64px_rgba(255,106,0,0.30)] ring-2 ring-orange-400/35 transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/70 active:scale-[0.98]"
+          /* allow-arbitrary: pre-slice-a */
           : "group relative touch-manipulation select-none overflow-hidden rounded-[1.75rem] border border-white/10 bg-zinc-950 text-left shadow-[0_14px_42px_rgba(0,0,0,0.35)] transition-all duration-200 ease-out hover:border-[#FF6A00]/45 hover:shadow-[0_20px_52px_rgba(255,106,0,0.16)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/50 active:scale-[0.98]"
       }
     >
@@ -646,6 +656,7 @@ function CutCard({
         {/* External badge (kept for API compat) */}
         {badge && (
           <Badge
+            /* allow-arbitrary: pre-slice-a */
             className="absolute left-2 top-2 z-10 text-[9px] shadow-lg shadow-black/20 backdrop-blur-md sm:left-3 sm:top-3 sm:text-[11px]"
             tone="glass"
           >
@@ -659,6 +670,7 @@ function CutCard({
             alt={cut.name}
             size="lg"
             shape="soft"
+            /* allow-arbitrary: pre-slice-a */
             className="absolute left-2 top-2 z-10 h-12 w-12 rounded-[1.05rem] bg-black/45 shadow-lg shadow-black/30 backdrop-blur-sm sm:left-3 sm:top-3 sm:h-14 sm:w-14"
           />
         )}
@@ -682,6 +694,7 @@ function CutCard({
               {tags.map((tag) => (
                 <span
                   key={tag}
+                  /* allow-arbitrary: pre-slice-a */
                   className="rounded-full border border-white/10 bg-black/45 px-1.5 py-0.5 text-[10px] font-bold text-white/55 backdrop-blur-sm"
                 >
                   {tag}
@@ -690,9 +703,11 @@ function CutCard({
             </div>
           )}
 
+          {/* allow-arbitrary: pre-slice-a */}
           <h3 className="line-clamp-2 text-lg font-black leading-5 tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)] sm:text-2xl sm:leading-tight">
             {cut.name}
           </h3>
+          {/* allow-arbitrary: pre-slice-a */}
           <p className="mt-1 line-clamp-2 max-w-[24rem] text-[11px] font-medium leading-4 text-slate-200/75 sm:mt-2 sm:text-sm sm:leading-5">
             {cut.description}
           </p>
@@ -729,6 +744,7 @@ function CookingCutStep({
       <AppTopBar backLabel={animal} onBack={onBack} />
 
       <div className="max-w-3xl pl-11 md:pl-0">
+        {/* allow-arbitrary: pre-slice-a */}
         <p className="text-[11px] font-black uppercase tracking-[0.22em] text-orange-300/75">
           {lang === "es" ? "Categoría" : lang === "fi" ? "Kategoria" : "Category"}
         </p>
@@ -757,6 +773,7 @@ function CookingCutStep({
       {/* Remaining cuts in 2-col grid */}
       {gridCuts.length > 0 && (
         <div className="space-y-3 sm:space-y-4">
+          {/* allow-arbitrary: pre-slice-a */}
           <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/25">
             {lang === "es" ? "Todos los cortes" : lang === "fi" ? "Kaikki leikkaukset" : "All cuts"}
           </p>
@@ -895,7 +912,9 @@ function DetailsFieldGroup({
   title: string;
 }) {
   return (
+    /* allow-arbitrary: pre-slice-a */
     <div className="rounded-[1.1rem] border border-white/[0.08] bg-white/[0.03] p-3 sm:rounded-[1.25rem] sm:p-3.5">
+      {/* allow-arbitrary: pre-slice-a */}
       <p className="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-orange-200/70">
         {title}
       </p>
@@ -917,6 +936,7 @@ function DetailsInput({
 }) {
   return (
     <div>
+      {/* allow-arbitrary: pre-slice-a */}
       <label className="text-[10px] font-bold uppercase tracking-[0.11em] text-slate-400 sm:text-[11px] sm:tracking-[0.12em]">
         {label}
       </label>
@@ -943,6 +963,7 @@ function DetailsSelect({
 }) {
   return (
     <div>
+      {/* allow-arbitrary: pre-slice-a */}
       <label className="text-[10px] font-bold uppercase tracking-[0.11em] text-slate-400 sm:text-[11px] sm:tracking-[0.12em]">
         {label}
       </label>
@@ -977,6 +998,7 @@ function EquipmentOptionCards({
 }) {
   return (
     <div className="min-[390px]:col-span-2">
+      {/* allow-arbitrary: pre-slice-a */}
       <p className="text-[10px] font-bold uppercase tracking-[0.11em] text-slate-400 sm:text-[11px] sm:tracking-[0.12em]">
         {label}
       </p>
@@ -992,6 +1014,7 @@ function EquipmentOptionCards({
               onClick={() => onChange(option.value)}
               className={
                 selected
+                  /* allow-arbitrary: pre-slice-a */
                   ? "flex min-h-[48px] min-w-0 items-center gap-2 rounded-xl border border-orange-300/70 bg-orange-500/18 px-2.5 py-2 text-left text-sm font-black text-orange-50 shadow-[0_10px_28px_rgba(249,115,22,0.14)] ring-1 ring-orange-300/20 transition active:scale-[0.98]"
                   : "flex min-h-[48px] min-w-0 items-center gap-2 rounded-xl border border-white/10 bg-slate-950/80 px-2.5 py-2 text-left text-sm font-semibold text-slate-200 shadow-inner shadow-black/20 transition hover:border-orange-300/35 hover:bg-orange-500/8 active:scale-[0.98]"
               }
@@ -1143,10 +1166,12 @@ function CookingDetailsStep({
         selectedCut={selectedCut}
       />
 
+      {/* allow-arbitrary: pre-slice-a */}
       <div className="animate-live-enter relative overflow-hidden rounded-[1.35rem] border border-white/10 bg-[linear-gradient(145deg,rgba(12,10,9,0.94),rgba(3,7,18,0.94))] p-3 shadow-[0_14px_42px_rgba(0,0,0,0.34)] ring-1 ring-inset ring-white/[0.04] [animation-delay:70ms] sm:rounded-[1.6rem] sm:p-4">
         <div className="relative space-y-3">
           <div className="flex items-center justify-between gap-3">
             <div>
+              {/* allow-arbitrary: pre-slice-a */}
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-200/75">
                 {detailsSetupText.section}
               </p>
@@ -1154,6 +1179,7 @@ function CookingDetailsStep({
                 {detailsSetupText.title}
               </h2>
             </div>
+            {/* allow-arbitrary: pre-slice-a */}
             <div className="hidden rounded-full border border-orange-300/20 bg-orange-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-orange-200 min-[390px]:block">
               {detailsHeroBadge}
             </div>
@@ -1249,6 +1275,7 @@ function CookingDetailsStep({
           loading={loading}
           text={t.generatePlan}
           loadingText={t.generating}
+          /* allow-arbitrary: pre-slice-a */
           className="min-h-[3.15rem] rounded-[1.25rem] border border-orange-200/25 shadow-[0_18px_50px_rgba(249,115,22,0.34),0_0_28px_rgba(255,106,0,0.14)] ring-1 ring-orange-300/25 hover:shadow-[0_22px_60px_rgba(249,115,22,0.42),0_0_34px_rgba(255,106,0,0.18)] sm:min-h-[3.3rem]"
         />
       </div>

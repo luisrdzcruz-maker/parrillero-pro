@@ -56,6 +56,7 @@ export function ParrilladaSetupScreen({
         <h2 className="min-w-0 truncate text-lg font-semibold text-white">
           {title} {mode === 'pro' ? 'Pro' : 'Lite'}
         </h2>
+        {/* allow-arbitrary: pre-slice-a */}
         <span className="shrink-0 rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[11px] font-semibold text-white/65 tabular-nums">
           {liteMinItems}–{liteMaxItems} items
         </span>
@@ -83,6 +84,7 @@ export function ParrilladaSetupScreen({
         <button
           type="button"
           onClick={onBack}
+          /* allow-arbitrary: pre-slice-a */
           className="rounded-2xl border border-white/15 bg-black/20 px-4 py-3 text-sm font-semibold text-white/80 transition hover:border-white/30"
         >
           Back
@@ -94,6 +96,7 @@ export function ParrilladaSetupScreen({
           className={`rounded-2xl px-4 py-3 text-sm font-bold transition ${
             canGenerate
               ? 'bg-gradient-to-r from-orange-400 to-orange-500 text-black hover:brightness-105'
+              /* allow-arbitrary: pre-slice-a */
               : 'cursor-not-allowed border border-white/10 bg-black/20 text-white/45'
           }`}
         >

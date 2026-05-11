@@ -133,6 +133,7 @@ function FilterSelect({
 }) {
   return (
     <label className="block">
+      {/* allow-arbitrary: pre-slice-a */}
       <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
         {label}
       </span>
@@ -170,6 +171,7 @@ function KpiCard({
         ? "border-red-500/25 bg-red-500/5"
         : tone === "accent"
           ? "border-orange-500/30 bg-orange-500/5"
+          /* allow-arbitrary: pre-slice-a */
           : "border-white/10 bg-white/[0.04]";
 
   return (
@@ -179,6 +181,7 @@ function KpiCard({
         toneClass,
       )}
     >
+      {/* allow-arbitrary: pre-slice-a */}
       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
         {label}
       </p>
@@ -264,6 +267,7 @@ export default function AdminQaPage() {
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-black/25 p-4 text-left lg:min-w-64">
+              {/* allow-arbitrary: pre-slice-a */}
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                 Last run
               </p>
@@ -313,6 +317,7 @@ export default function AdminQaPage() {
                 tone="danger"
               />
               <Card className="border-orange-500/30 bg-orange-500/5 transition duration-200 hover:-translate-y-0.5 active:scale-[0.99]">
+                {/* allow-arbitrary: pre-slice-a */}
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                   Avg score
                 </p>
@@ -440,6 +445,7 @@ export default function AdminQaPage() {
                     {filteredFailures.map((f) => (
                       <tr
                         key={f.id}
+                        /* allow-arbitrary: pre-slice-a */
                         className="border-b border-white/5 transition-colors hover:bg-white/[0.04]"
                       >
                         <td className="px-2 py-2 align-top sm:px-3">
@@ -501,6 +507,7 @@ export default function AdminQaPage() {
                     {filteredCases.map((item) => (
                       <tr
                         key={item.id}
+                        /* allow-arbitrary: pre-slice-a */
                         className="border-b border-white/5 transition-colors hover:bg-white/[0.04]"
                       >
                         <td className="px-2 py-2 align-top sm:px-3">

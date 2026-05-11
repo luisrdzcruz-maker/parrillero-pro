@@ -106,9 +106,11 @@ export function ParrilladaTimelineFinal({ result }: { result: PlannerResult | nu
   const executionGroups = result.executionTimelineGroups ?? [];
 
   return (
+    /* allow-arbitrary: pre-slice-a */
     <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-3 shadow-xl sm:p-4">
       <div className="mb-3 flex items-end justify-between gap-3">
         <h2 className="text-lg font-semibold tracking-tight text-white sm:text-xl">Timeline</h2>
+        {/* allow-arbitrary: pre-slice-a */}
         <div className="flex items-baseline gap-1.5 text-xs text-white/55">
           <span>Serve</span>
           <span className="text-sm font-semibold text-white tabular-nums">{formatTime(result.request.serveAtIso)}</span>
@@ -118,6 +120,7 @@ export function ParrilladaTimelineFinal({ result }: { result: PlannerResult | nu
       <div className="space-y-2">
         {executionGroups.length > 0 ? (
           <article className="rounded-2xl border border-white/10 bg-black/20 p-2.5">
+            {/* allow-arbitrary: pre-slice-a */}
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">Actions</p>
             <div className="space-y-1.5">
               {executionGroups.map((group) => (
@@ -127,6 +130,7 @@ export function ParrilladaTimelineFinal({ result }: { result: PlannerResult | nu
                 >
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-2.5 py-2">
                     <div className="flex min-w-0 items-center gap-2">
+                      {/* allow-arbitrary: pre-slice-a */}
                       <span className="shrink-0 text-[12px] font-semibold tabular-nums text-orange-100/85">
                         {formatTime(group.startIso)}
                       </span>
@@ -134,16 +138,19 @@ export function ParrilladaTimelineFinal({ result }: { result: PlannerResult | nu
                     </div>
                     <span
                       aria-hidden="true"
+                      /* allow-arbitrary: pre-slice-a */
                       className="shrink-0 text-base font-black text-white/30 transition-transform duration-200 group-open:rotate-90 group-open:text-orange-200/75"
                     >
                       ›
                     </span>
                   </summary>
+                  {/* allow-arbitrary: pre-slice-a */}
                   <div className="space-y-1 border-t border-white/[0.06] px-2.5 pb-2 pt-1.5 text-xs text-white/65">
                     <p>{formatActionMeta(group)}</p>
                     {itemQuantityLabel(group) ? (
                       <p className="text-orange-100/80">{itemQuantityLabel(group)}</p>
                     ) : null}
+                    {/* allow-arbitrary: pre-slice-a */}
                     <p className="text-white/75">{compactExecutionInstruction(group)}</p>
                   </div>
                 </details>
@@ -154,9 +161,11 @@ export function ParrilladaTimelineFinal({ result }: { result: PlannerResult | nu
 
         <details className="group rounded-2xl border border-white/10 bg-black/20 transition open:bg-black/30">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-2.5 py-2">
+            {/* allow-arbitrary: pre-slice-a */}
             <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">All phases</span>
             <span
               aria-hidden="true"
+              /* allow-arbitrary: pre-slice-a */
               className="text-base font-black text-white/30 transition-transform duration-200 group-open:rotate-90 group-open:text-orange-200/70"
             >
               ›
@@ -164,12 +173,15 @@ export function ParrilladaTimelineFinal({ result }: { result: PlannerResult | nu
           </summary>
           <div className="space-y-2 border-t border-white/[0.06] px-2.5 pb-2 pt-2">
             {groups.map((group) => (
+              /* allow-arbitrary: pre-slice-a */
               <article key={group.time} className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-2">
                 <div className="mb-1.5 flex items-center gap-2">
+                  {/* allow-arbitrary: pre-slice-a */}
                   <span className="text-[12px] font-semibold tabular-nums text-orange-100/85">
                     {formatTime(group.time)}
                   </span>
                   {group.phases.length > 1 && (
+                    /* allow-arbitrary: pre-slice-a */
                     <span className="text-[11px] text-white/45">{group.phases.length} parallel</span>
                   )}
                 </div>
@@ -177,16 +189,21 @@ export function ParrilladaTimelineFinal({ result }: { result: PlannerResult | nu
                   {group.phases.map((phase) => (
                     <div key={phase.id} className="rounded-lg border border-white/[0.06] bg-black/20 p-2">
                       <div className="flex flex-wrap items-center gap-1.5">
+                        {/* allow-arbitrary: pre-slice-a */}
                         <span className="rounded-full bg-orange-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-orange-100">
                           {phaseLabel(phase.type)}
                         </span>
+                        {/* allow-arbitrary: pre-slice-a */}
                         <span className="text-[13px] font-semibold text-white">{phase.displayName}</span>
+                        {/* allow-arbitrary: pre-slice-a */}
                         <span className="text-[11px] text-white/45 tabular-nums">{formatDuration(phase.durationMinutes)}</span>
                       </div>
+                      {/* allow-arbitrary: pre-slice-a */}
                       <p className="mt-0.5 text-[11px] text-white/50">
                         {zoneLabel(phase.zone)} · until {formatTime(phase.endIso)}
                       </p>
                       {phase.notes && phase.notes.length > 0 ? (
+                        /* allow-arbitrary: pre-slice-a */
                         <p className="mt-1 text-xs text-white/72">{phase.notes[0]}</p>
                       ) : null}
                     </div>

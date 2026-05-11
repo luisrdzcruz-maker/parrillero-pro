@@ -147,7 +147,9 @@ function hasSetupSignal(value: string) {
 
 function MetricPill({ label, value }: { label: string; value: string }) {
   return (
+    /* allow-arbitrary: pre-slice-a */
     <div className="rounded-2xl border border-white/10 bg-white/[0.055] p-3 shadow-lg shadow-black/15 ring-1 ring-inset ring-white/[0.03]">
+      {/* allow-arbitrary: pre-slice-a */}
       <p className="text-[9px] font-black uppercase tracking-[0.22em] text-orange-300/90">{label}</p>
       <p className="mt-1.5 line-clamp-2 text-sm font-black leading-snug text-white">{value}</p>
     </div>
@@ -158,7 +160,9 @@ function HighlightCard({ block }: { block: ResultBlock }) {
   const text = compactText(block.content, 150);
 
   return (
+    /* allow-arbitrary: pre-slice-a */
     <article className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 shadow-lg shadow-black/15">
+      {/* allow-arbitrary: pre-slice-a */}
       <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300">
         {block.title}
       </p>
@@ -212,6 +216,7 @@ export default function ShareClient() {
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(249,115,22,0.22),transparent_30%),linear-gradient(180deg,#020617_0%,#0f172a_48%,#020617_100%)] px-4 py-5 text-slate-100 sm:py-8">
       <div className="mx-auto max-w-[560px]">
         {!hasAnyContent ? (
+          /* allow-arbitrary: pre-slice-a */
           <section className="rounded-[2rem] border border-dashed border-white/15 bg-slate-950/85 p-7 text-center shadow-[0_30px_100px_rgba(0,0,0,0.35)]">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl border border-orange-400/20 bg-orange-500/12 text-2xl shadow-lg shadow-orange-500/10">
               P
@@ -229,6 +234,7 @@ export default function ShareClient() {
           </section>
         ) : (
           <>
+            {/* allow-arbitrary: pre-slice-a */}
             <section className="overflow-hidden rounded-[2.25rem] border border-orange-300/25 bg-[radial-gradient(circle_at_14%_0%,rgba(251,146,60,0.34),transparent_33%),linear-gradient(145deg,rgba(15,23,42,0.98),rgba(2,6,23,0.98)_58%,rgba(67,20,7,0.78))] shadow-[0_34px_120px_rgba(249,115,22,0.16)] ring-1 ring-inset ring-white/[0.05]">
               <div className="relative p-5 sm:p-7">
                 <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-orange-400/20 blur-3xl" />
@@ -242,20 +248,24 @@ export default function ShareClient() {
                       </div>
                       <div>
                         <p className="text-sm font-black text-white">Parrillero Pro</p>
+                        {/* allow-arbitrary: pre-slice-a */}
                         <p className="text-[11px] font-semibold text-slate-400">
                           Premium cooking card
                         </p>
                       </div>
                     </div>
+                    {/* allow-arbitrary: pre-slice-a */}
                     <p className="rounded-full border border-orange-300/25 bg-orange-500/15 px-3 py-1 text-[9px] font-black uppercase tracking-[0.22em] text-orange-200">
                       Shared
                     </p>
                   </div>
 
                   <div className="mt-7">
+                    {/* allow-arbitrary: pre-slice-a */}
                     <p className="text-[10px] font-black uppercase tracking-[0.26em] text-orange-300">
                       Resultado de cocción
                     </p>
+                    {/* allow-arbitrary: pre-slice-a */}
                     <h1 className="mt-3 text-[clamp(2.4rem,12vw,4.4rem)] font-black leading-[0.92] tracking-[-0.07em] text-white">
                       {heroTitle}
                     </h1>
@@ -267,6 +277,7 @@ export default function ShareClient() {
                   </div>
 
                   {setupVisual && (
+                    /* allow-arbitrary: pre-slice-a */
                     <div className="mt-6 overflow-hidden rounded-[1.75rem] border border-orange-200/20 bg-slate-950 shadow-2xl shadow-black/35 ring-1 ring-inset ring-white/[0.04]">
                       <div className="relative h-48 sm:h-56">
                         <Image
@@ -278,6 +289,7 @@ export default function ShareClient() {
                           priority
                         />
                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_0%,rgba(251,146,60,0.24),transparent_31%),linear-gradient(135deg,rgba(2,6,23,0.84)_0%,rgba(2,6,23,0.38)_42%,rgba(2,6,23,0.1)_100%)]" />
+                        {/* allow-arbitrary: pre-slice-a */}
                         <p className="absolute left-3 top-3 rounded-full border border-white/15 bg-black/45 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-orange-100 backdrop-blur-md">
                           Setup visual
                         </p>
