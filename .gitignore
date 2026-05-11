@@ -48,3 +48,6 @@ assets/raw/*
 docs/design/_scratch/*
 !docs/design/_scratch/README.md
 
+# Claude Code agent tooling (local-only)
+.claude/
+
