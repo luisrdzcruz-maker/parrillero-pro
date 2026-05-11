@@ -1,9 +1,18 @@
 export const ds = {
   radius: {
+    // Legacy Tailwind-alias scale. Kept untouched in Slice A so existing
+    // consumers don't break. Use the semantic names below for new code.
     sm: "rounded-lg",
     md: "rounded-xl",
     lg: "rounded-2xl",
     xl: "rounded-3xl",
+    // Slice A — semantic radius scale derived from hybrid-premium-canvas
+    // (see docs/audits/slice-a-locked-values.md). Single `card` token; no
+    // `hero` distinction until the canvas demonstrates one.
+    pill: "rounded-full",
+    chip: "rounded-xl",
+    row: "rounded-[0.875rem]",
+    card: "rounded-3xl",
   },
 
   spacing: {
@@ -36,6 +45,17 @@ export const ds = {
       "font-black tracking-[-0.04em] text-white text-[clamp(1.55rem,7vw,2rem)] leading-none sm:text-3xl",
     metricCompact:
       "font-black tracking-[-0.04em] text-white truncate text-[clamp(0.95rem,3.6vw,1.2rem)] leading-tight",
+    // ──────────────────────────────────────────────────────────────────
+    // Slice A — semantic text tiers (see docs/audits/slice-a-locked-values.md).
+    // The existing `eyebrow` token stays at tracking-[0.2em] to avoid visual
+    // diff; tracking change to 0.08em is deferred to a future polish slice.
+    // ──────────────────────────────────────────────────────────────────
+    eyebrowEmber: "text-xs font-semibold uppercase tracking-[0.2em] text-[#E36A1A]",
+    eyebrowMuted: "text-xs font-semibold uppercase tracking-[0.2em] text-white/55",
+    body14: "text-[14px] leading-[1.45]",
+    body12: "text-[12px] leading-[1.4]",
+    body11: "text-[11px] leading-[1.4]",
+    helper: "text-[11px] leading-[1.35] text-white/50",
   },
 
   colors: {
@@ -174,6 +194,53 @@ export const ds = {
       "fixed bottom-24 left-4 z-50 flex gap-1 rounded-full border border-white/10 bg-black/60 p-1.5 text-xs shadow-2xl shadow-black/30 backdrop-blur",
     switcherLink:
       "rounded-full px-3 py-1.5 font-semibold text-slate-300 transition hover:bg-white/10 hover:text-orange-300",
+  },
+
+  // ══════════════════════════════════════════════════════════════════════
+  // Slice A — additive token groups locked against the Hybrid Premium
+  // canvas (see docs/audits/slice-a-locked-values.md). All new; no
+  // existing ds.* surface modified. Lint rule
+  // (scripts/lint-tokens.mjs) blocks new uses of arbitrary Tailwind
+  // values outside this file.
+  // ══════════════════════════════════════════════════════════════════════
+
+  // Single canonical ember. `ds.colors.primary` (Tailwind bg-orange-500)
+  // is visibly more saturated than the canvas; future code uses these.
+  ember: {
+    DEFAULT: "#E36A1A",
+    hover: "#D55E14",
+    border: "#E36A1A",
+    faint: "rgba(227, 106, 26, 0.12)",
+  },
+
+  // Note: distinct from `ds.colors` above. `ds.colors.*` are Tailwind class
+  // strings (e.g. "bg-orange-500 text-black"); `ds.color.*` are raw values
+  // for inline-style / CSS-variable consumption.
+  color: {
+    muted: {
+      strong: "rgba(255, 255, 255, 0.90)",
+      base: "rgba(255, 255, 255, 0.70)",
+      helper: "rgba(255, 255, 255, 0.50)",
+    },
+  },
+
+  // Tailwind class strings (consistent with the rest of ds.*). Arbitrary
+  // `shadow-[...]` values live inside this file only; the lint rule exempts
+  // lib/design-system.ts.
+  shadow: {
+    cardBase: "shadow-[0_1px_0_rgba(255,255,255,0.04)_inset]",
+    cardLifted: "shadow-[0_8px_24px_rgba(0,0,0,0.35)]",
+    emberGlowSm: "shadow-[0_4px_18px_rgba(227,106,26,0.25)]",
+    emberGlowMd: "shadow-[0_12px_32px_rgba(227,106,26,0.20)]",
+  },
+
+  // Tailwind class strings using nearest preset durations where possible.
+  // 200/300 are exact presets approximating proposal's 180/280 ms.
+  // 600ms has no Tailwind preset; arbitrary value used (exempted in lib/).
+  motion: {
+    enter: "duration-200 ease-out",
+    emphasis: "duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+    pulse: "duration-[600ms] ease-in-out",
   },
 } as const;
 
