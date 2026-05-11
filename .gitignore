@@ -44,3 +44,7 @@ assets/raw/*
 !assets/raw/icons/
 !assets/raw/icons/**
 
+# Non-canonical design experiments (folder tracked via its README)
+docs/design/_scratch/*
+!docs/design/_scratch/README.md
+
