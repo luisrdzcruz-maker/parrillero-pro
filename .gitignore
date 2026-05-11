@@ -44,5 +44,3 @@ assets/raw/*
 !assets/raw/icons/
 !assets/raw/icons/**
 
-# Local-only visual reference canvases
-docs/design/hybrid-premium-canvas/
