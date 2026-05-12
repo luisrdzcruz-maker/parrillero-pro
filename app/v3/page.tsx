@@ -112,6 +112,7 @@ function V3UI() {
             <MiniProof value="Pro" label="tips accionables" />
           </div>
 
+          {/* allow-arbitrary: pre-slice-a */}
           <div className="mt-10 rounded-[2rem] border border-white/10 bg-white/[0.06] p-5 shadow-2xl backdrop-blur-xl">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-sm font-black uppercase tracking-[0.2em] text-zinc-400">
@@ -130,8 +131,10 @@ function V3UI() {
                     setCutId(cut.id);
                     setShowResult(false);
                   }}
+                  /* allow-arbitrary: pre-slice-a */
                   className={`rounded-[1.5rem] border p-4 text-left transition ${
                     cutId === cut.id
+                      /* allow-arbitrary: pre-slice-a */
                       ? "border-orange-400 bg-orange-500/20 shadow-[0_0_40px_rgba(249,115,22,0.18)]"
                       : "border-white/10 bg-black/20 hover:border-orange-400/60 hover:bg-white/10"
                   }`}
@@ -148,6 +151,7 @@ function V3UI() {
             </div>
           </div>
 
+          {/* allow-arbitrary: pre-slice-a */}
           <div className="mt-5 rounded-[2rem] border border-white/10 bg-white/[0.06] p-5 shadow-2xl backdrop-blur-xl">
             <h2 className="mb-4 text-sm font-black uppercase tracking-[0.2em] text-zinc-400">
               2. Elige punto
@@ -180,14 +184,17 @@ function V3UI() {
 
           <button
             onClick={() => setShowResult(true)}
+            /* allow-arbitrary: pre-slice-a */
             className="mt-6 w-full rounded-[1.5rem] bg-gradient-to-r from-orange-400 to-red-500 px-6 py-5 text-lg font-black text-black shadow-[0_25px_90px_rgba(249,115,22,0.30)] transition hover:scale-[1.01]"
           >
             Generar mi plan perfecto
           </button>
         </div>
 
+        {/* allow-arbitrary: pre-slice-a */}
         <aside className="rounded-[2.5rem] border border-orange-400/20 bg-gradient-to-b from-white/[0.12] to-white/[0.04] p-5 shadow-[0_30px_120px_rgba(249,115,22,0.20)] backdrop-blur-xl">
           {!showResult ? (
+            /* allow-arbitrary: pre-slice-a */
             <div className="flex min-h-[560px] flex-col justify-between rounded-[2rem] border border-white/10 bg-black/35 p-6">
               <div>
                 <div className="mb-5 text-7xl">{selectedCut.emoji}</div>
@@ -201,6 +208,7 @@ function V3UI() {
                 <p className="mt-3 text-zinc-400">{selectedCut.subtitle}</p>
               </div>
 
+              {/* allow-arbitrary: pre-slice-a */}
               <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.06] p-5">
                 <div className="text-sm font-bold text-zinc-400">Resultado que verás</div>
                 <div className="mt-3 grid gap-3">
@@ -211,6 +219,7 @@ function V3UI() {
               </div>
             </div>
           ) : (
+            /* allow-arbitrary: pre-slice-a */
             <div className="rounded-[2rem] border border-white/10 bg-black/40 p-6">
               <div className="mb-6 flex items-start justify-between gap-4">
                 <div>
@@ -235,6 +244,7 @@ function V3UI() {
                 <Metric label="Reposo" value={selectedCut.rest} />
               </div>
 
+              {/* allow-arbitrary: pre-slice-a */}
               <div className="mt-5 rounded-[1.5rem] border border-orange-400/20 bg-orange-500/10 p-5">
                 <div className="text-sm font-black uppercase tracking-[0.18em] text-orange-200">
                   Consejo Pro
@@ -242,6 +252,7 @@ function V3UI() {
                 <p className="mt-3 text-lg leading-relaxed">{selectedCut.tip}</p>
               </div>
 
+              {/* allow-arbitrary: pre-slice-a */}
               <div className="mt-4 rounded-[1.5rem] border border-red-400/20 bg-red-500/10 p-5">
                 <div className="text-sm font-black uppercase tracking-[0.18em] text-red-200">
                   Error a evitar
@@ -273,6 +284,7 @@ function V3UI() {
 
 function MiniProof({ value, label }: { value: string; label: string }) {
   return (
+    /* allow-arbitrary: pre-slice-a */
     <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4">
       <div className="text-2xl font-black text-orange-300">{value}</div>
       <div className="mt-1 text-sm text-zinc-400">{label}</div>
@@ -282,6 +294,7 @@ function MiniProof({ value, label }: { value: string; label: string }) {
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
+    /* allow-arbitrary: pre-slice-a */
     <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.06] p-5">
       <div className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">{label}</div>
       <div className="mt-2 text-3xl font-black text-orange-300">{value}</div>

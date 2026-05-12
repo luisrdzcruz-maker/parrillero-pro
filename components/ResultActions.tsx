@@ -149,6 +149,7 @@ export default function ResultActions({
         <button
           type="button"
           onClick={actions.onStartCooking}
+          /* allow-arbitrary: pre-slice-a */
           className="group relative flex w-full items-center gap-4 overflow-hidden rounded-[1.5rem] border border-orange-300/45 bg-orange-500 px-4 py-4 text-left text-slate-950 shadow-2xl shadow-orange-950/25 ring-1 ring-inset ring-white/20 transition-all duration-200 hover:bg-orange-400 active:scale-[0.99] sm:px-5"
         >
           <span
@@ -170,12 +171,14 @@ export default function ResultActions({
           </span>
 
           <span className="relative min-w-0 flex-1">
+            {/* allow-arbitrary: pre-slice-a */}
             <span className="block text-[10px] font-black uppercase tracking-[0.22em] text-slate-900/70">
               {labels.live.eyebrow}
             </span>
             <span className="mt-0.5 block text-base font-black leading-tight text-slate-950">
               {t.startCooking}
             </span>
+            {/* allow-arbitrary: pre-slice-a */}
             <span className="mt-1 block text-xs font-bold leading-snug text-slate-950/70">
               {labels.live.helper}
             </span>
@@ -183,6 +186,7 @@ export default function ResultActions({
 
           <span className="relative flex shrink-0 items-center gap-1.5 rounded-full border border-black/10 bg-black/10 px-2.5 py-1">
             <span className="h-1.5 w-1.5 rounded-full bg-slate-950" />
+            {/* allow-arbitrary: pre-slice-a */}
             <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-950">
               {labels.live.status}
             </span>

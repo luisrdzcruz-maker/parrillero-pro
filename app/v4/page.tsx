@@ -119,6 +119,7 @@ ${selectedCut.name} · ${selectedDoneness?.label}
         <header className="mb-8 flex items-center justify-between gap-4">
           <Link
             href="/"
+            /* allow-arbitrary: pre-slice-a */
             className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-xs font-black text-zinc-300 backdrop-blur hover:bg-white/10"
           >
             ← V1
@@ -130,6 +131,7 @@ ${selectedCut.name} · ${selectedDoneness?.label}
         </header>
 
         <div className="grid gap-8 lg:grid-cols-[430px_1fr_430px]">
+          {/* allow-arbitrary: pre-slice-a */}
           <section className="rounded-[2.5rem] border border-white/10 bg-white/[0.06] p-5 shadow-2xl backdrop-blur-xl">
             <div className="mb-5">
               <p className="text-sm font-black text-orange-300">Paso 1</p>
@@ -147,8 +149,10 @@ ${selectedCut.name} · ${selectedDoneness?.label}
                 <button
                   key={cut.id}
                   onClick={() => setCutId(cut.id)}
+                  /* allow-arbitrary: pre-slice-a */
                   className={`rounded-[1.5rem] border p-4 text-left transition ${
                     cutId === cut.id
+                      /* allow-arbitrary: pre-slice-a */
                       ? "border-orange-400 bg-orange-500/20 shadow-[0_0_45px_rgba(249,115,22,0.20)]"
                       : "border-white/10 bg-black/20 hover:border-orange-400/60 hover:bg-white/10"
                   }`}
@@ -205,7 +209,9 @@ ${selectedCut.name} · ${selectedDoneness?.label}
               </p>
             </div>
 
+            {/* allow-arbitrary: pre-slice-a */}
             <div className="rounded-[3rem] border border-orange-400/25 bg-gradient-to-br from-orange-500/20 via-white/[0.08] to-red-600/20 p-4 shadow-[0_35px_140px_rgba(249,115,22,0.25)]">
+              {/* allow-arbitrary: pre-slice-a */}
               <div className="rounded-[2.5rem] border border-white/10 bg-[#090909]/90 p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -228,6 +234,7 @@ ${selectedCut.name} · ${selectedDoneness?.label}
                   <CardMetric label="Reposo" value={selectedCut.rest} />
                 </div>
 
+                {/* allow-arbitrary: pre-slice-a */}
                 <div className="mt-5 rounded-[1.5rem] border border-orange-400/20 bg-orange-500/10 p-5">
                   <div className="text-xs font-black uppercase tracking-[0.18em] text-orange-200">
                     Consejo Pro
@@ -235,6 +242,7 @@ ${selectedCut.name} · ${selectedDoneness?.label}
                   <p className="mt-3 text-lg leading-relaxed">{selectedCut.tip}</p>
                 </div>
 
+                {/* allow-arbitrary: pre-slice-a */}
                 <div className="mt-4 rounded-[1.5rem] border border-red-400/20 bg-red-500/10 p-5">
                   <div className="text-xs font-black uppercase tracking-[0.18em] text-red-200">
                     No hagas esto
@@ -256,6 +264,7 @@ ${selectedCut.name} · ${selectedDoneness?.label}
             </div>
           </section>
 
+          {/* allow-arbitrary: pre-slice-a */}
           <aside className="rounded-[2.5rem] border border-white/10 bg-white/[0.06] p-5 shadow-2xl backdrop-blur-xl">
             <p className="text-sm font-black text-orange-300">Paso 3</p>
             <h2 className="mt-1 text-4xl font-black leading-none tracking-tight">
@@ -269,6 +278,7 @@ ${selectedCut.name} · ${selectedDoneness?.label}
 
             <button
               onClick={copyShareCard}
+              /* allow-arbitrary: pre-slice-a */
               className="mt-6 w-full rounded-[1.5rem] bg-gradient-to-r from-orange-400 to-red-500 px-5 py-5 text-lg font-black text-black shadow-[0_25px_90px_rgba(249,115,22,0.28)] transition hover:scale-[1.01]"
             >
               {copied ? "Copiado ✅" : "Copiar tarjeta"}
@@ -277,11 +287,13 @@ ${selectedCut.name} · ${selectedDoneness?.label}
             <a
               href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
               target="_blank"
+              /* allow-arbitrary: pre-slice-a */
               className="mt-3 block w-full rounded-[1.5rem] border border-green-400/30 bg-green-500/10 px-5 py-5 text-center text-lg font-black text-green-300 hover:bg-green-500/15"
             >
               Compartir por WhatsApp
             </a>
 
+            {/* allow-arbitrary: pre-slice-a */}
             <div className="mt-6 rounded-[1.5rem] border border-white/10 bg-black/30 p-5">
               <div className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">
                 Texto generado
@@ -299,6 +311,7 @@ ${selectedCut.name} · ${selectedDoneness?.label}
 
 function CardMetric({ label, value }: { label: string; value: string }) {
   return (
+    /* allow-arbitrary: pre-slice-a */
     <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.06] p-4">
       <div className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">{label}</div>
       <div className="mt-2 text-2xl font-black text-orange-300">{value}</div>

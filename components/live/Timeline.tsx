@@ -52,6 +52,7 @@ export default function Timeline({ steps, currentIndex, phase, onGoToStep }: Pro
                 }`}
               />
               {isCurrent && (
+                /* allow-arbitrary: pre-slice-a */
                 <p className="max-w-full truncate text-center text-[9px] font-bold leading-none text-white/38">
                   {step.label}
                 </p>
@@ -63,9 +64,11 @@ export default function Timeline({ steps, currentIndex, phase, onGoToStep }: Pro
 
       {/* Meta row */}
       <div className="flex items-center justify-between px-0.5">
+        {/* allow-arbitrary: pre-slice-a */}
         <span className="text-[9px] font-semibold text-white/20">
           Paso {currentIndex + 1} de {steps.length}
         </span>
+        {/* allow-arbitrary: pre-slice-a */}
         <span className="text-[9px] font-semibold text-white/20">{progressPct}%</span>
       </div>
     </div>

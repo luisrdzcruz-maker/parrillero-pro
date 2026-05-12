@@ -31,7 +31,9 @@ const pixelSizes: Record<BrandImageIconSize, number> = {
 
 const shapeClasses: Record<BrandImageIconShape, string> = {
   plain: "bg-transparent",
+  /* allow-arbitrary: pre-slice-a */
   tile: "rounded-[1.2rem] border border-orange-300/18 bg-black/35 shadow-[0_10px_28px_rgba(249,115,22,0.16)] ring-1 ring-inset ring-white/[0.045]",
+  /* allow-arbitrary: pre-slice-a */
   soft: "rounded-2xl border border-white/10 bg-white/[0.04] shadow-[0_8px_22px_rgba(0,0,0,0.22)]",
 };
 

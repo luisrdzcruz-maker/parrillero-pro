@@ -16,12 +16,15 @@ const ACTION_TONE: Record<ActionKind, string> = {
   move: "border-orange-300/40 bg-orange-400/12 text-orange-100",
   rest: "border-blue-300/45 bg-blue-400/14 text-blue-100",
   serve: "border-emerald-300/45 bg-emerald-400/14 text-emerald-100",
+  /* allow-arbitrary: pre-slice-a */
   manual: "border-white/12 bg-white/[0.055] text-white/82",
 };
 
 const GUIDE_TONE: Record<UrgencyLevel, string> = {
+  /* allow-arbitrary: pre-slice-a */
   normal: "border-white/[0.07] bg-white/[0.032]",
   attention: "border-orange-300/34 bg-orange-500/[0.065]",
+  /* allow-arbitrary: pre-slice-a */
   critical: "border-yellow-300/55 bg-yellow-400/[0.09] shadow-[0_0_34px_rgba(250,204,21,0.16)]",
 };
 
@@ -174,6 +177,7 @@ export default function LiveExecutionGuide({
   const durationLabel = currentStep.duration > 0 ? formatDuration(currentStep.duration) : text.manualStep;
 
   return (
+    /* allow-arbitrary: pre-slice-a */
     <section className={`rounded-[1.25rem] border px-3.5 py-3 ${GUIDE_TONE[urgency]}`}>
       <div className="flex min-w-0 items-center gap-3">
         <div
@@ -183,12 +187,15 @@ export default function LiveExecutionGuide({
         </div>
 
         <div className="min-w-0 flex-1">
+          {/* allow-arbitrary: pre-slice-a */}
           <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/32">
             {text.actionGuide}
           </p>
+          {/* allow-arbitrary: pre-slice-a */}
           <p className="mt-0.5 truncate text-[15px] font-black leading-tight text-white/88">
             {getActionLabel(actionKind, lang)}
           </p>
+          {/* allow-arbitrary: pre-slice-a */}
           <p className="mt-1 overflow-hidden text-[11px] font-semibold leading-snug text-white/48 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">
             {getActionHint(actionKind, lang)}
           </p>
@@ -197,19 +204,27 @@ export default function LiveExecutionGuide({
 
       <div className="mt-3 grid grid-cols-3 gap-1.5">
         <div className={`min-w-0 rounded-xl border px-2.5 py-2 ${ZONE_TONE[currentStep.zone]}`}>
+          {/* allow-arbitrary: pre-slice-a */}
           <p className="text-[8px] font-black uppercase tracking-[0.16em] opacity-55">{text.zoneLabel}</p>
+          {/* allow-arbitrary: pre-slice-a */}
           <p className="mt-0.5 truncate text-[11px] font-black">{getZoneLabel(currentStep.zone, lang)}</p>
         </div>
 
+        {/* allow-arbitrary: pre-slice-a */}
         <div className="min-w-0 rounded-xl border border-white/[0.08] bg-white/[0.04] px-2.5 py-2 text-white/78">
+          {/* allow-arbitrary: pre-slice-a */}
           <p className="text-[8px] font-black uppercase tracking-[0.16em] text-white/34">{text.remainingShort}</p>
+          {/* allow-arbitrary: pre-slice-a */}
           <p className="mt-0.5 truncate text-[11px] font-black tabular-nums">{remainingLabel}</p>
         </div>
 
+        {/* allow-arbitrary: pre-slice-a */}
         <div className="min-w-0 rounded-xl border border-white/[0.08] bg-white/[0.04] px-2.5 py-2 text-white/78">
+          {/* allow-arbitrary: pre-slice-a */}
           <p className="text-[8px] font-black uppercase tracking-[0.16em] text-white/34">
             {currentStep.tempTarget !== null ? text.targetShort : text.durationShort}
           </p>
+          {/* allow-arbitrary: pre-slice-a */}
           <p className="mt-0.5 truncate text-[11px] font-black tabular-nums">
             {currentStep.tempTarget !== null ? `${currentStep.tempTarget}°C` : durationLabel}
           </p>

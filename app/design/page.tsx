@@ -9,6 +9,7 @@ export default function DesignGalleryPage() {
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-10 text-white">
       <div className="mx-auto max-w-6xl">
+        {/* allow-arbitrary: pre-slice-a */}
         <div className="rounded-[2rem] border border-orange-500/20 bg-orange-500/10 p-6">
           <p className="text-xs font-black uppercase tracking-[0.26em] text-orange-300">
             Internal Design Preview
@@ -27,6 +28,7 @@ export default function DesignGalleryPage() {
             <Link
               key={variant.slug}
               href={`/design/${variant.slug}`}
+              /* allow-arbitrary: pre-slice-a */
               className="group overflow-hidden rounded-[2rem] border border-white/10 bg-slate-900 transition duration-300 hover:-translate-y-1 hover:border-orange-400/50 hover:shadow-[0_24px_70px_rgba(249,115,22,0.14)]"
             >
               <div className="relative h-44">

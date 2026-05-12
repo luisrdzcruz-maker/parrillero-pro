@@ -35,7 +35,9 @@ export function ParrilladaReviewScreen({ plan, plannerResult, ctaLabel, onBack, 
     <section className="space-y-3">
       <ParrilladaHeroCard plan={plan} keyExecutionHint={keyExecutionHint} />
 
+      {/* allow-arbitrary: pre-slice-a */}
       <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
+        {/* allow-arbitrary: pre-slice-a */}
         <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Main sequence</p>
         {criticalStep ? (
           <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5">
@@ -52,6 +54,7 @@ export function ParrilladaReviewScreen({ plan, plannerResult, ctaLabel, onBack, 
             />
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-white">{criticalStep.title}</p>
+              {/* allow-arbitrary: pre-slice-a */}
               <p className="text-xs text-white/55">
                 {criticalStep.timeLabel}
                 {criticalStep.zone ? ` · ${criticalStep.zone}` : ''}
@@ -63,6 +66,7 @@ export function ParrilladaReviewScreen({ plan, plannerResult, ctaLabel, onBack, 
 
       <ParrilladaTimelineFinal result={plannerResult} />
 
+      {/* allow-arbitrary: pre-slice-a */}
       <details className="rounded-3xl border border-white/10 bg-white/[0.04] p-3">
         <summary className="cursor-pointer text-sm font-semibold text-white">Zone status</summary>
         <div className="mt-2">
@@ -70,6 +74,7 @@ export function ParrilladaReviewScreen({ plan, plannerResult, ctaLabel, onBack, 
         </div>
       </details>
 
+      {/* allow-arbitrary: pre-slice-a */}
       <details className="rounded-3xl border border-white/10 bg-white/[0.04] p-3">
         <summary className="cursor-pointer text-sm font-semibold text-white">Warnings</summary>
         <div className="mt-2">
@@ -81,6 +86,7 @@ export function ParrilladaReviewScreen({ plan, plannerResult, ctaLabel, onBack, 
         <button
           type="button"
           onClick={onBack}
+          /* allow-arbitrary: pre-slice-a */
           className="rounded-2xl border border-white/15 bg-black/20 px-4 py-3 text-sm font-semibold text-white/80"
         >
           Back

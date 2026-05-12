@@ -307,6 +307,7 @@ export default function SavedMenusClient({ initialMenus }: { initialMenus: Saved
       <div className="pointer-events-none fixed inset-0 -z-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.22),transparent_34%),radial-gradient(circle_at_80%_10%,rgba(234,179,8,0.12),transparent_28%),linear-gradient(180deg,#020617_0%,#0f172a_58%,#020617_100%)]" />
 
       <div className="relative z-10 mx-auto max-w-6xl">
+        {/* allow-arbitrary: pre-slice-a */}
         <header className="mb-5 overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04] p-5 shadow-2xl shadow-black/30 backdrop-blur sm:mb-8 sm:p-8">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-3xl">
@@ -356,6 +357,7 @@ export default function SavedMenusClient({ initialMenus }: { initialMenus: Saved
           </div>
         </header>
 
+        {/* allow-arbitrary: pre-slice-a */}
         <section className="mb-5 rounded-[1.5rem] border border-white/10 bg-slate-900/70 p-3 shadow-xl shadow-black/20 sm:mb-6 sm:p-4">
           <input
             value={query}
@@ -452,12 +454,14 @@ function SavedMenuCard({
           onToggle();
         }
       }}
+      /* allow-arbitrary: pre-slice-a */
       className="group cursor-pointer overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/[0.045] shadow-xl shadow-black/20 outline-none backdrop-blur transition hover:-translate-y-1 hover:border-orange-400/60 hover:bg-white/[0.07] focus:border-orange-400"
     >
       <div className="relative min-h-40 p-5">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_0%,rgba(249,115,22,0.24),transparent_36%),linear-gradient(to_top,rgba(2,6,23,0.95),rgba(15,23,42,0.35))]" />
         <div className="relative">
           <div className="mb-5 flex items-start justify-between gap-4">
+            {/* allow-arbitrary: pre-slice-a */}
             <div className="rounded-full border border-orange-400/25 bg-orange-500/15 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-orange-300">
               {getTypeLabel(meta.type, t)}
             </div>
@@ -522,6 +526,7 @@ function SavedMenuCard({
         </div>
 
         {isLocal && (
+          /* allow-arbitrary: pre-slice-a */
           <p className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-xs font-bold text-slate-300">
             {t.localOnly}
           </p>
@@ -580,6 +585,7 @@ function Metric({ value, label }: { value: string; label: string }) {
 function InfoPill({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0 rounded-2xl border border-white/10 bg-black/25 p-3">
+      {/* allow-arbitrary: pre-slice-a */}
       <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">{label}</p>
       <p className="mt-1 truncate text-sm font-bold text-slate-100">{value}</p>
     </div>
@@ -588,6 +594,7 @@ function InfoPill({ label, value }: { label: string; value: string }) {
 
 function EmptyState({ t }: { t: (typeof texts)[Lang] }) {
   return (
+    /* allow-arbitrary: pre-slice-a */
     <section className="rounded-[2rem] border border-dashed border-orange-400/40 bg-orange-500/[0.06] p-8 text-center shadow-2xl shadow-black/20 sm:p-10">
       <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-orange-500/15 text-4xl ring-1 ring-orange-400/30">
         🍽️
@@ -606,6 +613,7 @@ function EmptyState({ t }: { t: (typeof texts)[Lang] }) {
 
 function NoMatchesState({ onClear, t }: { onClear: () => void; t: (typeof texts)[Lang] }) {
   return (
+    /* allow-arbitrary: pre-slice-a */
     <section className="rounded-[2rem] border border-dashed border-white/15 bg-white/[0.03] p-8 text-center shadow-2xl shadow-black/20">
       <h2 className="text-2xl font-black text-white">{t.noMatchesTitle}</h2>
       <p className="mx-auto mt-3 max-w-xl text-slate-300">{t.noMatchesText}</p>

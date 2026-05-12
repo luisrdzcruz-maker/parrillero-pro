@@ -27,6 +27,7 @@ export default function DevCutsPage() {
               className={`shrink-0 rounded-full border px-4 py-2 text-xs font-black transition ${
                 animal === item.id
                   ? "border-orange-400 bg-orange-500 text-black"
+                  /* allow-arbitrary: pre-slice-a */
                   : "border-white/10 bg-white/[0.06] text-zinc-300"
               }`}
             >

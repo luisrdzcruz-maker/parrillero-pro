@@ -19,7 +19,9 @@ function severityClasses(severity: ParrilladaWarning['severity']) {
 
 export function ParrilladaWarningsCard({ warnings }: ParrilladaWarningsCardProps) {
   return (
+    /* allow-arbitrary: pre-slice-a */
     <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
+      {/* allow-arbitrary: pre-slice-a */}
       <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Warnings</p>
       <h3 className="mt-1 text-base font-semibold text-white">Actionable checks</h3>
 

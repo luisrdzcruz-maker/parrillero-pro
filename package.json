@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "lint:tokens": "node scripts/lint-tokens.mjs",
     "qa:parrillada": "tsx scripts/qa-parrillada-scheduler.ts",
     "report:parrillada-catalog": "tsx scripts/report-parrillada-catalog-quality.ts",
     "format": "prettier --write .",

@@ -68,9 +68,11 @@ export default function LiveTimeline({
       </div>
 
       <div className="mt-0.5 flex items-center justify-between px-0.5">
+        {/* allow-arbitrary: pre-slice-a */}
         <span className="text-[9px] font-semibold text-white/20">
           {`${text.step} ${currentIndex + 1} ${text.of} ${steps.length}`}
         </span>
+        {/* allow-arbitrary: pre-slice-a */}
         <span className="text-[9px] font-semibold text-white/20">{progressPct}%</span>
       </div>
     </div>

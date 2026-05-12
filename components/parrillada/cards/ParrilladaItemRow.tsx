@@ -16,6 +16,7 @@ export function ParrilladaItemRow({ item }: ParrilladaItemRowProps) {
       <BrandImageIcon src={iconSrc ?? '/icons/ui/meat-selection.webp'} alt="" size="md" shape="soft" aria-hidden="true" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-white">{item.displayName}</p>
+        {/* allow-arbitrary: pre-slice-a */}
         {item.category ? <p className="mt-0.5 text-[11px] text-white/50">{item.category}</p> : null}
       </div>
     </div>

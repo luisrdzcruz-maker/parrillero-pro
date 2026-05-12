@@ -50,6 +50,7 @@ export function CocinaModeScreen({
         />
       )}
       <div className="bg-[#0a0a0a] md:flex md:min-h-screen md:items-center md:justify-center md:py-8">
+        {/* allow-arbitrary: pre-slice-a */}
         <div className="flex h-screen w-full flex-col overflow-hidden md:h-[844px] md:w-[390px] md:rounded-[3rem] md:border md:border-white/10 md:shadow-[0_32px_80px_rgba(0,0,0,0.8)]">
           {!liveClientReady ? (
             <div className="flex flex-1 flex-col items-center justify-center bg-[#020202]">

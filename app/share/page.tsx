@@ -9,6 +9,7 @@ export const metadata = {
 function ShareLoading() {
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100">
+      {/* allow-arbitrary: pre-slice-a */}
       <div className="mx-auto max-w-md animate-pulse rounded-[2rem] border border-white/10 bg-white/[0.03] p-6">
         <div className="h-4 w-40 rounded-full bg-orange-400/20" />
         <div className="mt-5 h-10 w-64 rounded-2xl bg-white/10" />

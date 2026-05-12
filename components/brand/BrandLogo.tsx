@@ -22,7 +22,9 @@ const markSizes: Record<BrandLogoSize, string> = {
 };
 
 const textSizes: Record<BrandLogoSize, string> = {
+  /* allow-arbitrary: pre-slice-a */
   sm: "text-[11px]",
+  /* allow-arbitrary: pre-slice-a */
   eyebrow: "text-[11px]",
   md: "text-sm",
   lg: "text-base",

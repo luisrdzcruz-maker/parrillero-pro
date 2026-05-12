@@ -30,19 +30,24 @@ export default function LiveNextStepPreview({ nextStep, lang = "en" }: Props) {
         ? text.zoneIndirect
         : text.zoneRest;
   return (
+    /* allow-arbitrary: pre-slice-a */
     <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-2xl border border-white/[0.06] bg-white/[0.025] px-3.5 py-2.5">
+      {/* allow-arbitrary: pre-slice-a */}
       <span className="shrink-0 text-[9px] font-black uppercase tracking-[0.2em] text-white/28">
         {text.upNext}
       </span>
+      {/* allow-arbitrary: pre-slice-a */}
       <span className="min-w-[7rem] flex-1 truncate text-[13px] font-bold text-white/55">
         {nextStep.name}
       </span>
       <span
+        /* allow-arbitrary: pre-slice-a */
         className={`shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] ${ZONE_BADGE[nextStep.zone]}`}
       >
         {zoneLabel}
       </span>
       {nextStep.duration > 0 && (
+        /* allow-arbitrary: pre-slice-a */
         <span className="shrink-0 text-[11px] font-bold tabular-nums text-white/35">
           {formatDuration(nextStep.duration)}
         </span>

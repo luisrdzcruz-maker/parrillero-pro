@@ -13,7 +13,9 @@ type ParrilladaTimelineCardProps = {
 
 export function ParrilladaTimelineCard({ plan, timeline }: ParrilladaTimelineCardProps) {
   return (
+    /* allow-arbitrary: pre-slice-a */
     <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
+      {/* allow-arbitrary: pre-slice-a */}
       <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Timeline</p>
       <h3 className="mt-1 text-base font-semibold text-white">Execution order</h3>
 
@@ -30,6 +32,7 @@ export function ParrilladaTimelineCard({ plan, timeline }: ParrilladaTimelineCar
               <div className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5">
                 <p className="text-xs font-semibold text-orange-100">{step.timeLabel}</p>
                 <p className="mt-0.5 text-sm font-medium text-white">{step.title}</p>
+                {/* allow-arbitrary: pre-slice-a */}
                 <p className="mt-1 text-xs text-white/55">
                   {step.zone ? `${step.zone} zone` : 'coordination'}
                   {step.durationMinutes ? ` · ${step.durationMinutes} min` : ''}
