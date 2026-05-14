@@ -1052,6 +1052,8 @@ function ParrilleroAppContent() {
           })}
           // eslint-disable-next-line react-hooks/refs
           parrillada={buildParrilladaModeProps({
+            lang,
+            t,
             step: parrilladaStep,
             onStepChange: (next) => commitNav("parrillada", "animal", "push", {}, next),
           })}

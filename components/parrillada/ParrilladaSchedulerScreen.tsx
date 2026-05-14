@@ -24,6 +24,7 @@ import {
   type PlannerCutInput,
   type SchedulerStrategy,
 } from '@/lib/planning';
+import { texts, type AppText, type Lang } from '@/lib/i18n/texts';
 
 export type ParrilladaFlowStep = 'entry' | 'setup' | 'review' | 'live';
 const LITE_MIN_ITEMS = 2;
@@ -36,6 +37,13 @@ export type ParrilladaSchedulerScreenProps = {
    */
   step?: ParrilladaFlowStep;
   onStepChange?: (next: ParrilladaFlowStep) => void;
+  /**
+   * Optional so PlanModeScreen (which renders this same component out of Slice B
+   * scope) continues to work without changes. ParrilladaModeScreen passes real
+   * lang/t; otherwise we fall back to `es` / `texts.es`.
+   */
+  lang?: Lang;
+  t?: AppText;
 };
 
 function toLocalInputValue(date: Date): string {
@@ -73,6 +81,8 @@ function tryLocalDateTimeToIso(value: string): string | null {
 export function ParrilladaSchedulerScreen({
   step: controlledStep,
   onStepChange,
+  lang = 'es',
+  t = texts.es,
 }: ParrilladaSchedulerScreenProps = {}) {
   const isControlled = controlledStep !== undefined && onStepChange !== undefined;
   const [internalStep, setInternalStep] = useState<ParrilladaFlowStep>('entry');
@@ -161,6 +171,8 @@ export function ParrilladaSchedulerScreen({
       <section className="mx-auto max-w-3xl space-y-3">
         {step === 'entry' && (
           <ParrilladaEntryScreen
+            lang={lang}
+            t={t}
             quickTitle={parrilladaPlanCopy.entry.quickTitle}
             quickDescription={parrilladaPlanCopy.entry.quickDescription}
             proTitle={parrilladaPlanCopy.entry.proTitle}
@@ -173,6 +185,8 @@ export function ParrilladaSchedulerScreen({
 
         {step === 'setup' && (
           <ParrilladaSetupScreen
+            lang={lang}
+            t={t}
             mode={mode}
             selectedItems={setupItems}
             availableItems={availableItems}
@@ -199,6 +213,8 @@ export function ParrilladaSchedulerScreen({
 
         {step === 'review' && reviewPlan && plannerResult && (
           <ParrilladaReviewScreen
+            lang={lang}
+            t={t}
             plan={reviewPlan}
             plannerResult={plannerResult}
             ctaLabel={parrilladaPlanCopy.review.cta}

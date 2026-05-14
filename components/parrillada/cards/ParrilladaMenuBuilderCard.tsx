@@ -5,11 +5,14 @@ import { Badge } from '@/components/ui/Badge';
 import { BrandImageIcon } from '@/components/ui/BrandImageIcon';
 import { Panel } from '@/components/ui/Panel';
 import { getParrilladaItemIcon } from '@/components/parrillada/icons/parrilladaIconResolver';
+import type { AppText, Lang } from '@/lib/i18n/texts';
 import type { ParrilladaItem } from '@/lib/planning';
 import type { PlannerCutInput } from '@/lib/planning';
 import { ParrilladaItemRow } from './ParrilladaItemRow';
 
 type ParrilladaMenuBuilderCardProps = {
+  lang: Lang;
+  t: AppText;
   items: ParrilladaItem[];
   availableItems: PlannerCutInput[];
   selectedItemIds: Set<string>;

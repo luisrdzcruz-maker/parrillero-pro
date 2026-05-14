@@ -14,9 +14,12 @@ import { GrillZoneStatusCard } from '@/components/parrillada/cards/GrillZoneStat
 import { getParrilladaItemIcon, getZoneIcon } from '@/components/parrillada/icons/parrilladaIconResolver';
 import { ParrilladaTimelineFinal } from '@/components/parrillada/ParrilladaTimelineFinal';
 import { ParrilladaWarningsFinal } from '@/components/parrillada/ParrilladaWarningsFinal';
+import type { AppText, Lang } from '@/lib/i18n/texts';
 import type { ParrilladaPlan, PlannerResult } from '@/lib/planning';
 
 type ParrilladaReviewScreenProps = {
+  lang: Lang;
+  t: AppText;
   plan: ParrilladaPlan;
   plannerResult: PlannerResult;
   ctaLabel: string;
@@ -24,7 +27,7 @@ type ParrilladaReviewScreenProps = {
   onStartLive: () => void;
 };
 
-export function ParrilladaReviewScreen({ plan, plannerResult, ctaLabel, onBack, onStartLive }: ParrilladaReviewScreenProps) {
+export function ParrilladaReviewScreen({ lang, t, plan, plannerResult, ctaLabel, onBack, onStartLive }: ParrilladaReviewScreenProps) {
   const criticalStep = plannerResultToCriticalStep(plannerResult);
   const zoneStatus = plannerResultToReviewZoneStatus(plannerResult);
 
@@ -38,7 +41,7 @@ export function ParrilladaReviewScreen({ plan, plannerResult, ctaLabel, onBack, 
   return (
     <section className="space-y-3">
       <ScreenHeader title="Parrillada Review" subtitle="Review before you cook" />
-      <ParrilladaHeroCard plan={plan} keyExecutionHint={keyExecutionHint} />
+      <ParrilladaHeroCard lang={lang} t={t} plan={plan} keyExecutionHint={keyExecutionHint} />
 
       <Panel as="section" className="p-4">
         {/* allow-arbitrary: pre-slice-a */}
@@ -68,7 +71,7 @@ export function ParrilladaReviewScreen({ plan, plannerResult, ctaLabel, onBack, 
         ) : null}
       </Panel>
 
-      <ParrilladaTimelineFinal result={plannerResult} />
+      <ParrilladaTimelineFinal lang={lang} t={t} result={plannerResult} />
 
       <CompactDisclosure
         label="Zone status"

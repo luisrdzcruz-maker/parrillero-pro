@@ -1,9 +1,12 @@
 'use client';
 
 import { Badge } from '@/components/ui/Badge';
+import type { AppText, Lang } from '@/lib/i18n/texts';
 import type { ParrilladaPlan } from '@/lib/planning';
 
 type ParrilladaHeroCardProps = {
+  lang: Lang;
+  t: AppText;
   plan: ParrilladaPlan;
   keyExecutionHint?: string;
 };

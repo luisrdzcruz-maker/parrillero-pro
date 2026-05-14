@@ -1,8 +1,11 @@
 'use client';
 
 import { Panel } from '@/components/ui/Panel';
+import type { AppText, Lang } from '@/lib/i18n/texts';
 
 type ServeStrategyCardProps = {
+  lang: Lang;
+  t: AppText;
   strategy: 'asap' | 'time';
   serveAtLocal: string;
   hasValidServeTime: boolean;

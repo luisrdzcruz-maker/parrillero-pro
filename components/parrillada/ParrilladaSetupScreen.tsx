@@ -6,9 +6,12 @@ import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { ParrilladaMenuBuilderCard } from '@/components/parrillada/cards/ParrilladaMenuBuilderCard';
 import { ServeStrategyCard } from '@/components/parrillada/cards/ServeStrategyCard';
 import { GrillSetupCard } from '@/components/parrillada/cards/GrillSetupCard';
+import type { AppText, Lang } from '@/lib/i18n/texts';
 import type { ParrilladaItem, ParrilladaMode, PlannerCutInput, SchedulerStrategy } from '@/lib/planning';
 
 type ParrilladaSetupScreenProps = {
+  lang: Lang;
+  t: AppText;
   mode: ParrilladaMode;
   selectedItems: ParrilladaItem[];
   availableItems: PlannerCutInput[];
@@ -31,6 +34,8 @@ type ParrilladaSetupScreenProps = {
 };
 
 export function ParrilladaSetupScreen({
+  lang,
+  t,
   mode,
   selectedItems,
   availableItems,
@@ -65,6 +70,8 @@ export function ParrilladaSetupScreen({
       />
 
       <ParrilladaMenuBuilderCard
+        lang={lang}
+        t={t}
         items={selectedItems}
         availableItems={availableItems}
         selectedItemIds={selectedItemIds}
@@ -72,6 +79,8 @@ export function ParrilladaSetupScreen({
         onToggleCatalogItem={onToggleCatalogItem}
       />
       <ServeStrategyCard
+        lang={lang}
+        t={t}
         strategy={strategyValue}
         serveAtLocal={serveAtLocal}
         hasValidServeTime={hasValidServeTime}

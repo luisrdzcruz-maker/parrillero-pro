@@ -5,6 +5,7 @@ import { Panel } from '@/components/ui/Panel';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { getModeIcon } from '@/components/parrillada/icons/parrilladaIconResolver';
 import { ParrilladaModeCard } from '@/components/parrillada/cards/ParrilladaModeCard';
+import type { AppText, Lang } from '@/lib/i18n/texts';
 import type { ParrilladaMode } from '@/lib/planning';
 
 type RecentPlan = {
@@ -15,6 +16,8 @@ type RecentPlan = {
 };
 
 type ParrilladaEntryScreenProps = {
+  lang: Lang;
+  t: AppText;
   quickTitle: string;
   quickDescription: string;
   proTitle: string;

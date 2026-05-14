@@ -2,6 +2,7 @@
 
 import { CompactDisclosure } from '@/components/ui/CompactDisclosure';
 import { Panel } from '@/components/ui/Panel';
+import type { AppText, Lang } from '@/lib/i18n/texts';
 import type { ExecutionTimelineGroup, PlannerPhase, PlannerResult } from '../../lib/planning';
 import { getShortGroupLabel } from './utils/parrilladaTimelineLabels';
 
@@ -100,7 +101,13 @@ function groupByStartTime(phases: PlannerPhase[]): Array<{ time: string; phases:
     .map(([time, groupedPhases]) => ({ time, phases: groupedPhases }));
 }
 
-export function ParrilladaTimelineFinal({ result }: { result: PlannerResult | null }) {
+export function ParrilladaTimelineFinal({
+  result,
+}: {
+  lang: Lang;
+  t: AppText;
+  result: PlannerResult | null;
+}) {
   if (!result) return null;
 
   const phases = ensureFinalServeRow(result.phases, result);
