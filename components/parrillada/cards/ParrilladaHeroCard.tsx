@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { Badge } from '@/components/ui/Badge';
 import type { ParrilladaPlan } from '@/lib/planning';
 
 type ParrilladaHeroCardProps = {
@@ -39,10 +39,10 @@ export function ParrilladaHeroCard({ plan, keyExecutionHint }: ParrilladaHeroCar
 
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
         {keyExecutionHint ? (
-          <Chip tone="orange">{keyExecutionHint}</Chip>
+          <Badge tone="accent">{keyExecutionHint}</Badge>
         ) : null}
-        {isPro && zonesCount > 0 ? <Chip tone="neutral">{zonesCount} zones</Chip> : null}
-        {isPro && holdsCount > 0 ? <Chip tone="neutral">{holdsCount} holds</Chip> : null}
+        {isPro && zonesCount > 0 ? <Badge tone="glass">{zonesCount} zones</Badge> : null}
+        {isPro && holdsCount > 0 ? <Badge tone="glass">{holdsCount} holds</Badge> : null}
       </div>
     </section>
   );
@@ -56,6 +56,10 @@ function countUniqueZones(plan: ParrilladaPlan): number {
   return zones.size;
 }
 
+// TODO(slice-d): Replace local Metric with <MetricTile> once neutral
+// and amber tones are added to the shared primitive. Current local
+// implementation has 4 callers: 3 use the default (neutral) tone, 1
+// uses amber for warnings >0. See Slice B prompt for context.
 function Metric({ label, value, tone = 'default' }: { label: string; value: string; tone?: MetricTone }) {
   const className =
     tone === 'amber'
@@ -71,22 +75,5 @@ function Metric({ label, value, tone = 'default' }: { label: string; value: stri
       <p className={labelClass}>{label}</p>
       <p className={valueClass}>{value}</p>
     </article>
-  );
-}
-
-function Chip({ children, tone }: { children: ReactNode; tone: 'orange' | 'neutral' }) {
-  if (tone === 'orange') {
-    return (
-      /* allow-arbitrary: pre-slice-a */
-      <span className="inline-flex rounded-full border border-orange-300/30 bg-orange-500/12 px-2.5 py-1 text-[11px] font-semibold text-orange-100">
-        {children}
-      </span>
-    );
-  }
-  return (
-    /* allow-arbitrary: pre-slice-a */
-    <span className="inline-flex rounded-full border border-white/12 bg-black/20 px-2.5 py-1 text-[11px] font-semibold text-white/80">
-      {children}
-    </span>
   );
 }

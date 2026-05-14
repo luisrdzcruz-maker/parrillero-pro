@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { Badge } from '@/components/ui/Badge';
 import { BrandImageIcon } from '@/components/ui/BrandImageIcon';
 import { Panel } from '@/components/ui/Panel';
 import { getParrilladaItemIcon } from '@/components/parrillada/icons/parrilladaIconResolver';
@@ -86,15 +87,11 @@ export function ParrilladaMenuBuilderCard({
     <Panel as="section" className="p-4">
       <div className="mb-2.5 flex items-center justify-between gap-3">
         <h3 className="text-base font-semibold text-white">Choose cuts</h3>
-        <span
-          className={`rounded-full border px-2.5 py-1 text-xs font-semibold tabular-nums ${
-            itemLimitReached
-              ? 'border-amber-300/30 bg-amber-500/15 text-amber-100'
-              : 'border-white/10 bg-black/25 text-white/70'
-          }`}
-        >
+        {/* TODO(slice-d): warning state currently maps to danger (red).
+            Switch to a proper amber tone once added to <Badge>. */}
+        <Badge tone={itemLimitReached ? 'danger' : 'glass'} className="tabular-nums">
           {items.length}/{maxItems}
-        </span>
+        </Badge>
       </div>
 
       <button
@@ -128,10 +125,9 @@ export function ParrilladaMenuBuilderCard({
                 <h4 className="text-sm font-semibold text-white">Choose cuts</h4>
               </div>
               <div className="flex items-center gap-2">
-                {/* allow-arbitrary: pre-slice-a */}
-                <span className="rounded-full border border-white/10 bg-black/30 px-2.5 py-1 text-xs font-semibold text-white/75">
+                <Badge tone="glass" className="tabular-nums">
                   {items.length}/{maxItems}
-                </span>
+                </Badge>
                 <button
                   type="button"
                   onClick={() => setSelectorOpen(false)}
