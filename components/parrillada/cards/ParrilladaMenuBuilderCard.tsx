@@ -87,11 +87,21 @@ export function ParrilladaMenuBuilderCard({
     <Panel as="section" className="p-4">
       <div className="mb-2.5 flex items-center justify-between gap-3">
         <h3 className="text-base font-semibold text-white">Choose cuts</h3>
-        {/* TODO(slice-d): warning state currently maps to danger (red).
-            Switch to a proper amber tone once added to <Badge>. */}
-        <Badge tone={itemLimitReached ? 'danger' : 'glass'} className="tabular-nums">
+        {/* TODO(slice-d): Migrate this pill to <Badge> once an "amber" tone
+            is added to the shared primitive. The orange/neutral pill below
+            (in the modal header) was migrated to Badge in Slice B; this
+            call site stays inline because its warning state needs amber,
+            and red (Badge tone="danger") would read as "broken" rather
+            than "heads up." */}
+        <span
+          className={`rounded-full border px-2.5 py-1 text-xs font-semibold tabular-nums ${
+            itemLimitReached
+              ? 'border-amber-300/30 bg-amber-500/15 text-amber-100'
+              : 'border-white/10 bg-black/25 text-white/70'
+          }`}
+        >
           {items.length}/{maxItems}
-        </Badge>
+        </span>
       </div>
 
       <button
