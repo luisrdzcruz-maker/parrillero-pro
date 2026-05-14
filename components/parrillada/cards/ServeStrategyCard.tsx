@@ -56,7 +56,7 @@ export function ServeStrategyCard({
 
       {strategy === 'time' ? (
         <label className="mt-3 block space-y-1.5">
-          {/* allow-arbitrary: pre-slice-a */}
+          {/* allow-arbitrary: text-white/45 — ds.color.muted exposes only 50/70/90 */}
           <span className="text-xs font-semibold uppercase tracking-[0.16em] text-white/45">{t.parrilladaServeTime}</span>
           <input
             className="w-full rounded-2xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white outline-none focus:border-orange-300/60"
@@ -77,7 +77,7 @@ export function ServeStrategyCard({
           <button
             type="button"
             onClick={onSetEarliestServeTime}
-            /* allow-arbitrary: pre-slice-a */
+            /* allow-arbitrary: text-[11px] amber CTA chip — ds.text scale lacks 11px */
             className="mt-2 rounded-lg border border-amber-200/40 bg-amber-400/15 px-2.5 py-1 text-[11px] font-semibold text-amber-50"
           >
             {t.parrilladaServeSetEarliest}

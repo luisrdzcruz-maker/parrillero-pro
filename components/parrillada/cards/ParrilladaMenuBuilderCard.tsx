@@ -114,7 +114,7 @@ export function ParrilladaMenuBuilderCard({
       <button
         type="button"
         onClick={() => setSelectorOpen(true)}
-        /* allow-arbitrary: pre-slice-a */
+        /* allow-arbitrary: text-white/85 — ds.color.muted exposes only 50/70/90 */
         className="rounded-xl border border-white/10 bg-black/25 px-3 py-1.5 text-xs font-semibold text-white/85 transition hover:border-white/25"
       >
         {t.parrilladaMenuAddCuts}
@@ -125,7 +125,7 @@ export function ParrilladaMenuBuilderCard({
           <ParrilladaItemRow key={item.id} item={item} />
         ))}
         {items.length === 0 ? (
-          /* allow-arbitrary: pre-slice-a */
+          /* allow-arbitrary: text-white/60 — ds.color.muted exposes only 50/70/90 */
           <p className="rounded-xl border border-dashed border-white/15 bg-black/20 px-3 py-2 text-xs text-white/60">
             {t.parrilladaMenuEmptyPrompt}
           </p>
@@ -137,7 +137,7 @@ export function ParrilladaMenuBuilderCard({
           <div className="mx-auto flex h-full w-full max-w-3xl flex-col bg-[#070707] px-3 py-3 sm:px-4 sm:py-4">
             <Panel className="mb-2 flex items-center justify-between gap-2 px-3 py-2">
               <div>
-                {/* allow-arbitrary: pre-slice-a */}
+                {/* allow-arbitrary: text-[11px] eyebrow + text-white/45 — ds.text scale lacks 11px; ds.color.muted exposes only 50/70/90 */}
                 <p className="text-[11px] uppercase tracking-[0.16em] text-white/45">{t.parrilladaMenuCutSelectorEyebrow}</p>
                 <h4 className="text-sm font-semibold text-white">{t.parrilladaMenuChooseCuts}</h4>
               </div>
@@ -148,7 +148,7 @@ export function ParrilladaMenuBuilderCard({
                 <button
                   type="button"
                   onClick={() => setSelectorOpen(false)}
-                  /* allow-arbitrary: pre-slice-a */
+                  /* allow-arbitrary: text-white/80 — ds.color.muted exposes only 50/70/90 */
                   className="rounded-lg border border-white/10 bg-black/25 px-3 py-1.5 text-xs font-semibold text-white/80 transition hover:border-white/25"
                 >
                   {t.parrilladaMenuModalDone}
@@ -161,7 +161,7 @@ export function ParrilladaMenuBuilderCard({
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder={t.parrilladaMenuSearchPlaceholder}
-                /* allow-arbitrary: pre-slice-a */
+                /* allow-arbitrary: placeholder:text-white/35 — ds.color.muted exposes only 50/70/90 */
                 className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none placeholder:text-white/35 focus:border-orange-300/50"
               />
               <div className="mt-2 flex gap-1.5 overflow-x-auto pb-0.5">
@@ -172,7 +172,7 @@ export function ParrilladaMenuBuilderCard({
                       key={filterId}
                       type="button"
                       onClick={() => setActiveFilter(filterId)}
-                      /* allow-arbitrary: pre-slice-a */
+                      /* allow-arbitrary: text-[11px] filter chip — ds.text scale lacks 11px */
                       className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
                         selected
                           ? 'border-orange-300/50 bg-orange-500/15 text-orange-100'
@@ -187,12 +187,12 @@ export function ParrilladaMenuBuilderCard({
 
               <div className="mt-2.5 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
                 {groupedItems.map(([groupLabel, groupItems]) => (
-                  /* allow-arbitrary: pre-slice-a */
+                  /* allow-arbitrary: bg-white/[0.03] group panel tint — ds.panel lacks this alpha */
                   <section key={groupLabel} className="rounded-xl border border-white/10 bg-white/[0.03] p-2">
                     <div className="mb-1.5 flex items-center justify-between">
-                      {/* allow-arbitrary: pre-slice-a */}
+                      {/* allow-arbitrary: text-[10px] group label — ds.text scale lacks 10px (text-white/50 is canonical) */}
                       <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">{groupLabel}</p>
-                      {/* allow-arbitrary: pre-slice-a */}
+                      {/* allow-arbitrary: text-[10px] + text-white/45 — ds.text scale lacks 10px; ds.color.muted exposes only 50/70/90 */}
                       <span className="text-[10px] text-white/45">{groupItems.length}</span>
                     </div>
                     <div className="space-y-1.5">
@@ -209,9 +209,9 @@ export function ParrilladaMenuBuilderCard({
                               selected
                                 ? 'border-orange-300/50 bg-orange-500/15 text-orange-100'
                                 : disabled
-                                  /* allow-arbitrary: pre-slice-a */
+                                  /* allow-arbitrary: text-white/35 disabled state — ds.color.muted exposes only 50/70/90 */
                                   ? 'cursor-not-allowed border-white/10 bg-black/20 text-white/35'
-                                  /* allow-arbitrary: pre-slice-a */
+                                  /* allow-arbitrary: text-white/85 — ds.color.muted exposes only 50/70/90 */
                                   : 'border-white/10 bg-black/20 text-white/85 hover:border-white/25'
                             }`}
                           >
@@ -224,7 +224,7 @@ export function ParrilladaMenuBuilderCard({
                             />
                             <div className="min-w-0 flex-1">
                               <p className="truncate text-sm font-semibold">{item.displayName}</p>
-                              {/* allow-arbitrary: pre-slice-a */}
+                              {/* allow-arbitrary: text-[11px] + text-white/55 — ds.text scale lacks 11px; ds.color.muted exposes only 50/70/90 */}
                               <p className="text-[11px] text-white/55">{animalLabel(item.animal, t)}</p>
                             </div>
                             <span className="text-xs font-semibold">{selected ? t.parrilladaMenuItemSelected : t.parrilladaMenuItemAdd}</span>
@@ -235,7 +235,7 @@ export function ParrilladaMenuBuilderCard({
                   </section>
                 ))}
                 {groupedItems.length === 0 ? (
-                  /* allow-arbitrary: pre-slice-a */
+                  /* allow-arbitrary: text-white/60 — ds.color.muted exposes only 50/70/90 */
                   <p className="rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-xs text-white/60">
                     {t.parrilladaMenuNoResults}
                   </p>

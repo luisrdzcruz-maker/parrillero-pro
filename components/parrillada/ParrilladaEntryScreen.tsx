@@ -55,7 +55,7 @@ export function ParrilladaEntryScreen({
       <ParrilladaModeCard mode="pro" title={proTitle} description={proDescription} onClick={onSelectMode} />
 
       <Panel as="section" className="p-4">
-        {/* allow-arbitrary: pre-slice-a */}
+        {/* allow-arbitrary: text-[11px] eyebrow + text-white/45 — ds.text scale lacks 11px; ds.color.muted exposes only 50/70/90 */}
         <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">{recentTitle}</p>
         <div className="mt-3 space-y-2">
           {recentPlans.map((plan) => (
@@ -70,11 +70,11 @@ export function ParrilladaEntryScreen({
                 />
                 <div>
                   <p className="text-sm font-medium text-white">{plan.title}</p>
-                  {/* allow-arbitrary: pre-slice-a */}
+                  {/* allow-arbitrary: text-white/55 — ds.color.muted exposes only 50/70/90 */}
                   <p className="text-xs text-white/55">{plan.updatedLabel}</p>
                 </div>
               </div>
-              {/* allow-arbitrary: pre-slice-a */}
+              {/* allow-arbitrary: text-[11px] mode chip — ds.text scale lacks 11px */}
               <span className="rounded-full border border-white/10 bg-black/25 px-2.5 py-1 text-[11px] font-semibold uppercase text-white/70">
                 {plan.mode}
               </span>

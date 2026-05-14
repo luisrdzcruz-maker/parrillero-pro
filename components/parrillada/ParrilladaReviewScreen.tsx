@@ -44,7 +44,7 @@ export function ParrilladaReviewScreen({ lang, t, plan, plannerResult, ctaLabel,
       <ParrilladaHeroCard lang={lang} t={t} plan={plan} keyExecutionHint={keyExecutionHint} />
 
       <Panel as="section" className="p-4">
-        {/* allow-arbitrary: pre-slice-a */}
+        {/* allow-arbitrary: text-[11px] eyebrow + text-white/45 — ds.text scale lacks 11px; ds.color.muted exposes only 50/70/90 */}
         <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">{t.parrilladaMainSequence}</p>
         {criticalStep ? (
           <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5">
@@ -61,7 +61,7 @@ export function ParrilladaReviewScreen({ lang, t, plan, plannerResult, ctaLabel,
             />
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-white">{criticalStep.title}</p>
-              {/* allow-arbitrary: pre-slice-a */}
+              {/* allow-arbitrary: text-white/55 — ds.color.muted exposes only 50/70/90 */}
               <p className="text-xs text-white/55">
                 {criticalStep.timeLabel}
                 {criticalStep.zone ? ` · ${criticalStep.zone}` : ''}
