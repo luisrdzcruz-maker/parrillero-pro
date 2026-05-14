@@ -2,6 +2,7 @@
 
 import { BrandImageIcon } from '@/components/ui/BrandImageIcon';
 import { Panel } from '@/components/ui/Panel';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { getModeIcon } from '@/components/parrillada/icons/parrilladaIconResolver';
 import { ParrilladaModeCard } from '@/components/parrillada/cards/ParrilladaModeCard';
 import type { ParrilladaMode } from '@/lib/planning';
@@ -34,13 +35,11 @@ export function ParrilladaEntryScreen({
 }: ParrilladaEntryScreenProps) {
   return (
     <section className="space-y-3">
-      <header className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-black/25 p-4">
-        {/* allow-arbitrary: pre-slice-a */}
-        <p className="text-[11px] uppercase tracking-[0.18em] text-orange-200/70">Parrillada</p>
-        <h1 className="mt-1 text-2xl font-semibold text-white">Start simple. Reveal power when needed.</h1>
-        {/* allow-arbitrary: pre-slice-a */}
-        <p className="mt-1 text-sm text-white/65">Build menu, validate timeline, then execute with a calm command-center flow.</p>
-      </header>
+      <ScreenHeader
+        eyebrow="Parrillada"
+        title="Start simple. Reveal power when needed."
+        subtitle="Build menu, validate timeline, then execute with a calm command-center flow."
+      />
 
       <ParrilladaModeCard
         mode="lite"

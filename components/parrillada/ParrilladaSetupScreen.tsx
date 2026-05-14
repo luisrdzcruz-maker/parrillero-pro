@@ -1,6 +1,8 @@
 'use client';
 
+import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { ParrilladaMenuBuilderCard } from '@/components/parrillada/cards/ParrilladaMenuBuilderCard';
 import { ServeStrategyCard } from '@/components/parrillada/cards/ServeStrategyCard';
 import { GrillSetupCard } from '@/components/parrillada/cards/GrillSetupCard';
@@ -53,15 +55,14 @@ export function ParrilladaSetupScreen({
 
   return (
     <section className="space-y-3">
-      <header className="flex items-center justify-between gap-3 px-1">
-        <h2 className="min-w-0 truncate text-lg font-semibold text-white">
-          {title} {mode === 'pro' ? 'Pro' : 'Lite'}
-        </h2>
-        {/* allow-arbitrary: pre-slice-a */}
-        <span className="shrink-0 rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[11px] font-semibold text-white/65 tabular-nums">
-          {liteMinItems}–{liteMaxItems} items
-        </span>
-      </header>
+      <ScreenHeader
+        title={`${title} ${mode === 'pro' ? 'Pro' : 'Lite'}`}
+        trailing={
+          <Badge tone="glass" className="tabular-nums">
+            {liteMinItems}–{liteMaxItems} items
+          </Badge>
+        }
+      />
 
       <ParrilladaMenuBuilderCard
         items={selectedItems}

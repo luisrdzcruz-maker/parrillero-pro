@@ -4,6 +4,7 @@ import { BrandImageIcon } from '@/components/ui/BrandImageIcon';
 import { Button } from '@/components/ui/Button';
 import { CompactDisclosure } from '@/components/ui/CompactDisclosure';
 import { Panel } from '@/components/ui/Panel';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import {
   plannerResultToCriticalStep,
   plannerResultToReviewZoneStatus,
@@ -36,6 +37,7 @@ export function ParrilladaReviewScreen({ plan, plannerResult, ctaLabel, onBack, 
 
   return (
     <section className="space-y-3">
+      <ScreenHeader title="Parrillada Review" subtitle="Review before you cook" />
       <ParrilladaHeroCard plan={plan} keyExecutionHint={keyExecutionHint} />
 
       <Panel as="section" className="p-4">
