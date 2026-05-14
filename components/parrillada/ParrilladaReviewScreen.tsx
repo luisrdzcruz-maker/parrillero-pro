@@ -33,19 +33,19 @@ export function ParrilladaReviewScreen({ lang, t, plan, plannerResult, ctaLabel,
 
   const criticalItem = criticalStep?.itemId ? plan.items.find((item) => item.id === criticalStep.itemId) : undefined;
   const keyExecutionHint = criticalItem
-    ? `First · ${criticalItem.displayName}`
+    ? `${t.parrilladaFirstPrefix} · ${criticalItem.displayName}`
     : criticalStep
-      ? `First · ${criticalStep.title}`
+      ? `${t.parrilladaFirstPrefix} · ${criticalStep.title}`
       : undefined;
 
   return (
     <section className="space-y-3">
-      <ScreenHeader title="Parrillada Review" subtitle="Review before you cook" />
+      <ScreenHeader title={t.parrilladaReviewTitle} subtitle={t.parrilladaReviewSubtitle} />
       <ParrilladaHeroCard lang={lang} t={t} plan={plan} keyExecutionHint={keyExecutionHint} />
 
       <Panel as="section" className="p-4">
         {/* allow-arbitrary: pre-slice-a */}
-        <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Main sequence</p>
+        <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">{t.parrilladaMainSequence}</p>
         {criticalStep ? (
           <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5">
             <BrandImageIcon
@@ -74,10 +74,10 @@ export function ParrilladaReviewScreen({ lang, t, plan, plannerResult, ctaLabel,
       <ParrilladaTimelineFinal lang={lang} t={t} result={plannerResult} />
 
       <CompactDisclosure
-        label="Zone status"
-        summary={`${zoneStatus.length} ${zoneStatus.length === 1 ? 'zone' : 'zones'} configured`}
-        showLabel="Show detail"
-        hideLabel="Hide detail"
+        label={t.parrilladaZoneStatus}
+        summary={`${zoneStatus.length} ${zoneStatus.length === 1 ? t.parrilladaZonesConfiguredSingular : t.parrilladaZonesConfiguredPlural}`}
+        showLabel={t.parrilladaShowDetail}
+        hideLabel={t.parrilladaHideDetail}
       >
         <div className="mt-2">
           <GrillZoneStatusCard zones={zoneStatus} />
@@ -85,10 +85,10 @@ export function ParrilladaReviewScreen({ lang, t, plan, plannerResult, ctaLabel,
       </CompactDisclosure>
 
       <CompactDisclosure
-        label="Warnings"
-        summary={`${plan.warnings.length} ${plan.warnings.length === 1 ? 'warning' : 'warnings'}`}
-        showLabel="Show detail"
-        hideLabel="Hide detail"
+        label={t.parrilladaWarnings}
+        summary={`${plan.warnings.length} ${plan.warnings.length === 1 ? t.parrilladaWarningSingular : t.parrilladaWarningPlural}`}
+        showLabel={t.parrilladaShowDetail}
+        hideLabel={t.parrilladaHideDetail}
       >
         <div className="mt-2">
           <ParrilladaWarningsFinal result={plannerResult} />
@@ -97,7 +97,7 @@ export function ParrilladaReviewScreen({ lang, t, plan, plannerResult, ctaLabel,
 
       <div className="grid grid-cols-2 gap-2">
         <Button variant="secondary" onClick={onBack}>
-          Back
+          {t.parrilladaBack}
         </Button>
         <Button variant="primary" onClick={onStartLive}>
           {ctaLabel}

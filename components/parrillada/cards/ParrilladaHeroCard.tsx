@@ -13,7 +13,7 @@ type ParrilladaHeroCardProps = {
 
 type MetricTone = 'default' | 'amber';
 
-export function ParrilladaHeroCard({ plan, keyExecutionHint }: ParrilladaHeroCardProps) {
+export function ParrilladaHeroCard({ t, plan, keyExecutionHint }: ParrilladaHeroCardProps) {
   const isPro = plan.mode === 'pro';
   const warningsCount = plan.warnings.length;
   const holdsCount = plan.items.filter((item) => item.canHoldWarm === true).length;
@@ -22,19 +22,19 @@ export function ParrilladaHeroCard({ plan, keyExecutionHint }: ParrilladaHeroCar
   return (
     <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-orange-500/[0.07] p-4">
       <div className="flex items-start justify-between gap-3">
-        <h2 className="text-xl font-semibold tracking-tight text-white">Parrillada Plan</h2>
+        <h2 className="text-xl font-semibold tracking-tight text-white">{t.parrilladaHeroTitle}</h2>
         {/* allow-arbitrary: pre-slice-a */}
         <span className="shrink-0 rounded-full border border-orange-300/35 bg-orange-500/15 px-2.5 py-0.5 text-[11px] font-black uppercase tracking-[0.14em] text-orange-100">
-          {isPro ? 'Pro' : 'Lite'}
+          {isPro ? t.parrilladaModePro : t.parrilladaModeLite}
         </span>
       </div>
 
       <div className="mt-3 grid grid-cols-4 gap-1">
-        <Metric label="Items" value={`${plan.items.length}`} />
-        <Metric label="Serve" value={plan.serveTargetLabel} />
-        <Metric label="Complexity" value={plan.complexity} />
+        <Metric label={t.parrilladaHeroMetricItems} value={`${plan.items.length}`} />
+        <Metric label={t.parrilladaServe} value={plan.serveTargetLabel} />
+        <Metric label={t.parrilladaHeroMetricComplexity} value={plan.complexity} />
         <Metric
-          label="Warnings"
+          label={t.parrilladaWarnings}
           value={`${warningsCount}`}
           tone={warningsCount > 0 ? 'amber' : 'default'}
         />
@@ -44,8 +44,8 @@ export function ParrilladaHeroCard({ plan, keyExecutionHint }: ParrilladaHeroCar
         {keyExecutionHint ? (
           <Badge tone="accent">{keyExecutionHint}</Badge>
         ) : null}
-        {isPro && zonesCount > 0 ? <Badge tone="glass">{zonesCount} zones</Badge> : null}
-        {isPro && holdsCount > 0 ? <Badge tone="glass">{holdsCount} holds</Badge> : null}
+        {isPro && zonesCount > 0 ? <Badge tone="glass">{zonesCount} {t.parrilladaZonesSuffix}</Badge> : null}
+        {isPro && holdsCount > 0 ? <Badge tone="glass">{holdsCount} {t.parrilladaHoldsSuffix}</Badge> : null}
       </div>
     </section>
   );

@@ -28,6 +28,7 @@ type ParrilladaEntryScreenProps = {
 };
 
 export function ParrilladaEntryScreen({
+  t,
   quickTitle,
   quickDescription,
   proTitle,
@@ -39,9 +40,9 @@ export function ParrilladaEntryScreen({
   return (
     <section className="space-y-3">
       <ScreenHeader
-        eyebrow="Parrillada"
-        title="Start simple. Reveal power when needed."
-        subtitle="Build menu, validate timeline, then execute with a calm command-center flow."
+        eyebrow={t.parrilladaEntryEyebrow}
+        title={t.parrilladaEntryTitle}
+        subtitle={t.parrilladaEntrySubtitle}
       />
 
       <ParrilladaModeCard

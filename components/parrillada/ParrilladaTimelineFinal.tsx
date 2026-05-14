@@ -23,20 +23,31 @@ function zoneLabel(zone: PlannerPhase['zone']): string {
   return zone.replaceAll('_', ' ');
 }
 
-function phaseLabel(type: PlannerPhase['type']): string {
-  const map: Record<PlannerPhase['type'], string> = {
-    prep: 'Prep',
-    preheat: 'Preheat',
-    cook: 'Cook',
-    sear: 'Sear',
-    flip: 'Flip',
-    rest: 'Rest',
-    hold: 'Hold',
-    serve: 'Serve',
-    check: 'Check',
-    buffer: 'Buffer',
-  };
-  return map[type];
+// Translation lookup keyed by stable PlannerPhase['type'] enum.
+// lang stays out of lib/; the planner emits data, this file translates at render.
+function phaseLabel(type: PlannerPhase['type'], t: AppText): string {
+  switch (type) {
+    case 'prep':
+      return t.parrilladaPhasePrep;
+    case 'preheat':
+      return t.parrilladaPhasePreheat;
+    case 'cook':
+      return t.parrilladaPhaseCook;
+    case 'sear':
+      return t.parrilladaPhaseSear;
+    case 'flip':
+      return t.parrilladaPhaseFlip;
+    case 'rest':
+      return t.parrilladaPhaseRest;
+    case 'hold':
+      return t.parrilladaPhaseHold;
+    case 'serve':
+      return t.parrilladaServe;
+    case 'check':
+      return t.parrilladaPhaseCheck;
+    case 'buffer':
+      return t.parrilladaPhaseBuffer;
+  }
 }
 
 function compactExecutionInstruction(group: ExecutionTimelineGroup): string {
@@ -63,11 +74,14 @@ function itemQuantityLabel(group: ExecutionTimelineGroup): string | null {
     .join(' + ');
 }
 
-function formatActionMeta(group: ExecutionTimelineGroup): string {
-  return `${executionZoneLabel(group)} · ${executionHeatLabel(group)} · until ${formatTime(group.endIso)}`;
+function formatActionMeta(group: ExecutionTimelineGroup, t: AppText): string {
+  // executionZoneLabel / executionHeatLabel still emit data-derived English
+  // (e.g., 'high heat', 'holding'); deeper i18n belongs alongside planner
+  // surface-fallback work, not Slice B.
+  return `${executionZoneLabel(group)} · ${executionHeatLabel(group)} · ${t.parrilladaUntil} ${formatTime(group.endIso)}`;
 }
 
-function ensureFinalServeRow(phases: PlannerPhase[], result: PlannerResult): PlannerPhase[] {
+function ensureFinalServeRow(phases: PlannerPhase[], result: PlannerResult, t: AppText): PlannerPhase[] {
   if (phases.some((phase) => phase.type === 'serve')) return phases;
   const serveTime = result.request.serveAtIso;
   return [
@@ -76,7 +90,7 @@ function ensureFinalServeRow(phases: PlannerPhase[], result: PlannerResult): Pla
       id: 'global-serve-row',
       itemId: 'global',
       cutId: 'global',
-      displayName: 'Serve all items',
+      displayName: t.parrilladaServeAllItems,
       type: 'serve',
       zone: 'holding',
       startMinute: 0,
@@ -85,7 +99,7 @@ function ensureFinalServeRow(phases: PlannerPhase[], result: PlannerResult): Pla
       endIso: serveTime,
       durationMinutes: 1,
       isFlexible: false,
-      notes: ['Plate and serve the full parrillada.'],
+      notes: [t.parrilladaServeAllNote],
     },
   ];
 }
@@ -102,6 +116,7 @@ function groupByStartTime(phases: PlannerPhase[]): Array<{ time: string; phases:
 }
 
 export function ParrilladaTimelineFinal({
+  t,
   result,
 }: {
   lang: Lang;
@@ -110,17 +125,17 @@ export function ParrilladaTimelineFinal({
 }) {
   if (!result) return null;
 
-  const phases = ensureFinalServeRow(result.phases, result);
+  const phases = ensureFinalServeRow(result.phases, result, t);
   const groups = groupByStartTime(phases);
   const executionGroups = result.executionTimelineGroups ?? [];
 
   return (
     <Panel as="section" className="p-3 sm:p-4">
       <div className="mb-3 flex items-end justify-between gap-3">
-        <h2 className="text-lg font-semibold tracking-tight text-white sm:text-xl">Timeline</h2>
+        <h2 className="text-lg font-semibold tracking-tight text-white sm:text-xl">{t.parrilladaTimelineTitle}</h2>
         {/* allow-arbitrary: pre-slice-a */}
         <div className="flex items-baseline gap-1.5 text-xs text-white/55">
-          <span>Serve</span>
+          <span>{t.parrilladaServe}</span>
           <span className="text-sm font-semibold text-white tabular-nums">{formatTime(result.request.serveAtIso)}</span>
         </div>
       </div>
@@ -129,19 +144,19 @@ export function ParrilladaTimelineFinal({
         {executionGroups.length > 0 ? (
           <article className="rounded-2xl border border-white/10 bg-black/20 p-2.5">
             {/* allow-arbitrary: pre-slice-a */}
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">Actions</p>
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">{t.parrilladaTimelineActionsEyebrow}</p>
             <div className="space-y-1.5">
               {executionGroups.map((group) => (
                 <CompactDisclosure
                   key={group.id}
                   label={formatTime(group.startIso)}
                   summary={getShortGroupLabel(group)}
-                  showLabel="Show detail"
-                  hideLabel="Hide detail"
+                  showLabel={t.parrilladaShowDetail}
+                  hideLabel={t.parrilladaHideDetail}
                 >
                   {/* allow-arbitrary: pre-slice-a */}
                   <div className="mt-2 space-y-1 text-xs text-white/65">
-                    <p>{formatActionMeta(group)}</p>
+                    <p>{formatActionMeta(group, t)}</p>
                     {itemQuantityLabel(group) ? (
                       <p className="text-orange-100/80">{itemQuantityLabel(group)}</p>
                     ) : null}
@@ -155,10 +170,10 @@ export function ParrilladaTimelineFinal({
         ) : null}
 
         <CompactDisclosure
-          label="All phases"
-          summary={`${groups.length} ${groups.length === 1 ? 'time slot' : 'time slots'} on timeline`}
-          showLabel="Show phases"
-          hideLabel="Hide phases"
+          label={t.parrilladaTimelineAllPhases}
+          summary={`${groups.length} ${groups.length === 1 ? t.parrilladaTimelineTimeSlotsSingular : t.parrilladaTimelineTimeSlotsPlural}`}
+          showLabel={t.parrilladaTimelineShowPhases}
+          hideLabel={t.parrilladaTimelineHidePhases}
         >
           <div className="mt-2 space-y-2">
             {groups.map((group) => (
@@ -171,7 +186,7 @@ export function ParrilladaTimelineFinal({
                   </span>
                   {group.phases.length > 1 && (
                     /* allow-arbitrary: pre-slice-a */
-                    <span className="text-[11px] text-white/45">{group.phases.length} parallel</span>
+                    <span className="text-[11px] text-white/45">{group.phases.length} {t.parrilladaParallelSuffix}</span>
                   )}
                 </div>
                 <div className="space-y-1.5">
@@ -180,7 +195,7 @@ export function ParrilladaTimelineFinal({
                       <div className="flex flex-wrap items-center gap-1.5">
                         {/* allow-arbitrary: pre-slice-a */}
                         <span className="rounded-full bg-orange-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-orange-100">
-                          {phaseLabel(phase.type)}
+                          {phaseLabel(phase.type, t)}
                         </span>
                         {/* allow-arbitrary: pre-slice-a */}
                         <span className="text-[13px] font-semibold text-white">{phase.displayName}</span>
@@ -189,7 +204,7 @@ export function ParrilladaTimelineFinal({
                       </div>
                       {/* allow-arbitrary: pre-slice-a */}
                       <p className="mt-0.5 text-[11px] text-white/50">
-                        {zoneLabel(phase.zone)} · until {formatTime(phase.endIso)}
+                        {zoneLabel(phase.zone)} · {t.parrilladaUntil} {formatTime(phase.endIso)}
                       </p>
                       {phase.notes && phase.notes.length > 0 ? (
                         /* allow-arbitrary: pre-slice-a */

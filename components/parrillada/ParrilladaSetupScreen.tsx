@@ -61,10 +61,10 @@ export function ParrilladaSetupScreen({
   return (
     <section className="space-y-3">
       <ScreenHeader
-        title={`${title} ${mode === 'pro' ? 'Pro' : 'Lite'}`}
+        title={`${title} ${mode === 'pro' ? t.parrilladaModePro : t.parrilladaModeLite}`}
         trailing={
           <Badge tone="glass" className="tabular-nums">
-            {liteMinItems}–{liteMaxItems} items
+            {liteMinItems}–{liteMaxItems} {t.parrilladaItemsSuffix}
           </Badge>
         }
       />
@@ -93,7 +93,7 @@ export function ParrilladaSetupScreen({
 
       <div className="grid grid-cols-2 gap-2">
         <Button variant="secondary" onClick={onBack}>
-          Back
+          {t.parrilladaBack}
         </Button>
         <Button variant="primary" disabled={!canGenerate} onClick={onGenerate}>
           {ctaLabel}
