@@ -290,4 +290,30 @@ Borrowed and tightened from spec §14:
 
 ---
 
+## 8. Follow-ups
+
+### Planner surface fallbacks need i18n
+
+During Slice B, the seven in-scope Parrillada UI files were i18n'd, but several user-visible strings still flow through planner data unchanged:
+
+- `executionZoneLabel()` / `executionHeatLabel()` / `compactExecutionInstruction()` in `components/parrillada/ParrilladaTimelineFinal.tsx` emit data-derived English ("high heat", "mixed zones", "holding").
+- `lib/i18n/surfaceFallbacks.ts` is the natural home for proper i18n of these enum values (it already houses `getEquipmentSurfaceLabel`, `localizeResultSurfaceCopy`, etc.).
+- Some props passed into the seven Parrillada files (e.g. `parrilladaPlanCopy.entry.quickTitle`, ctaLabel, criticalStep fields) are caller-supplied English. Caller chain: `parrilladaPlanCopy` → SchedulerScreen → the seven files.
+
+Out of scope for Slice B (which limited itself to seven UI files). Consider a dedicated planner-surface i18n slice when broader i18n coverage matters.
+
+### Copy tone vs canvas mismatch
+
+Slice B's i18n pass made the Parrillada strings translatable but preserved the existing verbose, marketing-voice English source. The Hybrid Premium canvas (`docs/design/hybrid-premium-canvas/`) shows a different voice across every screen: short eyebrow + short title + one supporting line at most. Examples of the mismatch:
+
+- `parrilladaEntryTitle` = "Start simple. Reveal power when needed." Canvas voice would be closer to: "Parrillada Entry" / "Start your live session."
+- `parrilladaEntrySubtitle` = "Build menu, validate timeline, then execute with a calm command-center flow." Canvas voice: one short line, not a sentence chain.
+- Card subtitles and helper text throughout follow the same pattern.
+
+Scope: this is a content/tone consolidation, not a translation refinement. Affects English source strings first, then propagates to es/fi (fi being deleted in a separate near-term PR). Should be its own dedicated slice ("Content tone pass") rather than mixed into structural slices. Deferred until after the Finnish locale is removed and the Slice D/E/C/F structural work is complete.
+
+Out of scope for Slice B.
+
+---
+
 *This document is a static analysis. Visual verification on real devices (iPhone SE, Pixel 5, iPhone 14 Pro) is required before treating any "looks fine" claim as fact. The next audit (UI-UX-audit02.md) should be done on-device with screenshots attached.*
