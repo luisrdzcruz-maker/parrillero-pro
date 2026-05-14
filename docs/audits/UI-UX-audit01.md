@@ -302,17 +302,9 @@ During Slice B, the seven in-scope Parrillada UI files were i18n'd, but several 
 
 Out of scope for Slice B (which limited itself to seven UI files). Consider a dedicated planner-surface i18n slice when broader i18n coverage matters.
 
-### Copy tone vs canvas mismatch
+### Copy tone alignment with canvas
 
-Slice B's i18n pass made the Parrillada strings translatable but preserved the existing verbose, marketing-voice English source. The Hybrid Premium canvas (`docs/design/hybrid-premium-canvas/`) shows a different voice across every screen: short eyebrow + short title + one supporting line at most. Examples of the mismatch:
-
-- `parrilladaEntryTitle` = "Start simple. Reveal power when needed." Canvas voice would be closer to: "Parrillada Entry" / "Start your live session."
-- `parrilladaEntrySubtitle` = "Build menu, validate timeline, then execute with a calm command-center flow." Canvas voice: one short line, not a sentence chain.
-- Card subtitles and helper text throughout follow the same pattern.
-
-Scope: this is a content/tone consolidation, not a translation refinement. Affects English source strings first, then propagates to es/fi (fi being deleted in a separate near-term PR). Should be its own dedicated slice ("Content tone pass") rather than mixed into structural slices. Deferred until after the Finnish locale is removed and the Slice D/E/C/F structural work is complete.
-
-Out of scope for Slice B.
+Slice B refined the verbose source copy for Parrillada Entry, Review, and Hero headers to match the canvas voice (short declarative title + optional one-sentence support). Remaining surfaces (Onboarding, Saved, CookingWizard, Result) have not yet been audited against the canvas for tone. A dedicated pass over `lib/i18n/texts.ts` after the Finnish locale is removed will close the gap consistently across the app.
 
 ---
 
