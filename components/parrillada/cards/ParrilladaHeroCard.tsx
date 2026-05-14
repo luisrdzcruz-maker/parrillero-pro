@@ -8,12 +8,11 @@ type ParrilladaHeroCardProps = {
   lang: Lang;
   t: AppText;
   plan: ParrilladaPlan;
-  keyExecutionHint?: string;
 };
 
 type MetricTone = 'default' | 'amber';
 
-export function ParrilladaHeroCard({ t, plan, keyExecutionHint }: ParrilladaHeroCardProps) {
+export function ParrilladaHeroCard({ t, plan }: ParrilladaHeroCardProps) {
   const isPro = plan.mode === 'pro';
   const warningsCount = plan.warnings.length;
   const holdsCount = plan.items.filter((item) => item.canHoldWarm === true).length;
@@ -41,9 +40,6 @@ export function ParrilladaHeroCard({ t, plan, keyExecutionHint }: ParrilladaHero
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
-        {keyExecutionHint ? (
-          <Badge tone="accent">{keyExecutionHint}</Badge>
-        ) : null}
         {isPro && zonesCount > 0 ? <Badge tone="glass">{zonesCount} {t.parrilladaZonesSuffix}</Badge> : null}
         {isPro && holdsCount > 0 ? <Badge tone="glass">{holdsCount} {t.parrilladaHoldsSuffix}</Badge> : null}
       </div>
