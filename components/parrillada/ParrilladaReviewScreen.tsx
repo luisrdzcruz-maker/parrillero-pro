@@ -1,6 +1,7 @@
 'use client';
 
 import { BrandImageIcon } from '@/components/ui/BrandImageIcon';
+import { CompactDisclosure } from '@/components/ui/CompactDisclosure';
 import { Panel } from '@/components/ui/Panel';
 import {
   plannerResultToCriticalStep,
@@ -66,21 +67,27 @@ export function ParrilladaReviewScreen({ plan, plannerResult, ctaLabel, onBack, 
 
       <ParrilladaTimelineFinal result={plannerResult} />
 
-      {/* allow-arbitrary: pre-slice-a */}
-      <details className="rounded-3xl border border-white/10 bg-white/[0.04] p-3">
-        <summary className="cursor-pointer text-sm font-semibold text-white">Zone status</summary>
+      <CompactDisclosure
+        label="Zone status"
+        summary={`${zoneStatus.length} ${zoneStatus.length === 1 ? 'zone' : 'zones'} configured`}
+        showLabel="Show detail"
+        hideLabel="Hide detail"
+      >
         <div className="mt-2">
           <GrillZoneStatusCard zones={zoneStatus} />
         </div>
-      </details>
+      </CompactDisclosure>
 
-      {/* allow-arbitrary: pre-slice-a */}
-      <details className="rounded-3xl border border-white/10 bg-white/[0.04] p-3">
-        <summary className="cursor-pointer text-sm font-semibold text-white">Warnings</summary>
+      <CompactDisclosure
+        label="Warnings"
+        summary={`${plan.warnings.length} ${plan.warnings.length === 1 ? 'warning' : 'warnings'}`}
+        showLabel="Show detail"
+        hideLabel="Hide detail"
+      >
         <div className="mt-2">
           <ParrilladaWarningsFinal result={plannerResult} />
         </div>
-      </details>
+      </CompactDisclosure>
 
       <div className="grid grid-cols-2 gap-2">
         <button

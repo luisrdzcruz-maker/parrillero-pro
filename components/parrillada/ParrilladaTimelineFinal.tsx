@@ -1,5 +1,6 @@
 'use client';
 
+import { CompactDisclosure } from '@/components/ui/CompactDisclosure';
 import { Panel } from '@/components/ui/Panel';
 import type { ExecutionTimelineGroup, PlannerPhase, PlannerResult } from '../../lib/planning';
 import { getShortGroupLabel } from './utils/parrilladaTimelineLabels';
@@ -124,28 +125,15 @@ export function ParrilladaTimelineFinal({ result }: { result: PlannerResult | nu
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">Actions</p>
             <div className="space-y-1.5">
               {executionGroups.map((group) => (
-                <details
+                <CompactDisclosure
                   key={group.id}
-                  className="group rounded-xl border border-white/[0.08] bg-black/25 transition open:border-orange-300/25 open:bg-orange-500/[0.06]"
+                  label={formatTime(group.startIso)}
+                  summary={getShortGroupLabel(group)}
+                  showLabel="Show detail"
+                  hideLabel="Hide detail"
                 >
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-2.5 py-2">
-                    <div className="flex min-w-0 items-center gap-2">
-                      {/* allow-arbitrary: pre-slice-a */}
-                      <span className="shrink-0 text-[12px] font-semibold tabular-nums text-orange-100/85">
-                        {formatTime(group.startIso)}
-                      </span>
-                      <span className="truncate text-sm font-semibold text-white">{getShortGroupLabel(group)}</span>
-                    </div>
-                    <span
-                      aria-hidden="true"
-                      /* allow-arbitrary: pre-slice-a */
-                      className="shrink-0 text-base font-black text-white/30 transition-transform duration-200 group-open:rotate-90 group-open:text-orange-200/75"
-                    >
-                      ›
-                    </span>
-                  </summary>
                   {/* allow-arbitrary: pre-slice-a */}
-                  <div className="space-y-1 border-t border-white/[0.06] px-2.5 pb-2 pt-1.5 text-xs text-white/65">
+                  <div className="mt-2 space-y-1 text-xs text-white/65">
                     <p>{formatActionMeta(group)}</p>
                     {itemQuantityLabel(group) ? (
                       <p className="text-orange-100/80">{itemQuantityLabel(group)}</p>
@@ -153,25 +141,19 @@ export function ParrilladaTimelineFinal({ result }: { result: PlannerResult | nu
                     {/* allow-arbitrary: pre-slice-a */}
                     <p className="text-white/75">{compactExecutionInstruction(group)}</p>
                   </div>
-                </details>
+                </CompactDisclosure>
               ))}
             </div>
           </article>
         ) : null}
 
-        <details className="group rounded-2xl border border-white/10 bg-black/20 transition open:bg-black/30">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-2.5 py-2">
-            {/* allow-arbitrary: pre-slice-a */}
-            <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">All phases</span>
-            <span
-              aria-hidden="true"
-              /* allow-arbitrary: pre-slice-a */
-              className="text-base font-black text-white/30 transition-transform duration-200 group-open:rotate-90 group-open:text-orange-200/70"
-            >
-              ›
-            </span>
-          </summary>
-          <div className="space-y-2 border-t border-white/[0.06] px-2.5 pb-2 pt-2">
+        <CompactDisclosure
+          label="All phases"
+          summary={`${groups.length} ${groups.length === 1 ? 'time slot' : 'time slots'} on timeline`}
+          showLabel="Show phases"
+          hideLabel="Hide phases"
+        >
+          <div className="mt-2 space-y-2">
             {groups.map((group) => (
               /* allow-arbitrary: pre-slice-a */
               <article key={group.time} className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-2">
@@ -212,7 +194,7 @@ export function ParrilladaTimelineFinal({ result }: { result: PlannerResult | nu
               </article>
             ))}
           </div>
-        </details>
+        </CompactDisclosure>
       </div>
     </Panel>
   );
