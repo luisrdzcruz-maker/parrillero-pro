@@ -1,6 +1,7 @@
 'use client';
 
 import { BrandImageIcon } from '@/components/ui/BrandImageIcon';
+import { Button } from '@/components/ui/Button';
 import { CompactDisclosure } from '@/components/ui/CompactDisclosure';
 import { Panel } from '@/components/ui/Panel';
 import {
@@ -90,21 +91,12 @@ export function ParrilladaReviewScreen({ plan, plannerResult, ctaLabel, onBack, 
       </CompactDisclosure>
 
       <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={onBack}
-          /* allow-arbitrary: pre-slice-a */
-          className="rounded-2xl border border-white/15 bg-black/20 px-4 py-3 text-sm font-semibold text-white/80"
-        >
+        <Button variant="secondary" onClick={onBack}>
           Back
-        </button>
-        <button
-          type="button"
-          onClick={onStartLive}
-          className="rounded-2xl bg-gradient-to-r from-orange-400 to-orange-500 px-4 py-3 text-sm font-bold text-black"
-        >
+        </Button>
+        <Button variant="primary" onClick={onStartLive}>
           {ctaLabel}
-        </button>
+        </Button>
       </div>
     </section>
   );

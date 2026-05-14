@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@/components/ui/Button';
 import { ParrilladaMenuBuilderCard } from '@/components/parrillada/cards/ParrilladaMenuBuilderCard';
 import { ServeStrategyCard } from '@/components/parrillada/cards/ServeStrategyCard';
 import { GrillSetupCard } from '@/components/parrillada/cards/GrillSetupCard';
@@ -81,27 +82,12 @@ export function ParrilladaSetupScreen({
       <GrillSetupCard />
 
       <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={onBack}
-          /* allow-arbitrary: pre-slice-a */
-          className="rounded-2xl border border-white/15 bg-black/20 px-4 py-3 text-sm font-semibold text-white/80 transition hover:border-white/30"
-        >
+        <Button variant="secondary" onClick={onBack}>
           Back
-        </button>
-        <button
-          type="button"
-          disabled={!canGenerate}
-          onClick={onGenerate}
-          className={`rounded-2xl px-4 py-3 text-sm font-bold transition ${
-            canGenerate
-              ? 'bg-gradient-to-r from-orange-400 to-orange-500 text-black hover:brightness-105'
-              /* allow-arbitrary: pre-slice-a */
-              : 'cursor-not-allowed border border-white/10 bg-black/20 text-white/45'
-          }`}
-        >
+        </Button>
+        <Button variant="primary" disabled={!canGenerate} onClick={onGenerate}>
           {ctaLabel}
-        </button>
+        </Button>
       </div>
     </section>
   );
