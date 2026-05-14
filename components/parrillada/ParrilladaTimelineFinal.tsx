@@ -1,5 +1,6 @@
 'use client';
 
+import { Panel } from '@/components/ui/Panel';
 import type { ExecutionTimelineGroup, PlannerPhase, PlannerResult } from '../../lib/planning';
 import { getShortGroupLabel } from './utils/parrilladaTimelineLabels';
 
@@ -106,8 +107,7 @@ export function ParrilladaTimelineFinal({ result }: { result: PlannerResult | nu
   const executionGroups = result.executionTimelineGroups ?? [];
 
   return (
-    /* allow-arbitrary: pre-slice-a */
-    <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-3 shadow-xl sm:p-4">
+    <Panel as="section" className="p-3 sm:p-4">
       <div className="mb-3 flex items-end justify-between gap-3">
         <h2 className="text-lg font-semibold tracking-tight text-white sm:text-xl">Timeline</h2>
         {/* allow-arbitrary: pre-slice-a */}
@@ -214,6 +214,6 @@ export function ParrilladaTimelineFinal({ result }: { result: PlannerResult | nu
           </div>
         </details>
       </div>
-    </section>
+    </Panel>
   );
 }

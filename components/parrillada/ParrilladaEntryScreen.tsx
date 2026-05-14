@@ -1,6 +1,7 @@
 'use client';
 
 import { BrandImageIcon } from '@/components/ui/BrandImageIcon';
+import { Panel } from '@/components/ui/Panel';
 import { getModeIcon } from '@/components/parrillada/icons/parrilladaIconResolver';
 import { ParrilladaModeCard } from '@/components/parrillada/cards/ParrilladaModeCard';
 import type { ParrilladaMode } from '@/lib/planning';
@@ -50,8 +51,7 @@ export function ParrilladaEntryScreen({
       />
       <ParrilladaModeCard mode="pro" title={proTitle} description={proDescription} onClick={onSelectMode} />
 
-      {/* allow-arbitrary: pre-slice-a */}
-      <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
+      <Panel as="section" className="p-4">
         {/* allow-arbitrary: pre-slice-a */}
         <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">{recentTitle}</p>
         <div className="mt-3 space-y-2">
@@ -78,7 +78,7 @@ export function ParrilladaEntryScreen({
             </article>
           ))}
         </div>
-      </section>
+      </Panel>
     </section>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { BrandImageIcon } from '@/components/ui/BrandImageIcon';
+import { Panel } from '@/components/ui/Panel';
 import { getParrilladaItemIcon } from '@/components/parrillada/icons/parrilladaIconResolver';
 import type { ParrilladaItem } from '@/lib/planning';
 import type { PlannerCutInput } from '@/lib/planning';
@@ -82,8 +83,7 @@ export function ParrilladaMenuBuilderCard({
   }, [availableItems, search, activeFilter]);
 
   return (
-    /* allow-arbitrary: pre-slice-a */
-    <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
+    <Panel as="section" className="p-4">
       <div className="mb-2.5 flex items-center justify-between gap-3">
         <h3 className="text-base font-semibold text-white">Choose cuts</h3>
         <span
@@ -121,8 +121,7 @@ export function ParrilladaMenuBuilderCard({
       {selectorOpen ? (
         <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-[2px]">
           <div className="mx-auto flex h-full w-full max-w-3xl flex-col bg-[#070707] px-3 py-3 sm:px-4 sm:py-4">
-            {/* allow-arbitrary: pre-slice-a */}
-            <div className="mb-2 flex items-center justify-between gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
+            <Panel className="mb-2 flex items-center justify-between gap-2 px-3 py-2">
               <div>
                 {/* allow-arbitrary: pre-slice-a */}
                 <p className="text-[11px] uppercase tracking-[0.16em] text-white/45">Cut selector</p>
@@ -142,10 +141,9 @@ export function ParrilladaMenuBuilderCard({
                   Done
                 </button>
               </div>
-            </div>
+            </Panel>
 
-            {/* allow-arbitrary: pre-slice-a */}
-            <section className="flex min-h-0 flex-1 flex-col rounded-2xl border border-white/10 bg-white/[0.04] p-2.5">
+            <Panel as="section" className="flex min-h-0 flex-1 flex-col p-2.5">
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
@@ -230,10 +228,10 @@ export function ParrilladaMenuBuilderCard({
                   </p>
                 ) : null}
               </div>
-            </section>
+            </Panel>
           </div>
         </div>
       ) : null}
-    </section>
+    </Panel>
   );
 }

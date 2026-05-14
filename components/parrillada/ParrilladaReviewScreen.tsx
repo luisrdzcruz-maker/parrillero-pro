@@ -1,6 +1,7 @@
 'use client';
 
 import { BrandImageIcon } from '@/components/ui/BrandImageIcon';
+import { Panel } from '@/components/ui/Panel';
 import {
   plannerResultToCriticalStep,
   plannerResultToReviewZoneStatus,
@@ -35,8 +36,7 @@ export function ParrilladaReviewScreen({ plan, plannerResult, ctaLabel, onBack, 
     <section className="space-y-3">
       <ParrilladaHeroCard plan={plan} keyExecutionHint={keyExecutionHint} />
 
-      {/* allow-arbitrary: pre-slice-a */}
-      <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
+      <Panel as="section" className="p-4">
         {/* allow-arbitrary: pre-slice-a */}
         <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Main sequence</p>
         {criticalStep ? (
@@ -62,7 +62,7 @@ export function ParrilladaReviewScreen({ plan, plannerResult, ctaLabel, onBack, 
             </div>
           </div>
         ) : null}
-      </section>
+      </Panel>
 
       <ParrilladaTimelineFinal result={plannerResult} />
 
