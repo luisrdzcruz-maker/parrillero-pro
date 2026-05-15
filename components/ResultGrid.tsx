@@ -59,8 +59,8 @@ function ShoppingListCard({
   setCheckedItems: (value: Record<string, boolean>) => void;
 }) {
   const items = getShoppingItems(content);
-  const checklistLabel = lang === "es" ? "Checklist" : lang === "fi" ? "Tarkistuslista" : "Checklist";
-  const itemsLabel = lang === "es" ? "items" : lang === "fi" ? "tuotetta" : "items";
+  const checklistLabel = lang === "es" ? "Checklist" : "Checklist";
+  const itemsLabel = lang === "es" ? "items" : "items";
 
   return (
     <div
@@ -127,11 +127,7 @@ function GrillManagerCard({
     .filter(Boolean);
 
   const subtitle =
-    lang === "es"
-      ? "Control inteligente de zonas y prioridades"
-      : lang === "fi"
-        ? "Alykas vyohykkeiden ja prioriteettien hallinta"
-        : "Smart zone and priority control";
+    lang === "es" ? "Control inteligente de zonas y prioridades" : "Smart zone and priority control";
 
   return (
     <div
@@ -225,19 +221,19 @@ function getAvoidGuidanceContent(blocks: Blocks, keys: string[], lang: ResultLan
 function getLocalizedBlockTitle(key: string, lang: Lang) {
   const upperKey = key.toUpperCase();
   if (upperKey === "SETUP" || upperKey === "CONFIGURACION" || upperKey === "CONFIGURACIÓN") {
-    return lang === "es" ? "🔥 Configuración" : lang === "fi" ? "🔥 Asetus" : "🔥 Setup";
+    return lang === "es" ? "🔥 Configuración" : "🔥 Setup";
   }
   if (upperKey === "TIMES" || upperKey === "TIEMPOS") {
-    return lang === "es" ? "⏱️ Tiempos" : lang === "fi" ? "⏱️ Ajat" : "⏱️ Times";
+    return lang === "es" ? "⏱️ Tiempos" : "⏱️ Times";
   }
   if (upperKey === "TEMPERATURE" || upperKey === "TEMPERATURA") {
-    return lang === "es" ? "🌡️ Temperatura" : lang === "fi" ? "🌡️ Lampotila" : "🌡️ Temperature";
+    return lang === "es" ? "🌡️ Temperatura" : "🌡️ Temperature";
   }
   if (upperKey === "STEPS" || upperKey === "PASOS") {
-    return lang === "es" ? "🧠 Pasos" : lang === "fi" ? "🧠 Vaiheet" : "🧠 Steps";
+    return lang === "es" ? "🧠 Pasos" : "🧠 Steps";
   }
   if (upperKey === "SHOPPING" || upperKey === "COMPRA") {
-    return lang === "es" ? "🛒 Lista de compra" : lang === "fi" ? "🛒 Ostoslista" : "🛒 Shopping list";
+    return lang === "es" ? "🛒 Lista de compra" : "🛒 Shopping list";
   }
   return formatTitle(key);
 }
@@ -270,7 +266,7 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: Lang): Resu
 
     if (key === "TIMELINE") {
       const timelineTitle =
-        lang === "es" ? "⏱️ Timeline Parrillada" : lang === "fi" ? "⏱️ BBQ-aikajana" : "⏱️ BBQ Timeline";
+        lang === "es" ? "⏱️ Timeline Parrillada" : "⏱️ BBQ Timeline";
       timelineItems.push({
         key,
         title: timelineTitle,
@@ -282,7 +278,7 @@ function getOrderedResultItems(blocks: Blocks, keys: string[], lang: Lang): Resu
 
     if (key === "GRILL_MANAGER") {
       const grillManagerTitle =
-        lang === "es" ? "🔥 Grill Manager Pro" : lang === "fi" ? "🔥 Grill Manager Pro" : "🔥 Grill Manager Pro";
+        lang === "es" ? "🔥 Grill Manager Pro" : "🔥 Grill Manager Pro";
       grillManagerItems.push({
         key,
         title: grillManagerTitle,

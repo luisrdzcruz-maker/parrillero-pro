@@ -147,10 +147,10 @@ function compactTimeMetric(value?: string, restValue?: string) {
 function temperatureSuffix(value: string, lang: ResultLang) {
   if (/\b(salida|retirar|sacar|pull|remove)\b/i.test(value)) {
     if (lang === "en") return "pull";
-    if (lang === "fi") return "ulos";
+
     return "salida";
   }
-  if (/\b(final|servir|serve|ready|valmis)\b/i.test(value)) return lang === "fi" ? "valmis" : "final";
+  if (/\b(final|servir|serve|ready|valmis)\b/i.test(value)) return "final";
   return "";
 }
 

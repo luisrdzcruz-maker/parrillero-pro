@@ -47,13 +47,13 @@ export function getSetupOverlayChips(
 ): SetupOverlayChip[] {
   const normalizedSetup = normalizeSetupText(setup).replace(/[_\s]+/g, "-");
   const labels = {
-    indirect: lang === "es" ? "❄️ Indirecto" : lang === "fi" ? "❄️ Epasuora" : "❄️ Indirect",
-    finalSear: lang === "es" ? "Sellado final" : lang === "fi" ? "Lopullinen ruskistus" : "Final sear",
-    lowHeat: lang === "es" ? "Baja temperatura" : lang === "fi" ? "Matala lampo" : "Low heat",
-    twoZones: lang === "es" ? "2 zonas" : lang === "fi" ? "2 vyohyketta" : "2 zones",
+    indirect: lang === "es" ? "❄️ Indirecto" : "❄️ Indirect",
+    finalSear: lang === "es" ? "Sellado final" : "Final sear",
+    lowHeat: lang === "es" ? "Baja temperatura" : "Low heat",
+    twoZones: lang === "es" ? "2 zonas" : "2 zones",
     mixZone:
-      lang === "es" ? "🔥 Directo + ❄️ Indirecto" : lang === "fi" ? "🔥 Suora + ❄️ Epasuora" : "🔥 Direct + ❄️ Indirect",
-    direct: lang === "es" ? "🔥 Directo" : lang === "fi" ? "🔥 Suora" : "🔥 Direct",
+      lang === "es" ? "🔥 Directo + ❄️ Indirecto" : "🔥 Direct + ❄️ Indirect",
+    direct: lang === "es" ? "🔥 Directo" : "🔥 Direct",
   };
 
   if (normalizedSetup === "reverse-sear") {
@@ -124,7 +124,7 @@ export function buildSetupVisualResult({
   const setupImage = getSetupVisual(setupEquipment, detectedSetup);
   const overlayChips = getSetupOverlayChips(detectedSetup, lang);
   const setupLine = sanitizeSetupSummaryCopy(compactSummaryValue(content), lang, equipment);
-  const setupVisualLabel = lang === "es" ? "Visual de configuración" : lang === "fi" ? "Asetuskuva" : "Setup visual";
+  const setupVisualLabel = lang === "es" ? "Visual de configuración" : "Setup visual";
 
   return {
     setupImage,

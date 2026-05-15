@@ -39,18 +39,17 @@ function getVariantLabel(
   lang: Lang,
 ): string {
   const isEs = lang === "es";
-  const isFi = lang === "fi";
   switch (variant) {
     case "primary":
-      return isEs ? "Pasos ejecutables" : isFi ? "Toteutettavat vaiheet" : "Executable steps";
+      return isEs ? "Pasos ejecutables" : "Executable steps";
     case "tip":
-      return isEs ? "Guia critica" : isFi ? "Kriittinen ohje" : "Critical guidance";
+      return isEs ? "Guia critica" : "Critical guidance";
     case "summary":
-      return isEs ? "Tiempos · Temperatura" : isFi ? "Ajat · Lampotila" : "Times · Temperature";
+      return isEs ? "Tiempos · Temperatura" : "Times · Temperature";
     case "setup":
-      return isEs ? "Configuración del fuego" : isFi ? "Tuliasetus" : "Fire setup";
+      return isEs ? "Configuración del fuego" : "Fire setup";
     default:
-      return isFi ? "Suunnitelma" : "Plan";
+      return "Plan";
   }
 }
 
@@ -228,7 +227,7 @@ function ResultCardContent({
 
 function getCloseLabel(lang: Lang) {
   if (lang === "es") return "Cerrar";
-  if (lang === "fi") return "Sulje";
+
   return "Close";
 }
 
@@ -345,12 +344,12 @@ type SetupOverlayChip = {
 function getSetupOverlayChips(setup: SetupType | undefined, lang: Lang): SetupOverlayChip[] {
   const normalizedSetup = normalizeSetupText(setup).replace(/[_\s]+/g, "-");
   const labels = {
-    indirect: lang === "es" ? "❄️ Indirecto" : lang === "fi" ? "❄️ Epasuora" : "❄️ Indirect",
-    finalSear: lang === "es" ? "Sellado final" : lang === "fi" ? "Lopullinen ruskistus" : "Final sear",
-    lowHeat: lang === "es" ? "Baja temperatura" : lang === "fi" ? "Matala lampo" : "Low heat",
-    twoZones: lang === "es" ? "2 zonas" : lang === "fi" ? "2 vyohyketta" : "2 zones",
-    mixZone: lang === "es" ? "🔥 Directo + ❄️ Indirecto" : lang === "fi" ? "🔥 Suora + ❄️ Epasuora" : "🔥 Direct + ❄️ Indirect",
-    direct: lang === "es" ? "🔥 Directo" : lang === "fi" ? "🔥 Suora" : "🔥 Direct",
+    indirect: lang === "es" ? "❄️ Indirecto" : "❄️ Indirect",
+    finalSear: lang === "es" ? "Sellado final" : "Final sear",
+    lowHeat: lang === "es" ? "Baja temperatura" : "Low heat",
+    twoZones: lang === "es" ? "2 zonas" : "2 zones",
+    mixZone: lang === "es" ? "🔥 Directo + ❄️ Indirecto" : "🔥 Direct + ❄️ Indirect",
+    direct: lang === "es" ? "🔥 Directo" : "🔥 Direct",
   };
 
   if (normalizedSetup === "reverse-sear") {
@@ -447,15 +446,11 @@ function SetupVisualToggle({
   const setupEquipment = resolveSetupEquipment(equipment) ?? resolveSetupEquipment(content);
   const detectedSetup = setup ?? detectSetupFromText(content);
   const setupImage = getSetupVisual(setupEquipment, detectedSetup);
-  const setupTitle = lang === "es" ? "Visual de configuración" : lang === "fi" ? "Asetuskuva" : "Setup visual";
+  const setupTitle = lang === "es" ? "Visual de configuración" : "Setup visual";
   const setupSubtitle =
-    lang === "es"
-      ? "Zonas de calor y flujo recomendado"
-      : lang === "fi"
-        ? "Lampoalueet ja suositeltu jarjestys"
-        : "Heat zones and suggested flow";
-  const hideLabel = lang === "es" ? "Ocultar" : lang === "fi" ? "Piilota" : "Hide";
-  const viewLabel = lang === "es" ? "Ver →" : lang === "fi" ? "Nayta →" : "View →";
+    lang === "es" ? "Zonas de calor y flujo recomendado" : "Heat zones and suggested flow";
+  const hideLabel = lang === "es" ? "Ocultar" : "Hide";
+  const viewLabel = lang === "es" ? "Ver →" : "View →";
   const overlayChips = getSetupOverlayChips(detectedSetup, lang);
 
   if (!isSetupCard(title)) return null;

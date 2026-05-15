@@ -75,7 +75,7 @@ const catalogBackedCutsById = new Map<string, ProductCut>([
       id: "bone_in_ribeye",
       animalId: "beef",
       inputProfileId: "thick_steak_bone_in_thickness_weight",
-      names: { es: "Chuletón", en: "Bone-in ribeye", fi: "Luullinen ribeye" },
+      names: { es: "Chuletón", en: "Bone-in ribeye" },
       defaultThicknessCm: 5,
       showThickness: true,
       allowedMethods: ["reverse_sear", "grill_indirect", "oven_pan"],
@@ -202,7 +202,6 @@ function buildProductCutFromGenerated(profile: GeneratedCutProfile, legacyCut?: 
       names: {
         es: profile.canonicalNameEn,
         en: profile.canonicalNameEn,
-        fi: profile.canonicalNameEn,
       },
       defaultThicknessCm: profile.defaultThicknessCm,
       showThickness: profile.showThickness,
@@ -236,7 +235,6 @@ function buildProductCutFromGenerated(profile: GeneratedCutProfile, legacyCut?: 
       ...(legacyCut?.names ?? {
         es: profile.canonicalNameEn,
         en: profile.canonicalNameEn,
-        fi: profile.canonicalNameEn,
       }),
       en: profile.canonicalNameEn,
     },
@@ -320,7 +318,6 @@ function buildFallbackCutFromAnimal(animalId: string, inputCutName: string): Pro
     names: {
       es: inputCutName,
       en: inputCutName,
-      fi: inputCutName,
     },
     defaultThicknessCm: animalId === "fish" ? 3 : animalId === "vegetables" ? 2 : 4,
     showThickness: animalId !== "vegetables",

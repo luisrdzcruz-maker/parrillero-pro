@@ -25,7 +25,7 @@ type QuickPicksProps = {
 
 function getDetailsLabel(lang: Lang) {
   if (lang === "es") return "Detalles";
-  if (lang === "fi") return "Tiedot";
+
   return "Details";
 }
 
@@ -54,7 +54,7 @@ export function QuickPicks({
         <div>
           {/* allow-arbitrary: pre-slice-a */}
           <h2 className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-400">
-            {lang === "es" ? "Recomendados" : lang === "fi" ? "Suositukset" : "Recommended"}
+            {lang === "es" ? "Recomendados" : "Recommended"}
           </h2>
         </div>
         <span className="text-xs font-bold text-zinc-500">{picks.length}</span>

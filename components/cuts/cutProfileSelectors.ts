@@ -42,22 +42,6 @@ const categoryLabelsByLang: Record<Lang, Record<string, string>> = {
     whole: "Whole",
     wing: "Wings",
   },
-  fi: {
-    bbq: "BBQ",
-    breast: "Rinta",
-    fillet: "Fileet",
-    ground: "Jauheliha",
-    leg: "Koipi",
-    loin: "Lanne",
-    ribs: "Ribsit",
-    roast: "Paistit",
-    steak: "Pihvit",
-    tail: "Pyrstö",
-    thigh: "Reidet",
-    vegetable: "Kasvikset",
-    whole: "Kokonainen",
-    wing: "Siivet",
-  },
 };
 
 const styleLabelsByLang: Record<Lang, Record<GeneratedCookingStyle, string>> = {
@@ -83,17 +67,6 @@ const styleLabelsByLang: Record<Lang, Record<GeneratedCookingStyle, string>> = {
     thick: "Thick cut",
     vegetable: "Vegetables",
   },
-  fi: {
-    crispy: "Rapea",
-    fast: "Suora lämpö",
-    fatcap: "Rasvakerros",
-    fish: "Kala",
-    lowSlow: "Matala ja hidas",
-    poultry: "Kana",
-    reverse: "Käänteinen paisto",
-    thick: "Paksu pala",
-    vegetable: "Kasvikset",
-  },
 };
 
 const helpfulAliasByCutId: Record<string, string> = {
@@ -114,47 +87,38 @@ const localizedCutContentOverrides: Record<
   }>
 > = {
   ribeye: {
-    names: { es: "Ribeye", fi: "Ribeye" },
+    names: { es: "Ribeye" },
     descriptions: {
       es: "Steak premium con buena infiltración y costra intensa.",
-      fi: "Premium-pihvi, jossa hyvä rasvoitus ja vahva paistopinta.",
     },
-    aliases: { es: ["Ojo de bife", "Entrecot"], fi: ["Rib eye"] },
+    aliases: { es: ["Ojo de bife", "Entrecot"] },
   },
 };
 const legacyCatalogCutsById = new Map(productCatalog.map((cut) => [cut.id, cut]));
-const safetyNoteTranslations: Record<string, { es: string; fi: string }> = {
+const safetyNoteTranslations: Record<string, { es: string }> = {
   "Cook to safe pork temperature.": {
     es: "Cocina hasta una temperatura segura para cerdo.",
-    fi: "Kypsenna turvalliseen porsaan sisalampotilaan.",
   },
   "Chicken must be fully cooked.": {
     es: "El pollo debe cocinarse por completo.",
-    fi: "Kana on kypsennettava kokonaan.",
   },
   "Ground pork must be cooked safely.": {
     es: "La carne de cerdo picada debe cocinarse de forma segura.",
-    fi: "Jauhettu porsaanliha on kypsennettava turvallisesti.",
   },
   "Ground chicken must be fully cooked.": {
     es: "El pollo picado debe cocinarse por completo.",
-    fi: "Jauhettu kana on kypsennettava kokonaan.",
   },
   "Cook until flesh flakes easily.": {
     es: "Cocina hasta que la carne se desmenuce con facilidad.",
-    fi: "Kypsenna kunnes liha lohkeaa helposti.",
   },
   "Cook until opaque and firm.": {
     es: "Cocina hasta que quede opaco y firme.",
-    fi: "Kypsenna kunnes rakenne on opaakki ja napakka.",
   },
   "Do not overcook lean fish.": {
     es: "No sobrecocines pescados magros.",
-    fi: "Ala ylikypsenna vaharasvaista kalaa.",
   },
   "Use very fresh fish; cook higher for vulnerable guests.": {
     es: "Usa pescado muy fresco; cocina mas alto para comensales vulnerables.",
-    fi: "Kayta hyvin tuoretta kalaa; kypsenna korkeammaksi herkille ruokailijoille.",
   },
 };
 
@@ -256,7 +220,6 @@ export function getWhyChooseLabel(profile: GeneratedCutProfile, lang: Lang = "en
   const fallbackByLang: Record<Lang, string> = {
     es: "Una opción confiable para este tipo de cocción.",
     en: "A reliable choice for this cooking path.",
-    fi: "Luotettava valinta tähän kypsennystapaan.",
   };
   const override = getOverride(profile);
   const catalogCut = getLegacyCatalogCut(profile);
@@ -276,7 +239,6 @@ export function getDifficultyLabel(profile: GeneratedCutProfile, lang: Lang = "e
   const labelsByLang: Record<Lang, { easy: string; medium: string; hard: string }> = {
     es: { easy: "Fácil", medium: "Media", hard: "Alta" },
     en: { easy: "Easy", medium: "Medium", hard: "Hard" },
-    fi: { easy: "Helppo", medium: "Keskitaso", hard: "Vaikea" },
   };
   if (profile.confidenceLevel === "high" || profile.tipsEn.includes("easy")) return labelsByLang[lang].easy;
   if (profile.style === "lowSlow" || profile.confidenceLevel === "low") return labelsByLang[lang].hard;
@@ -288,7 +250,7 @@ export function getEstimatedTimeLabel(profile: GeneratedCutProfile, lang: Lang =
   if (profile.cookingMinutes) return `${profile.cookingMinutes} min`;
   if (profile.estimatedTimeMinPerCm) return `${profile.estimatedTimeMinPerCm} min/cm`;
   if (lang === "es") return "Visual";
-  if (lang === "fi") return "Visuaalinen";
+
   return "Visual";
 }
 
@@ -316,7 +278,7 @@ export function getSafetyNote(profile: GeneratedCutProfile, lang: Lang = "en") {
     return toDisplaySentence(profile.safetyNoteEn);
   }
   if (lang === "es") return "Usa señales visuales y manipulación segura.";
-  if (lang === "fi") return "Käytä visuaalista kypsyysarviota ja turvallista käsittelyä.";
+
   return "Use visual doneness and safe handling.";
 }
 
@@ -380,9 +342,6 @@ function getFirstNonEmpty(values: Array<string | undefined>) {
 function getRuntimeDisplayName(profile: GeneratedCutProfile, lang: Lang) {
   if (lang === "es") {
     return getFirstNonEmpty([profile.displayNameEsEs, profile.displayNameEn, profile.canonicalNameEn]);
-  }
-  if (lang === "fi") {
-    return getFirstNonEmpty([profile.displayNameFi, profile.displayNameEn, profile.canonicalNameEn]);
   }
   return getFirstNonEmpty([profile.displayNameEn, profile.canonicalNameEn]);
 }
@@ -465,9 +424,6 @@ function getNeutralDescriptorFallback(profile: GeneratedCutProfile, lang: Lang) 
   if (lang === "es") {
     return `${categoryLabel} · ${styleLabel} · ${timeLabel}`;
   }
-  if (lang === "fi") {
-    return `${categoryLabel} · ${styleLabel} · ${timeLabel}`;
-  }
   return `${categoryLabel} · ${styleLabel} · ${timeLabel}`;
 }
 
@@ -476,5 +432,5 @@ function translateSafetyNote(note: string, lang: Lang) {
   const normalized = note.trim();
   const translated = safetyNoteTranslations[normalized];
   if (!translated) return "";
-  return lang === "es" ? translated.es : translated.fi;
+  return translated.es;
 }

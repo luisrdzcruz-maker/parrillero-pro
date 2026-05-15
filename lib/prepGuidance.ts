@@ -192,21 +192,21 @@ export function getPrepGuidanceForCut(
   return typeof cut === "string" ? getFallbackPrepGuidance({ id: cut }) : getFallbackPrepGuidance(cut);
 }
 
-function formatMinutes(value: number, lang: Lang) {
+function formatMinutes(value: number) {
   if (value === 0) return "0 min";
   if (value < 60) return `${value} min`;
   const hours = value / 60;
   const rounded = Number.isInteger(hours) ? String(hours) : hours.toFixed(1).replace(/\.0$/, "");
-  return lang === "fi" ? `${rounded} h` : `${rounded} h`;
+  return `${rounded} h`;
 }
 
 function formatRange(range: CatalogV2TimeRange | undefined, lang: Lang) {
   if (!range) return "";
   if (range.min <= 0 && range.max <= 5) {
-    return lang === "es" ? "justo antes" : lang === "fi" ? "juuri ennen" : "just before";
+    return lang === "es" ? "justo antes" : "just before";
   }
-  if (range.min === range.max) return formatMinutes(range.min, lang);
-  return `${formatMinutes(range.min, lang)}-${formatMinutes(range.max, lang)}`;
+  if (range.min === range.max) return formatMinutes(range.min);
+  return `${formatMinutes(range.min)}-${formatMinutes(range.max)}`;
 }
 
 function isFishGuidance(guidance: PrepGuidance) {

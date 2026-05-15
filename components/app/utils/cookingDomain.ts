@@ -6,7 +6,7 @@ import {
   getDonenessOptions,
 } from "@/lib/cookingRules";
 import type { DonenessId, ProductCut } from "@/lib/cookingCatalog";
-import { getDonenessSurfaceLabel, sanitizeCriticalErrorCopy } from "@/lib/i18n/surfaceFallbacks";
+import { sanitizeCriticalErrorCopy } from "@/lib/i18n/surfaceFallbacks";
 import type { Lang } from "@/lib/i18n/texts";
 import { animalIdsByLabel, type AnimalLabel } from "@/lib/media/animalMedia";
 import { cutImages } from "@/lib/media/cutImages";
@@ -78,7 +78,7 @@ export function getDonenessSelectOptions(animal: AnimalLabel, lang: Lang, cutId?
     if (!option) return [];
     return {
     value: option.id,
-    label: lang === "fi" ? getDonenessSurfaceLabel(option.id, "fi") : option.names[lang],
+    label: option.names[lang],
     };
   });
 }

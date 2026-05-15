@@ -97,36 +97,36 @@ export type ProductCut = {
   aliases?: string[];
 };
 
-type VegetableSeed = readonly [id: string, es: string, en: string, fi: string, minutes: number];
+type VegetableSeed = readonly [id: string, es: string, en: string, minutes: number];
 
 export const animalCatalog: CatalogAnimal[] = [
-  { id: "beef", names: { es: "Vacuno", en: "Beef", fi: "Nauta" } },
-  { id: "pork", names: { es: "Cerdo", en: "Pork", fi: "Sika" } },
-  { id: "chicken", names: { es: "Pollo", en: "Chicken", fi: "Kana" } },
-  { id: "fish", names: { es: "Pescado", en: "Fish", fi: "Kala" } },
-  { id: "vegetables", names: { es: "Verduras", en: "Vegetables", fi: "Kasvikset" } },
+  { id: "beef", names: { es: "Vacuno", en: "Beef" } },
+  { id: "pork", names: { es: "Cerdo", en: "Pork" } },
+  { id: "chicken", names: { es: "Pollo", en: "Chicken" } },
+  { id: "fish", names: { es: "Pescado", en: "Fish" } },
+  { id: "vegetables", names: { es: "Verduras", en: "Vegetables" } },
 ];
 
 export const donenessCatalog: Record<DonenessId, DonenessOption> = {
-  blue: { id: "blue", names: { es: "blue", en: "blue", fi: "blue" } },
-  rare: { id: "rare", names: { es: "poco hecho", en: "rare", fi: "rare" } },
+  blue: { id: "blue", names: { es: "blue", en: "blue" } },
+  rare: { id: "rare", names: { es: "poco hecho", en: "rare" } },
   medium_rare: {
     id: "medium_rare",
-    names: { es: "medium rare", en: "medium rare", fi: "medium rare" },
+    names: { es: "medium rare", en: "medium rare" },
   },
-  medium: { id: "medium", names: { es: "medium", en: "medium", fi: "medium" } },
-  medium_well: { id: "medium_well", names: { es: "hecho", en: "medium well", fi: "medium well" } },
-  well_done: { id: "well_done", names: { es: "muy hecho", en: "well done", fi: "well done" } },
+  medium: { id: "medium", names: { es: "medium", en: "medium" } },
+  medium_well: { id: "medium_well", names: { es: "hecho", en: "medium well" } },
+  well_done: { id: "well_done", names: { es: "muy hecho", en: "well done" } },
   juicy_safe: {
     id: "juicy_safe",
-    names: { es: "jugoso seguro", en: "juicy safe", fi: "mehevä turvallinen" },
+    names: { es: "jugoso seguro", en: "juicy safe" },
   },
   medium_safe: {
     id: "medium_safe",
-    names: { es: "medio seguro", en: "medium safe", fi: "medium turvallinen" },
+    names: { es: "medio seguro", en: "medium safe" },
   },
-  safe: { id: "safe", names: { es: "seguro", en: "safe", fi: "turvallinen" } },
-  juicy: { id: "juicy", names: { es: "jugoso", en: "juicy", fi: "mehevä" } },
+  safe: { id: "safe", names: { es: "seguro", en: "safe" } },
+  juicy: { id: "juicy", names: { es: "jugoso", en: "juicy" } },
 };
 
 export const animalDoneness: Record<AnimalId, DonenessId[]> = {
@@ -153,7 +153,7 @@ export const productCatalog: ProductCut[] = [
   {
     id: "aguja",
     animalId: "beef",
-    names: { es: "Aguja", en: "Chuck", fi: "Chuck" },
+    names: { es: "Aguja", en: "Chuck" },
     defaultThicknessCm: 5,
     showThickness: true,
     allowedMethods: ["grill_direct", "grill_indirect", "oven_pan"],
@@ -172,7 +172,7 @@ export const productCatalog: ProductCut[] = [
     id: "lomo_alto",
     animalId: "beef",
     inputProfileId: "beef-large",
-    names: { es: "Lomo alto", en: "Rib steak", fi: "Entrecote pala" },
+    names: { es: "Lomo alto", en: "Rib steak" },
     defaultThicknessCm: 5,
     showThickness: true,
     allowedMethods: ["grill_direct", "grill_indirect", "oven_pan"],
@@ -191,7 +191,7 @@ export const productCatalog: ProductCut[] = [
     id: "tomahawk",
     animalId: "beef",
     inputProfileId: "beef-large",
-    names: { es: "Tomahawk", en: "Tomahawk", fi: "Tomahawk" },
+    names: { es: "Tomahawk", en: "Tomahawk" },
     defaultThicknessCm: 6,
     showThickness: true,
     allowedMethods: ["reverse_sear", "grill_indirect", "oven_pan"],
@@ -210,7 +210,7 @@ export const productCatalog: ProductCut[] = [
     id: "entrecote",
     animalId: "beef",
     inputProfileId: "beef-steak",
-    names: { es: "Entrecote", en: "Ribeye", fi: "Entrecote" },
+    names: { es: "Entrecote", en: "Ribeye" },
     defaultThicknessCm: 3,
     showThickness: true,
     allowedMethods: ["grill_direct", "oven_pan"],
@@ -229,7 +229,7 @@ export const productCatalog: ProductCut[] = [
     id: "picanha",
     animalId: "beef",
     inputProfileId: "beef-large",
-    names: { es: "Picanha", en: "Picanha", fi: "Picanha" },
+    names: { es: "Picanha", en: "Picanha" },
     defaultThicknessCm: 4,
     showThickness: true,
     allowedMethods: ["grill_direct", "grill_indirect", "oven_pan"],
@@ -247,7 +247,7 @@ export const productCatalog: ProductCut[] = [
   {
     id: "maminha",
     animalId: "beef",
-    names: { es: "Maminha", en: "Tri-tip", fi: "Tri-tip" },
+    names: { es: "Maminha", en: "Tri-tip" },
     defaultThicknessCm: 4,
     showThickness: true,
     allowedMethods: ["grill_direct", "grill_indirect", "oven_pan"],
@@ -265,7 +265,7 @@ export const productCatalog: ProductCut[] = [
   {
     id: "bavette",
     animalId: "beef",
-    names: { es: "Bavette", en: "Bavette", fi: "Bavette" },
+    names: { es: "Bavette", en: "Bavette" },
     defaultThicknessCm: 2,
     showThickness: false,
     allowedMethods: ["grill_direct", "oven_pan"],
@@ -283,7 +283,7 @@ export const productCatalog: ProductCut[] = [
   {
     id: "entrana",
     animalId: "beef",
-    names: { es: "Entraña", en: "Skirt steak", fi: "Skirt steak" },
+    names: { es: "Entraña", en: "Skirt steak" },
     defaultThicknessCm: 2,
     showThickness: false,
     allowedMethods: ["grill_direct", "oven_pan"],
@@ -302,7 +302,7 @@ export const productCatalog: ProductCut[] = [
     id: "secreto_iberico",
     animalId: "pork",
     inputProfileId: "pork-fast",
-    names: { es: "Secreto ibérico", en: "Iberian secreto", fi: "Iberico secreto" },
+    names: { es: "Secreto ibérico", en: "Iberian secreto" },
     defaultThicknessCm: 2,
     showThickness: false,
     allowedMethods: ["grill_direct", "oven_pan"],
@@ -321,7 +321,7 @@ export const productCatalog: ProductCut[] = [
     id: "presa_iberica",
     animalId: "pork",
     inputProfileId: "pork-fast",
-    names: { es: "Presa ibérica", en: "Iberian presa", fi: "Iberico presa" },
+    names: { es: "Presa ibérica", en: "Iberian presa" },
     defaultThicknessCm: 4,
     showThickness: true,
     allowedMethods: ["grill_direct", "grill_indirect", "oven_pan"],
@@ -339,7 +339,7 @@ export const productCatalog: ProductCut[] = [
   {
     id: "costillas",
     animalId: "pork",
-    names: { es: "Costillas", en: "Ribs", fi: "Ribsit" },
+    names: { es: "Costillas", en: "Ribs" },
     defaultThicknessCm: 5,
     showThickness: false,
     allowedMethods: ["grill_indirect"],
@@ -358,7 +358,7 @@ export const productCatalog: ProductCut[] = [
     id: "panceta",
     animalId: "pork",
     inputProfileId: "pork-fast",
-    names: { es: "Panceta", en: "Pork belly", fi: "Porsaankylki" },
+    names: { es: "Panceta", en: "Pork belly" },
     defaultThicknessCm: 4,
     showThickness: true,
     allowedMethods: ["grill_indirect", "oven_pan"],
@@ -376,7 +376,7 @@ export const productCatalog: ProductCut[] = [
   {
     id: "solomillo",
     animalId: "pork",
-    names: { es: "Solomillo", en: "Tenderloin", fi: "Sisäfilee" },
+    names: { es: "Solomillo", en: "Tenderloin" },
     defaultThicknessCm: 3,
     showThickness: true,
     allowedMethods: ["grill_direct", "oven_pan"],
@@ -394,7 +394,7 @@ export const productCatalog: ProductCut[] = [
   {
     id: "pork_chop",
     animalId: "pork",
-    names: { es: "Chuleta de cerdo", en: "Pork chop", fi: "Porsaankyljys" },
+    names: { es: "Chuleta de cerdo", en: "Pork chop" },
     defaultThicknessCm: 3,
     showThickness: true,
     allowedMethods: ["grill_direct", "grill_indirect", "oven_pan"],
@@ -412,7 +412,7 @@ export const productCatalog: ProductCut[] = [
   {
     id: "muslos",
     animalId: "chicken",
-    names: { es: "Muslos", en: "Thighs", fi: "Koivet" },
+    names: { es: "Muslos", en: "Thighs" },
     defaultThicknessCm: 4,
     showThickness: false,
     allowedMethods: ["grill_indirect", "grill_direct", "oven_pan"],
@@ -430,7 +430,7 @@ export const productCatalog: ProductCut[] = [
   {
     id: "alitas",
     animalId: "chicken",
-    names: { es: "Alitas", en: "Wings", fi: "Siivet" },
+    names: { es: "Alitas", en: "Wings" },
     defaultThicknessCm: 2,
     showThickness: false,
     allowedMethods: ["grill_indirect", "grill_direct", "oven_pan"],
@@ -449,7 +449,7 @@ export const productCatalog: ProductCut[] = [
     id: "pechuga",
     animalId: "chicken",
     inputProfileId: "chicken-breast",
-    names: { es: "Pechuga", en: "Breast", fi: "Rintafilee" },
+    names: { es: "Pechuga", en: "Breast" },
     defaultThicknessCm: 3,
     showThickness: true,
     allowedMethods: ["grill_direct", "grill_indirect", "oven_pan"],
@@ -468,7 +468,7 @@ export const productCatalog: ProductCut[] = [
     id: "pollo_entero",
     animalId: "chicken",
     inputProfileId: "poultry-whole",
-    names: { es: "Pollo entero", en: "Whole chicken", fi: "Kokonainen kana" },
+    names: { es: "Pollo entero", en: "Whole chicken" },
     defaultThicknessCm: 6,
     showThickness: false,
     allowedMethods: ["grill_indirect", "oven_pan"],
@@ -487,7 +487,7 @@ export const productCatalog: ProductCut[] = [
     id: "rodaballo",
     animalId: "fish",
     inputProfileId: "fish-whole",
-    names: { es: "Rodaballo", en: "Turbot", fi: "Piikkikampela" },
+    names: { es: "Rodaballo", en: "Turbot" },
     defaultThicknessCm: 3,
     showThickness: true,
     allowedMethods: ["grill_direct", "oven_pan"],
@@ -506,7 +506,7 @@ export const productCatalog: ProductCut[] = [
     id: "salmon",
     animalId: "fish",
     inputProfileId: "fish-fillet",
-    names: { es: "Salmón", en: "Salmon", fi: "Lohi" },
+    names: { es: "Salmón", en: "Salmon" },
     defaultThicknessCm: 3,
     showThickness: true,
     allowedMethods: ["grill_direct", "oven_pan"],
@@ -525,7 +525,7 @@ export const productCatalog: ProductCut[] = [
     id: "lubina",
     animalId: "fish",
     inputProfileId: "fish-whole",
-    names: { es: "Lubina", en: "Sea bass", fi: "Meriahven" },
+    names: { es: "Lubina", en: "Sea bass" },
     defaultThicknessCm: 2,
     showThickness: true,
     allowedMethods: ["grill_direct", "oven_pan"],
@@ -544,7 +544,7 @@ export const productCatalog: ProductCut[] = [
     id: "dorada",
     animalId: "fish",
     inputProfileId: "fish-whole",
-    names: { es: "Dorada", en: "Sea bream", fi: "Kultaotsa-ahven" },
+    names: { es: "Dorada", en: "Sea bream" },
     defaultThicknessCm: 2,
     showThickness: true,
     allowedMethods: ["grill_direct", "oven_pan"],
@@ -561,21 +561,21 @@ export const productCatalog: ProductCut[] = [
   },
   ...(
     [
-      ["maiz", "Maíz", "Corn", "Maissi", 25],
-      ["berenjena", "Berenjena", "Eggplant", "Munakoiso", 18],
-      ["patata", "Patata", "Potato", "Peruna", 45],
-      ["esparragos", "Espárragos", "Asparagus", "Parsa", 8],
-      ["pimientos", "Pimientos", "Peppers", "Paprikat", 14],
-      ["calabacin", "Calabacín", "Zucchini", "Kesäkurpitsa", 10],
-      ["setas", "Setas", "Mushrooms", "Sienet", 10],
+      ["maiz", "Maíz", "Corn", 25],
+      ["berenjena", "Berenjena", "Eggplant", 18],
+      ["patata", "Patata", "Potato", 45],
+      ["esparragos", "Espárragos", "Asparagus", 8],
+      ["pimientos", "Pimientos", "Peppers", 14],
+      ["calabacin", "Calabacín", "Zucchini", 10],
+      ["setas", "Setas", "Mushrooms", 10],
     ] satisfies VegetableSeed[]
   ).map(
-    ([id, es, en, fi, minutes]) =>
+    ([id, es, en, minutes]) =>
       ({
         id,
         animalId: "vegetables",
         inputProfileId: "vegetable-format",
-        names: { es, en, fi },
+        names: { es, en },
         defaultThicknessCm: 2,
         showThickness: false,
         allowedMethods: ["vegetables_grill"],

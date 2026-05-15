@@ -8,12 +8,16 @@ export const LANG_STORAGE_KEY = "parrillero_lang";
 
 export function parseSavedLang(value: unknown): Lang {
   const text = asText(value);
-  if (text === "en" || text === "fi" || text === "es") return text;
+  // Legacy 'fi' storage from prior versions: silently fall back to 'en'.
+  if (text === "fi") return "en";
+  if (text === "en" || text === "es") return text;
   return "es";
 }
 
 export function parseLangParam(value: string | null | undefined): Lang | null {
-  if (value === "en" || value === "fi" || value === "es") return value;
+  // Legacy 'fi' URL state from prior versions: silently fall back to 'en'.
+  if (value === "fi") return "en";
+  if (value === "en" || value === "es") return value;
   return null;
 }
 
@@ -27,7 +31,6 @@ export function catalogLang(lang: Lang) {
 
 export function localeForLang(lang: Lang) {
   if (lang === "en") return "en-US";
-  if (lang === "fi") return "fi-FI";
   return "es-ES";
 }
 
@@ -39,16 +42,6 @@ export function getPlanTextDefaults(lang: Lang) {
       sides: "potatoes, salad, chimichurri",
       parrilladaProducts: "ribs, ribeye, secreto iberico, corn",
       parrilladaSides: "potatoes, salad, chimichurri",
-    };
-  }
-
-  if (lang === "fi") {
-    return {
-      planProduct: "ribeye",
-      menuMeats: "ribeye, secreto iberico",
-      sides: "perunat, salaatti, chimichurri",
-      parrilladaProducts: "ribsit, ribeye, secreto iberico, maissi",
-      parrilladaSides: "perunat, salaatti, chimichurri",
     };
   }
 

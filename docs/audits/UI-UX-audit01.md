@@ -304,7 +304,7 @@ Out of scope for Slice B (which limited itself to seven UI files). Consider a de
 
 ### Copy tone alignment with canvas
 
-Slice B refined the verbose source copy for Parrillada Entry, Review, and Hero headers to match the canvas voice (short declarative title + optional one-sentence support). Remaining surfaces (Onboarding, Saved, CookingWizard, Result) have not yet been audited against the canvas for tone. A dedicated pass over `lib/i18n/texts.ts` after the Finnish locale is removed will close the gap consistently across the app.
+Slice B refined the verbose source copy for Parrillada Entry, Review, and Hero headers to match the canvas voice (short declarative title + optional one-sentence support). Remaining surfaces (Onboarding, Saved, CookingWizard, Result) have not yet been audited against the canvas for tone. A dedicated pass over `lib/i18n/texts.ts` (now es/en only after the Finnish locale removal) will close the gap consistently across the app.
 
 ---
 

@@ -51,22 +51,6 @@ function getCopy(lang: ResultLang) {
       close: "Cerrar",
     };
   }
-
-  if (lang === "fi") {
-    return {
-      setup: "Setup",
-      setupKicker: "Tuli",
-      avoid: "Valta",
-      avoidKicker: "Riski",
-      prep: "Prep",
-      prepKicker: "Ennen",
-      prepNote: "Ei lisaa istunnon aikaan",
-      setupFallback: "Tulisuunnitelma",
-      avoidFallback: "Tarkista tarkein virhe ennen kypsennysta.",
-      close: "Sulje",
-    };
-  }
-
   return {
     setup: "Setup",
     setupKicker: "Fire",
