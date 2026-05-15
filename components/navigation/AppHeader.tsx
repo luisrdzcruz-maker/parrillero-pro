@@ -59,7 +59,6 @@ export function AppHeader({
         >
           <option value="es">🇪🇸 Español</option>
           <option value="en">🇬🇧 English</option>
-          <option value="fi">🇫🇮 Suomi</option>
         </select>
       </div>
     </header>

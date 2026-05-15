@@ -236,7 +236,6 @@ function HomeSettingsStrip({
       >
         <option value="es">🇪🇸 {t.homeLangSpanish}</option>
         <option value="en">🇬🇧 {t.homeLangEnglish}</option>
-        <option value="fi">🇫🇮 {t.homeLangFinnish}</option>
       </select>
     </section>
   );
