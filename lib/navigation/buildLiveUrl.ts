@@ -24,7 +24,9 @@ export type LiveParams = {
 };
 
 function normalizeLang(value: string | undefined) {
-  if (value === "es" || value === "en" || value === "fi") return value;
+  // Legacy 'fi' URL state from prior versions: silently fall back to 'en'.
+  if (value === "fi") return "en";
+  if (value === "es" || value === "en") return value;
   return undefined;
 }
 
