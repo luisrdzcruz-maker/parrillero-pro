@@ -223,8 +223,12 @@ export const ds = {
   color: {
     muted: {
       strong: "rgba(255, 255, 255, 0.90)",
+      body: "rgba(255, 255, 255, 0.80)",
       base: "rgba(255, 255, 255, 0.70)",
+      secondary: "rgba(255, 255, 255, 0.65)",
       helper: "rgba(255, 255, 255, 0.50)",
+      faint: "rgba(255, 255, 255, 0.45)",
+      disabled: "rgba(255, 255, 255, 0.35)",
     },
   },
 
