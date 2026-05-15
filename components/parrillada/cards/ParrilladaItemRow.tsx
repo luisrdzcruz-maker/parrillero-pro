@@ -12,7 +12,7 @@ export function ParrilladaItemRow({ item }: ParrilladaItemRowProps) {
   const iconSrc = getParrilladaItemIcon(item.cutId);
 
   return (
-    <div className="flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-left">
+    <div className="flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-3 py-1.5 text-left">
       <BrandImageIcon src={iconSrc ?? '/icons/ui/meat-selection.webp'} alt="" size="md" shape="soft" aria-hidden="true" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-white">{item.displayName}</p>
