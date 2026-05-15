@@ -149,13 +149,14 @@ export function ParrilladaTimelineFinal({
               {executionGroups.map((group) => (
                 <CompactDisclosure
                   key={group.id}
+                  compact
                   label={formatTime(group.startIso)}
                   summary={getShortGroupLabel(group)}
                   showLabel={t.parrilladaShowDetail}
                   hideLabel={t.parrilladaHideDetail}
                 >
                   {/* allow-arbitrary: text-white/65 — ds.color.muted exposes only 50/70/90 */}
-                  <div className="mt-2 space-y-1 text-xs text-white/65">
+                  <div className="space-y-1 text-xs text-white/65">
                     <p>{formatActionMeta(group, t)}</p>
                     {itemQuantityLabel(group) ? (
                       <p className="text-orange-100/80">{itemQuantityLabel(group)}</p>

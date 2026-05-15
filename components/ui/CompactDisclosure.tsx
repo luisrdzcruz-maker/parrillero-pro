@@ -3,13 +3,13 @@
 import { useState, type ReactNode } from "react";
 
 export type CompactDisclosureProps = {
-  /** Eyebrow / label above the summary line. */
+  /** Eyebrow / label above the summary line. In compact mode, rendered inline before summary. */
   label: string;
   /** Always-visible one-liner summary. */
   summary: string;
-  /** "Show detail" affordance copy. */
+  /** "Show detail" affordance copy. In compact mode, used as aria-label only. */
   showLabel?: string;
-  /** "Hide detail" affordance copy. */
+  /** "Hide detail" affordance copy. In compact mode, used as aria-label only. */
   hideLabel?: string;
   /** Initial open state. */
   defaultOpen?: boolean;
@@ -20,6 +20,12 @@ export type CompactDisclosureProps = {
   children?: ReactNode;
   /** Extra wrapper className (e.g., for surrounding spacing). */
   className?: string;
+  /**
+   * Render in single-line compact mode: label + summary on one row, chevron-only
+   * trigger (the entire row is tappable), no chassis. Use for dense list
+   * disclosures inside an outer panel. Defaults to false (existing card layout).
+   */
+  compact?: boolean;
 };
 
 /**
@@ -33,6 +39,9 @@ export type CompactDisclosureProps = {
  *
  * Visual classes mirror the current ResultHero implementation byte-for-byte;
  * the only behavior change is open-state ownership moves into this component.
+ *
+ * `compact` mode added 2026-05-15 for dense timeline list usage (Slice B-FU-IA);
+ * existing callers keep their default-mode rendering unchanged.
  */
 export function CompactDisclosure({
   label,
@@ -42,8 +51,37 @@ export function CompactDisclosure({
   defaultOpen = false,
   children,
   className,
+  compact = false,
 }: CompactDisclosureProps) {
   const [open, setOpen] = useState(defaultOpen);
+
+  if (compact) {
+    const wrapperClass = className ? className : undefined;
+    return (
+      <div className={wrapperClass}>
+        <button
+          type="button"
+          onClick={() => setOpen((current) => !current)}
+          aria-expanded={open}
+          aria-label={open ? hideLabel : showLabel}
+          disabled={!children}
+          className="flex w-full items-center gap-2 rounded-lg px-1 py-2 text-left transition hover:bg-white/5 disabled:hover:bg-transparent"
+        >
+          <span className="font-semibold tabular-nums text-orange-100">{label}</span>
+          <span className="min-w-0 flex-1 truncate text-sm text-white/90">{summary}</span>
+          {children ? (
+            <span
+              className={`shrink-0 text-white/70 transition-transform ${open ? "rotate-180" : ""}`}
+              aria-hidden="true"
+            >
+              ▾
+            </span>
+          ) : null}
+        </button>
+        {children && open ? <div className="mt-1.5 pl-2">{children}</div> : null}
+      </div>
+    );
+  }
 
   return (
     <div
