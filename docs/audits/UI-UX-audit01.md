@@ -357,6 +357,23 @@ Setup also has unique runtime variability (item count); a viewport-fit guarantee
 - Token-scale extensions, MetricTile/Badge variants (Slice D).
 - Any color or styling changes — this audit is layout and density only.
 
+### Status after Slice B-FU-IA (2026-05-15)
+
+Compactions landed in this branch (`slice-B-fu-ia-density`):
+
+- **Entry** — ✅ no changes needed; was already fitting.
+- **Review** — ✅ ~1052 → ~648 px. Deleted the "All phases" disclosure (substantive — removed the phases-by-time detail view; execution-group rows are the primary display). Combined zone status + warnings into "Plan checks" disclosure with subsection eyebrows.
+- **Setup** — ⚠ ~528–956 → ~490–800 px. ServeStrategy past-warning is now an inline row, GrillSetupCard restructured to canvas mockup 10's single-row collapsible pattern, ParrilladaItemRow padding trimmed. Empty/2-item state fits; edge state with 5 items + all warnings still slightly over.
+
+**Deferred** (explicit, documented in `memory/slice-b-followup-information-density.md`):
+
+1. **Live screen density** — ~862 px. Needs a dedicated slice with its own canvas reference (`08-parrillada-live.png`).
+2. **Setup-with-warning edge case** — acceptable scroll for a rare state. Next compaction target if needed: `ParrilladaMenuBuilderCard` "Add cuts" button becomes a row inside the menu card.
+
+**Not pursued** (per user direction during /3 review): Hero metric tile padding trim, `space-y-3 → space-y-2`. Rhythm consistency over marginal recovery.
+
+The one-viewport rule is now an established app-wide principle. Cut Selection is the documented exception.
+
 ---
 
 *This document is a static analysis. Visual verification on real devices (iPhone SE, Pixel 5, iPhone 14 Pro) is required before treating any "looks fine" claim as fact. The next audit (UI-UX-audit02.md) should be done on-device with screenshots attached.*
