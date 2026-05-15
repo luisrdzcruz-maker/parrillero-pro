@@ -72,13 +72,13 @@ export function ServeStrategyCard({
       ) : null}
 
       {startsInPast && onSetEarliestServeTime ? (
-        <div className="mt-2.5 rounded-xl border border-amber-300/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
-          <p>{t.parrilladaServeStartsInPast}</p>
+        <div className="mt-2 flex items-center gap-2 text-xs text-amber-100">
+          <span className="min-w-0 flex-1">{t.parrilladaServeStartsInPast}</span>
           <button
             type="button"
             onClick={onSetEarliestServeTime}
             /* allow-arbitrary: text-[11px] amber CTA chip — ds.text scale lacks 11px */
-            className="mt-2 rounded-lg border border-amber-200/40 bg-amber-400/15 px-2.5 py-1 text-[11px] font-semibold text-amber-50"
+            className="shrink-0 rounded-md border border-amber-200/40 bg-amber-400/15 px-2 py-0.5 text-[11px] font-semibold text-amber-50"
           >
             {t.parrilladaServeSetEarliest}
           </button>
