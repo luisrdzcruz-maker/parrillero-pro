@@ -6,11 +6,11 @@ import {
   unpublishGeneratedMenu,
 } from "@/app/actions/savedMenus";
 import type { Json, SavedMenu } from "@/lib/db/savedMenus";
+import type { Lang } from "@/lib/i18n/texts";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 
-type Lang = "es" | "en" | "fi";
 type Blocks = Record<string, string>;
 type SavedMenuType = "cooking_plan" | "generated_menu" | "parrillada_plan";
 type ShareActionResult =
