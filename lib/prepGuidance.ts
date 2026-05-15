@@ -1,4 +1,5 @@
-import type { CookingPlan, CookingStyle, Language, ProductCut } from "@/lib/cookingCatalog";
+import type { CookingPlan, CookingStyle, ProductCut } from "@/lib/cookingCatalog";
+import type { Lang } from "@/lib/i18n/texts";
 import {
   getPrepGuidanceFromCatalogV2,
   type CatalogV2TimeRange,
@@ -24,7 +25,7 @@ export type PrepGuidanceCutInput = {
   animalId?: string;
   style?: CookingStyle;
   inputProfileId?: string;
-  names?: Partial<Record<Language, string>>;
+  names?: Partial<Record<Lang, string>>;
 };
 
 export type CookingPlanWithPrepGuidance = CookingPlan & {
@@ -191,7 +192,7 @@ export function getPrepGuidanceForCut(
   return typeof cut === "string" ? getFallbackPrepGuidance({ id: cut }) : getFallbackPrepGuidance(cut);
 }
 
-function formatMinutes(value: number, lang: Language) {
+function formatMinutes(value: number, lang: Lang) {
   if (value === 0) return "0 min";
   if (value < 60) return `${value} min`;
   const hours = value / 60;
@@ -199,7 +200,7 @@ function formatMinutes(value: number, lang: Language) {
   return lang === "fi" ? `${rounded} h` : `${rounded} h`;
 }
 
-function formatRange(range: CatalogV2TimeRange | undefined, lang: Language) {
+function formatRange(range: CatalogV2TimeRange | undefined, lang: Lang) {
   if (!range) return "";
   if (range.min <= 0 && range.max <= 5) {
     return lang === "es" ? "justo antes" : lang === "fi" ? "juuri ennen" : "just before";
@@ -224,7 +225,7 @@ function hasPrepWarning(guidance: PrepGuidance, code: string) {
   return guidance.prepWarningCodes.includes(code);
 }
 
-export function formatPrepGuidance(guidance: PrepGuidance | undefined, lang: Language = "en") {
+export function formatPrepGuidance(guidance: PrepGuidance | undefined, lang: Lang = "en") {
   if (!guidance) return "";
 
   const range = formatRange(guidance.saltTimingMinutes ?? guidance.prepLeadTimeMinutes, lang);

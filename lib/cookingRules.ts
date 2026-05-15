@@ -14,10 +14,10 @@ import {
   type CookingStep,
   type CookingStyle,
   type DonenessId,
-  type Language,
   type ProductCut,
   type TargetTemp,
 } from "./cookingCatalog";
+import type { Lang } from "@/lib/i18n/texts";
 import {
   applyCookingSafetyRules,
   resolveLegacyAnimalId,
@@ -84,12 +84,12 @@ function getDonenessId(
   return allowedDoneness.includes(resolved) ? resolved : (cut ? getDefaultDonenessForCut(cut) : resolved);
 }
 
-function getLocalized(value: Partial<Record<Language, string>> | undefined, language: "es" | "en") {
+function getLocalized(value: Partial<Record<Lang, string>> | undefined, language: "es" | "en") {
   return value?.[language] ?? value?.es ?? value?.en ?? "";
 }
 
 function getLocalizedList(
-  value: Partial<Record<Language, string[]>> | undefined,
+  value: Partial<Record<Lang, string[]>> | undefined,
   language: "es" | "en",
 ) {
   return value?.[language] ?? value?.es ?? value?.en ?? [];
