@@ -32,24 +32,22 @@ export function ParrilladaReviewScreen({ lang, t, plan, plannerResult, ctaLabel,
       <ParrilladaTimelineFinal lang={lang} t={t} result={plannerResult} />
 
       <CompactDisclosure
-        label={t.parrilladaZoneStatus}
-        summary={`${zoneStatus.length} ${zoneStatus.length === 1 ? t.parrilladaZonesConfiguredSingular : t.parrilladaZonesConfiguredPlural}`}
+        label={t.parrilladaPlanChecks}
+        summary={`${zoneStatus.length} ${zoneStatus.length === 1 ? t.parrilladaZonesConfiguredSingular : t.parrilladaZonesConfiguredPlural} · ${plan.warnings.length} ${plan.warnings.length === 1 ? t.parrilladaWarningSingular : t.parrilladaWarningPlural}`}
         showLabel={t.parrilladaShowDetail}
         hideLabel={t.parrilladaHideDetail}
       >
         <div className="mt-2">
-          <GrillZoneStatusCard zones={zoneStatus} />
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-100/55">{t.parrilladaZoneStatus}</p>
+          <div className="mt-1.5">
+            <GrillZoneStatusCard zones={zoneStatus} />
+          </div>
         </div>
-      </CompactDisclosure>
-
-      <CompactDisclosure
-        label={t.parrilladaWarnings}
-        summary={`${plan.warnings.length} ${plan.warnings.length === 1 ? t.parrilladaWarningSingular : t.parrilladaWarningPlural}`}
-        showLabel={t.parrilladaShowDetail}
-        hideLabel={t.parrilladaHideDetail}
-      >
-        <div className="mt-2">
-          <ParrilladaWarningsFinal result={plannerResult} />
+        <div className="mt-3 border-t border-white/10 pt-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-100/55">{t.parrilladaWarnings}</p>
+          <div className="mt-1.5">
+            <ParrilladaWarningsFinal result={plannerResult} />
+          </div>
         </div>
       </CompactDisclosure>
 
