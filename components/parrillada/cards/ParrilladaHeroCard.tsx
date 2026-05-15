@@ -1,16 +1,18 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { Badge } from '@/components/ui/Badge';
+import type { AppText, Lang } from '@/lib/i18n/texts';
 import type { ParrilladaPlan } from '@/lib/planning';
 
 type ParrilladaHeroCardProps = {
+  lang: Lang;
+  t: AppText;
   plan: ParrilladaPlan;
-  keyExecutionHint?: string;
 };
 
 type MetricTone = 'default' | 'amber';
 
-export function ParrilladaHeroCard({ plan, keyExecutionHint }: ParrilladaHeroCardProps) {
+export function ParrilladaHeroCard({ t, plan }: ParrilladaHeroCardProps) {
   const isPro = plan.mode === 'pro';
   const warningsCount = plan.warnings.length;
   const holdsCount = plan.items.filter((item) => item.canHoldWarm === true).length;
@@ -19,30 +21,27 @@ export function ParrilladaHeroCard({ plan, keyExecutionHint }: ParrilladaHeroCar
   return (
     <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-orange-500/[0.07] p-4">
       <div className="flex items-start justify-between gap-3">
-        <h2 className="text-xl font-semibold tracking-tight text-white">Parrillada Plan</h2>
-        {/* allow-arbitrary: pre-slice-a */}
+        <h2 className="text-xl font-semibold tracking-tight text-white">{t.parrilladaHeroTitle}</h2>
+        {/* allow-arbitrary: text-[11px] mode chip — ds.text scale lacks 11px */}
         <span className="shrink-0 rounded-full border border-orange-300/35 bg-orange-500/15 px-2.5 py-0.5 text-[11px] font-black uppercase tracking-[0.14em] text-orange-100">
-          {isPro ? 'Pro' : 'Lite'}
+          {isPro ? t.parrilladaModePro : t.parrilladaModeLite}
         </span>
       </div>
 
       <div className="mt-3 grid grid-cols-4 gap-1">
-        <Metric label="Items" value={`${plan.items.length}`} />
-        <Metric label="Serve" value={plan.serveTargetLabel} />
-        <Metric label="Complexity" value={plan.complexity} />
+        <Metric label={t.parrilladaHeroMetricItems} value={`${plan.items.length}`} />
+        <Metric label={t.parrilladaServe} value={plan.serveTargetLabel} />
+        <Metric label={t.parrilladaHeroMetricComplexity} value={plan.complexity} />
         <Metric
-          label="Warnings"
+          label={t.parrilladaWarnings}
           value={`${warningsCount}`}
           tone={warningsCount > 0 ? 'amber' : 'default'}
         />
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
-        {keyExecutionHint ? (
-          <Chip tone="orange">{keyExecutionHint}</Chip>
-        ) : null}
-        {isPro && zonesCount > 0 ? <Chip tone="neutral">{zonesCount} zones</Chip> : null}
-        {isPro && holdsCount > 0 ? <Chip tone="neutral">{holdsCount} holds</Chip> : null}
+        {isPro && zonesCount > 0 ? <Badge tone="glass">{zonesCount} {t.parrilladaZonesSuffix}</Badge> : null}
+        {isPro && holdsCount > 0 ? <Badge tone="glass">{holdsCount} {t.parrilladaHoldsSuffix}</Badge> : null}
       </div>
     </section>
   );
@@ -56,14 +55,18 @@ function countUniqueZones(plan: ParrilladaPlan): number {
   return zones.size;
 }
 
+// TODO(slice-d): Replace local Metric with <MetricTile> once neutral
+// and amber tones are added to the shared primitive. Current local
+// implementation has 4 callers: 3 use the default (neutral) tone, 1
+// uses amber for warnings >0. See Slice B prompt for context.
 function Metric({ label, value, tone = 'default' }: { label: string; value: string; tone?: MetricTone }) {
   const className =
     tone === 'amber'
       ? 'min-w-0 rounded-xl border border-amber-300/30 bg-amber-500/10 px-1.5 py-1.5'
       : 'min-w-0 rounded-xl border border-white/10 bg-black/20 px-1.5 py-1.5';
-  /* allow-arbitrary: pre-slice-a */
+  /* allow-arbitrary: text-[9px] metric label — ds.text scale lacks 9px */
   const labelClass = tone === 'amber' ? 'truncate text-[9px] uppercase tracking-wide text-amber-200/85' : 'truncate text-[9px] uppercase tracking-wide text-white/50';
-  /* allow-arbitrary: pre-slice-a */
+  /* allow-arbitrary: text-[13px] metric value — ds.text scale lacks 13px */
   const valueClass = tone === 'amber' ? 'mt-0.5 truncate text-[13px] font-semibold text-amber-100' : 'mt-0.5 truncate text-[13px] font-semibold text-white';
 
   return (
@@ -71,22 +74,5 @@ function Metric({ label, value, tone = 'default' }: { label: string; value: stri
       <p className={labelClass}>{label}</p>
       <p className={valueClass}>{value}</p>
     </article>
-  );
-}
-
-function Chip({ children, tone }: { children: ReactNode; tone: 'orange' | 'neutral' }) {
-  if (tone === 'orange') {
-    return (
-      /* allow-arbitrary: pre-slice-a */
-      <span className="inline-flex rounded-full border border-orange-300/30 bg-orange-500/12 px-2.5 py-1 text-[11px] font-semibold text-orange-100">
-        {children}
-      </span>
-    );
-  }
-  return (
-    /* allow-arbitrary: pre-slice-a */
-    <span className="inline-flex rounded-full border border-white/12 bg-black/20 px-2.5 py-1 text-[11px] font-semibold text-white/80">
-      {children}
-    </span>
   );
 }

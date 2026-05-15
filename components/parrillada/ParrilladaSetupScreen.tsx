@@ -1,11 +1,17 @@
 'use client';
 
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { ParrilladaMenuBuilderCard } from '@/components/parrillada/cards/ParrilladaMenuBuilderCard';
 import { ServeStrategyCard } from '@/components/parrillada/cards/ServeStrategyCard';
 import { GrillSetupCard } from '@/components/parrillada/cards/GrillSetupCard';
+import type { AppText, Lang } from '@/lib/i18n/texts';
 import type { ParrilladaItem, ParrilladaMode, PlannerCutInput, SchedulerStrategy } from '@/lib/planning';
 
 type ParrilladaSetupScreenProps = {
+  lang: Lang;
+  t: AppText;
   mode: ParrilladaMode;
   selectedItems: ParrilladaItem[];
   availableItems: PlannerCutInput[];
@@ -28,6 +34,8 @@ type ParrilladaSetupScreenProps = {
 };
 
 export function ParrilladaSetupScreen({
+  lang,
+  t,
   mode,
   selectedItems,
   availableItems,
@@ -52,17 +60,18 @@ export function ParrilladaSetupScreen({
 
   return (
     <section className="space-y-3">
-      <header className="flex items-center justify-between gap-3 px-1">
-        <h2 className="min-w-0 truncate text-lg font-semibold text-white">
-          {title} {mode === 'pro' ? 'Pro' : 'Lite'}
-        </h2>
-        {/* allow-arbitrary: pre-slice-a */}
-        <span className="shrink-0 rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[11px] font-semibold text-white/65 tabular-nums">
-          {liteMinItems}–{liteMaxItems} items
-        </span>
-      </header>
+      <ScreenHeader
+        title={`${title} ${mode === 'pro' ? t.parrilladaModePro : t.parrilladaModeLite}`}
+        trailing={
+          <Badge tone="glass" className="tabular-nums">
+            {liteMinItems}–{liteMaxItems} {t.parrilladaItemsSuffix}
+          </Badge>
+        }
+      />
 
       <ParrilladaMenuBuilderCard
+        lang={lang}
+        t={t}
         items={selectedItems}
         availableItems={availableItems}
         selectedItemIds={selectedItemIds}
@@ -70,6 +79,8 @@ export function ParrilladaSetupScreen({
         onToggleCatalogItem={onToggleCatalogItem}
       />
       <ServeStrategyCard
+        lang={lang}
+        t={t}
         strategy={strategyValue}
         serveAtLocal={serveAtLocal}
         hasValidServeTime={hasValidServeTime}
@@ -81,27 +92,12 @@ export function ParrilladaSetupScreen({
       <GrillSetupCard />
 
       <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={onBack}
-          /* allow-arbitrary: pre-slice-a */
-          className="rounded-2xl border border-white/15 bg-black/20 px-4 py-3 text-sm font-semibold text-white/80 transition hover:border-white/30"
-        >
-          Back
-        </button>
-        <button
-          type="button"
-          disabled={!canGenerate}
-          onClick={onGenerate}
-          className={`rounded-2xl px-4 py-3 text-sm font-bold transition ${
-            canGenerate
-              ? 'bg-gradient-to-r from-orange-400 to-orange-500 text-black hover:brightness-105'
-              /* allow-arbitrary: pre-slice-a */
-              : 'cursor-not-allowed border border-white/10 bg-black/20 text-white/45'
-          }`}
-        >
+        <Button variant="secondary" onClick={onBack}>
+          {t.parrilladaBack}
+        </Button>
+        <Button variant="primary" disabled={!canGenerate} onClick={onGenerate}>
           {ctaLabel}
-        </button>
+        </Button>
       </div>
     </section>
   );

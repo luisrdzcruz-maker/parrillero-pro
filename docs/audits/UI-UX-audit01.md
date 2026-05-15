@@ -290,4 +290,22 @@ Borrowed and tightened from spec §14:
 
 ---
 
+## 8. Follow-ups
+
+### Planner surface fallbacks need i18n
+
+During Slice B, the seven in-scope Parrillada UI files were i18n'd, but several user-visible strings still flow through planner data unchanged:
+
+- `executionZoneLabel()` / `executionHeatLabel()` / `compactExecutionInstruction()` in `components/parrillada/ParrilladaTimelineFinal.tsx` emit data-derived English ("high heat", "mixed zones", "holding").
+- `lib/i18n/surfaceFallbacks.ts` is the natural home for proper i18n of these enum values (it already houses `getEquipmentSurfaceLabel`, `localizeResultSurfaceCopy`, etc.).
+- Some props passed into the seven Parrillada files (e.g. `parrilladaPlanCopy.entry.quickTitle`, ctaLabel, criticalStep fields) are caller-supplied English. Caller chain: `parrilladaPlanCopy` → SchedulerScreen → the seven files.
+
+Out of scope for Slice B (which limited itself to seven UI files). Consider a dedicated planner-surface i18n slice when broader i18n coverage matters.
+
+### Copy tone alignment with canvas
+
+Slice B refined the verbose source copy for Parrillada Entry, Review, and Hero headers to match the canvas voice (short declarative title + optional one-sentence support). Remaining surfaces (Onboarding, Saved, CookingWizard, Result) have not yet been audited against the canvas for tone. A dedicated pass over `lib/i18n/texts.ts` after the Finnish locale is removed will close the gap consistently across the app.
+
+---
+
 *This document is a static analysis. Visual verification on real devices (iPhone SE, Pixel 5, iPhone 14 Pro) is required before treating any "looks fine" claim as fact. The next audit (UI-UX-audit02.md) should be done on-device with screenshots attached.*

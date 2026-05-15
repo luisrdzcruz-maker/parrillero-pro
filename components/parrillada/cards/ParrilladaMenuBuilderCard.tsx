@@ -1,13 +1,18 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { Badge } from '@/components/ui/Badge';
 import { BrandImageIcon } from '@/components/ui/BrandImageIcon';
+import { Panel } from '@/components/ui/Panel';
 import { getParrilladaItemIcon } from '@/components/parrillada/icons/parrilladaIconResolver';
+import type { AppText, Lang } from '@/lib/i18n/texts';
 import type { ParrilladaItem } from '@/lib/planning';
 import type { PlannerCutInput } from '@/lib/planning';
 import { ParrilladaItemRow } from './ParrilladaItemRow';
 
 type ParrilladaMenuBuilderCardProps = {
+  lang: Lang;
+  t: AppText;
   items: ParrilladaItem[];
   availableItems: PlannerCutInput[];
   selectedItemIds: Set<string>;
@@ -17,25 +22,28 @@ type ParrilladaMenuBuilderCardProps = {
 
 type MenuFilter = 'all' | 'beef' | 'pork' | 'chicken' | 'fish' | 'vegetable';
 
-function animalLabel(value: PlannerCutInput['animal']): string {
-  if (value === 'beef') return 'Beef';
-  if (value === 'pork') return 'Pork';
-  if (value === 'chicken') return 'Chicken';
-  if (value === 'fish') return 'Fish';
-  if (value === 'seafood') return 'Seafood';
-  if (value === 'lamb') return 'Lamb';
-  if (value === 'vegetable') return 'Vegetables';
-  return 'Other';
+const FILTER_IDS: ReadonlyArray<MenuFilter> = ['all', 'beef', 'pork', 'chicken', 'fish', 'vegetable'];
+
+// Translation lookups keyed by stable data values; lang stays out of lib/.
+function animalLabel(value: PlannerCutInput['animal'], t: AppText): string {
+  if (value === 'beef') return t.parrilladaAnimalBeef;
+  if (value === 'pork') return t.parrilladaAnimalPork;
+  if (value === 'chicken') return t.parrilladaAnimalChicken;
+  if (value === 'fish') return t.parrilladaAnimalFish;
+  if (value === 'seafood') return t.parrilladaAnimalSeafood;
+  if (value === 'lamb') return t.parrilladaAnimalLamb;
+  if (value === 'vegetable') return t.parrilladaAnimalVegetables;
+  return t.parrilladaAnimalOther;
 }
 
-const MENU_FILTERS: Array<{ id: MenuFilter; label: string }> = [
-  { id: 'all', label: 'All' },
-  { id: 'beef', label: 'Beef' },
-  { id: 'pork', label: 'Pork' },
-  { id: 'chicken', label: 'Chicken' },
-  { id: 'fish', label: 'Fish' },
-  { id: 'vegetable', label: 'Vegetable' },
-];
+function filterLabel(id: MenuFilter, t: AppText): string {
+  if (id === 'all') return t.parrilladaMenuFilterAll;
+  if (id === 'beef') return t.parrilladaAnimalBeef;
+  if (id === 'pork') return t.parrilladaAnimalPork;
+  if (id === 'chicken') return t.parrilladaAnimalChicken;
+  if (id === 'fish') return t.parrilladaAnimalFish;
+  return t.parrilladaMenuFilterVegetable;
+}
 
 function matchesFilter(item: PlannerCutInput, filter: MenuFilter): boolean {
   if (filter === 'all') return true;
@@ -44,6 +52,7 @@ function matchesFilter(item: PlannerCutInput, filter: MenuFilter): boolean {
 }
 
 export function ParrilladaMenuBuilderCard({
+  t,
   items,
   availableItems,
   selectedItemIds,
@@ -75,17 +84,22 @@ export function ParrilladaMenuBuilderCard({
     const filtered = query ? byFilter.filter((item) => item.displayName.toLowerCase().includes(query)) : byFilter;
     const grouped = new Map<string, PlannerCutInput[]>();
     filtered.forEach((item) => {
-      const key = animalLabel(item.animal);
+      const key = animalLabel(item.animal, t);
       grouped.set(key, [...(grouped.get(key) ?? []), item]);
     });
     return [...grouped.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  }, [availableItems, search, activeFilter]);
+  }, [availableItems, search, activeFilter, t]);
 
   return (
-    /* allow-arbitrary: pre-slice-a */
-    <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
+    <Panel as="section" className="p-4">
       <div className="mb-2.5 flex items-center justify-between gap-3">
-        <h3 className="text-base font-semibold text-white">Choose cuts</h3>
+        <h3 className="text-base font-semibold text-white">{t.parrilladaMenuChooseCuts}</h3>
+        {/* TODO(slice-d): Migrate this pill to <Badge> once an "amber" tone
+            is added to the shared primitive. The orange/neutral pill below
+            (in the modal header) was migrated to Badge in Slice B; this
+            call site stays inline because its warning state needs amber,
+            and red (Badge tone="danger") would read as "broken" rather
+            than "heads up." */}
         <span
           className={`rounded-full border px-2.5 py-1 text-xs font-semibold tabular-nums ${
             itemLimitReached
@@ -100,10 +114,10 @@ export function ParrilladaMenuBuilderCard({
       <button
         type="button"
         onClick={() => setSelectorOpen(true)}
-        /* allow-arbitrary: pre-slice-a */
+        /* allow-arbitrary: text-white/85 — ds.color.muted exposes only 50/70/90 */
         className="rounded-xl border border-white/10 bg-black/25 px-3 py-1.5 text-xs font-semibold text-white/85 transition hover:border-white/25"
       >
-        Add cuts
+        {t.parrilladaMenuAddCuts}
       </button>
 
       <div className="mt-3 space-y-2">
@@ -111,9 +125,9 @@ export function ParrilladaMenuBuilderCard({
           <ParrilladaItemRow key={item.id} item={item} />
         ))}
         {items.length === 0 ? (
-          /* allow-arbitrary: pre-slice-a */
+          /* allow-arbitrary: text-white/60 — ds.color.muted exposes only 50/70/90 */
           <p className="rounded-xl border border-dashed border-white/15 bg-black/20 px-3 py-2 text-xs text-white/60">
-            Pick at least 2 items to build a valid parrillada plan.
+            {t.parrilladaMenuEmptyPrompt}
           </p>
         ) : null}
       </div>
@@ -121,54 +135,51 @@ export function ParrilladaMenuBuilderCard({
       {selectorOpen ? (
         <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-[2px]">
           <div className="mx-auto flex h-full w-full max-w-3xl flex-col bg-[#070707] px-3 py-3 sm:px-4 sm:py-4">
-            {/* allow-arbitrary: pre-slice-a */}
-            <div className="mb-2 flex items-center justify-between gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
+            <Panel className="mb-2 flex items-center justify-between gap-2 px-3 py-2">
               <div>
-                {/* allow-arbitrary: pre-slice-a */}
-                <p className="text-[11px] uppercase tracking-[0.16em] text-white/45">Cut selector</p>
-                <h4 className="text-sm font-semibold text-white">Choose cuts</h4>
+                {/* allow-arbitrary: text-[11px] eyebrow + text-white/45 — ds.text scale lacks 11px; ds.color.muted exposes only 50/70/90 */}
+                <p className="text-[11px] uppercase tracking-[0.16em] text-white/45">{t.parrilladaMenuCutSelectorEyebrow}</p>
+                <h4 className="text-sm font-semibold text-white">{t.parrilladaMenuChooseCuts}</h4>
               </div>
               <div className="flex items-center gap-2">
-                {/* allow-arbitrary: pre-slice-a */}
-                <span className="rounded-full border border-white/10 bg-black/30 px-2.5 py-1 text-xs font-semibold text-white/75">
+                <Badge tone="glass" className="tabular-nums">
                   {items.length}/{maxItems}
-                </span>
+                </Badge>
                 <button
                   type="button"
                   onClick={() => setSelectorOpen(false)}
-                  /* allow-arbitrary: pre-slice-a */
+                  /* allow-arbitrary: text-white/80 — ds.color.muted exposes only 50/70/90 */
                   className="rounded-lg border border-white/10 bg-black/25 px-3 py-1.5 text-xs font-semibold text-white/80 transition hover:border-white/25"
                 >
-                  Done
+                  {t.parrilladaMenuModalDone}
                 </button>
               </div>
-            </div>
+            </Panel>
 
-            {/* allow-arbitrary: pre-slice-a */}
-            <section className="flex min-h-0 flex-1 flex-col rounded-2xl border border-white/10 bg-white/[0.04] p-2.5">
+            <Panel as="section" className="flex min-h-0 flex-1 flex-col p-2.5">
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search cut"
-                /* allow-arbitrary: pre-slice-a */
+                placeholder={t.parrilladaMenuSearchPlaceholder}
+                /* allow-arbitrary: placeholder:text-white/35 — ds.color.muted exposes only 50/70/90 */
                 className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none placeholder:text-white/35 focus:border-orange-300/50"
               />
               <div className="mt-2 flex gap-1.5 overflow-x-auto pb-0.5">
-                {MENU_FILTERS.map((filter) => {
-                  const selected = activeFilter === filter.id;
+                {FILTER_IDS.map((filterId) => {
+                  const selected = activeFilter === filterId;
                   return (
                     <button
-                      key={filter.id}
+                      key={filterId}
                       type="button"
-                      onClick={() => setActiveFilter(filter.id)}
-                      /* allow-arbitrary: pre-slice-a */
+                      onClick={() => setActiveFilter(filterId)}
+                      /* allow-arbitrary: text-[11px] filter chip — ds.text scale lacks 11px */
                       className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
                         selected
                           ? 'border-orange-300/50 bg-orange-500/15 text-orange-100'
                           : 'border-white/10 bg-black/25 text-white/70 hover:border-white/20'
                       }`}
                     >
-                      {filter.label}
+                      {filterLabel(filterId, t)}
                     </button>
                   );
                 })}
@@ -176,12 +187,12 @@ export function ParrilladaMenuBuilderCard({
 
               <div className="mt-2.5 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
                 {groupedItems.map(([groupLabel, groupItems]) => (
-                  /* allow-arbitrary: pre-slice-a */
+                  /* allow-arbitrary: bg-white/[0.03] group panel tint — ds.panel lacks this alpha */
                   <section key={groupLabel} className="rounded-xl border border-white/10 bg-white/[0.03] p-2">
                     <div className="mb-1.5 flex items-center justify-between">
-                      {/* allow-arbitrary: pre-slice-a */}
+                      {/* allow-arbitrary: text-[10px] group label — ds.text scale lacks 10px (text-white/50 is canonical) */}
                       <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">{groupLabel}</p>
-                      {/* allow-arbitrary: pre-slice-a */}
+                      {/* allow-arbitrary: text-[10px] + text-white/45 — ds.text scale lacks 10px; ds.color.muted exposes only 50/70/90 */}
                       <span className="text-[10px] text-white/45">{groupItems.length}</span>
                     </div>
                     <div className="space-y-1.5">
@@ -198,9 +209,9 @@ export function ParrilladaMenuBuilderCard({
                               selected
                                 ? 'border-orange-300/50 bg-orange-500/15 text-orange-100'
                                 : disabled
-                                  /* allow-arbitrary: pre-slice-a */
+                                  /* allow-arbitrary: text-white/35 disabled state — ds.color.muted exposes only 50/70/90 */
                                   ? 'cursor-not-allowed border-white/10 bg-black/20 text-white/35'
-                                  /* allow-arbitrary: pre-slice-a */
+                                  /* allow-arbitrary: text-white/85 — ds.color.muted exposes only 50/70/90 */
                                   : 'border-white/10 bg-black/20 text-white/85 hover:border-white/25'
                             }`}
                           >
@@ -213,10 +224,10 @@ export function ParrilladaMenuBuilderCard({
                             />
                             <div className="min-w-0 flex-1">
                               <p className="truncate text-sm font-semibold">{item.displayName}</p>
-                              {/* allow-arbitrary: pre-slice-a */}
-                              <p className="text-[11px] text-white/55">{animalLabel(item.animal)}</p>
+                              {/* allow-arbitrary: text-[11px] + text-white/55 — ds.text scale lacks 11px; ds.color.muted exposes only 50/70/90 */}
+                              <p className="text-[11px] text-white/55">{animalLabel(item.animal, t)}</p>
                             </div>
-                            <span className="text-xs font-semibold">{selected ? 'Selected' : 'Add'}</span>
+                            <span className="text-xs font-semibold">{selected ? t.parrilladaMenuItemSelected : t.parrilladaMenuItemAdd}</span>
                           </button>
                         );
                       })}
@@ -224,16 +235,16 @@ export function ParrilladaMenuBuilderCard({
                   </section>
                 ))}
                 {groupedItems.length === 0 ? (
-                  /* allow-arbitrary: pre-slice-a */
+                  /* allow-arbitrary: text-white/60 — ds.color.muted exposes only 50/70/90 */
                   <p className="rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-xs text-white/60">
-                    No cuts match this search.
+                    {t.parrilladaMenuNoResults}
                   </p>
                 ) : null}
               </div>
-            </section>
+            </Panel>
           </div>
         </div>
       ) : null}
-    </section>
+    </Panel>
   );
 }

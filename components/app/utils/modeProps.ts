@@ -253,12 +253,16 @@ export type BuildGuardadosModePropsArgs = {
 };
 
 export type BuildParrilladaModePropsArgs = {
+  lang: Lang;
+  t: AppText;
   step: ParrilladaFlowStep;
   onStepChange: (next: ParrilladaFlowStep) => void;
 };
 
 export function buildParrilladaModeProps(args: BuildParrilladaModePropsArgs): ParrilladaModeScreenProps {
   return {
+    lang: args.lang,
+    t: args.t,
     step: args.step,
     onStepChange: args.onStepChange,
   };

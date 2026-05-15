@@ -1,8 +1,11 @@
 'use client';
 
 import { BrandImageIcon } from '@/components/ui/BrandImageIcon';
+import { Panel } from '@/components/ui/Panel';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { getModeIcon } from '@/components/parrillada/icons/parrilladaIconResolver';
 import { ParrilladaModeCard } from '@/components/parrillada/cards/ParrilladaModeCard';
+import type { AppText, Lang } from '@/lib/i18n/texts';
 import type { ParrilladaMode } from '@/lib/planning';
 
 type RecentPlan = {
@@ -13,6 +16,8 @@ type RecentPlan = {
 };
 
 type ParrilladaEntryScreenProps = {
+  lang: Lang;
+  t: AppText;
   quickTitle: string;
   quickDescription: string;
   proTitle: string;
@@ -23,6 +28,7 @@ type ParrilladaEntryScreenProps = {
 };
 
 export function ParrilladaEntryScreen({
+  t,
   quickTitle,
   quickDescription,
   proTitle,
@@ -33,13 +39,11 @@ export function ParrilladaEntryScreen({
 }: ParrilladaEntryScreenProps) {
   return (
     <section className="space-y-3">
-      <header className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-black/25 p-4">
-        {/* allow-arbitrary: pre-slice-a */}
-        <p className="text-[11px] uppercase tracking-[0.18em] text-orange-200/70">Parrillada</p>
-        <h1 className="mt-1 text-2xl font-semibold text-white">Start simple. Reveal power when needed.</h1>
-        {/* allow-arbitrary: pre-slice-a */}
-        <p className="mt-1 text-sm text-white/65">Build menu, validate timeline, then execute with a calm command-center flow.</p>
-      </header>
+      <ScreenHeader
+        eyebrow={t.parrilladaEntryEyebrow}
+        title={t.parrilladaEntryTitle}
+        subtitle={t.parrilladaEntrySubtitle}
+      />
 
       <ParrilladaModeCard
         mode="lite"
@@ -50,9 +54,8 @@ export function ParrilladaEntryScreen({
       />
       <ParrilladaModeCard mode="pro" title={proTitle} description={proDescription} onClick={onSelectMode} />
 
-      {/* allow-arbitrary: pre-slice-a */}
-      <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
-        {/* allow-arbitrary: pre-slice-a */}
+      <Panel as="section" className="p-4">
+        {/* allow-arbitrary: text-[11px] eyebrow + text-white/45 — ds.text scale lacks 11px; ds.color.muted exposes only 50/70/90 */}
         <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">{recentTitle}</p>
         <div className="mt-3 space-y-2">
           {recentPlans.map((plan) => (
@@ -67,18 +70,18 @@ export function ParrilladaEntryScreen({
                 />
                 <div>
                   <p className="text-sm font-medium text-white">{plan.title}</p>
-                  {/* allow-arbitrary: pre-slice-a */}
+                  {/* allow-arbitrary: text-white/55 — ds.color.muted exposes only 50/70/90 */}
                   <p className="text-xs text-white/55">{plan.updatedLabel}</p>
                 </div>
               </div>
-              {/* allow-arbitrary: pre-slice-a */}
+              {/* allow-arbitrary: text-[11px] mode chip — ds.text scale lacks 11px */}
               <span className="rounded-full border border-white/10 bg-black/25 px-2.5 py-1 text-[11px] font-semibold uppercase text-white/70">
                 {plan.mode}
               </span>
             </article>
           ))}
         </div>
-      </section>
+      </Panel>
     </section>
   );
 }
