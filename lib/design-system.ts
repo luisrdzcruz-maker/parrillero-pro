@@ -94,6 +94,8 @@ export const ds = {
     highlight: "rounded-2xl border border-orange-500/30 bg-orange-500/10 p-4",
     empty:
       "rounded-[1.65rem] border border-white/[0.08] bg-white/[0.03] p-6 text-slate-400 shadow-[0_14px_36px_rgba(0,0,0,0.32)] ring-1 ring-inset ring-white/[0.04] backdrop-blur",
+    subpanel:
+      "rounded-2xl border border-white/[0.08] bg-white/[0.025] ring-1 ring-inset ring-white/[0.04]",
     glass:
       "rounded-2xl border border-white/10 bg-white/5 p-5 shadow-xl shadow-black/30 backdrop-blur",
     timer: "mt-6 rounded-3xl bg-slate-950 p-8 text-center",
