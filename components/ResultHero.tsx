@@ -10,6 +10,7 @@ import {
 } from "@/components/ui";
 import { resolveEquipmentIconKey, resolveMethodIconKey } from "@/lib/assets/equipmentMethodIconResolver";
 import { brandIconAssets } from "@/lib/brand/iconAssets";
+import type { Lang } from "@/lib/i18n/texts";
 import { pushResultOverlayHistory, SetupDetailSurface } from "@/components/results/ResultGuidancePanel";
 import { detectSetupFromText } from "@/lib/setupVisualMap";
 import {
@@ -44,7 +45,7 @@ function getCompactMethod(value = "") {
   return firstSentence.length > 42 ? `${firstSentence.slice(0, 39).trim()}...` : firstSentence;
 }
 
-function getFireSetupItems(value: string | undefined, lang: "es" | "en" | "fi") {
+function getFireSetupItems(value: string | undefined, lang: Lang) {
   const copy = texts[lang];
   const normalized = value?.toLowerCase() ?? "";
   const items: string[] = [];
@@ -85,7 +86,7 @@ export default function ResultHero({
   resultBlocks?: Record<string, string>;
   resultKeys?: string[];
   hasResult: boolean;
-  lang?: "es" | "en" | "fi";
+  lang?: Lang;
   onEdit?: () => void;
   saveMenuStatus?: SaveMenuStatus;
   summary?: ResultSummary;

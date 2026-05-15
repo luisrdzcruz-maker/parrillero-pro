@@ -1,4 +1,5 @@
 import type { Animal } from "@/lib/types/domain";
+import type { Lang } from "@/lib/i18n/texts";
 import type { CookingTimeSemantics } from "./cookingTimeSemantics";
 import type { PrepGuidance } from "./prepGuidance";
 import type { PlanningMetadata } from "./planning/types";
@@ -30,7 +31,6 @@ export type CookingStep = {
   warningCue?: string;
 };
 
-export type Language = "es" | "en" | "fi";
 export type AnimalId = Animal;
 export type CookingMethod =
   | "grill_direct"
@@ -63,12 +63,12 @@ export type CookingStyle =
 
 export type CatalogAnimal = {
   id: AnimalId;
-  names: Record<Language, string>;
+  names: Record<Lang, string>;
 };
 
 export type DonenessOption = {
   id: DonenessId;
-  names: Record<Language, string>;
+  names: Record<Lang, string>;
 };
 
 export type TargetTemp = {
@@ -81,7 +81,7 @@ export type ProductCut = {
   animalId: AnimalId;
   inputProfileId?: string;
   donenessProfileId?: DonenessTemperatureProfileId;
-  names: Record<Language, string>;
+  names: Record<Lang, string>;
   defaultThicknessCm: number;
   showThickness: boolean;
   allowedMethods: CookingMethod[];
@@ -89,8 +89,8 @@ export type ProductCut = {
   targetTempsC?: Partial<Record<DonenessId, TargetTemp>>;
   restingMinutes: number;
   cookingMinutes?: number;
-  notes?: Partial<Record<Language, string>>;
-  tips?: Partial<Record<Language, string[]>>;
+  notes?: Partial<Record<Lang, string>>;
+  tips?: Partial<Record<Lang, string[]>>;
   style: CookingStyle;
   defaultMethod: CookingMethod;
   error: Record<"es" | "en", string>;

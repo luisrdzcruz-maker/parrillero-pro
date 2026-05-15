@@ -1,4 +1,6 @@
-export type SurfaceLang = "es" | "en" | "fi";
+import type { Lang } from "@/lib/i18n/texts";
+
+export type SurfaceLang = Lang;
 
 function normalizeText(value: string) {
   return value

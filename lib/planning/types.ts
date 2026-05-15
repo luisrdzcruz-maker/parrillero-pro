@@ -6,6 +6,8 @@
  * Keep UI, catalog data, and scheduling logic decoupled.
  */
 
+import type { Lang } from "@/lib/i18n/texts";
+
 export type PlanningAnimal =
   | 'beef'
   | 'pork'
@@ -173,7 +175,7 @@ export interface PlannerRequest {
   serveAtIso: string;
   grillCapacity: GrillCapacity;
   strategy?: SchedulerStrategy;
-  language?: 'es' | 'en' | 'fi';
+  language?: Lang;
   allowHolding?: boolean;
   maxPlanLookbackMinutes?: number;
   preheatMinutes?: number;

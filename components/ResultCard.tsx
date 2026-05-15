@@ -11,6 +11,7 @@ import {
   type SetupType,
 } from "@/lib/setupVisualMap";
 import { AppIcon, Panel } from "@/components/ui";
+import type { Lang } from "@/lib/i18n/texts";
 import { resolveMethodIconKey } from "@/lib/assets/equipmentMethodIconResolver";
 import { ds } from "@/lib/design-system";
 import type { IconCategory } from "@/lib/assets/iconTypes";
@@ -21,7 +22,7 @@ type ResultCardProps = {
   content?: string;
   equipment?: string;
   setup?: SetupType;
-  lang?: "es" | "en" | "fi";
+  lang?: Lang;
   variant?: "default" | "primary" | "summary" | "tip" | "setup";
 };
 
@@ -35,7 +36,7 @@ const inlineFallbackImage =
 
 function getVariantLabel(
   variant: NonNullable<ResultCardProps["variant"]>,
-  lang: "es" | "en" | "fi",
+  lang: Lang,
 ): string {
   const isEs = lang === "es";
   const isFi = lang === "fi";
@@ -75,7 +76,7 @@ function ResultCardHeader({
 }: {
   accent: string;
   icon: string;
-  lang: "es" | "en" | "fi";
+  lang: Lang;
   title: string;
   variant: NonNullable<ResultCardProps["variant"]>;
 }) {
@@ -225,7 +226,7 @@ function ResultCardContent({
   );
 }
 
-function getCloseLabel(lang: "es" | "en" | "fi") {
+function getCloseLabel(lang: Lang) {
   if (lang === "es") return "Cerrar";
   if (lang === "fi") return "Sulje";
   return "Close";
@@ -238,7 +239,7 @@ function StepsDetailSurface({
   open,
   title,
 }: {
-  lang: "es" | "en" | "fi";
+  lang: Lang;
   lines: string[];
   onClose: () => void;
   open: boolean;
@@ -341,7 +342,7 @@ type SetupOverlayChip = {
   tone: "direct" | "indirect" | "neutral";
 };
 
-function getSetupOverlayChips(setup: SetupType | undefined, lang: "es" | "en" | "fi"): SetupOverlayChip[] {
+function getSetupOverlayChips(setup: SetupType | undefined, lang: Lang): SetupOverlayChip[] {
   const normalizedSetup = normalizeSetupText(setup).replace(/[_\s]+/g, "-");
   const labels = {
     indirect: lang === "es" ? "❄️ Indirecto" : lang === "fi" ? "❄️ Epasuora" : "❄️ Indirect",
@@ -438,7 +439,7 @@ function SetupVisualToggle({
 }: {
   content: string;
   equipment?: string;
-  lang: "es" | "en" | "fi";
+  lang: Lang;
   setup?: SetupType;
   title: string;
 }) {

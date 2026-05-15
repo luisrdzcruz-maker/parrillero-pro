@@ -1,8 +1,8 @@
-import { texts } from "@/lib/i18n/texts";
+import { texts, type Lang } from "@/lib/i18n/texts";
 import type { CookingTimeSemantics } from "@/lib/cookingTimeSemantics";
 import type { ResultSummary } from "@/lib/results/resultSummary";
 
-export type ResultLang = "es" | "en" | "fi";
+export type ResultLang = Lang;
 export type MetricTone = "orange" | "red" | "sky";
 export type ResultHeroMetricItem = {
   label: string;

@@ -19,7 +19,6 @@ export type {
   CookingStyle,
   DonenessId,
   DonenessOption,
-  Language,
   ProductCut,
   TargetTemp,
 } from "./cookingCatalog";

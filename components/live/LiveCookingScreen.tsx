@@ -9,6 +9,7 @@ import {
 } from "@/hooks/useLiveCooking";
 import { ds } from "@/lib/design-system";
 import { parseLiveParams } from "@/lib/navigation/parseLiveParams";
+import type { Lang } from "@/lib/i18n/texts";
 import LiveExecutionGuide from "./LiveExecutionGuide";
 import LiveHeader from "./LiveHeader";
 import LiveNextStepPreview from "./LiveNextStepPreview";
@@ -27,7 +28,7 @@ type Props = {
   paused: boolean;
   started?: boolean;
   context?: string;
-  lang?: "es" | "en" | "fi";
+  lang?: Lang;
   onBack?: () => void;
   onReset?: () => void;
   onPause: () => void;

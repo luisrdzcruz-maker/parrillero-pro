@@ -1,6 +1,7 @@
 import { localizeResultSurfaceCopy } from "@/lib/i18n/surfaceFallbacks";
+import type { Lang } from "@/lib/i18n/texts";
 
-export type ResultLang = "es" | "en" | "fi";
+export type ResultLang = Lang;
 export type ResultBlocks = Record<string, string>;
 
 export type ResultSummary = {

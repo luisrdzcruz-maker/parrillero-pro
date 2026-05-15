@@ -7,6 +7,7 @@ import {
 } from "@/lib/i18n/surfaceFallbacks";
 import type { CookingTimeSemantics, CookingTimeSemanticsSource } from "@/lib/cookingTimeSemantics";
 import { getLiveCookingPhaseMetadata } from "@/lib/liveCookingPhases";
+import type { Lang } from "@/lib/i18n/texts";
 
 export const LIVE_COOKING_STORAGE_KEY = "parrillero_live_cooking_plan_v1";
 
@@ -18,7 +19,7 @@ export type LiveCookingInputSnapshot = {
   equipment: string;
   doneness: string;
   thickness: string;
-  lang: "es" | "en" | "fi";
+  lang: Lang;
 };
 
 export type LiveCookingTimerState = {
@@ -282,7 +283,7 @@ function pickLabel(entry: string) {
   return base.length > 72 ? `${base.slice(0, 69)}...` : base;
 }
 
-function pickStepInstruction(entry: string, surfaceLang: "es" | "en" | "fi") {
+function pickStepInstruction(entry: string, surfaceLang: Lang) {
   const [, ...bodyParts] = entry.split(":");
   const body = bodyParts.join(":").trim();
   const instruction = body || entry.trim();
@@ -395,7 +396,7 @@ export function writeLiveCookingTimer(timer: LiveCookingTimerState | null) {
 export function buildLiveStepsFromPayload(
   payload: LiveCookingPlanPayload | null,
   fallbackSteps: LiveStep[],
-  surfaceLang: "es" | "en" | "fi" = "en",
+  surfaceLang: Lang = "en",
 ): BuildLiveStepsResult {
   if (!payload) {
     return {
