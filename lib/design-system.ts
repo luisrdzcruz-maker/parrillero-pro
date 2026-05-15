@@ -53,8 +53,12 @@ export const ds = {
     eyebrowEmber: "text-xs font-semibold uppercase tracking-[0.2em] text-[#E36A1A]",
     eyebrowMuted: "text-xs font-semibold uppercase tracking-[0.2em] text-white/55",
     body14: "text-[14px] leading-[1.45]",
+    body13: "text-[13px] leading-[1.4]",
     body12: "text-[12px] leading-[1.4]",
     body11: "text-[11px] leading-[1.4]",
+    body10: "text-[10px] leading-[1.35]",
+    body9: "text-[9px] leading-[1.35]",
+    body8: "text-[8px] leading-[1.35]",
     helper: "text-[11px] leading-[1.35] text-white/50",
   },
 
