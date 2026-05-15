@@ -12,6 +12,7 @@ import { CutViewToggle } from "./CutViewToggle";
 import { IntentSelector } from "./IntentSelector";
 import { QuickPicks } from "./QuickPicks";
 import { normalizeCutSearchText, searchCutProfiles } from "./cutSearch";
+import type { Lang } from "@/lib/i18n/texts";
 import {
   filterCutsByIntent,
   getCategoryLabel,
@@ -38,7 +39,7 @@ import {
   getViewAllLabel,
 } from "./cutSelectionTypes";
 
-function buildCookingWizardHref(profile: GeneratedCutProfile, lang?: "es" | "en" | "fi") {
+function buildCookingWizardHref(profile: GeneratedCutProfile, lang?: Lang) {
   const params = new URLSearchParams({
     mode: "coccion",
     step: "details",
@@ -66,7 +67,7 @@ function getCategoryIcon(animalId: GeneratedAnimalId) {
     : undefined;
 }
 
-function getSearchActionLabel(lang: "es" | "en" | "fi") {
+function getSearchActionLabel(lang: Lang) {
   if (lang === "es") return "Buscar";
   if (lang === "fi") return "Hae";
   return "Search";
@@ -474,7 +475,7 @@ export function CutSelectionScreen({
 
 type CatalogContentProps = {
   animal: GeneratedAnimalId;
-  lang: "es" | "en" | "fi";
+  lang: Lang;
   viewMode: CutViewMode;
   searchQuery: string;
   selectedZone: string | null;

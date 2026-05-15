@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Badge, Button } from "@/components/ui";
-import { texts } from "@/lib/i18n/texts";
+import { texts, type Lang } from "@/lib/i18n/texts";
 
 type SaveMenuStatus = "idle" | "saving" | "success" | "error";
 
@@ -23,7 +23,7 @@ export default function ResultActions({
   };
   compact?: boolean;
   hasResult: boolean;
-  lang?: "es" | "en" | "fi";
+  lang?: Lang;
   secondary?: boolean;
   status?: SaveMenuStatus;
   t: {

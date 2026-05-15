@@ -1,4 +1,5 @@
 import type { CookingPlan, DonenessId } from "../cookingCatalog";
+import type { Lang } from "@/lib/i18n/texts";
 import { shouldShowThickness } from "../cookingEngine";
 import {
   buildLiveStepsFromPayload,
@@ -27,7 +28,7 @@ export type SingleCutFlowInput = {
   doneness?: DonenessId;
   equipment: string;
   thicknessCm: string;
-  lang: "es" | "en" | "fi";
+  lang: Lang;
 };
 
 export type SingleCutFlowArtifacts = {

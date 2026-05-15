@@ -5,6 +5,7 @@ import { ds } from "@/lib/design-system";
 import type { SetupType } from "@/lib/setupVisualMap";
 import { formatTitle, getGrillManagerLineClass, getShoppingItems } from "@/lib/uiHelpers";
 import { localizeResultSurfaceCopy, sanitizeCriticalErrorCopy } from "@/lib/i18n/surfaceFallbacks";
+import type { Lang } from "@/lib/i18n/texts";
 import {
   buildResultSummary as buildResultSummaryHelper,
   sanitizeUserFacingGuidance,
@@ -54,7 +55,7 @@ function ShoppingListCard({
   title: string;
   content: string;
   checkedItems: Record<string, boolean>;
-  lang: "es" | "en" | "fi";
+  lang: Lang;
   setCheckedItems: (value: Record<string, boolean>) => void;
 }) {
   const items = getShoppingItems(content);
@@ -118,7 +119,7 @@ function GrillManagerCard({
 }: {
   title: string;
   content: string;
-  lang: "es" | "en" | "fi";
+  lang: Lang;
 }) {
   const lines = content
     .split("\n")
@@ -221,7 +222,7 @@ function getAvoidGuidanceContent(blocks: Blocks, keys: string[], lang: ResultLan
   );
 }
 
-function getLocalizedBlockTitle(key: string, lang: "es" | "en" | "fi") {
+function getLocalizedBlockTitle(key: string, lang: Lang) {
   const upperKey = key.toUpperCase();
   if (upperKey === "SETUP" || upperKey === "CONFIGURACION" || upperKey === "CONFIGURACIÓN") {
     return lang === "es" ? "🔥 Configuración" : lang === "fi" ? "🔥 Asetus" : "🔥 Setup";
@@ -241,7 +242,7 @@ function getLocalizedBlockTitle(key: string, lang: "es" | "en" | "fi") {
   return formatTitle(key);
 }
 
-function getOrderedResultItems(blocks: Blocks, keys: string[], lang: "es" | "en" | "fi"): ResultItem[] {
+function getOrderedResultItems(blocks: Blocks, keys: string[], lang: Lang): ResultItem[] {
   const setupKey = findBlockKey(keys, ["SETUP", "CONFIGURACION", "CONFIGURACIÓN"]);
   const timeKey = findBlockKey(keys, ["TIEMPOS", "TIMES"]);
   const tempKey = findBlockKey(keys, ["TEMPERATURA", "TEMPERATURE"]);
@@ -327,7 +328,7 @@ export default function ResultGrid({
   checkedItems: Record<string, boolean>;
   equipment?: string;
   keys: string[];
-  lang?: "es" | "en" | "fi";
+  lang?: Lang;
   loading: boolean;
   prepGuidanceLine?: string;
   setCheckedItems: (value: Record<string, boolean>) => void;
