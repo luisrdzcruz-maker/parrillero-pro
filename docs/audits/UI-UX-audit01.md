@@ -308,4 +308,55 @@ Slice B refined the verbose source copy for Parrillada Entry, Review, and Hero h
 
 ---
 
+## 9. Density audit — 2026-05-15
+
+Parrillada screens audited at 375 × 667 px (iPhone SE viewport) against the one-viewport rule from `memory/slice-b-followup-information-density.md`. Heights below are **static-JSX estimates** based on padding/leading/content tallies — runtime variations (recent-plan count, item count, conditional warnings) are noted per screen.
+
+Reference usable height: ~570 px after Safari iOS chrome (status bar + URL bar + tab bar). Anything past that requires scroll.
+
+Canvas mockups are the ground truth where shipped diverges:
+- `06-parrillada-entry.png`
+- `07-parrillada-review.png`
+- `08-parrillada-live.png`
+- `10-parrillada-setup.png`
+
+### Findings
+
+| Screen | Tag | Estimated height | Notes |
+|---|---|---|---|
+| `ParrilladaEntryScreen` | ✅ | ~382–554 px depending on recent-plan count | Comfortable in all observed states. Mode cards are appropriately sized; recent-plans panel is bounded. |
+| `ParrilladaSetupScreen` | ⚠ / ❌ | ~528 px empty/asap, ~764 px with 3 items + time, ~956 px with 5 items + past warning | Heavy contributors: ServeStrategyCard balloons to ~254 px when `startsInPast` warning is shown. MenuBuilderCard grows linearly with selected-item count. |
+| `ParrilladaReviewScreen` | ❌ | ~820 px after slice-B-fu-ia/1 (was ~1052 px before) | Compacting the inner execution-group disclosures removed ~232 px. Remaining over-budget contributors are the Hero card (~156 px), the outer "All phases" CompactDisclosure (~80 px collapsed), and the two zone/warnings disclosures (~80 px each). |
+| `ParrilladaLiveScreen` | ❌ | ~862 px with 2 active items | Currently outside Slice B-FU-IA's compaction scope but flagged for the dedicated Live slice. Header, LiveCommandCard, Up-Next, GrillZones, ActiveItems list, and Adjust-Plan footer all stack vertically with no compaction. |
+
+### Compaction targets (proposed, awaiting direction)
+
+For ⚠ / ❌ screens, the heaviest contributors and proposed strategies:
+
+**Review** (highest priority — `slice-B-fu-ia/1` already addressed timeline rows):
+- *Hero card* (~156 px) — the metric tile row could be reduced from 4-column to a 2-row 2x2 grid only on very narrow viewports; or the optional `zones`/`holds` badges row collapsed when both are absent. ~12–20 px savings possible.
+- *"All phases" outer disclosure* (~80 px collapsed) — could be removed entirely if the inner execution-group rows make it redundant. The data overlaps. Removing saves ~80 px + ~12 px gap.
+- *Zone status + Warnings disclosures* (~80 px × 2 = 160 px) — could be combined into a single "Plan checks" disclosure with two sub-sections, or rendered as two compact rows side-by-side. ~80 px savings.
+- *space-y-3 → space-y-2* between top-level sections — uniform tightening. Saves 5 × 4 = 20 px.
+
+Conservative estimate after these: ~620 px. Still ~50 px over but visibly close.
+
+**Setup**:
+- *ServeStrategyCard* (~110–254 px) — the `startsInPast` amber card is the largest variable contributor. It could be a single-line warning row with an inline CTA chip instead of a full card. ~60–80 px savings when shown.
+- *GrillSetupCard* (~112 px) — currently a 3-zone grid below the strategy. Canvas mockup 10 shows this as a tighter horizontal strip. ~30 px savings possible.
+- *MenuBuilderCard item rows* (~52 px each) — already reasonably tight. Could trim `py-2.5` → `py-2` if needed. ~10 px savings.
+
+Setup also has unique runtime variability (item count); a viewport-fit guarantee for arbitrary item counts is unrealistic. Goal should be: empty/2-item state fits one viewport; longer states scroll gracefully.
+
+**Live**: out of scope for this slice. Defer to a future Live-specific density slice.
+
+### Out of scope for this audit
+
+- Cut Selection (catalog is inherently scrollable; exempt per principle).
+- Onboarding, Saved, CookingWizard (their respective consolidation slices).
+- Token-scale extensions, MetricTile/Badge variants (Slice D).
+- Any color or styling changes — this audit is layout and density only.
+
+---
+
 *This document is a static analysis. Visual verification on real devices (iPhone SE, Pixel 5, iPhone 14 Pro) is required before treating any "looks fine" claim as fact. The next audit (UI-UX-audit02.md) should be done on-device with screenshots attached.*
