@@ -746,17 +746,13 @@ function CookingCutStep({
       <div className="max-w-3xl pl-11 md:pl-0">
         {/* allow-arbitrary: pre-slice-a */}
         <p className="text-[11px] font-black uppercase tracking-[0.22em] text-orange-300/75">
-          {lang === "es" ? "Categoría" : lang === "fi" ? "Kategoria" : "Category"}
+          {lang === "es" ? "Categoría" : "Category"}
         </p>
         <h1 className="mt-2 text-4xl font-black tracking-tight text-white sm:text-5xl">
           {t.chooseCut}
         </h1>
         <p className="mt-2 text-sm font-medium leading-6 text-slate-400 sm:text-base">
-          {lang === "es"
-            ? "Selecciona el corte para ajustar fuego y tiempos."
-            : lang === "fi"
-              ? "Valitse leikkaus, jotta lampo ja ajat saadaan kohdalleen."
-              : "Select the cut to tune heat and timings."}
+          {lang === "es" ? "Selecciona el corte para ajustar fuego y tiempos." : "Select the cut to tune heat and timings."}
         </p>
       </div>
 
@@ -775,7 +771,7 @@ function CookingCutStep({
         <div className="space-y-3 sm:space-y-4">
           {/* allow-arbitrary: pre-slice-a */}
           <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/25">
-            {lang === "es" ? "Todos los cortes" : lang === "fi" ? "Kaikki leikkaukset" : "All cuts"}
+            {lang === "es" ? "Todos los cortes" : "All cuts"}
           </p>
           <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {gridCuts.map((item) => (
@@ -807,10 +803,10 @@ function getDetailsHeroBadge({
   showDoneness: boolean;
   showWeightPreset: boolean;
 }) {
-  if (showWeightPreset) return lang === "es" ? "Corte critico" : lang === "fi" ? "Tarkea leikkaus" : "Critical cut";
-  if (showAdvancedExactThickness) return lang === "es" ? "Control fino" : lang === "fi" ? "Tarkka hallinta" : "Fine control";
-  if (showDoneness) return lang === "es" ? "Alta precision" : lang === "fi" ? "Korkea tarkkuus" : "High precision";
-  return lang === "es" ? "Control fino" : lang === "fi" ? "Tarkka hallinta" : "Fine control";
+  if (showWeightPreset) return lang === "es" ? "Corte critico" : "Critical cut";
+  if (showAdvancedExactThickness) return lang === "es" ? "Control fino" : "Fine control";
+  if (showDoneness) return lang === "es" ? "Alta precision" : "High precision";
+  return lang === "es" ? "Control fino" : "Fine control";
 }
 
 function getCutPositioningLine(style: CookingStyle | undefined, lang: Lang) {
@@ -818,47 +814,38 @@ function getCutPositioningLine(style: CookingStyle | undefined, lang: Lang) {
     fast: {
       es: "Tierno / rapido / sensible al punto",
       en: "Tender / fast / point-sensitive",
-      fi: "Murea / nopea / kypsyysherkka",
     },
     thick: {
       es: "Grueso / controlado / necesita centro estable",
       en: "Thick / controlled / needs a stable center",
-      fi: "Paksu / hallittu / tarvitsee tasaisen keskustan",
     },
     reverse: {
       es: "Grueso / sellado inverso / temperatura primero",
       en: "Thick / reverse sear / temperature first",
-      fi: "Paksu / kaanteinen paisto / lampotila ensin",
     },
     fatcap: {
       es: "Grasa / render lento / costra al final",
       en: "Fat cap / slow render / crust at the end",
-      fi: "Rasvakerros / hidas sulatus / paistopinta lopuksi",
     },
     lowSlow: {
       es: "Lento / tierno / calor estable",
       en: "Slow / tender / stable heat",
-      fi: "Hidas / murea / vakaa lampo",
     },
     crispy: {
       es: "Crujiente / grasa controlada / final fuerte",
       en: "Crispy / controlled fat / strong finish",
-      fi: "Rapea / hallittu rasva / vahva viimeistely",
     },
     poultry: {
       es: "Seguro / jugoso / medir centro",
       en: "Safe / juicy / check the center",
-      fi: "Turvallinen / mehukas / mittaa keskusta",
     },
     fish: {
       es: "Delicado / rapido / no sobrecocinar",
       en: "Delicate / fast / do not overcook",
-      fi: "Herkkä / nopea / ala ylikypsenna",
     },
     vegetable: {
       es: "Vegetal / directo / textura visible",
       en: "Vegetable / direct / visual texture",
-      fi: "Kasvis / suora lampo / nakyva rakenne",
     },
   };
 
@@ -888,7 +875,7 @@ function CookingDetailsHero({
       <CutIdentityHeader
         compact
         title={selectedCut.name}
-        eyebrow={lang === "es" ? "Ajusta detalles" : lang === "fi" ? "Aseta tiedot" : "Adjust details"}
+        eyebrow={lang === "es" ? "Ajusta detalles" : "Adjust details"}
         description={positioningLine}
         iconSrc={cutIconSrc}
         chips={
@@ -1137,14 +1124,14 @@ function CookingDetailsStep({
     showDoneness,
     showWeightPreset,
   });
-  const measurementsTitle = lang === "es" ? "Tamano y peso" : lang === "fi" ? "Koko ja paino" : "Size and weight";
-  const cookingTitle = lang === "es" ? "Punto y equipo" : lang === "fi" ? "Kypsyys ja valine" : "Doneness and gear";
+  const measurementsTitle = lang === "es" ? "Tamano y peso" : "Size and weight";
+  const cookingTitle = lang === "es" ? "Punto y equipo" : "Doneness and gear";
   const localizedDonenessOptions = currentDonenessOptions.map((option) =>
     typeof option === "string"
       ? option
       : {
           ...option,
-          label: lang === "fi" ? getDonenessSurfaceLabel(option.value, lang) : option.label,
+          label: option.label,
         },
   );
   const localizedCookingEquipmentOptions = cookingEquipmentOptions.map((value) => ({
@@ -1436,7 +1423,7 @@ export function ResultCards({
     if (typeof window === "undefined" || !navigator.clipboard) return;
 
     navigator.clipboard.writeText(buildText(blocks));
-    alert(lang === "es" ? "Copiado" : lang === "fi" ? "Kopioitu" : "Copied");
+    alert(lang === "es" ? "Copiado" : "Copied");
   }
 
   function shareWhatsApp() {
@@ -1468,15 +1455,11 @@ export function ResultCards({
         summary={resultSummary}
         t={{
           copy: t.copy,
-          save: lang === "es" ? "Guardar" : lang === "fi" ? "Tallenna" : "Save",
-          saving: lang === "es" ? "Guardando..." : lang === "fi" ? "Tallennetaan..." : "Saving...",
-          share: lang === "es" ? "Compartir" : lang === "fi" ? "Jaa" : "Share",
+          save: lang === "es" ? "Guardar" : "Save",
+          saving: lang === "es" ? "Guardando..." : "Saving...",
+          share: lang === "es" ? "Compartir" : "Share",
           startCooking:
-            lang === "es"
-              ? "Iniciar coccion en vivo"
-              : lang === "fi"
-                ? "Aloita live-kypsennys"
-                : "Start Live Cooking",
+            lang === "es" ? "Iniciar coccion en vivo" : "Start Live Cooking",
         }}
       />
 

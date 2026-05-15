@@ -34,8 +34,13 @@ export function parseLiveParams(search: string) {
   const thicknessValue = thicknessRaw ? Number(thicknessRaw) : undefined;
   const thickness = thicknessValue !== undefined && Number.isFinite(thicknessValue) ? thicknessValue : undefined;
   const langRaw = params.get("lang");
+  // Legacy 'fi' URL state from prior versions: silently fall back to 'en'.
   const lang: Lang | undefined =
-    langRaw === "es" || langRaw === "en" || langRaw === "fi" ? langRaw : undefined;
+    langRaw === "fi"
+      ? "en"
+      : langRaw === "es" || langRaw === "en"
+        ? langRaw
+        : undefined;
 
   return {
     mode: params.get("mode"),

@@ -69,7 +69,7 @@ function getCategoryIcon(animalId: GeneratedAnimalId) {
 
 function getSearchActionLabel(lang: Lang) {
   if (lang === "es") return "Buscar";
-  if (lang === "fi") return "Hae";
+
   return "Search";
 }
 
@@ -642,7 +642,7 @@ function MobileCatalogSheet({
               <div className="min-w-0">
                 {/* allow-arbitrary: pre-slice-a */}
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-300">
-                  {catalogProps.lang === "es" ? "Catálogo completo" : catalogProps.lang === "fi" ? "Koko valikoima" : "Full catalog"}
+                  {catalogProps.lang === "es" ? "Catálogo completo" : "Full catalog"}
                 </p>
                 <h2 id="mobile-cut-catalog-title" className="mt-1 truncate text-xl font-black tracking-tight text-white">
                   {title}

@@ -44,9 +44,6 @@ function getActiveLocaleNames(profile: GeneratedCutProfile, lang: Lang) {
       profile.canonicalNameEn,
     ]);
   }
-  if (lang === "fi") {
-    return toNormalizedUnique([profile.displayNameFi, profile.displayNameEn, profile.canonicalNameEn]);
-  }
   return toNormalizedUnique([profile.displayNameEn, profile.canonicalNameEn]);
 }
 

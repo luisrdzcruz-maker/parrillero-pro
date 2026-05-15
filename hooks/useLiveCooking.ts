@@ -96,11 +96,7 @@ function pickInstructions(step: LiveStep, lang: SurfaceLang) {
   const rawValue =
     step.notes?.trim() ||
     step.label.trim() ||
-    (lang === "es"
-      ? "Manten calor estable y avanza al terminar este paso."
-      : lang === "fi"
-        ? "Pidä lämpö tasaisena ja jatka, kun vaihe on valmis."
-        : "Keep heat stable and move when this step is done.");
+    (lang === "es" ? "Manten calor estable y avanza al terminar este paso." : "Keep heat stable and move when this step is done.");
   return sanitizeLiveInstructionCopy(rawValue, lang);
 }
 

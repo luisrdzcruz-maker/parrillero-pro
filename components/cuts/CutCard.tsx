@@ -23,7 +23,7 @@ type CutCardProps = {
 
 function getDetailsLabel(lang: Lang) {
   if (lang === "es") return "Ver detalles";
-  if (lang === "fi") return "Näytä tiedot";
+
   return "View details";
 }
 
@@ -77,7 +77,7 @@ export function CutCard({ profile, lang, selected = false, onSelect, onViewDetai
         <div className="flex items-center justify-between gap-2">
           {/* allow-arbitrary: pre-slice-a */}
           <span className="text-[10px] font-bold text-zinc-600">
-            {lang === "es" ? "Abrir formulario" : lang === "fi" ? "Avaa lomake" : "Open form"}
+            {lang === "es" ? "Abrir formulario" : "Open form"}
           </span>
           {onViewDetails && (
             <button

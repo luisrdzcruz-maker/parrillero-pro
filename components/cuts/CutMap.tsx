@@ -21,17 +21,13 @@ export function CutMap({ animal, lang, selectedZone, onZoneChange }: CutMapProps
         <div>
           {/* allow-arbitrary: pre-slice-a */}
           <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300">
-            {lang === "es" ? "Filtro por zona" : lang === "fi" ? "Aluesuodatin" : "Zone filter"}
+            {lang === "es" ? "Filtro por zona" : "Zone filter"}
           </p>
           <h2 className="mt-1 text-2xl font-black tracking-tight text-white">
-            {lang === "es" ? "Filtrar por zona" : lang === "fi" ? "Suodata alueen mukaan" : "Filter by area"}
+            {lang === "es" ? "Filtrar por zona" : "Filter by area"}
           </h2>
           <p className="mt-2 max-w-md text-sm leading-6 text-zinc-500">
-            {lang === "es"
-              ? "Elige una categoría de corte para acotar la lista sin cambiar tu ruta de cocción."
-              : lang === "fi"
-                ? "Valitse leikkauskategoria rajataksesi listaa muuttamatta kypsennyspolkua."
-                : "Choose a cut category to narrow the list without changing your cooking path."}
+            {lang === "es" ? "Elige una categoría de corte para acotar la lista sin cambiar tu ruta de cocción." : "Choose a cut category to narrow the list without changing your cooking path."}
           </p>
         </div>
         {selectedZone && (
@@ -41,7 +37,7 @@ export function CutMap({ animal, lang, selectedZone, onZoneChange }: CutMapProps
             /* allow-arbitrary: pre-slice-a */
             className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-zinc-200 transition active:scale-[0.97]"
           >
-            {lang === "es" ? "Limpiar" : lang === "fi" ? "Tyhjennä" : "Clear"}
+            {lang === "es" ? "Limpiar" : "Clear"}
           </button>
         )}
       </div>
@@ -65,7 +61,7 @@ export function CutMap({ animal, lang, selectedZone, onZoneChange }: CutMapProps
               <span className="block text-sm font-black">{getCategoryLabel(zone, lang)}</span>
               {/* allow-arbitrary: pre-slice-a */}
               <span className={`mt-1 block text-[11px] ${isActive ? "text-black/60" : "text-zinc-500"}`}>
-                {lang === "es" ? "Toca para filtrar" : lang === "fi" ? "Napauta suodattaaksesi" : "Tap to filter"}
+                {lang === "es" ? "Toca para filtrar" : "Tap to filter"}
               </span>
             </button>
           );

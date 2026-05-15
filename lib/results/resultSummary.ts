@@ -17,7 +17,7 @@ export type ResultSummary = {
 
 function getLocalizedInternalCopyFallback(lang: ResultLang) {
   if (lang === "es") return "Evita sobrecocinar el centro magro antes de terminar el dorado.";
-  if (lang === "fi") return "Valta ylikypsentamasta vähärasvaista osaa ennen pinnan viimeistelya.";
+
   return "Avoid overcooking the lean center before the crust finishes.";
 }
 

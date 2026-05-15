@@ -33,8 +33,6 @@ function getPrimaryCtaLabel(lang: Lang | undefined, cutName: string) {
   switch (lang) {
     case "es":
       return `Cocinar ${cutName}`;
-    case "fi":
-      return `Kokkaa ${cutName}`;
     case "en":
     default:
       return `Cook ${cutName}`;
@@ -145,9 +143,7 @@ function CutDetailContent({
           helpfulAlias
             ? lang === "es"
               ? `También conocido como ${helpfulAlias}.`
-              : lang === "fi"
-                ? `Tunnetaan myös nimellä ${helpfulAlias}.`
-                : `Also known as ${helpfulAlias}.`
+              : `Also known as ${helpfulAlias}.`
             : getCutDescriptor(profile, lang)
         }
         iconSrc={cutIconSrc}
@@ -167,7 +163,7 @@ function CutDetailContent({
               inline ? "" : "sticky top-0"
             }`}
           >
-            {lang === "es" ? "Cerrar" : lang === "fi" ? "Sulje" : "Close"}
+            {lang === "es" ? "Cerrar" : "Close"}
           </button>
         }
       />
@@ -183,11 +179,11 @@ function CutDetailContent({
 
       <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
         <CutInfoModule
-          title={lang === "es" ? "Por qué elegirlo" : lang === "fi" ? "Miksi valita tämä" : "Why choose it"}
+          title={lang === "es" ? "Por qué elegirlo" : "Why choose it"}
           value={getWhyChooseLabel(profile, lang)}
         />
         <CutInfoModule
-          title={lang === "es" ? "Mejor método" : lang === "fi" ? "Paras menetelmä" : "Best method"}
+          title={lang === "es" ? "Mejor método" : "Best method"}
           value={methodValue}
           icon={
             methodIcon ? (
@@ -203,9 +199,9 @@ function CutDetailContent({
           }
         />
         <CutInfoModule
-          title={lang === "es" ? "Tiempo y dificultad" : lang === "fi" ? "Aika ja vaikeus" : "Time and difficulty"}
+          title={lang === "es" ? "Tiempo y dificultad" : "Time and difficulty"}
           value={`${getEstimatedTimeLabel(profile, lang)} · ${getDifficultyLabel(profile, lang)} · ${
-            lang === "es" ? "reposo" : lang === "fi" ? "lepo" : "rest"
+            lang === "es" ? "reposo" : "rest"
           } ${profile.restingMinutes} min`}
         />
       </div>
@@ -219,9 +215,7 @@ function CutDetailContent({
               alt={
                 lang === "es"
                   ? `Visual de ${displayName}`
-                  : lang === "fi"
-                    ? `${displayName} - kuva`
-                    : `Visual for ${displayName}`
+                  : `Visual for ${displayName}`
               }
               fill
               loading="lazy"
@@ -236,7 +230,7 @@ function CutDetailContent({
 
       <div className="mt-2.5">
         <CutInfoModule
-          title={lang === "es" ? "Nota de seguridad" : lang === "fi" ? "Turvallisuushuomio" : "Safety note"}
+          title={lang === "es" ? "Nota de seguridad" : "Safety note"}
           value={getSafetyNote(profile, lang)}
           tone="warning"
         />

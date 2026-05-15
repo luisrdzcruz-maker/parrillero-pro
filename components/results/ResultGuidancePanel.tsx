@@ -37,18 +37,6 @@ function getCopy(lang: ResultLang) {
       setupKicker: "Fuego",
     };
   }
-
-  if (lang === "fi") {
-    return {
-      avoid: "Valta",
-      close: "Sulje",
-      prep: "Prep",
-      prepNote: "Ei lisaa istunnon aikaan",
-      setup: "Tulisuunnitelma",
-      setupKicker: "Tuli",
-    };
-  }
-
   return {
     avoid: "Avoid",
     close: "Close",

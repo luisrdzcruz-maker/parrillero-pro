@@ -107,59 +107,16 @@ const texts = {
     typeMenu: "Menu",
     typeParrillada: "Parrillada",
   },
-  fi: {
-    eyebrow: "Kirjasto",
-    title: "Tallennetut grillisuunnitelmat",
-    subtitle: "Avaa menut, ostoslistat ja kypsennyssuunnitelmat premium-reseptikirjastona.",
-    back: "Luo suunnitelma",
-    language: "Kieli",
-    menus: "suunnitelmaa",
-    people: "henkilöä",
-    noPeople: "Ei henkilömäärää",
-    savedOn: "Tallennettu",
-    details: "Näytä suunnitelma",
-    hideDetails: "Piilota",
-    delete: "Poista",
-    deleting: "Poistetaan...",
-    publish: "Julkaise",
-    unpublish: "Poista julkaisu",
-    copyLink: "Kopioi linkki",
-    private: "Yksityinen",
-    public: "Julkinen",
-    publishing: "Päivitetään...",
-    copiedShare: "Linkki kopioitu",
-    shareError: "Julkisen linkin päivitys epäonnistui. Yritä uudelleen.",
-    localOnly: "Tallenna pilveen jakaaksesi",
-    emptyTitle: "Sinulla ei ole vielä tallennettuja suunnitelmia",
-    emptyText:
-      "Luo suunnitelma generaattorissa ja tallenna parhaat grillaukset toistamista varten.",
-    createFirst: "Luo ensimmäinen",
-    deleteError: "Menun poistaminen epäonnistui. Yritä uudelleen.",
-    summary: "Yhteenveto",
-    untitled: "Nimetön suunnitelma",
-    unknown: "Ei päivämäärää",
-    search: "Hae nimellä, leikkauksella tai sisällöllä...",
-    noMatchesTitle: "Ei hakua vastaavia suunnitelmia",
-    noMatchesText: "Kokeile toista leikkausta, tuotetta tai tallennettua nimeä.",
-    clearSearch: "Tyhjennä haku",
-    cut: "Leikkaus",
-    products: "Tuotteet",
-    typeCooking: "Kypsennys",
-    typeMenu: "Menu",
-    typeParrillada: "Parrillada",
-  },
 } satisfies Record<Lang, Record<string, string>>;
 
 const localeByLang: Record<Lang, string> = {
   es: "es-ES",
   en: "en-US",
-  fi: "fi-FI",
 };
 
 const langOptions: Array<{ value: Lang; label: string }> = [
   { value: "es", label: "ES" },
   { value: "en", label: "EN" },
-  { value: "fi", label: "FI" },
 ];
 
 export default function SavedMenusClient({ initialMenus }: { initialMenus: SavedMenu[] }) {

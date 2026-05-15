@@ -16,13 +16,6 @@ function isLikelyEnglish(value: string) {
   );
 }
 
-function isLikelySpanish(value: string) {
-  const normalized = normalizeText(value);
-  return /\b(precalienta|parrilla|directo|indirecto|reposo|sellar|lado|paso|configuracion|error|critico|tiempo restante|no presiones)\b/.test(
-    normalized,
-  );
-}
-
 function isLikelyInternalDescriptor(value: string) {
   const normalized = normalizeText(value);
   return (
@@ -35,48 +28,48 @@ function isLikelyInternalDescriptor(value: string) {
 }
 
 const ANIMAL_LABELS: Record<string, Record<SurfaceLang, string>> = {
-  beef: { es: "Vacuno", en: "Beef", fi: "Nauta" },
-  vacuno: { es: "Vacuno", en: "Beef", fi: "Nauta" },
-  nauta: { es: "Vacuno", en: "Beef", fi: "Nauta" },
-  pork: { es: "Cerdo", en: "Pork", fi: "Sika" },
-  cerdo: { es: "Cerdo", en: "Pork", fi: "Sika" },
-  sika: { es: "Cerdo", en: "Pork", fi: "Sika" },
-  chicken: { es: "Pollo", en: "Chicken", fi: "Kana" },
-  pollo: { es: "Pollo", en: "Chicken", fi: "Kana" },
-  kana: { es: "Pollo", en: "Chicken", fi: "Kana" },
-  fish: { es: "Pescado", en: "Fish", fi: "Kala" },
-  pescado: { es: "Pescado", en: "Fish", fi: "Kala" },
-  kala: { es: "Pescado", en: "Fish", fi: "Kala" },
-  vegetables: { es: "Verduras", en: "Vegetables", fi: "Kasvikset" },
-  verduras: { es: "Verduras", en: "Vegetables", fi: "Kasvikset" },
-  kasvikset: { es: "Verduras", en: "Vegetables", fi: "Kasvikset" },
+  beef: { es: "Vacuno", en: "Beef" },
+  vacuno: { es: "Vacuno", en: "Beef" },
+  nauta: { es: "Vacuno", en: "Beef" },
+  pork: { es: "Cerdo", en: "Pork" },
+  cerdo: { es: "Cerdo", en: "Pork" },
+  sika: { es: "Cerdo", en: "Pork" },
+  chicken: { es: "Pollo", en: "Chicken" },
+  pollo: { es: "Pollo", en: "Chicken" },
+  kana: { es: "Pollo", en: "Chicken" },
+  fish: { es: "Pescado", en: "Fish" },
+  pescado: { es: "Pescado", en: "Fish" },
+  kala: { es: "Pescado", en: "Fish" },
+  vegetables: { es: "Verduras", en: "Vegetables" },
+  verduras: { es: "Verduras", en: "Vegetables" },
+  kasvikset: { es: "Verduras", en: "Vegetables" },
 };
 
 const DONENESS_LABELS: Record<string, Record<SurfaceLang, string>> = {
-  rare: { es: "Poco hecho", en: "Rare", fi: "Raaka" },
-  medium_rare: { es: "Al punto menos", en: "Medium rare", fi: "Puoliraaka" },
-  medium: { es: "Al punto", en: "Medium", fi: "Keskikypsa" },
-  medium_well: { es: "Tres cuartos", en: "Medium well", fi: "Melko kypsa" },
-  well_done: { es: "Bien hecho", en: "Well done", fi: "Kypsa" },
-  juicy_safe: { es: "Jugoso seguro", en: "Juicy safe", fi: "Meheva turvallinen" },
-  medium_safe: { es: "Al punto seguro", en: "Medium safe", fi: "Keskikypsa turvallinen" },
-  safe: { es: "Seguro", en: "Safe", fi: "Turvallinen" },
-  juicy: { es: "Jugoso", en: "Juicy", fi: "Meheva" },
+  rare: { es: "Poco hecho", en: "Rare" },
+  medium_rare: { es: "Al punto menos", en: "Medium rare" },
+  medium: { es: "Al punto", en: "Medium" },
+  medium_well: { es: "Tres cuartos", en: "Medium well" },
+  well_done: { es: "Bien hecho", en: "Well done" },
+  juicy_safe: { es: "Jugoso seguro", en: "Juicy safe" },
+  medium_safe: { es: "Al punto seguro", en: "Medium safe" },
+  safe: { es: "Seguro", en: "Safe" },
+  juicy: { es: "Jugoso", en: "Juicy" },
 };
 
 const EQUIPMENT_LABELS: Record<string, Record<SurfaceLang, string>> = {
-  "parrilla gas": { es: "Parrilla de gas", en: "Gas grill", fi: "Kaasugrilli" },
-  "parrilla carbon": { es: "Parrilla de carbon", en: "Charcoal grill", fi: "Hiiligrilli" },
-  kamado: { es: "Kamado", en: "Kamado", fi: "Kamado" },
-  "cocina interior": { es: "Cocina interior", en: "Indoor kitchen", fi: "Sisakeittio" },
+  "parrilla gas": { es: "Parrilla de gas", en: "Gas grill" },
+  "parrilla carbon": { es: "Parrilla de carbon", en: "Charcoal grill" },
+  kamado: { es: "Kamado", en: "Kamado" },
+  "cocina interior": { es: "Cocina interior", en: "Indoor kitchen" },
 };
 
 const METHOD_LABELS: Record<string, Record<SurfaceLang, string>> = {
-  grill_direct: { es: "Parrilla directa", en: "Direct grill", fi: "Suora grillaus" },
-  grill_indirect: { es: "Parrilla indirecta", en: "Indirect grill", fi: "Epasuora grillaus" },
-  reverse_sear: { es: "Sellado inverso", en: "Reverse sear", fi: "Kaanteinen ruskistus" },
-  oven_pan: { es: "Sarten u horno", en: "Pan or oven", fi: "Pannu tai uuni" },
-  vegetables_grill: { es: "Verduras a la parrilla", en: "Grilled vegetables", fi: "Grillatut kasvikset" },
+  grill_direct: { es: "Parrilla directa", en: "Direct grill" },
+  grill_indirect: { es: "Parrilla indirecta", en: "Indirect grill" },
+  reverse_sear: { es: "Sellado inverso", en: "Reverse sear" },
+  oven_pan: { es: "Sarten u horno", en: "Pan or oven" },
+  vegetables_grill: { es: "Verduras a la parrilla", en: "Grilled vegetables" },
 };
 
 function resolveLookupKey(value: string) {
@@ -112,14 +105,6 @@ export function getDetailsSetupLabels(lang: SurfaceLang) {
       title: "Ajusta los detalles",
     };
   }
-
-  if (lang === "fi") {
-    return {
-      section: "Asetukset",
-      title: "Tarkenna tiedot",
-    };
-  }
-
   return {
     section: "Cooking setup",
     title: "Adjust details",
@@ -140,46 +125,37 @@ function extractEquipmentNameFromSetup(value: string) {
 
 export function sanitizeSetupSummaryCopy(value: string, lang: SurfaceLang, equipment?: string) {
   if (lang === "en") return value;
-  if (!isLikelyEnglish(value) && !(lang === "fi" && isLikelySpanish(value))) return value;
+  if (!isLikelyEnglish(value)) return value;
 
   const resolvedEquipment = equipment?.trim() || extractEquipmentNameFromSetup(value);
-  if (lang === "es") {
-    return resolvedEquipment
-      ? `Calor directo controlado. Usa ${resolvedEquipment}.`
-      : "Calor controlado con zonas directa e indirecta.";
-  }
-
   return resolvedEquipment
-    ? `Hallittu suora lampo. Kayta valinetta: ${resolvedEquipment}.`
-    : "Hallittu lampo suoralla ja epasuoralla alueella.";
+    ? `Calor directo controlado. Usa ${resolvedEquipment}.`
+    : "Calor controlado con zonas directa e indirecta.";
 }
 
 export function localizeLiveStepEntry(entry: string, lang: SurfaceLang) {
   if (lang === "en") return entry;
 
   const normalized = normalizeText(entry);
-  if (!isLikelyEnglish(entry) && !(lang === "fi" && isLikelySpanish(entry))) return entry;
+  if (!isLikelyEnglish(entry)) return entry;
 
   if (normalized.includes("preheat grill") || normalized.includes("precalienta parrilla")) {
-    return lang === "es"
-      ? "Precalentar parrilla: prepara zona directa y zona de seguridad."
-      : "Esilamita grilli: rakenna suora alue ja viileampi varavyohyke.";
+    return "Precalentar parrilla: prepara zona directa y zona de seguridad.";
   }
 
   if (/\bsear\s+side\s*1\b/.test(normalized) || /\bsellar?\s+lado\s*1\b/.test(normalized)) {
-    return lang === "es" ? "Sellar lado 1: marca costra sin mover la pieza." : "Ruskista puoli 1: tee paistopinta liikuttamatta lihaa.";
+    return "Sellar lado 1: marca costra sin mover la pieza.";
   }
 
   if (/\bsear\s+side\s*2\b/.test(normalized) || /\bsellar?\s+lado\s*2\b/.test(normalized)) {
-    return lang === "es" ? "Sellar lado 2: iguala color y termina la costra." : "Ruskista puoli 2: tasaa vari ja viimeistele paistopinta.";
+    return "Sellar lado 2: iguala color y termina la costra.";
   }
 
   if (normalized.includes("mark step done")) {
-    return lang === "es" ? "Marca el paso como completado." : "Merkitse vaihe valmiiksi.";
+    return "Marca el paso como completado.";
   }
 
-  if (lang === "es") return "Sigue este paso con calor controlado y verifica el punto antes de avanzar.";
-  return "Jatka hallitulla lampotilalla ja varmista kypsyys ennen seuraavaa vaihetta.";
+  return "Sigue este paso con calor controlado y verifica el punto antes de avanzar.";
 }
 
 export function localizeLiveStepName(name: string, lang: SurfaceLang) {
@@ -187,25 +163,25 @@ export function localizeLiveStepName(name: string, lang: SurfaceLang) {
   const normalized = normalizeText(name);
 
   if (normalized.includes("preheat grill") || normalized.includes("precalienta parrilla")) {
-    return lang === "es" ? "Precalentar parrilla" : "Esilamita grilli";
+    return "Precalentar parrilla";
   }
   if (/\bsear\s+side\s*1\b/.test(normalized) || /\bsellar?\s+lado\s*1\b/.test(normalized)) {
-    return lang === "es" ? "Sellar lado 1" : "Ruskista puoli 1";
+    return "Sellar lado 1";
   }
   if (/\bsear\s+side\s*2\b/.test(normalized) || /\bsellar?\s+lado\s*2\b/.test(normalized)) {
-    return lang === "es" ? "Sellar lado 2" : "Ruskista puoli 2";
+    return "Sellar lado 2";
   }
   if (normalized.includes("rest") || normalized.includes("repos")) {
-    return lang === "es" ? "Reposar" : "Lepuuta";
+    return "Reposar";
   }
-  if (!isLikelyEnglish(name) && !(lang === "fi" && isLikelySpanish(name))) return name;
-  return lang === "es" ? "Paso de coccion" : "Kypsennysvaihe";
+  if (!isLikelyEnglish(name)) return name;
+  return "Paso de coccion";
 }
 
 export function sanitizeLiveInstructionCopy(value: string, lang: SurfaceLang) {
   if (lang === "en") return value;
   const normalized = normalizeText(value);
-  if (!isLikelyEnglish(value) && !(lang === "fi" && isLikelySpanish(value)) && !isLikelyInternalDescriptor(value)) {
+  if (!isLikelyEnglish(value) && !isLikelyInternalDescriptor(value)) {
     return value;
   }
 
@@ -390,76 +366,6 @@ export function getLiveText(lang: SurfaceLang) {
       noTimer: "Manual",
     };
   }
-
-  if (lang === "fi") {
-    return {
-      plan: "Suunnitelma",
-      noStepsTitle: "Aktiivista suunnitelmaa ei loytynyt",
-      noStepsBody: "Aktiivista live-suunnitelmaa ei loytynyt. Luo uusi suunnitelma ennen aloittamista.",
-      backToPlan: "Luo suunnitelma",
-      upNext: "Seuraavaksi",
-      done: "Valmis",
-      timeRemaining: "Aikaa jaljella",
-      stepDuration: "Vaiheen kesto",
-      manualStep: "Manuaalinen vaihe",
-      followAction: "Seuraa toimintoa",
-      advanceWhenDone: "Jatka, kun tama vaihe on valmis.",
-      cookingComplete: "Kypsennys valmis",
-      cookingCompleteBody: "Leikkaa, tarjoile ja nauti.",
-      saveCook: "Tallenna tama kypsennys",
-      savedCook: "Tallennettu",
-      reset: "Nollaa",
-      leaveConfirm: "Kypsennys on kaynnissa. Poistutaanko?",
-      currentStep: "Nykyinen vaihe",
-      step: "Vaihe",
-      of: "/",
-      alerts: "Halytykset",
-      live: "Live",
-      progressAria: "Vaiheiden eteneminen",
-      goToStep: "Siirry vaiheeseen",
-      nextAction: "Seuraava toiminto",
-      checkBeforeNext: "Tarkista ennen jatkamista",
-      targetTemp: "Tavoite",
-      pauseTimer: "Tauko",
-      resumeTimer: "Jatka",
-      startCooking: "Aloita kypsennys",
-      cookingCompleteCta: "Kypsennys valmis",
-      nextStep: "Seuraava vaihe",
-      flipNow: "Kaanna nyt",
-      restNow: "Siirry lepuutukseen",
-      markDone: "Merkitse vaihe valmiiksi",
-      moveIndirect: "Siirra epasuoralle",
-      moveDirect: "Siirra suoralle",
-      feedbackRestStarted: "Lepuutus alkaa.",
-      feedbackGoodTiming: "Hyva ajoitus.",
-      feedbackPerfectSear: "Paistopinta onnistui.",
-      feedbackKeepHeat: "Pidetaan lampo tasaisena.",
-      zoneDirect: "Suora",
-      zoneIndirect: "Epasuora",
-      zoneRest: "Lepuutus",
-      actionGuide: "Toiminto-ohje",
-      actionPreheat: "Valmistele lampo",
-      actionSear: "Ruskista liikuttamatta",
-      actionFlip: "Kaanna",
-      actionMove: "Siirra alueelle",
-      actionRest: "Lepuuta pois lammolta",
-      actionServe: "Leikkaa ja tarjoile",
-      actionManual: "Manuaalinen toiminto",
-      actionHintPreheat: "Varmista grilli ennen kuin asetat raaka-aineen.",
-      actionHintSear: "Pidä kontakti kuumaan alueeseen, kunnes pinta muodostuu.",
-      actionHintFlip: "Kaanna kerran, ala paina, ja anna lammon tehda tyo.",
-      actionHintMove: "Siirra merkittyyn alueeseen kypsyyden hallitsemiseksi.",
-      actionHintRest: "Odota ennen leikkaamista, jotta nesteet tasaantuvat.",
-      actionHintServe: "Leikkaa rauhassa ja tarjoile lepuutuksen jalkeen.",
-      actionHintManual: "Tee tama toiminto ja jatka, kun se on valmis.",
-      zoneLabel: "Alue",
-      remainingShort: "Jaljella",
-      durationShort: "Kesto",
-      targetShort: "Tavoite",
-      noTimer: "Manuaali",
-    };
-  }
-
   return {
     plan: "Plan",
     noStepsTitle: "No active cooking plan found",

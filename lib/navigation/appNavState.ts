@@ -57,7 +57,9 @@ const animalLabelsById: Record<string, AnimalLabel> = Object.fromEntries(
 ) as Record<string, AnimalLabel>;
 
 function parseLangParam(value: string | null | undefined): Lang | null {
-  if (value === "en" || value === "fi" || value === "es") return value;
+  // Legacy 'fi' URL state from prior versions: silently fall back to 'en'.
+  if (value === "fi") return "en";
+  if (value === "en" || value === "es") return value;
   return null;
 }
 

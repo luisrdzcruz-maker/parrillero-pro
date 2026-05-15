@@ -41,10 +41,6 @@ const URL_FIXTURES: Array<{ name: string; params: LiveParams }> = [
     params: { animal: "fish", cutId: "salmon", doneness: "medium", thickness: 2.5, lang: "en" },
   },
   {
-    name: "chicken-breast / safe / fi",
-    params: { animal: "chicken", cutId: "chicken-breast", doneness: "safe", thickness: 4, lang: "fi" },
-  },
-  {
     name: "vegetables / juicy / no thickness",
     params: { animal: "vegetables", cutId: "asparagus", doneness: "juicy" },
   },
