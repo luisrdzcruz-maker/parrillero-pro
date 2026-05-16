@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { ds } from "@/lib/design-system";
 
 export type CompactDisclosureProps = {
   /** Eyebrow / label above the summary line. In compact mode, rendered inline before summary. */
@@ -85,25 +86,23 @@ export function CompactDisclosure({
 
   return (
     <div
-      /* allow-arbitrary: pre-slice-a */
+      /* allow-arbitrary: rounded-[1.15rem] — disclosure card radius, no canonical ds.radius.* tier */
       className={`rounded-[1.15rem] border border-orange-200/15 bg-slate-950/35 px-3.5 py-3 ring-1 ring-inset ring-white/5${
         className ? ` ${className}` : ""
       }`}
     >
-      {/* allow-arbitrary: pre-slice-a */}
-      <p className="text-[9px] font-black uppercase tracking-[0.16em] text-orange-100/55 sm:text-[10px]">
+      {/* allow-arbitrary: sm:text-[10px] — breakpoint-prefixed text size, ds.text.body{N} lacks breakpoint variants (deferred to PR D-primitives/B) */}
+      <p className={`${ds.text.body9} font-black uppercase tracking-[0.16em] text-orange-100/55 sm:text-[10px]`}>
         {label}
       </p>
-      {/* allow-arbitrary: pre-slice-a */}
-      <p className="mt-1 text-[13px] leading-snug text-white/90 sm:text-sm">{summary}</p>
+      <p className={`mt-1 ${ds.text.body13} leading-snug ${ds.color.mutedClass.strong} sm:text-sm`}>{summary}</p>
       {children ? (
         <>
           <button
             type="button"
             onClick={() => setOpen((current) => !current)}
             aria-expanded={open}
-            /* allow-arbitrary: pre-slice-a */
-            className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-orange-200/80 transition hover:text-orange-100"
+            className={`mt-2 inline-flex items-center gap-1 ${ds.text.body11} font-semibold uppercase tracking-[0.12em] text-orange-200/80 transition hover:text-orange-100`}
           >
             {open ? hideLabel : showLabel}
             <span aria-hidden="true" className={`transition-transform ${open ? "rotate-180" : ""}`}>
