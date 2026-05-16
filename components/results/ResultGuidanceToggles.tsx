@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { AppIcon } from "@/components/ui";
 import { resolveMethodIconKey } from "@/lib/assets/equipmentMethodIconResolver";
+import { ds } from "@/lib/design-system";
 import {
   SETUP_VISUAL_FALLBACK,
   type SetupType,
@@ -99,11 +100,11 @@ function toneClass(tone: GuidanceItem["tone"], active: boolean) {
 }
 
 function dotClass(tone: GuidanceItem["tone"]) {
-  /* allow-arbitrary: pre-slice-a */
+  /* allow-arbitrary: shadow-[...] tone-colored dot glow — no canonical ds.shadow.* tier */
   if (tone === "avoid") return "bg-red-300 shadow-[0_0_12px_rgba(252,165,165,0.42)]";
-  /* allow-arbitrary: pre-slice-a */
+  /* allow-arbitrary: shadow-[...] tone-colored dot glow — no canonical ds.shadow.* tier */
   if (tone === "prep") return "bg-amber-300 shadow-[0_0_12px_rgba(252,211,77,0.36)]";
-  /* allow-arbitrary: pre-slice-a */
+  /* allow-arbitrary: shadow-[...] tone-colored dot glow — no canonical ds.shadow.* tier */
   return "bg-orange-300 shadow-[0_0_12px_rgba(251,146,60,0.4)]";
 }
 
@@ -137,7 +138,7 @@ function SetupPanel({
 
   return (
     <div className="grid gap-3 sm:grid-cols-[220px_minmax(0,1fr)] sm:items-stretch">
-      {/* allow-arbitrary: pre-slice-a */}
+      {/* allow-arbitrary: rounded-[1.1rem] — compact setup-visual frame radius, no canonical ds.radius.* tier */}
       <div className="relative h-32 overflow-hidden rounded-[1.1rem] border border-orange-200/15 bg-slate-950 sm:h-40">
         <Image
           src={imageSrc}
@@ -159,8 +160,7 @@ function SetupPanel({
             return (
               <span
                 key={`${chip.tone}-${chip.label}`}
-                /* allow-arbitrary: pre-slice-a */
-                className={`${getSetupOverlayChipClass(chip.tone)} inline-flex items-center gap-1 px-2 py-1 text-[10px]`}
+                className={`${getSetupOverlayChipClass(chip.tone)} inline-flex items-center gap-1 px-2 py-1 ${ds.text.body10}`}
               >
                 {chipIcon ? (
                   <AppIcon
@@ -180,8 +180,7 @@ function SetupPanel({
       </div>
 
       <div className="rounded-2xl border border-orange-300/15 bg-orange-500/[0.055] p-3">
-        {/* allow-arbitrary: pre-slice-a */}
-        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-orange-300/85">
+        <p className={`${ds.text.body10} font-black uppercase tracking-[0.16em] text-orange-300/85`}>
           {setupVisual.setupVisualLabel}
         </p>
         <p className="mt-1 text-sm font-semibold leading-relaxed text-slate-100">
@@ -255,12 +254,10 @@ export default function ResultGuidanceToggles({
               <span className="flex min-w-0 items-center gap-2">
                 <span className={`h-2 w-2 shrink-0 rounded-full ${dotClass(item.tone)}`} />
                 <span className="min-w-0">
-                  {/* allow-arbitrary: pre-slice-a */}
-                  <span className="block truncate text-[9px] font-black uppercase tracking-[0.16em] text-current/60">
+                  <span className={`block truncate ${ds.text.body9} font-black uppercase tracking-[0.16em] text-current/60`}>
                     {item.kicker}
                   </span>
-                  {/* allow-arbitrary: pre-slice-a */}
-                  <span className="mt-0.5 block truncate text-[13px] font-black leading-tight text-white">
+                  <span className={`mt-0.5 block truncate ${ds.text.body13} font-black leading-tight text-white`}>
                     {item.label}
                   </span>
                 </span>
@@ -272,12 +269,11 @@ export default function ResultGuidanceToggles({
 
       {activeItem ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-16 backdrop-blur-sm sm:items-center sm:p-6">
-          {/* allow-arbitrary: pre-slice-a */}
+          {/* allow-arbitrary: rounded-[1.65rem] — guidance modal radius, no canonical ds.radius.* tier */}
           <div className="w-full max-w-2xl overflow-hidden rounded-[1.65rem] border border-white/10 bg-slate-950 shadow-2xl shadow-black/45 ring-1 ring-inset ring-white/[0.05]">
             <div className="flex items-center justify-between gap-3 border-b border-white/8 px-4 py-3">
               <div className="min-w-0">
-                {/* allow-arbitrary: pre-slice-a */}
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-300/75">
+                <p className={`${ds.text.body10} font-black uppercase tracking-[0.18em] text-orange-300/75`}>
                   {activeItem.kicker}
                 </p>
                 <h3 className="mt-0.5 truncate text-lg font-black tracking-tight text-white">
@@ -287,7 +283,7 @@ export default function ResultGuidanceToggles({
               <button
                 type="button"
                 onClick={() => setActiveKey(null)}
-                /* allow-arbitrary: pre-slice-a */
+                /* allow-arbitrary: bg-white/[0.06] — non-subpanel close-button surface, no canonical token */
                 className="shrink-0 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs font-black text-slate-200 transition hover:bg-white/[0.1] active:scale-[0.98]"
               >
                 {copy.close}
@@ -313,8 +309,7 @@ export default function ResultGuidanceToggles({
                 <div className="rounded-2xl border border-amber-300/20 bg-amber-500/[0.07] px-3 py-2.5">
                   <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span className={`h-1.5 w-1.5 rounded-full ${dotClass("prep")}`} />
-                    {/* allow-arbitrary: pre-slice-a */}
-                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-amber-200/90">
+                    <p className={`${ds.text.body10} font-black uppercase tracking-[0.16em] text-amber-200/90`}>
                       {copy.prepNote}
                     </p>
                   </div>
