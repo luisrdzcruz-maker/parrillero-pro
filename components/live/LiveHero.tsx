@@ -77,35 +77,37 @@ export default function LiveHero({
         </div>
       )}
 
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <p className={`${ds.text.body9} font-black uppercase tracking-[0.22em] ${ds.color.mutedClass.secondary}`}>
-            {text.nowEyebrow}
-          </p>
-          {/* allow-arbitrary: text-[clamp(...)] display-tier action label — stays inline per slice-d-tokens.md §1 */}
-          <h1 className="mt-1 overflow-hidden text-[clamp(1.5rem,6.5vw,2rem)] font-black leading-[1.02] tracking-[-0.035em] text-white [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">
-            {actionLabel}
-          </h1>
-        </div>
-        {hasTimer && (
-          <p
-            /* allow-arbitrary: text-[clamp(2.75rem,12vw,3.5rem)] hero countdown — sized for grill-distance readability per /8 spec, no canonical ds.text.* tier */
-            className={`shrink-0 font-mono font-black leading-none tabular-nums tracking-[-0.07em] text-[clamp(2.75rem,12vw,3.5rem)] ${COUNTDOWN_COLOR[phase]}`}
-          >
-            {formatCountdown(currentStep.remainingTime)}
-          </p>
-        )}
-        {!hasTimer && (
-          /* allow-arbitrary: bg-white/[0.05] — non-subpanel manual-step chip surface, no canonical token */
-          <p className={`shrink-0 rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 ${ds.text.body10} font-black ${ds.color.mutedClass.secondary}`}>
+      {/* Action label — the screen's headline. The entire screen IS the current
+          step, so no "AHORA" eyebrow is needed to disambiguate. */}
+      <h1
+        /* allow-arbitrary: text-[clamp(...)] display-tier action label — stays inline per slice-d-tokens.md §1 */
+        className="overflow-hidden text-[clamp(1.5rem,6.5vw,2rem)] font-black leading-[1.02] tracking-[-0.035em] text-white [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]"
+      >
+        {actionLabel}
+      </h1>
+
+      {/* Countdown — the screen's visual hero. Its own line, hero-size, centered,
+          display-only (not tappable; Pause lives in the sticky footer). */}
+      {hasTimer && (
+        <p
+          /* allow-arbitrary: text-[clamp(4rem,18vw,5rem)] hero countdown — 64-80px range for grill-distance readability, no canonical ds.text.* tier */
+          className={`mt-3 text-center font-mono font-black leading-none tabular-nums tracking-[-0.07em] text-[clamp(4rem,18vw,5rem)] ${COUNTDOWN_COLOR[phase]}`}
+        >
+          {formatCountdown(currentStep.remainingTime)}
+        </p>
+      )}
+      {!hasTimer && (
+        <p className="mt-3 text-center">
+          {/* allow-arbitrary: bg-white/[0.05] — non-subpanel manual-step chip surface, no canonical token */}
+          <span className={`inline-flex rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 ${ds.text.body10} font-black ${ds.color.mutedClass.secondary}`}>
             {text.noTimer}
-          </p>
-        )}
-      </div>
+          </span>
+        </p>
+      )}
 
       <p
         /* allow-arbitrary: text-[clamp(...)] responsive instructions — stays inline per slice-d-tokens.md §1 */
-        className={`mt-3 overflow-hidden whitespace-pre-line text-[clamp(0.9rem,3.6vw,1.05rem)] font-semibold leading-snug ${ds.color.mutedClass.body} [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]`}
+        className={`mt-4 overflow-hidden whitespace-pre-line text-[clamp(0.9rem,3.6vw,1.05rem)] font-semibold leading-snug ${ds.color.mutedClass.body} [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]`}
       >
         {currentStep.instructions}
       </p>
