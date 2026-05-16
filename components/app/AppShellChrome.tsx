@@ -18,6 +18,13 @@ type AppShellChromeProps = {
   onCloseProModal: () => void;
   isCutSelectionShell: boolean;
   isCutSelectionSheetOpen: boolean;
+  /**
+   * When true, drop the home-only ember radial gradient. Set on operational
+   * screens (cocción / cocina / parrillada / guardados / cuts) so the
+   * gradient is reserved for the landing/inicio surface where it earns its
+   * cost. The bottom fade stays on every screen.
+   */
+  flattenBg?: boolean;
   onTouchStart: (event: TouchEvent<HTMLElement>) => void;
   onTouchEnd: (event: TouchEvent<HTMLElement>) => void;
   onModeChange: (mode: Mode) => void;
@@ -32,11 +39,15 @@ export function AppShellChrome({
   onCloseProModal,
   isCutSelectionShell,
   isCutSelectionSheetOpen,
+  flattenBg = false,
   onTouchStart,
   onTouchEnd,
   onModeChange,
   children,
 }: AppShellChromeProps) {
+  const heroGradient = flattenBg
+    ? ""
+    : "before:pointer-events-none before:fixed before:inset-x-0 before:top-0 before:z-0 before:h-[28rem] before:bg-[radial-gradient(ellipse_at_50%_-10%,rgba(249,115,22,0.16),transparent_55%)]";
   return (
     <>
     {showProModal && (
@@ -48,7 +59,7 @@ export function AppShellChrome({
       />
     )}
     <main
-      className={`${ds.shell.page} relative isolate mx-auto flex min-w-0 w-full max-w-none flex-col px-3 pt-2 before:pointer-events-none before:fixed before:inset-x-0 before:top-0 before:z-0 before:h-[28rem] before:bg-[radial-gradient(ellipse_at_50%_-10%,rgba(249,115,22,0.16),transparent_55%)] after:pointer-events-none after:fixed after:inset-x-0 after:bottom-0 after:z-0 after:h-40 after:bg-gradient-to-t after:from-[#030201] after:via-[#030201]/82 after:to-transparent sm:px-4 sm:pt-5 lg:px-8 lg:pb-10 lg:pt-6 ${
+      className={`${ds.shell.page} relative isolate mx-auto flex min-w-0 w-full max-w-none flex-col px-3 pt-2 ${heroGradient} after:pointer-events-none after:fixed after:inset-x-0 after:bottom-0 after:z-0 after:h-40 after:bg-gradient-to-t after:from-[#030201] after:via-[#030201]/82 after:to-transparent sm:px-4 sm:pt-5 lg:px-8 lg:pb-10 lg:pt-6 ${
         isCutSelectionShell
           ? "box-border h-[100dvh] min-h-0 overflow-y-hidden pb-[calc(6.5rem+env(safe-area-inset-bottom))] lg:h-auto lg:min-h-screen lg:overflow-y-visible"
           : "pb-[calc(7.5rem+env(safe-area-inset-bottom))]"

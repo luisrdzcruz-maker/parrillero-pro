@@ -934,6 +934,7 @@ function ParrilleroAppContent() {
       onCloseProModal={closeProModal}
       isCutSelectionShell={isCutSelectionShell}
       isCutSelectionSheetOpen={isCutSelectionSheetOpen}
+      flattenBg={mode !== "inicio"}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onModeChange={handleModeChange}
