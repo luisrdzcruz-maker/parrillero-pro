@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { BrandImageIcon } from "@/components/ui/BrandImageIcon";
+import { ds } from "@/lib/design-system";
 
 type CutIconSlotProps = {
   src?: string | null;
@@ -36,7 +37,7 @@ export function CutIconSlot({ src, alt, size = "md", className = "" }: CutIconSl
       shape="soft"
       className={className}
       fallback={
-        /* allow-arbitrary: pre-slice-a */
+        /* allow-arbitrary: shadow-[0_0_14px_...] ember-dot glow on fallback — no canonical ds.shadow.* tier */
         <span aria-hidden="true" className="h-2.5 w-2.5 rounded-full bg-orange-300 shadow-[0_0_14px_rgba(251,146,60,0.32)]" />
       }
     />
@@ -48,10 +49,9 @@ export function CutMetaChip({ children, tone = "default" }: { children: ReactNod
     <span
       className={
         tone === "accent"
-          /* allow-arbitrary: pre-slice-a */
-          ? "inline-flex items-center rounded-full border border-orange-300/25 bg-orange-500/12 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-orange-200"
-          /* allow-arbitrary: pre-slice-a */
-          : "inline-flex items-center rounded-full border border-white/10 bg-white/[0.045] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.13em] text-zinc-400"
+          ? `inline-flex items-center rounded-full border border-orange-300/25 bg-orange-500/12 px-2.5 py-1 ${ds.text.body10} font-black uppercase tracking-[0.14em] text-orange-200`
+          /* allow-arbitrary: bg-white/[0.045] — non-subpanel default chip surface, no canonical token */
+          : `inline-flex items-center rounded-full border border-white/10 bg-white/[0.045] px-2.5 py-1 ${ds.text.body10} font-bold uppercase tracking-[0.13em] text-zinc-400`
       }
     >
       {children}
@@ -81,7 +81,7 @@ export function CutIdentityHeader({
   return (
     <div
       className={[
-        /* allow-arbitrary: pre-slice-a */
+        /* allow-arbitrary: rounded-[1.45rem] + bg-[radial-gradient(...)] + shadow-[0_16px_48px_...] — cut identity header chassis, no canonical token */
         "relative overflow-hidden rounded-[1.45rem] border border-white/10 bg-[radial-gradient(circle_at_15%_0%,rgba(249,115,22,0.14),transparent_34%),linear-gradient(145deg,rgba(12,10,9,0.98),rgba(2,6,23,0.96))] shadow-[0_16px_48px_rgba(0,0,0,0.30)] ring-1 ring-inset ring-white/[0.035]",
         compact ? "p-3 sm:p-4" : "p-4 sm:p-5",
       ].join(" ")}
@@ -90,8 +90,7 @@ export function CutIdentityHeader({
         <div className="flex min-w-0 items-start gap-3">
           <CutIconSlot src={iconSrc} alt="" size={compact ? "md" : "lg"} className={compact ? "mt-0.5" : ""} />
           <div className="min-w-0">
-            {/* allow-arbitrary: pre-slice-a */}
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-300/80">{eyebrow}</p>
+            <p className={`${ds.text.body10} font-black uppercase tracking-[0.2em] text-orange-300/80`}>{eyebrow}</p>
             <h2
               className={
                 compact
@@ -127,16 +126,15 @@ export function CutInfoModule({
   return (
     <div
       className={[
-        /* allow-arbitrary: pre-slice-a */
+        /* allow-arbitrary: rounded-[1.1rem] — cut info module radius, no canonical ds.radius.* tier */
         "flex min-w-0 gap-3 rounded-[1.1rem] border p-3",
-        /* allow-arbitrary: pre-slice-a */
+        /* allow-arbitrary: bg-white/[0.035] — non-subpanel default info-module surface, no canonical token */
         tone === "warning" ? "border-red-300/18 bg-red-500/8" : "border-white/10 bg-white/[0.035]",
       ].join(" ")}
     >
       {icon ? <span className="mt-0.5 inline-flex shrink-0 text-orange-200">{icon}</span> : null}
       <div className="min-w-0">
-        {/* allow-arbitrary: pre-slice-a */}
-        <p className={tone === "warning" ? "text-[10px] font-black uppercase tracking-[0.16em] text-red-200" : "text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500"}>
+        <p className={tone === "warning" ? `${ds.text.body10} font-black uppercase tracking-[0.16em] text-red-200` : `${ds.text.body10} font-black uppercase tracking-[0.16em] text-zinc-500`}>
           {title}
         </p>
         <p className="mt-1 line-clamp-2 text-sm font-semibold leading-5 text-zinc-100">{value}</p>
