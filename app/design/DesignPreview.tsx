@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { ds } from "@/lib/design-system";
 import type { DesignVariant } from "./designVariants";
 
 type PreviewStyle = CSSProperties & {
@@ -29,8 +30,7 @@ function getPreviewStyle(variant: DesignVariant): PreviewStyle {
 
 function InternalLabel() {
   return (
-    /* allow-arbitrary: pre-slice-a */
-    <div className="inline-flex rounded-full border border-[var(--preview-border)] bg-[var(--preview-accent-soft)] px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-[var(--preview-accent)]">
+    <div className={`inline-flex rounded-full border border-[var(--preview-border)] bg-[var(--preview-accent-soft)] px-3 py-1 ${ds.text.body10} font-black uppercase tracking-[0.24em] text-[var(--preview-accent)]`}>
       Internal Design Preview
     </div>
   );
@@ -38,7 +38,7 @@ function InternalLabel() {
 
 function Hero({ variant }: { variant: DesignVariant }) {
   return (
-    /* allow-arbitrary: pre-slice-a */
+    /* allow-arbitrary: rounded-[2rem] + shadow-[...var(--preview-glow)] — theme-preview hero chassis, no canonical token */
     <section className="relative overflow-hidden rounded-[2rem] border border-[var(--preview-border)] bg-[var(--preview-panel)] shadow-[0_24px_80px_var(--preview-glow)]">
       <div
         className="absolute inset-0 bg-cover bg-center opacity-70"
@@ -79,7 +79,7 @@ function ModeCards() {
       {cards.map(([title, description], index) => (
         <div
           key={title}
-          /* allow-arbitrary: pre-slice-a */
+          /* allow-arbitrary: rounded-[1.5rem] + shadow-[0_18px_50px_...] — theme-preview mode card, no canonical token */
           className="rounded-[1.5rem] border border-[var(--preview-border)] bg-[var(--preview-panel)] p-4 shadow-[0_18px_50px_rgba(0,0,0,0.22)]"
         >
           <div className="flex items-center justify-between gap-3">
@@ -100,7 +100,7 @@ function ModeCards() {
 
 function CookingWizardPreview() {
   return (
-    /* allow-arbitrary: pre-slice-a */
+    /* allow-arbitrary: rounded-[2rem] — theme-preview wizard section, no canonical ds.radius.* tier */
     <section className="rounded-[2rem] border border-[var(--preview-border)] bg-[var(--preview-panel)] p-4">
       <div className="flex items-center justify-between">
         <div>
@@ -129,7 +129,7 @@ function CookingWizardPreview() {
         ))}
       </div>
 
-      {/* allow-arbitrary: pre-slice-a */}
+      {/* allow-arbitrary: rounded-[1.5rem] — theme-preview wizard inner panel, no canonical ds.radius.* tier */}
       <div className="mt-4 rounded-[1.5rem] border border-[var(--preview-border)] bg-[var(--preview-panel-strong)] p-4">
         <p className="text-sm text-[var(--preview-muted)]">Grosor: 6 cm · Punto: medium rare</p>
         <div className="mt-3 h-2 overflow-hidden rounded-full bg-black/30">
@@ -142,7 +142,7 @@ function CookingWizardPreview() {
 
 function ResultCardPreview({ variant }: { variant: DesignVariant }) {
   return (
-    /* allow-arbitrary: pre-slice-a */
+    /* allow-arbitrary: rounded-[2rem] — theme-preview result card chassis, no canonical ds.radius.* tier */
     <section className="overflow-hidden rounded-[2rem] border border-[var(--preview-border)] bg-[var(--preview-panel)]">
       <div className="relative h-36">
         <div
@@ -176,7 +176,7 @@ function ResultCardPreview({ variant }: { variant: DesignVariant }) {
 
 function BottomNavPreview() {
   return (
-    /* allow-arbitrary: pre-slice-a */
+    /* allow-arbitrary: rounded-[1.75rem] — theme-preview bottom-nav strip, no canonical ds.radius.* tier */
     <nav className="grid grid-cols-4 gap-2 rounded-[1.75rem] border border-[var(--preview-border)] bg-[var(--preview-panel-strong)] p-2">
       {["Inicio", "Cocción", "Live", "Guardados"].map((item, index) => (
         <div
@@ -213,9 +213,9 @@ export default function DesignPreview({ variant }: { variant: DesignVariant }) {
           </p>
         </aside>
 
-        {/* allow-arbitrary: pre-slice-a */}
+        {/* allow-arbitrary: rounded-[2.5rem] + shadow-[...var(--preview-glow)] — phone-frame outer, no canonical token */}
         <section className="mx-auto w-full max-w-[430px] rounded-[2.5rem] border border-[var(--preview-border)] bg-black/25 p-3 shadow-[0_30px_100px_var(--preview-glow)]">
-          {/* allow-arbitrary: pre-slice-a */}
+          {/* allow-arbitrary: rounded-[2rem] — phone-frame inner, no canonical ds.radius.* tier */}
           <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-[var(--preview-bg)]">
             <div className="space-y-4 p-4 pb-5">
               <Hero variant={variant} />
