@@ -133,8 +133,7 @@ function FilterSelect({
 }) {
   return (
     <label className="block">
-      {/* allow-arbitrary: pre-slice-a */}
-      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+      <span className={`${ds.text.body11} font-semibold uppercase tracking-[0.16em] text-slate-500`}>
         {label}
       </span>
       <select
@@ -171,7 +170,7 @@ function KpiCard({
         ? "border-red-500/25 bg-red-500/5"
         : tone === "accent"
           ? "border-orange-500/30 bg-orange-500/5"
-          /* allow-arbitrary: pre-slice-a */
+          /* allow-arbitrary: bg-white/[0.04] — non-subpanel neutral KPI surface, no canonical token */
           : "border-white/10 bg-white/[0.04]";
 
   return (
@@ -181,8 +180,7 @@ function KpiCard({
         toneClass,
       )}
     >
-      {/* allow-arbitrary: pre-slice-a */}
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+      <p className={`${ds.text.body11} font-semibold uppercase tracking-[0.16em] text-slate-500`}>
         {label}
       </p>
       <p className="mt-2 text-3xl font-black tabular-nums text-white md:text-4xl">{value}</p>
@@ -267,8 +265,7 @@ export default function AdminQaPage() {
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-black/25 p-4 text-left lg:min-w-64">
-              {/* allow-arbitrary: pre-slice-a */}
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+              <p className={`${ds.text.body11} font-semibold uppercase tracking-[0.16em] text-slate-500`}>
                 Last run
               </p>
               <p className="mt-1 font-semibold text-white">{formatTimestamp(lastRunAt)}</p>
@@ -317,8 +314,7 @@ export default function AdminQaPage() {
                 tone="danger"
               />
               <Card className="border-orange-500/30 bg-orange-500/5 transition duration-200 hover:-translate-y-0.5 active:scale-[0.99]">
-                {/* allow-arbitrary: pre-slice-a */}
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                <p className={`${ds.text.body11} font-semibold uppercase tracking-[0.16em] text-slate-500`}>
                   Avg score
                 </p>
                 <div className="mt-2 flex items-end justify-between gap-3">
@@ -445,7 +441,7 @@ export default function AdminQaPage() {
                     {filteredFailures.map((f) => (
                       <tr
                         key={f.id}
-                        /* allow-arbitrary: pre-slice-a */
+                        /* allow-arbitrary: hover:bg-white/[0.04] — non-subpanel table-row hover, no canonical token */
                         className="border-b border-white/5 transition-colors hover:bg-white/[0.04]"
                       >
                         <td className="px-2 py-2 align-top sm:px-3">
@@ -507,7 +503,7 @@ export default function AdminQaPage() {
                     {filteredCases.map((item) => (
                       <tr
                         key={item.id}
-                        /* allow-arbitrary: pre-slice-a */
+                        /* allow-arbitrary: hover:bg-white/[0.04] — non-subpanel table-row hover, no canonical token */
                         className="border-b border-white/5 transition-colors hover:bg-white/[0.04]"
                       >
                         <td className="px-2 py-2 align-top sm:px-3">
