@@ -226,7 +226,7 @@ function HomeSettingsStrip({
       <select
         value={lang}
         onChange={(e) => onLangChange(e.target.value as Lang)}
-        className="min-h-9 shrink-0 rounded-xl border border-white/[0.1] bg-[#050302]/70 px-3 text-xs font-bold text-slate-100 shadow-inner shadow-black/40 outline-none transition focus:border-orange-400/60 focus:ring-2 focus:ring-orange-500/15"
+        className="min-h-11 shrink-0 rounded-xl border border-white/[0.1] bg-[#050302]/70 px-3 text-xs font-bold text-slate-100 shadow-inner shadow-black/40 outline-none transition focus:border-orange-400/60 focus:ring-2 focus:ring-orange-500/15"
       >
         <option value="es">🇪🇸 {t.homeLangSpanish}</option>
         <option value="en">🇬🇧 {t.homeLangEnglish}</option>

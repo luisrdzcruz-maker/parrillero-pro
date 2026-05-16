@@ -226,8 +226,8 @@ export function PlanHub({
                 onClick={() => setPlanMode(mode.id)}
                 className={
                   planMode === mode.id
-                    ? "min-h-[40px] rounded-xl bg-orange-500 text-sm font-black text-black shadow-lg shadow-orange-500/25 transition active:scale-[0.97]"
-                    : "min-h-[40px] rounded-xl text-sm font-bold text-slate-400 transition hover:bg-white/5 hover:text-white active:scale-[0.97]"
+                    ? "min-h-[44px] rounded-xl bg-orange-500 text-sm font-black text-black shadow-lg shadow-orange-500/25 transition active:scale-[0.97]"
+                    : "min-h-[44px] rounded-xl text-sm font-bold text-slate-400 transition hover:bg-white/5 hover:text-white active:scale-[0.97]"
                 }
               >
                 {mode.label}

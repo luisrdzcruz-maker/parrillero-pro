@@ -252,7 +252,7 @@ function CookCard({
         <button
           type="button"
           onClick={onDelete}
-          className={`shrink-0 self-start rounded-lg p-1.5 ${ds.text.body11} font-bold ${ds.color.mutedClass.secondary} transition hover:bg-red-500/10 hover:text-red-400 active:scale-[0.96]`}
+          className={`inline-flex shrink-0 self-start items-center justify-center rounded-lg min-h-[44px] min-w-[44px] ${ds.text.body11} font-bold ${ds.color.mutedClass.secondary} transition hover:bg-red-500/10 hover:text-red-400 active:scale-[0.96]`}
           aria-label="Eliminar"
         >
           ✕
@@ -265,14 +265,14 @@ function CookCard({
           type="button"
           onClick={onCookAgain}
           /* allow-arbitrary: shadow-[...] phase-colored CTA glow — no canonical ds.shadow.* tier */
-          className={`min-h-[2.5rem] flex-1 rounded-xl bg-orange-500 ${ds.text.body13} font-black text-black shadow-[0_3px_16px_rgba(249,115,22,0.32)] transition active:scale-[0.97] active:bg-orange-600 hover:bg-orange-400`}
+          className={`min-h-[2.75rem] flex-1 rounded-xl bg-orange-500 ${ds.text.body13} font-black text-black shadow-[0_3px_16px_rgba(249,115,22,0.32)] transition active:scale-[0.97] active:bg-orange-600 hover:bg-orange-400`}
         >
           Cocinar de nuevo →
         </button>
         <button
           type="button"
           onClick={() => setShowSteps((v) => !v)}
-          className={`min-h-[2.5rem] rounded-xl border px-4 ${ds.text.body13} font-black transition active:scale-[0.97] ${
+          className={`min-h-[2.75rem] rounded-xl border px-4 ${ds.text.body13} font-black transition active:scale-[0.97] ${
             showSteps
               /* allow-arbitrary: bg-white/[0.08] — non-subpanel button surface, no canonical token */
               ? `border-white/20 bg-white/[0.08] ${ds.color.mutedClass.body}`
