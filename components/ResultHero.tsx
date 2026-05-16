@@ -161,11 +161,13 @@ export default function ResultHero({
   }
 
   /**
-   * Time metric tile with inline Save + Share icon-only buttons on the right.
-   * Replaces the standalone Save/Share button row that previously sat below
-   * the metrics grid. Each icon button is a 44px touch target with aria-label
-   * for screen reader accessibility (Decision: icon-only with aria-label, not
-   * overflow menu).
+   * Combined TIEMPO + TEMP tile with inline Save + Share icon-only buttons on
+   * the right. Replaces the standalone Save/Share button row AND folds the
+   * separate TEMP metric tile into the same row, so the plan-generated screen
+   * shows time, temp, and actions on one band instead of two stacked rows.
+   * Each icon button is a 44px touch target with aria-label for screen reader
+   * accessibility. When TEMP is absent (e.g., doneness-by-feel cuts), the
+   * layout collapses gracefully to just TIEMPO + icons.
    */
   function renderTimeMetricWithActions() {
     if (!timeMetric?.value) return null;
@@ -175,13 +177,23 @@ export default function ResultHero({
     }
     return (
       <div
-        className={`col-span-2 xl:col-span-1 ${ds.panel.metric} ${getMetricToneClass(timeMetric.tone)} flex items-center justify-between gap-3`}
+        className={`col-span-2 ${ds.panel.metric} ${getMetricToneClass(timeMetric.tone)} flex items-center justify-between gap-4`}
       >
-        <div className="min-w-0 flex-1">
-          <p className={`${ds.text.metricEyebrow} text-current/58`}>{timeMetric.label}</p>
-          <p className={ds.text.metricLarge} title={timeMetric.value}>
-            {timeMetric.value}
-          </p>
+        <div className="flex min-w-0 items-baseline gap-5">
+          <div className="min-w-0">
+            <p className={`${ds.text.metricEyebrow} text-current/58`}>{timeMetric.label}</p>
+            <p className={ds.text.metricLarge} title={timeMetric.value}>
+              {timeMetric.value}
+            </p>
+          </div>
+          {tempMetric?.value && (
+            <div className="min-w-0">
+              <p className={`${ds.text.metricEyebrow} text-current/58`}>{tempMetric.label}</p>
+              <p className={ds.text.metricLarge} title={tempMetric.value}>
+                {tempMetric.value}
+              </p>
+            </div>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           {actions.onSave && (
@@ -295,13 +307,9 @@ export default function ResultHero({
 
           <div className="grid grid-cols-2 gap-2 xl:grid-cols-4 xl:grid-rows-2">
             {renderTimeMetricWithActions()}
-            {/* When time is widened to col-span-2 by inline actions, temp also widens
-               to col-span-2 so it doesn't orphan a single-column cell on mobile. */}
-            {tempMetric?.value && (
-              <div className={(actions.onSave || actions.onShare) ? "col-span-2 xl:col-span-1" : ""}>
-                {renderControlMetric(tempMetric)}
-              </div>
-            )}
+            {/* TEMP renders standalone only when there are no inline actions; with
+               actions, TEMP is folded into the combined tile above. */}
+            {!(actions.onSave || actions.onShare) && tempMetric?.value && renderControlMetric(tempMetric)}
 
             {actions.onStartCooking && (
               <button
