@@ -1,6 +1,7 @@
 'use client';
 
 import { Badge } from '@/components/ui/Badge';
+import { ds } from '@/lib/design-system';
 import type { AppText, Lang } from '@/lib/i18n/texts';
 import type { ParrilladaPlan } from '@/lib/planning';
 
@@ -22,8 +23,7 @@ export function ParrilladaHeroCard({ t, plan }: ParrilladaHeroCardProps) {
     <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-orange-500/[0.07] p-4">
       <div className="flex items-start justify-between gap-3">
         <h2 className="text-xl font-semibold tracking-tight text-white">{t.parrilladaHeroTitle}</h2>
-        {/* allow-arbitrary: text-[11px] mode chip — ds.text scale lacks 11px */}
-        <span className="shrink-0 rounded-full border border-orange-300/35 bg-orange-500/15 px-2.5 py-0.5 text-[11px] font-black uppercase tracking-[0.14em] text-orange-100">
+        <span className={`shrink-0 rounded-full border border-orange-300/35 bg-orange-500/15 px-2.5 py-0.5 ${ds.text.body11} font-black uppercase tracking-[0.14em] text-orange-100`}>
           {isPro ? t.parrilladaModePro : t.parrilladaModeLite}
         </span>
       </div>
@@ -64,10 +64,8 @@ function Metric({ label, value, tone = 'default' }: { label: string; value: stri
     tone === 'amber'
       ? 'min-w-0 rounded-xl border border-amber-300/30 bg-amber-500/10 px-1.5 py-1.5'
       : 'min-w-0 rounded-xl border border-white/10 bg-black/20 px-1.5 py-1.5';
-  /* allow-arbitrary: text-[9px] metric label — ds.text scale lacks 9px */
-  const labelClass = tone === 'amber' ? 'truncate text-[9px] uppercase tracking-wide text-amber-200/85' : 'truncate text-[9px] uppercase tracking-wide text-white/50';
-  /* allow-arbitrary: text-[13px] metric value — ds.text scale lacks 13px */
-  const valueClass = tone === 'amber' ? 'mt-0.5 truncate text-[13px] font-semibold text-amber-100' : 'mt-0.5 truncate text-[13px] font-semibold text-white';
+  const labelClass = tone === 'amber' ? `truncate ${ds.text.body9} uppercase tracking-wide text-amber-200/85` : `truncate ${ds.text.body9} uppercase tracking-wide text-white/50`;
+  const valueClass = tone === 'amber' ? `mt-0.5 truncate ${ds.text.body13} font-semibold text-amber-100` : `mt-0.5 truncate ${ds.text.body13} font-semibold text-white`;
 
   return (
     <article className={className}>
