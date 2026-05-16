@@ -945,7 +945,6 @@ function ParrilleroAppContent() {
           home={buildHomeModeProps({
             lang,
             t,
-            savedMenusCount: savedMenus.length,
             onLangChange: handleLanguageChange,
             onModeChange: handleModeChange,
             onPrimaryCtaClick: handleHomePrimaryCtaClick,
