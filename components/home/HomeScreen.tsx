@@ -117,8 +117,9 @@ function PrimaryActionTile({ action }: { action: QuickAction }) {
       <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-orange-200/55 to-transparent" />
       <div className="pointer-events-none absolute -right-14 -top-16 h-40 w-40 rounded-full bg-orange-400/30 blur-3xl transition group-hover:bg-orange-400/45" />
       <div className="pointer-events-none absolute -bottom-16 -left-10 h-32 w-32 rounded-full bg-orange-700/24 blur-3xl" />
-      <div className="relative flex h-full flex-col justify-between gap-4">
-        <div className="flex items-start justify-between gap-3">
+      <div className="relative flex h-full min-w-0 flex-col">
+        {/* Visual zone — large centered icon anchors the card */}
+        <div className="flex flex-1 items-center justify-center pb-3 sm:pb-4">
           {action.registryIcon ? (
             <AppIcon
               category={action.registryIcon.category}
@@ -126,22 +127,24 @@ function PrimaryActionTile({ action }: { action: QuickAction }) {
               alt=""
               size="lg"
               aria-hidden="true"
-              /* allow-arbitrary: rounded-[1.35rem] + shadow-[...] — primary action icon chassis, no canonical token */
-              className="h-[4.25rem] w-[4.25rem] rounded-[1.35rem] border border-orange-300/40 bg-[#0a0503]/72 p-3 shadow-[0_14px_32px_rgba(249,115,22,0.36),inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-inset ring-white/[0.08] transition-transform duration-200 group-hover:scale-[1.04] sm:h-[5rem] sm:w-[5rem]"
-              fallback={<span className="text-xl" aria-hidden>{action.icon}</span>}
+              /* allow-arbitrary: rounded-[1.4rem] + shadow-[...] — primary action icon chassis (enlarged for hero composition), no canonical token */
+              className="h-[5.25rem] w-[5.25rem] rounded-[1.4rem] border border-orange-300/40 bg-[#0a0503]/72 p-3.5 shadow-[0_14px_32px_rgba(249,115,22,0.36),inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-inset ring-white/[0.08] transition-transform duration-200 group-hover:scale-[1.04] sm:h-[6.25rem] sm:w-[6.25rem] sm:p-4"
+              fallback={<span className="text-3xl sm:text-4xl" aria-hidden>{action.icon}</span>}
             />
           ) : (
-            /* allow-arbitrary: rounded-[1.35rem] + shadow-[...] — primary action icon chassis (emoji fallback), no canonical token */
-            <span className="flex h-[4.25rem] w-[4.25rem] shrink-0 items-center justify-center rounded-[1.35rem] border border-white/10 bg-black/40 text-3xl shadow-[0_10px_24px_rgba(0,0,0,0.36)]" aria-hidden>{action.icon}</span>
+            /* allow-arbitrary: rounded-[1.4rem] + shadow-[...] — primary action icon chassis (emoji fallback, enlarged for hero composition), no canonical token */
+            <span className="flex h-[5.25rem] w-[5.25rem] shrink-0 items-center justify-center rounded-[1.4rem] border border-white/10 bg-black/40 text-4xl shadow-[0_10px_24px_rgba(0,0,0,0.36)] sm:h-[6.25rem] sm:w-[6.25rem] sm:text-5xl" aria-hidden>{action.icon}</span>
           )}
-          {/* allow-arbitrary: shadow-[inset_0_1px_0_...] — arrow chip inset highlight, no canonical token */}
-          <span aria-hidden="true" className={`mt-1.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/40 ${ds.text.body11} font-black ${ds.color.mutedClass.body} shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:border-orange-200/55 group-hover:text-orange-100`}>→</span>
         </div>
-        <div className="min-w-0">
+        {/* Text zone — title at top of zone, description + arrow at bottom-right */}
+        <div className="min-w-0 border-t border-white/10 pt-3 sm:pt-3.5">
           {/* allow-arbitrary: text-[17px]/sm:text-[22px] — between body14 and 22+ display tier, no canonical token */}
           <p className="text-[17px] font-black leading-[1.05] tracking-[-0.025em] text-white sm:text-[22px]">{action.title}</p>
-          {/* allow-arbitrary: sm:text-[13px] — breakpoint-prefixed text size, ds.text.body{N} lacks breakpoint variants (deferred to PR D-primitives/B) */}
-          <p className={`mt-1.5 line-clamp-2 ${ds.text.body11} font-medium leading-snug text-orange-100/72 sm:text-[13px] sm:leading-relaxed`}>{action.description}</p>
+          <div className="mt-1.5 flex items-end justify-between gap-2">
+            {/* allow-arbitrary: sm:text-[13px] — breakpoint-prefixed text size, ds.text.body{N} lacks breakpoint variants (deferred to PR D-primitives/B) */}
+            <p className={`min-w-0 flex-1 line-clamp-2 ${ds.text.body11} font-medium leading-snug text-orange-100/72 sm:text-[13px] sm:leading-relaxed`}>{action.description}</p>
+            <span aria-hidden="true" className={`shrink-0 ${ds.text.body14} font-black ${ds.color.mutedClass.body} transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-orange-100`}>→</span>
+          </div>
         </div>
       </div>
     </button>
