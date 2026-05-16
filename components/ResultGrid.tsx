@@ -95,7 +95,7 @@ function ShoppingListCard({
         {items.map((item) => (
           <label
             key={item}
-            /* allow-arbitrary: pre-slice-a */
+            /* allow-arbitrary: bg-white/[0.03] + hover:bg-white/[0.06] — non-subpanel shopping-item surface, no canonical token */
             className="flex cursor-pointer items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-sm leading-relaxed text-slate-300 transition hover:border-emerald-400/40 hover:bg-white/[0.06]"
           >
             <input

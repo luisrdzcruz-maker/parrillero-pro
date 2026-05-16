@@ -2,6 +2,7 @@
 
 import { BrandImageIcon } from '@/components/ui/BrandImageIcon';
 import { getParrilladaItemIcon } from '@/components/parrillada/icons/parrilladaIconResolver';
+import { ds } from '@/lib/design-system';
 import type { ParrilladaItem } from '@/lib/planning';
 
 type ParrilladaItemRowProps = {
@@ -16,8 +17,7 @@ export function ParrilladaItemRow({ item }: ParrilladaItemRowProps) {
       <BrandImageIcon src={iconSrc ?? '/icons/ui/meat-selection.webp'} alt="" size="md" shape="soft" aria-hidden="true" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-white">{item.displayName}</p>
-        {/* allow-arbitrary: pre-slice-a */}
-        {item.category ? <p className="mt-0.5 text-[11px] text-white/50">{item.category}</p> : null}
+        {item.category ? <p className={`mt-0.5 ${ds.text.body11} ${ds.color.mutedClass.helper}`}>{item.category}</p> : null}
       </div>
     </div>
   );
