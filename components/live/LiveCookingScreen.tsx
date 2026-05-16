@@ -44,13 +44,13 @@ type Props = {
 type TouchPoint = { x: number; y: number };
 
 const CTA_STYLE: Record<UrgencyLevel | "complete", string> = {
-  /* allow-arbitrary: pre-slice-a */
+  /* allow-arbitrary: shadow-[...] phase-colored CTA glow — no canonical ds.shadow.* tier */
   normal: "bg-orange-500 text-black shadow-[0_10px_36px_rgba(249,115,22,0.34)] hover:bg-orange-400",
-  /* allow-arbitrary: pre-slice-a */
+  /* allow-arbitrary: shadow-[...] phase-colored CTA glow — no canonical ds.shadow.* tier */
   attention: "bg-orange-300 text-black shadow-[0_14px_46px_rgba(253,186,116,0.46)] hover:bg-orange-200",
-  /* allow-arbitrary: pre-slice-a */
+  /* allow-arbitrary: shadow-[...] phase-colored CTA glow — no canonical ds.shadow.* tier */
   critical: "bg-yellow-300 text-black shadow-[0_0_54px_rgba(250,204,21,0.58)] hover:bg-yellow-200",
-  /* allow-arbitrary: pre-slice-a */
+  /* allow-arbitrary: shadow-[...] phase-colored CTA glow — no canonical ds.shadow.* tier */
   complete: "bg-emerald-500 text-black shadow-[0_10px_36px_rgba(16,185,129,0.34)]",
 };
 
@@ -236,24 +236,22 @@ export default function LiveCookingScreen({
   if (!currentStep) {
     return (
       <div className="flex min-h-0 flex-1 flex-col bg-[#020202] px-5 py-6 text-white">
-        {/* allow-arbitrary: pre-slice-a */}
+        {/* allow-arbitrary: rounded-[2rem] + bg-[radial-gradient(...)] + shadow-[...] — no-steps hero chassis, no canonical token */}
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center rounded-[2rem] border border-white/[0.08] bg-[radial-gradient(ellipse_at_50%_0%,rgba(249,115,22,0.13),transparent_58%),rgba(255,255,255,0.025)] px-5 text-center shadow-[0_24px_70px_rgba(0,0,0,0.45)]">
-          {/* allow-arbitrary: pre-slice-a */}
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-orange-300/20 bg-orange-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-orange-200">
+          <div className={`mb-4 inline-flex items-center gap-2 rounded-full border border-orange-300/20 bg-orange-500/10 px-3 py-1 ${ds.text.body10} font-black uppercase tracking-[0.2em] text-orange-200`}>
             <span className="h-1.5 w-1.5 rounded-full bg-orange-400" />
             {liveText.live}
           </div>
-          {/* allow-arbitrary: pre-slice-a */}
+          {/* allow-arbitrary: text-[clamp(...)] display-tier heading — stays inline per slice-d-tokens.md §1 */}
           <p className="max-w-[18rem] text-[clamp(1.75rem,8vw,2.45rem)] font-black leading-none tracking-[-0.05em]">
             {liveText.noStepsTitle}
           </p>
-          {/* allow-arbitrary: pre-slice-a */}
-          <p className="mt-3 max-w-[19rem] text-sm font-semibold leading-snug text-white/52">
+          <p className={`mt-3 max-w-[19rem] text-sm font-semibold leading-snug ${ds.color.mutedClass.helper}`}>
             {liveText.noStepsBody}
           </p>
           {resolvedContext && (
-            /* allow-arbitrary: pre-slice-a */
-            <p className="mt-4 max-w-[17rem] truncate rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] font-bold text-white/38">
+            /* allow-arbitrary: bg-white/[0.04] — non-subpanel chip surface, no canonical token */
+            <p className={`mt-4 max-w-[17rem] truncate rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 ${ds.text.body11} font-bold ${ds.color.mutedClass.disabled}`}>
               {resolvedContext}
             </p>
           )}
@@ -261,7 +259,7 @@ export default function LiveCookingScreen({
             <button
               type="button"
               onClick={onBack}
-              /* allow-arbitrary: pre-slice-a */
+              /* allow-arbitrary: shadow-[...] phase-colored CTA glow — no canonical ds.shadow.* tier */
               className="mt-6 min-h-12 w-full max-w-[18rem] rounded-2xl bg-orange-500 px-5 py-3 text-sm font-black text-black shadow-[0_10px_36px_rgba(249,115,22,0.32)] transition active:scale-[0.98]"
             >
               {liveText.backToPlan}
@@ -309,7 +307,7 @@ export default function LiveCookingScreen({
           />
         </div>
 
-        {/* allow-arbitrary: pre-slice-a */}
+        {/* allow-arbitrary: rounded-[1.5rem] + bg-[linear-gradient(...)] + shadow-[...] — hero step chassis, no canonical token */}
         <div className="relative min-h-0 shrink overflow-hidden rounded-[1.5rem] border border-white/[0.09] bg-[linear-gradient(160deg,rgba(255,255,255,0.06)_0%,rgba(255,255,255,0.025)_45%,rgba(0,0,0,0.32)_100%)] shadow-[0_28px_56px_rgba(0,0,0,0.55)] ring-1 ring-inset ring-white/[0.06] backdrop-blur-xl">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/22 to-transparent" />
           <LiveStepCard
@@ -323,7 +321,7 @@ export default function LiveCookingScreen({
         </div>
 
         {!isComplete && (
-          /* allow-arbitrary: pre-slice-a */
+          /* allow-arbitrary: rounded-[1.5rem] + bg-[radial-gradient(...)] + shadow-[...] — timer chassis, no canonical token */
           <div className="relative shrink-0 overflow-hidden rounded-[1.5rem] border border-orange-300/[0.18] bg-[radial-gradient(ellipse_at_50%_-20%,rgba(249,115,22,0.18),transparent_60%),linear-gradient(160deg,rgba(255,255,255,0.04)_0%,rgba(0,0,0,0.4)_100%)] shadow-[0_24px_50px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] ring-1 ring-inset ring-orange-200/[0.08] backdrop-blur-xl">
             <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-300/40 to-transparent" />
             <LiveTimer
@@ -355,12 +353,10 @@ export default function LiveCookingScreen({
         {isComplete && (
           <div className="shrink-0 space-y-2">
             <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-center">
-              {/* allow-arbitrary: pre-slice-a */}
-              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-400">
+              <p className={`${ds.text.body10} font-black uppercase tracking-[0.22em] text-emerald-400`}>
                 {liveText.cookingComplete}
               </p>
-              {/* allow-arbitrary: pre-slice-a */}
-              <p className="mt-1 text-xs font-semibold text-white/60">
+              <p className={`mt-1 text-xs font-semibold ${ds.color.mutedClass.secondary}`}>
                 {liveText.cookingCompleteBody}
               </p>
             </div>
@@ -376,7 +372,7 @@ export default function LiveCookingScreen({
                 className={`min-h-11 w-full rounded-2xl text-sm font-black transition-all duration-300 active:scale-[0.98] ${
                   saveState === "saved"
                     ? "border border-emerald-500/35 bg-emerald-500/15 text-emerald-300"
-                    /* allow-arbitrary: pre-slice-a */
+                    /* allow-arbitrary: shadow-[...] phase-colored CTA glow — no canonical ds.shadow.* tier */
                     : "bg-emerald-500 text-black shadow-[0_4px_28px_rgba(16,185,129,0.38)] hover:bg-emerald-400 active:bg-emerald-600"
                 }`}
               >
@@ -391,15 +387,14 @@ export default function LiveCookingScreen({
         {(resolvedContext || onReset) && (
           <div className="mt-auto flex min-h-6 shrink-0 items-center justify-center gap-3">
             {resolvedContext && (
-              /* allow-arbitrary: pre-slice-a */
-              <span className="truncate text-[10px] font-semibold text-white/18">{resolvedContext}</span>
+              <span className={`truncate ${ds.text.body10} font-semibold ${ds.color.mutedClass.disabled}`}>{resolvedContext}</span>
             )}
             {onReset && (
               <button
                 type="button"
                 onClick={onReset}
-                /* allow-arbitrary: pre-slice-a */
-                className="shrink-0 px-2 py-1 text-[10px] font-bold text-white/18 transition hover:text-white/38 active:scale-[0.98]"
+                /* allow-arbitrary: hover:text-white/38 — mutedClass hover variant deferred to PR D-primitives/B */
+                className={`shrink-0 px-2 py-1 ${ds.text.body10} font-bold ${ds.color.mutedClass.disabled} transition hover:text-white/38 active:scale-[0.98]`}
               >
                 {liveText.reset}
               </button>
@@ -408,10 +403,9 @@ export default function LiveCookingScreen({
         )}
       </main>
 
-      {/* allow-arbitrary: pre-slice-a */}
+      {/* allow-arbitrary: shadow-[0_-12px_...] bottom-nav lift — no canonical ds.shadow.* tier */}
       <nav className="shrink-0 border-t border-white/[0.07] bg-black/[0.78] px-3.5 py-2 shadow-[0_-12px_30px_rgba(0,0,0,0.32)] backdrop-blur-xl pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-        {/* allow-arbitrary: pre-slice-a */}
-        <p className="mb-1 text-center text-[9px] font-black uppercase tracking-[0.2em] text-white/28">
+        <p className={`mb-1 text-center ${ds.text.body9} font-black uppercase tracking-[0.2em] ${ds.color.mutedClass.disabled}`}>
           {liveText.nextAction}
         </p>
         <div className="flex items-center gap-2">
@@ -419,8 +413,8 @@ export default function LiveCookingScreen({
             <button
               type="button"
               onClick={handlePauseToggle}
-              /* allow-arbitrary: pre-slice-a */
-              className="min-h-14 w-[4.9rem] shrink-0 rounded-[1.25rem] border border-white/14 bg-white/[0.075] px-2 text-[11px] font-black text-white/82 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition active:scale-[0.98]"
+              /* allow-arbitrary: rounded-[1.25rem] + bg-white/[0.075] non-subpanel + shadow-[inset_...] — pause button chassis, no canonical token */
+              className={`min-h-14 w-[4.9rem] shrink-0 rounded-[1.25rem] border border-white/14 bg-white/[0.075] px-2 ${ds.text.body11} font-black ${ds.color.mutedClass.body} shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition active:scale-[0.98]`}
             >
               {paused ? liveText.resumeTimer : liveText.pauseTimer}
             </button>
@@ -429,7 +423,7 @@ export default function LiveCookingScreen({
             type="button"
             onClick={handlePrimaryAction}
             disabled={isComplete}
-            /* allow-arbitrary: pre-slice-a */
+            /* allow-arbitrary: rounded-[1.25rem] — primary CTA radius, no canonical ds.radius.* tier */
             className={`min-h-14 min-w-0 flex-1 rounded-[1.25rem] px-4 text-lg font-black tracking-[-0.02em] transition-all duration-200 active:scale-[0.98] disabled:opacity-80 ${
               shouldPulseCta ? "animate-pulse" : ""
             } ${
