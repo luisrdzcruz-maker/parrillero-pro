@@ -1,3 +1,5 @@
+import { ds } from "@/lib/design-system";
+
 export type LivePhase = "idle" | "active" | "urgent" | "rest" | "complete";
 
 const RADIUS = 88;
@@ -83,10 +85,8 @@ export default function TimerDial({ total, remaining, phase }: Props) {
           />
         </svg>
         <div className="text-center">
-          {/* allow-arbitrary: pre-slice-a */}
-          <p className="font-mono text-5xl font-black leading-none text-white/20">—</p>
-          {/* allow-arbitrary: pre-slice-a */}
-          <p className="mt-1.5 text-[10px] font-bold uppercase tracking-[0.24em] text-white/22">
+          <p className={`font-mono text-5xl font-black leading-none ${ds.color.mutedClass.disabled}`}>—</p>
+          <p className={`mt-1.5 ${ds.text.body10} font-bold uppercase tracking-[0.24em] ${ds.color.mutedClass.disabled}`}>
             Manual
           </p>
         </div>
@@ -198,8 +198,7 @@ export default function TimerDial({ total, remaining, phase }: Props) {
           {formatTime(remaining)}
         </p>
         <p
-          /* allow-arbitrary: pre-slice-a */
-          className="mt-2.5 text-[10px] font-bold uppercase tracking-[0.26em]"
+          className={`mt-2.5 ${ds.text.body10} font-bold uppercase tracking-[0.26em]`}
           style={{ color: "rgba(255,255,255,0.42)" }}
         >
           {SUB_LABEL[phase]}

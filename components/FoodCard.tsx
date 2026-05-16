@@ -1,6 +1,7 @@
 "use client";
 
 import { BrandImageIcon } from "@/components/ui/BrandImageIcon";
+import { ds } from "@/lib/design-system";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -36,9 +37,9 @@ export default function FoodCard({
       onClick={onClick}
       className={
         selected
-          /* allow-arbitrary: pre-slice-a */
+          /* allow-arbitrary: rounded-[2rem] + shadow-[...] — selected food-card chassis, no canonical token */
           ? "group relative min-h-52 w-full touch-manipulation select-none overflow-hidden rounded-[2rem] border-2 border-orange-400/90 bg-zinc-950 text-left shadow-[0_24px_70px_rgba(255,106,0,0.36)] ring-2 ring-orange-400/35 transition-all duration-300 ease-out hover:scale-[1.025] hover:shadow-[0_30px_90px_rgba(255,106,0,0.46)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/70 active:scale-[0.98] sm:min-h-64 lg:min-h-[360px] xl:min-h-[420px] 2xl:min-h-[460px]"
-          /* allow-arbitrary: pre-slice-a */
+          /* allow-arbitrary: rounded-[2rem] + shadow-[...] — unselected food-card chassis, no canonical token */
           : "group relative min-h-52 w-full touch-manipulation select-none overflow-hidden rounded-[2rem] border border-white/10 bg-zinc-950 text-left shadow-[0_14px_45px_rgba(0,0,0,0.38)] transition-all duration-300 ease-out hover:scale-[1.025] hover:border-[#FF6A00]/70 hover:shadow-[0_26px_80px_rgba(255,106,0,0.34)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/60 active:scale-[0.98] sm:min-h-64 lg:min-h-[360px] xl:min-h-[420px] 2xl:min-h-[460px]"
       }
     >
@@ -70,8 +71,8 @@ export default function FoodCard({
       />
 
       {badge && (
-        /* allow-arbitrary: pre-slice-a */
-        <span className="absolute right-2 top-2 z-10 rounded-full border border-white/10 bg-black/35 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-orange-100 shadow-lg shadow-black/20 backdrop-blur-md sm:right-3 sm:top-3 sm:text-[11px]">
+        /* allow-arbitrary: sm:text-[11px] — breakpoint-prefixed text size, ds.text.body{N} lacks breakpoint variants (deferred to PR D-primitives/B) */
+        <span className={`absolute right-2 top-2 z-10 rounded-full border border-white/10 bg-black/35 px-2.5 py-1 ${ds.text.body9} font-black uppercase tracking-[0.14em] text-orange-100 shadow-lg shadow-black/20 backdrop-blur-md sm:right-3 sm:top-3 sm:text-[11px]`}>
           {badge}
         </span>
       )}
@@ -82,7 +83,7 @@ export default function FoodCard({
           alt={iconAlt ?? ""}
           size="lg"
           shape="soft"
-          /* allow-arbitrary: pre-slice-a */
+          /* allow-arbitrary: rounded-[1.05rem] — food-card icon radius, no canonical ds.radius.* tier */
           className="absolute left-3 top-3 z-10 h-12 w-12 rounded-[1.05rem] bg-black/45 shadow-lg shadow-black/30 backdrop-blur-sm sm:h-14 sm:w-14"
         />
       )}
@@ -98,7 +99,7 @@ export default function FoodCard({
       )}
 
       <div className={`absolute inset-x-0 bottom-0 p-5 lg:p-6 ${selected ? "pr-16" : "pr-5"}`}>
-        {/* allow-arbitrary: pre-slice-a */}
+        {/* allow-arbitrary: drop-shadow-[0_2px_16px_...] — title text depth, no canonical ds.shadow.* tier */}
         <h3 className="line-clamp-2 text-2xl font-black leading-none tracking-[-0.04em] text-white drop-shadow-[0_2px_16px_rgba(0,0,0,0.72)] sm:text-3xl lg:text-[2rem]">
           {title}
         </h3>

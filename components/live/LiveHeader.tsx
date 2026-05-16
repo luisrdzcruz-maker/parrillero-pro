@@ -1,5 +1,6 @@
 import type { LivePhase } from "./TimerDial";
 import type { LiveCookingStepState } from "./LiveCookingScreen";
+import { ds } from "@/lib/design-system";
 import { getLiveText, type SurfaceLang } from "@/lib/i18n/surfaceFallbacks";
 
 const STATUS_COLOR: Record<LivePhase, string> = {
@@ -42,8 +43,8 @@ export default function LiveHeader({
         <button
           type="button"
           onClick={onBack}
-          /* allow-arbitrary: pre-slice-a */
-          className="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-bold text-white/55 transition active:scale-[0.97]"
+          /* allow-arbitrary: bg-white/[0.04] — non-subpanel chip surface, no canonical token */
+          className={`shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 ${ds.text.body10} font-bold ${ds.color.mutedClass.secondary} transition active:scale-[0.97]`}
         >
           {text.plan}
         </button>
@@ -52,27 +53,23 @@ export default function LiveHeader({
       <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
         {currentStep.tempTarget != null && (
           <>
-            {/* allow-arbitrary: pre-slice-a */}
-            <span className="text-[10px] font-bold text-white/35">
+            <span className={`${ds.text.body10} font-bold ${ds.color.mutedClass.disabled}`}>
               {currentStep.tempTarget}°C
             </span>
-            {/* allow-arbitrary: pre-slice-a */}
-            <span className="text-[9px] text-white/20">·</span>
+            <span className={`${ds.text.body9} ${ds.color.mutedClass.disabled}`}>·</span>
           </>
         )}
         <span
-          /* allow-arbitrary: pre-slice-a */
-          className={`truncate text-[10px] font-black uppercase tracking-[0.14em] ${STATUS_COLOR[phase]}`}
+          className={`truncate ${ds.text.body10} font-black uppercase tracking-[0.14em] ${STATUS_COLOR[phase]}`}
         >
           {currentStep.displayZone}
         </span>
       </div>
 
-      {/* allow-arbitrary: pre-slice-a */}
+      {/* allow-arbitrary: bg-white/[0.04] — non-subpanel chip surface, no canonical token */}
       <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5">
         <span className={`h-1.5 w-1.5 rounded-full ${dotClass}`} />
-        {/* allow-arbitrary: pre-slice-a */}
-        <span className="text-[9px] font-black uppercase tracking-[0.18em] text-white/80">
+        <span className={`${ds.text.body9} font-black uppercase tracking-[0.18em] ${ds.color.mutedClass.body}`}>
             {text.live}
         </span>
       </div>
@@ -81,33 +78,28 @@ export default function LiveHeader({
         {alertsEnabled !== undefined &&
           onEnableAlerts &&
           (alertsEnabled ? (
-            /* allow-arbitrary: pre-slice-a */
-            <span className={`text-[9px] font-bold ${STATUS_COLOR[phase]}`}>
+            <span className={`${ds.text.body9} font-bold ${STATUS_COLOR[phase]}`}>
               {text.alerts}
             </span>
           ) : (
             <button
               type="button"
               onClick={onEnableAlerts}
-              /* allow-arbitrary: pre-slice-a */
-              className="rounded-full border border-orange-500/25 bg-orange-500/10 px-2 py-0.5 text-[9px] font-black text-orange-200 transition active:scale-[0.97]"
+              className={`rounded-full border border-orange-500/25 bg-orange-500/10 px-2 py-0.5 ${ds.text.body9} font-black text-orange-200 transition active:scale-[0.97]`}
             >
               {text.alerts}
             </button>
           ))}
-        {/* allow-arbitrary: pre-slice-a */}
-        <span className="rounded-full border border-white/10 bg-white/[0.05] px-2 py-0.5 text-[10px] tabular-nums">
-          {/* allow-arbitrary: pre-slice-a */}
-          <span className="font-semibold text-white/38">{`${text.step} `}</span>
-          {/* allow-arbitrary: pre-slice-a */}
-          <span className="font-black text-white/75">{currentIndex + 1}</span>
-          {/* allow-arbitrary: pre-slice-a */}
-          <span className="font-medium text-white/30">
+        {/* allow-arbitrary: bg-white/[0.05] — non-subpanel chip surface, no canonical token */}
+        <span className={`rounded-full border border-white/10 bg-white/[0.05] px-2 py-0.5 ${ds.text.body10} tabular-nums`}>
+          <span className={`font-semibold ${ds.color.mutedClass.disabled}`}>{`${text.step} `}</span>
+          <span className={`font-black ${ds.color.mutedClass.body}`}>{currentIndex + 1}</span>
+          <span className={`font-medium ${ds.color.mutedClass.disabled}`}>
             {` ${text.of} ${stepCount}`}
           </span>
         </span>
       </div>
-      {/* allow-arbitrary: pre-slice-a */}
+      {/* allow-arbitrary: bg-white/[0.05] — progress bar surface, no canonical token */}
       <div className="absolute inset-x-0 bottom-0 h-0.5 bg-white/[0.05]" aria-hidden>
         <div
           className="h-full bg-orange-300 transition-[width] duration-300 ease-out"

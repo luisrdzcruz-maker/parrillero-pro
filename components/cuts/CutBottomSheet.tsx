@@ -129,9 +129,9 @@ function CutDetailContent({
     <div
       className={
         inline
-          /* allow-arbitrary: pre-slice-a */
+          /* allow-arbitrary: rounded-[2rem] + shadow-[0_24px_80px_...] — inline cut detail chassis, no canonical token */
           ? "pointer-events-auto w-full rounded-[2rem] border border-white/10 bg-[#070503]/95 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-2xl"
-          /* allow-arbitrary: pre-slice-a */
+          /* allow-arbitrary: sm:rounded-[2rem] + shadow-[0_-28px_110px_...] — mobile cut detail bottom sheet chassis, no canonical token */
           : "pointer-events-auto max-h-[calc(100vh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-1rem)] max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-1rem)] w-full overflow-y-auto scroll-pb-[calc(1rem+env(safe-area-inset-bottom))] rounded-t-[2rem] border border-white/10 bg-[#070503]/95 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-28px_110px_rgba(0,0,0,0.72)] backdrop-blur-2xl sm:max-h-[calc(100vh-env(safe-area-inset-top)-1.75rem)] sm:max-h-[calc(100dvh-env(safe-area-inset-top)-1.75rem)] sm:scroll-pb-8 sm:rounded-[2rem] sm:p-5 sm:pb-5"
       }
     >
@@ -158,7 +158,7 @@ function CutDetailContent({
           <button
             type="button"
             onClick={onClose}
-            /* allow-arbitrary: pre-slice-a */
+            /* allow-arbitrary: bg-white/[0.07] — non-subpanel close-button surface, no canonical token */
             className={`inline-flex h-9 min-h-[36px] min-w-[36px] items-center justify-center rounded-full border border-white/10 bg-white/[0.07] px-3 text-xs font-black text-zinc-200 shadow-lg transition hover:bg-white/12 active:scale-[0.97] ${
               inline ? "" : "sticky top-0"
             }`}
@@ -171,7 +171,7 @@ function CutDetailContent({
       <button
         type="button"
         onClick={() => onStartCooking?.(profile)}
-        /* allow-arbitrary: pre-slice-a */
+        /* allow-arbitrary: rounded-[1.35rem] + shadow-[0_20px_70px_...] — primary CTA chassis, no canonical token */
         className="mt-4 w-full rounded-[1.35rem] bg-gradient-to-r from-orange-400 to-red-500 px-5 py-4 text-sm font-black text-black shadow-[0_20px_70px_rgba(249,115,22,0.25)] transition active:scale-[0.98]"
       >
         {primaryCtaLabel}
@@ -207,7 +207,7 @@ function CutDetailContent({
       </div>
 
       {visualSrc ? (
-        /* allow-arbitrary: pre-slice-a */
+        /* allow-arbitrary: rounded-[1.2rem] + bg-[radial-gradient(...)] — visual frame chassis, no canonical token */
         <div className="mt-2.5 overflow-hidden rounded-[1.2rem] border border-white/10 bg-[radial-gradient(circle_at_20%_0%,rgba(251,146,60,0.16),transparent_38%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(2,6,23,0.94))] shadow-lg shadow-black/20 ring-1 ring-inset ring-white/[0.04]">
           <div className="relative aspect-[16/7] w-full sm:aspect-[16/6]">
             <Image

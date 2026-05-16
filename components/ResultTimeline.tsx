@@ -140,7 +140,7 @@ function TimelineRow({ item, status }: { item: TimelineItem; status: TimelineRow
     ? "z-10 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-green-500/40 bg-green-500/15 text-xs font-semibold text-green-300 shadow-sm shadow-green-500/10 transition-all duration-200 ease-out motion-reduce:transition-none sm:h-16 sm:w-16 sm:text-sm"
     : isNext
       ? "z-10 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-orange-500/40 bg-orange-500/15 text-xs font-semibold text-orange-300 shadow-sm shadow-orange-500/15 transition-all duration-200 ease-out motion-reduce:transition-none sm:h-16 sm:w-16 sm:text-sm"
-      /* allow-arbitrary: pre-slice-a */
+      /* allow-arbitrary: group-hover/row:bg-white/[0.07] — non-subpanel hover state, no canonical token */
       : "z-10 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-xs font-semibold text-slate-300 transition-all duration-200 ease-out motion-reduce:transition-none group-hover/row:border-white/20 group-hover/row:bg-white/[0.07] sm:h-16 sm:w-16 sm:text-sm";
 
   const cardClass = isActive
@@ -273,7 +273,7 @@ export default function ResultTimeline({ title, content }: { title: string; cont
       tone="result"
     >
       <div
-        /* allow-arbitrary: pre-slice-a */
+        /* allow-arbitrary: shadow-[2px_0_12px_...] live-indicator rail glow — no canonical ds.shadow.* tier */
         className={`absolute left-0 top-0 h-full w-[3px] rounded-l-2xl transition-all duration-300 ease-out motion-reduce:transition-none ${live ? "bg-orange-400/85 shadow-[2px_0_12px_rgba(249,115,22,0.25)]" : "bg-orange-400/55"}`}
         aria-hidden
       />

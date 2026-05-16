@@ -3,6 +3,7 @@
 import { AppIcon, Button } from "@/components/ui";
 import { Select, type Blocks, type SaveMenuStatus } from "@/components/cooking/CookingWizard";
 import { resolveEquipmentIconKey } from "@/lib/assets/equipmentMethodIconResolver";
+import { ds } from "@/lib/design-system";
 import { texts, type AppText, type Lang } from "@/lib/i18n/texts";
 import { useMemo, useState } from "react";
 
@@ -203,12 +204,12 @@ export function PlanHub({
 
   return (
     <section className="mx-auto grid w-full max-w-[1180px] gap-3 overflow-x-hidden lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-6 xl:max-w-[1360px]">
-      {/* allow-arbitrary: pre-slice-a */}
+      {/* allow-arbitrary: rounded-[1.75rem] + bg-[radial-gradient(...)] — sticky hero chassis, no canonical token */}
       <div className="relative overflow-hidden rounded-[1.75rem] border border-orange-400/15 bg-[radial-gradient(circle_at_20%_0%,rgba(249,115,22,0.20),transparent_34%),linear-gradient(145deg,rgba(15,23,42,0.98),rgba(2,6,23,0.96))] p-4 shadow-2xl shadow-orange-950/20 sm:p-7 lg:sticky lg:top-6 lg:min-h-[420px]">
         <div className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-orange-400/20 blur-3xl" />
         <div className="relative z-10 flex h-full flex-col justify-between gap-8">
           <div>
-            {/* allow-arbitrary: pre-slice-a */}
+            {/* allow-arbitrary: text-[clamp(...)] display-tier title — stays inline per slice-d-tokens.md §1 */}
             <h1 className="max-w-xl text-[clamp(1.8rem,8vw,3.25rem)] font-black leading-[0.98] tracking-[-0.055em] text-white lg:text-5xl">
               {t.planHubTitle}
             </h1>
@@ -236,7 +237,7 @@ export function PlanHub({
         </div>
       </div>
 
-      {/* allow-arbitrary: pre-slice-a */}
+      {/* allow-arbitrary: rounded-[1.75rem] + bg-white/[0.045] — plan-form card chassis, no canonical token */}
       <div className="rounded-[1.75rem] border border-white/10 bg-white/[0.045] p-4 shadow-2xl shadow-black/20 backdrop-blur sm:p-6">
         <div className="mb-4">
           <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-300">
@@ -369,12 +370,11 @@ function PlanInput({
 }) {
   return (
     <label className="block">
-      {/* allow-arbitrary: pre-slice-a */}
-      <span className="mb-1.5 block text-[11px] font-black uppercase tracking-[0.17em] text-slate-400">
+      <span className={`mb-1.5 block ${ds.text.body11} font-black uppercase tracking-[0.17em] text-slate-400`}>
         {label}
       </span>
       <input
-        /* allow-arbitrary: pre-slice-a */
+        /* allow-arbitrary: text-[15px] — between body14 and 22+ display tier, no canonical token */
         className="min-h-[50px] w-full rounded-2xl border border-white/10 bg-black/30 px-4 text-[15px] font-semibold text-white outline-none transition placeholder:text-slate-600 focus:border-orange-400/60 focus:bg-black/40"
         inputMode={inputMode}
         onChange={(event) => onChange(event.target.value)}
@@ -399,8 +399,7 @@ function PlanEquipmentChips({
 }) {
   return (
     <div>
-      {/* allow-arbitrary: pre-slice-a */}
-      <p className="mb-1.5 block text-[11px] font-black uppercase tracking-[0.17em] text-slate-400">
+      <p className={`mb-1.5 block ${ds.text.body11} font-black uppercase tracking-[0.17em] text-slate-400`}>
         {label}
       </p>
       <div className="grid grid-cols-2 gap-2 min-[520px]:grid-cols-3">
@@ -415,10 +414,9 @@ function PlanEquipmentChips({
               onClick={() => onChange(option.value)}
               className={
                 selected
-                  /* allow-arbitrary: pre-slice-a */
-                  ? "inline-flex min-h-[46px] min-w-0 items-center gap-2 rounded-2xl border border-orange-300/70 bg-orange-500/18 px-2.5 py-2 text-left text-[13px] font-black text-orange-50 shadow-[0_10px_28px_rgba(249,115,22,0.14)] ring-1 ring-orange-300/20 transition active:scale-[0.98]"
-                  /* allow-arbitrary: pre-slice-a */
-                  : "inline-flex min-h-[46px] min-w-0 items-center gap-2 rounded-2xl border border-white/10 bg-black/30 px-2.5 py-2 text-left text-[13px] font-bold text-slate-200 transition hover:border-orange-300/35 hover:bg-orange-500/8 active:scale-[0.98]"
+                  /* allow-arbitrary: shadow-[...] selected equipment-chip ember glow — no canonical ds.shadow.* tier */
+                  ? `inline-flex min-h-[46px] min-w-0 items-center gap-2 rounded-2xl border border-orange-300/70 bg-orange-500/18 px-2.5 py-2 text-left ${ds.text.body13} font-black text-orange-50 shadow-[0_10px_28px_rgba(249,115,22,0.14)] ring-1 ring-orange-300/20 transition active:scale-[0.98]`
+                  : `inline-flex min-h-[46px] min-w-0 items-center gap-2 rounded-2xl border border-white/10 bg-black/30 px-2.5 py-2 text-left ${ds.text.body13} font-bold text-slate-200 transition hover:border-orange-300/35 hover:bg-orange-500/8 active:scale-[0.98]`
               }
               aria-pressed={selected}
             >
@@ -474,7 +472,7 @@ function PlanResultView({
 }) {
   return (
     <section className="w-full max-w-full overflow-x-hidden">
-      {/* allow-arbitrary: pre-slice-a */}
+      {/* allow-arbitrary: rounded-[2rem] + bg-[radial-gradient(...)] — result hero chassis, no canonical token */}
       <div className="animate-[fadeIn_260ms_ease-out] rounded-[2rem] border border-orange-400/20 bg-[radial-gradient(circle_at_85%_0%,rgba(249,115,22,0.22),transparent_30%),linear-gradient(145deg,rgba(15,23,42,0.98),rgba(2,6,23,0.96))] p-5 shadow-2xl shadow-orange-950/20 sm:p-7">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -577,11 +575,11 @@ function PlanResultCard({
 
   return (
     <article
-      /* allow-arbitrary: pre-slice-a */
+      /* allow-arbitrary: rounded-[1.5rem] — result-card outer border-gradient wrapper, no canonical ds.radius.* tier */
       className="translate-y-0 rounded-[1.5rem] border border-white/10 bg-gradient-to-br from-white/[0.075] to-white/[0.025] p-[1px] opacity-100 shadow-2xl shadow-black/20 animate-[fadeIn_280ms_ease-out]"
       style={{ animationDelay: `${index * 70}ms` }}
     >
-      {/* allow-arbitrary: pre-slice-a */}
+      {/* allow-arbitrary: rounded-[1.45rem] — result-card inner radius, no canonical ds.radius.* tier */}
       <div className="h-full rounded-[1.45rem] bg-slate-950/82 p-5 backdrop-blur">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -590,7 +588,7 @@ function PlanResultCard({
             </div>
             <h2 className="text-lg font-black text-white">{title}</h2>
           </div>
-          {/* allow-arbitrary: pre-slice-a */}
+          {/* allow-arbitrary: bg-white/[0.05] — non-subpanel chip surface, no canonical token */}
           <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-bold text-slate-300">
             {lines} {t.planHubLines}
           </span>
@@ -611,7 +609,7 @@ function PlanResultCard({
 function VisualSetupModal({ onClose, t }: { onClose: () => void; t: AppText }) {
   return (
     <div className="fixed inset-0 z-[80] flex items-end bg-black/70 p-3 backdrop-blur-sm sm:items-center sm:justify-center">
-      {/* allow-arbitrary: pre-slice-a */}
+      {/* allow-arbitrary: rounded-[2rem] — visual setup modal radius, no canonical ds.radius.* tier */}
       <div className="w-full max-w-xl rounded-[2rem] border border-white/10 bg-slate-950 p-5 shadow-2xl shadow-black/50">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -638,7 +636,7 @@ function VisualSetupModal({ onClose, t }: { onClose: () => void; t: AppText }) {
               <p className="mt-1 text-sm text-blue-100">{t.planHubVisualIndirectZoneHint}</p>
             </div>
           </div>
-          {/* allow-arbitrary: pre-slice-a */}
+          {/* allow-arbitrary: bg-white/[0.04] — non-subpanel placeholder surface, no canonical token */}
           <div className="mt-3 rounded-2xl border border-dashed border-white/15 bg-white/[0.04] p-4 text-center text-sm font-bold text-slate-300">
             {t.planHubVisualPlaceholder}
           </div>

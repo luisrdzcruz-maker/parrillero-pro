@@ -1,6 +1,7 @@
 "use client";
 
 import { BrandImageIcon } from "@/components/ui/BrandImageIcon";
+import { ds } from "@/lib/design-system";
 import type { GeneratedCutProfile } from "@/lib/generated/cutProfiles";
 import type { Lang } from "@/lib/i18n/texts";
 import {
@@ -45,15 +46,14 @@ export function QuickPicks({
 
   return (
     <section
-      /* allow-arbitrary: pre-slice-a */
+      /* allow-arbitrary: rounded-[1.05rem]/sm:rounded-[1.2rem] + bg-white/[0.03] — recommended section chassis, no canonical token */
       className={`min-w-0 max-w-full rounded-[1.05rem] border border-white/10 bg-white/[0.03] p-1.5 backdrop-blur-xl sm:rounded-[1.2rem] sm:p-2 ${
         fillAvailable ? "flex min-h-0 flex-1 flex-col" : ""
       }`}
     >
       <div className="mb-1 flex items-center justify-between px-1">
         <div>
-          {/* allow-arbitrary: pre-slice-a */}
-          <h2 className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-400">
+          <h2 className={`${ds.text.body11} font-black uppercase tracking-[0.14em] text-zinc-400`}>
             {lang === "es" ? "Recomendados" : "Recommended"}
           </h2>
         </div>
@@ -72,9 +72,9 @@ export function QuickPicks({
               key={profile.id}
               className={`flex min-w-0 items-center gap-2 rounded-xl border p-1.5 text-left transition active:scale-[0.97] sm:p-2 ${
                 isActive
-                  /* allow-arbitrary: pre-slice-a */
+                  /* allow-arbitrary: shadow-[...] active ember glow — no canonical ds.shadow.* tier */
                   ? "border-orange-400 bg-orange-500/20 shadow-[0_12px_30px_rgba(249,115,22,0.12)]"
-                  /* allow-arbitrary: pre-slice-a */
+                  /* allow-arbitrary: hover:bg-white/[0.07] — non-subpanel hover state, no canonical token */
                   : "border-white/10 bg-black/25 hover:border-orange-400/45 hover:bg-white/[0.07]"
               }`}
             >
@@ -88,29 +88,27 @@ export function QuickPicks({
                       shape="plain"
                       aria-hidden="true"
                       className="h-8 w-8 rounded-lg"
-                      /* allow-arbitrary: pre-slice-a */
+                      /* allow-arbitrary: shadow-[...] ember-dot glow on fallback — no canonical ds.shadow.* tier */
                       fallback={<span aria-hidden="true" className="h-2.5 w-2.5 rounded-full bg-orange-300/80 shadow-[0_0_16px_rgba(251,146,60,0.35)]" />}
                     />
                   ) : (
-                    /* allow-arbitrary: pre-slice-a */
+                    /* allow-arbitrary: shadow-[...] ember-dot glow — no canonical ds.shadow.* tier */
                     <span aria-hidden="true" className="h-2.5 w-2.5 rounded-full bg-orange-300/80 shadow-[0_0_16px_rgba(251,146,60,0.35)]" />
                   )}
                 </span>
                 <span className="min-w-0 flex-1">
-                  {/* allow-arbitrary: pre-slice-a */}
-                  <span className="block truncate text-[13px] font-black text-white sm:text-sm">{getDisplayName(profile, lang)}</span>
-                  {/* allow-arbitrary: pre-slice-a */}
-                  <span className="mt-0.5 block truncate text-[10px] font-semibold text-zinc-500 sm:text-[11px]">{getCutDescriptor(profile, lang)}</span>
-                  {/* allow-arbitrary: pre-slice-a */}
-                  <span className="mt-0.5 block truncate text-[10px] font-black text-orange-300">{getEstimatedTimeLabel(profile, lang)}</span>
+                  <span className={`block truncate ${ds.text.body13} font-black text-white sm:text-sm`}>{getDisplayName(profile, lang)}</span>
+                  {/* allow-arbitrary: sm:text-[11px] — breakpoint-prefixed text size, ds.text.body{N} lacks breakpoint variants (deferred to PR D-primitives/B) */}
+                  <span className={`mt-0.5 block truncate ${ds.text.body10} font-semibold text-zinc-500 sm:text-[11px]`}>{getCutDescriptor(profile, lang)}</span>
+                  <span className={`mt-0.5 block truncate ${ds.text.body10} font-black text-orange-300`}>{getEstimatedTimeLabel(profile, lang)}</span>
                 </span>
               </button>
               {onViewDetails && (
                 <button
                   type="button"
                   onClick={() => onViewDetails(profile)}
-                  /* allow-arbitrary: pre-slice-a */
-                  className="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 text-[10px] font-black text-zinc-400 transition hover:border-orange-300/35 hover:text-orange-200 active:scale-[0.97]"
+                  /* allow-arbitrary: bg-white/[0.04] — non-subpanel details button surface, no canonical token */
+                  className={`shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 ${ds.text.body10} font-black text-zinc-400 transition hover:border-orange-300/35 hover:text-orange-200 active:scale-[0.97]`}
                 >
                   {getDetailsLabel(lang)}
                 </button>

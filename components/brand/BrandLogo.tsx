@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import type { HTMLAttributes } from "react";
+import { ds } from "@/lib/design-system";
 
 const BRAND_LOGO_SRC = "/brand/parrillero-logo-original.png";
 
@@ -22,10 +23,8 @@ const markSizes: Record<BrandLogoSize, string> = {
 };
 
 const textSizes: Record<BrandLogoSize, string> = {
-  /* allow-arbitrary: pre-slice-a */
-  sm: "text-[11px]",
-  /* allow-arbitrary: pre-slice-a */
-  eyebrow: "text-[11px]",
+  sm: ds.text.body11,
+  eyebrow: ds.text.body11,
   md: "text-sm",
   lg: "text-base",
 };

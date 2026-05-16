@@ -1,5 +1,6 @@
 "use client";
 
+import { ds } from "@/lib/design-system";
 import type { GeneratedAnimalId } from "@/lib/generated/cutProfiles";
 import type { Lang } from "@/lib/i18n/texts";
 import { getAvailableCategories, getCategoryLabel } from "./cutProfileSelectors";
@@ -15,12 +16,11 @@ export function CutMap({ animal, lang, selectedZone, onZoneChange }: CutMapProps
   const zones = getAvailableCategories(animal);
 
   return (
-    /* allow-arbitrary: pre-slice-a */
+    /* allow-arbitrary: rounded-[1.8rem] + bg-white/[0.04] — cut-map section chassis, no canonical token */
     <section className="overflow-hidden rounded-[1.8rem] border border-white/10 bg-white/[0.04] p-4 shadow-2xl shadow-black/20 backdrop-blur-xl">
       <div className="flex items-start justify-between gap-4">
         <div>
-          {/* allow-arbitrary: pre-slice-a */}
-          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300">
+          <p className={`${ds.text.body10} font-black uppercase tracking-[0.22em] text-orange-300`}>
             {lang === "es" ? "Filtro por zona" : "Zone filter"}
           </p>
           <h2 className="mt-1 text-2xl font-black tracking-tight text-white">
@@ -34,7 +34,7 @@ export function CutMap({ animal, lang, selectedZone, onZoneChange }: CutMapProps
           <button
             type="button"
             onClick={() => onZoneChange(null)}
-            /* allow-arbitrary: pre-slice-a */
+            /* allow-arbitrary: bg-white/[0.06] — non-subpanel clear-button surface, no canonical token */
             className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-zinc-200 transition active:scale-[0.97]"
           >
             {lang === "es" ? "Limpiar" : "Clear"}
@@ -52,15 +52,14 @@ export function CutMap({ animal, lang, selectedZone, onZoneChange }: CutMapProps
               onClick={() => onZoneChange(isActive ? null : zone)}
               className={`rounded-2xl border p-4 text-left transition active:scale-[0.98] ${
                 isActive
-                  /* allow-arbitrary: pre-slice-a */
+                  /* allow-arbitrary: shadow-[0_16px_50px_...] active-zone ember glow — no canonical ds.shadow.* tier */
                   ? "border-orange-400 bg-orange-500 text-black shadow-[0_16px_50px_rgba(249,115,22,0.24)]"
-                  /* allow-arbitrary: pre-slice-a */
+                  /* allow-arbitrary: hover:bg-white/[0.07] — non-subpanel hover state, no canonical token */
                   : "border-white/10 bg-black/25 text-zinc-200 hover:border-orange-400/45 hover:bg-white/[0.07]"
               }`}
             >
               <span className="block text-sm font-black">{getCategoryLabel(zone, lang)}</span>
-              {/* allow-arbitrary: pre-slice-a */}
-              <span className={`mt-1 block text-[11px] ${isActive ? "text-black/60" : "text-zinc-500"}`}>
+              <span className={`mt-1 block ${ds.text.body11} ${isActive ? "text-black/60" : "text-zinc-500"}`}>
                 {lang === "es" ? "Toca para filtrar" : "Tap to filter"}
               </span>
             </button>

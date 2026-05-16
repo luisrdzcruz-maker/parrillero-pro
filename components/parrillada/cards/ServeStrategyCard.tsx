@@ -1,6 +1,7 @@
 'use client';
 
 import { Panel } from '@/components/ui/Panel';
+import { ds } from '@/lib/design-system';
 import type { AppText, Lang } from '@/lib/i18n/texts';
 
 type ServeStrategyCardProps = {
@@ -56,8 +57,7 @@ export function ServeStrategyCard({
 
       {strategy === 'time' ? (
         <label className="mt-3 block space-y-1.5">
-          {/* allow-arbitrary: text-white/45 — ds.color.muted exposes only 50/70/90 */}
-          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-white/45">{t.parrilladaServeTime}</span>
+          <span className={`text-xs font-semibold uppercase tracking-[0.16em] ${ds.color.mutedClass.faint}`}>{t.parrilladaServeTime}</span>
           <input
             className="w-full rounded-2xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white outline-none focus:border-orange-300/60"
             type="datetime-local"
@@ -77,8 +77,7 @@ export function ServeStrategyCard({
           <button
             type="button"
             onClick={onSetEarliestServeTime}
-            /* allow-arbitrary: text-[11px] amber CTA chip — ds.text scale lacks 11px */
-            className="shrink-0 rounded-md border border-amber-200/40 bg-amber-400/15 px-2 py-0.5 text-[11px] font-semibold text-amber-50"
+            className={`shrink-0 rounded-md border border-amber-200/40 bg-amber-400/15 px-2 py-0.5 ${ds.text.body11} font-semibold text-amber-50`}
           >
             {t.parrilladaServeSetEarliest}
           </button>

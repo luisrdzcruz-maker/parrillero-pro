@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { BrandImageIcon } from '@/components/ui/BrandImageIcon';
 import { getZoneIcon } from '@/components/parrillada/icons/parrilladaIconResolver';
+import { ds } from '@/lib/design-system';
 import type { GrillZoneType } from '@/lib/planning';
 
 const zones: Array<{ zone: GrillZoneType; label: string; detail: string }> = [
@@ -20,7 +21,7 @@ function zoneTone(zone: GrillZoneType): string {
 export function GrillSetupCard() {
   const [open, setOpen] = useState(false);
   return (
-    /* allow-arbitrary: pre-slice-a */
+    /* allow-arbitrary: bg-white/[0.04] — rounded-3xl card (not subpanel chassis pattern), no canonical token */
     <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
       <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-300/85">Zones</p>
       <button
@@ -54,8 +55,7 @@ export function GrillSetupCard() {
                 />
                 <div className="min-w-0">
                   <p className="text-xs font-semibold text-white">{label}</p>
-                  {/* allow-arbitrary: pre-slice-a */}
-                  <p className="truncate text-[10px] text-white/55">{detail}</p>
+                  <p className={`truncate ${ds.text.body10} ${ds.color.mutedClass.secondary}`}>{detail}</p>
                 </div>
               </div>
             </div>

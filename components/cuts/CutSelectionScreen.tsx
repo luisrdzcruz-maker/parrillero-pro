@@ -2,6 +2,7 @@
 
 import { BrandImageIcon } from "@/components/ui/BrandImageIcon";
 import { categoryIconAssets } from "@/lib/brand/categoryIconAssets";
+import { ds } from "@/lib/design-system";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { GeneratedAnimalId, GeneratedCutProfile } from "@/lib/generated/cutProfiles";
@@ -85,10 +86,10 @@ function FishFallbackIcon() {
   return (
     <span
       aria-hidden="true"
-      /* allow-arbitrary: pre-slice-a */
+      /* allow-arbitrary: shadow-[...] ember halo on fish fallback chassis — no canonical ds.shadow.* tier */
       className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-orange-300/16 bg-black/35 shadow-[0_8px_22px_rgba(249,115,22,0.12)] ring-1 ring-inset ring-white/[0.035] sm:h-11 sm:w-11"
     >
-      {/* allow-arbitrary: pre-slice-a */}
+      {/* allow-arbitrary: drop-shadow-[...] svg glyph glow — no canonical ds.shadow.* tier */}
       <svg viewBox="0 0 48 48" className="h-7 w-7 text-orange-300 drop-shadow-[0_0_10px_rgba(249,115,22,0.45)] sm:h-8 sm:w-8">
         <path
           d="M6 24c5.8-7.4 13.2-11.1 22.1-11.1 5.2 0 9.7 2.4 13.5 7.1l4.4-4.3v16.6L41.6 28c-3.8 4.7-8.3 7.1-13.5 7.1C19.2 35.1 11.8 31.4 6 24Z"
@@ -304,7 +305,7 @@ export function CutSelectionScreen({
       </div>
 
       <section ref={cutSelectionShellRef} className={`relative mx-auto flex h-full min-h-0 w-full max-w-[1000px] flex-col overflow-hidden px-0 pt-0.5 sm:px-2 sm:pt-2 md:h-auto md:overflow-visible ${sectionBottomPaddingClass}`}>
-        {/* allow-arbitrary: pre-slice-a */}
+        {/* allow-arbitrary: rounded-[1.05rem]/[1.2rem] + bg-white/[0.035] + shadow-[...] — animal-picker header chassis, no canonical token */}
         <header className="rounded-[1.05rem] border border-orange-300/14 bg-white/[0.035] px-2 py-1.5 shadow-[0_12px_34px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:rounded-[1.2rem] sm:px-3 sm:py-2.5">
           <div className="grid grid-cols-5 gap-1 touch-pan-y sm:gap-2">
             {animalOptions.map(([animalId]) => {
@@ -318,10 +319,10 @@ export function CutSelectionScreen({
                   aria-label={label}
                   title={label}
                   onClick={() => handleAnimalSelect(animalId)}
-                  /* allow-arbitrary: pre-slice-a */
+                  /* allow-arbitrary: rounded-[0.95rem]/[1.35rem] — animal-chip radii, no canonical ds.radius.* tier */
                   className={`flex min-h-[46px] min-w-0 items-center justify-center rounded-[0.95rem] border p-1 transition active:scale-[0.98] sm:min-h-[66px] sm:rounded-[1.35rem] sm:p-2 ${
                     selected
-                      /* allow-arbitrary: pre-slice-a */
+                      /* allow-arbitrary: shadow-[...] selected-animal ember outline+glow — no canonical ds.shadow.* tier */
                       ? "border-orange-300/85 bg-orange-500/18 shadow-[0_0_0_1px_rgba(251,146,60,0.28),0_12px_30px_rgba(249,115,22,0.18)]"
                       : "border-white/12 bg-black/25 hover:border-orange-300/35 hover:bg-orange-500/8"
                   }`}
@@ -342,8 +343,7 @@ export function CutSelectionScreen({
               );
             })}
           </div>
-          {/* allow-arbitrary: pre-slice-a */}
-          <div className="mt-1.5 px-0.5 text-[10px] font-semibold text-zinc-400 sm:mt-2 sm:text-xs">
+          <div className={`mt-1.5 px-0.5 ${ds.text.body10} font-semibold text-zinc-400 sm:mt-2 sm:text-xs`}>
             <span className="block truncate">{compactStatusLine}</span>
             {selectedZone && <span className="block truncate text-orange-200">· {getCategoryLabel(selectedZone, effectiveLang)}</span>}
           </div>
@@ -371,7 +371,7 @@ export function CutSelectionScreen({
               <button
                 type="button"
                 onClick={handleSearchCatalogOpen}
-                /* allow-arbitrary: pre-slice-a */
+                /* allow-arbitrary: shadow-[...] ember-glow search CTA — no canonical ds.shadow.* tier */
                 className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl border border-orange-300/25 bg-orange-500/12 px-3 py-2.5 text-sm font-black text-orange-100 shadow-[0_10px_28px_rgba(249,115,22,0.10)] transition hover:border-orange-300/50 hover:bg-orange-500/18 active:scale-[0.99]"
                 aria-expanded={catalogExpanded}
               >
@@ -387,7 +387,7 @@ export function CutSelectionScreen({
               <button
                 type="button"
                 onClick={() => handleCatalogExpandedChange(!catalogExpanded)}
-                /* allow-arbitrary: pre-slice-a */
+                /* allow-arbitrary: bg-white/[0.035] non-subpanel + shadow-[...] view-all CTA chassis — no canonical token */
                 className="min-h-[44px] rounded-2xl border border-white/14 bg-white/[0.035] px-3 py-2.5 text-left text-sm font-black text-zinc-100 shadow-[0_10px_28px_rgba(0,0,0,0.20)] transition hover:border-orange-300/45 hover:bg-orange-500/10 active:scale-[0.99]"
                 aria-expanded={catalogExpanded}
               >
@@ -453,10 +453,9 @@ export function CutSelectionScreen({
             />
           </div>
           <aside className="hidden min-w-0 max-w-full lg:sticky lg:top-4 lg:block lg:self-start">
-            {/* allow-arbitrary: pre-slice-a */}
+            {/* allow-arbitrary: rounded-[1.3rem] + bg-white/[0.035] — selection sidebar chassis, no canonical token */}
             <div className="rounded-[1.3rem] border border-white/10 bg-white/[0.035] p-3 backdrop-blur-xl">
-              {/* allow-arbitrary: pre-slice-a */}
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">
+              <p className={`${ds.text.body10} font-black uppercase tracking-[0.18em] text-zinc-500`}>
                 {getCurrentSelectionLabel(effectiveLang)}
               </p>
               <p className="mt-2 text-sm font-black text-white">{getAnimalLabel(selectedAnimal, effectiveLang)}</p>
@@ -578,7 +577,7 @@ function CatalogContent({
         />
       )}
       {isSearchActive && catalogGroups.length === 0 ? (
-        /* allow-arbitrary: pre-slice-a */
+        /* allow-arbitrary: rounded-[1.5rem] + bg-white/[0.04] — no-results panel chassis, no canonical token */
         <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-6 text-center">
           <p className="text-lg font-black tracking-tight text-white">
             {getCutSearchNoResultsTitle(searchQuery.trim(), lang)}
@@ -634,26 +633,24 @@ function MobileCatalogSheet({
         aria-labelledby="mobile-cut-catalog-title"
         className="fixed inset-x-0 bottom-0 z-[75] mx-auto flex w-full max-w-3xl items-end px-2.5 pb-[calc(0.65rem+env(safe-area-inset-bottom))]"
       >
-        {/* allow-arbitrary: pre-slice-a */}
+        {/* allow-arbitrary: shadow-[0_-28px_110px_...] mobile sheet upward lift — no canonical ds.shadow.* tier */}
         <div className="flex max-h-[calc(100vh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-1.25rem)] max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-1.25rem)] w-full flex-col overflow-hidden rounded-t-[2rem] border border-white/10 bg-[#070503]/96 shadow-[0_-28px_110px_rgba(0,0,0,0.72)] backdrop-blur-2xl">
           <div className="shrink-0 border-b border-white/10 px-4 pb-3 pt-3">
             <div className="mx-auto mb-3 h-1 w-12 rounded-full bg-white/20" />
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                {/* allow-arbitrary: pre-slice-a */}
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-300">
+                <p className={`${ds.text.body10} font-black uppercase tracking-[0.2em] text-orange-300`}>
                   {catalogProps.lang === "es" ? "Catálogo completo" : "Full catalog"}
                 </p>
                 <h2 id="mobile-cut-catalog-title" className="mt-1 truncate text-xl font-black tracking-tight text-white">
                   {title}
                 </h2>
-                {/* allow-arbitrary: pre-slice-a */}
-                <p className="mt-1 truncate text-[11px] font-semibold text-zinc-500">{statusLine}</p>
+                <p className={`mt-1 truncate ${ds.text.body11} font-semibold text-zinc-500`}>{statusLine}</p>
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                /* allow-arbitrary: pre-slice-a */
+                /* allow-arbitrary: bg-white/[0.08] — non-subpanel close-button surface, no canonical token */
                 className="inline-flex h-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-full border border-white/10 bg-white/[0.08] px-3 text-xs font-black text-zinc-200 shadow-lg transition hover:bg-white/12 active:scale-[0.97]"
               >
                 {closeLabel}

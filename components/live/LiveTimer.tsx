@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { UrgencyLevel } from "@/hooks/useLiveCooking";
 import type { LivePhase } from "./TimerDial";
+import { ds } from "@/lib/design-system";
 import { getLiveText, type SurfaceLang } from "@/lib/i18n/surfaceFallbacks";
 
 function formatTime(seconds: number): string {
@@ -55,21 +56,19 @@ export default function LiveTimer({
 
   if (!hasTimer) {
     return (
-      /* allow-arbitrary: pre-slice-a */
+      /* allow-arbitrary: rounded-[1.15rem] + bg-white/[0.032] — manual-step section chassis, no canonical token */
       <section className="rounded-[1.15rem] border border-white/[0.07] bg-white/[0.032] px-3.5 py-3">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            {/* allow-arbitrary: pre-slice-a */}
-            <p className="text-[9px] font-black uppercase tracking-[0.22em] text-white/30">{liveText.manualStep}</p>
+            <p className={`${ds.text.body9} font-black uppercase tracking-[0.22em] ${ds.color.mutedClass.disabled}`}>{liveText.manualStep}</p>
             <p className="mt-0.5 truncate text-lg font-black leading-none text-white">{liveText.followAction}</p>
           </div>
-          {/* allow-arbitrary: pre-slice-a */}
-          <p className="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-black text-white/45">
+          {/* allow-arbitrary: bg-white/[0.04] — non-subpanel no-timer chip surface, no canonical token */}
+          <p className={`shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 ${ds.text.body10} font-black ${ds.color.mutedClass.faint}`}>
             {liveText.noTimer}
           </p>
         </div>
-        {/* allow-arbitrary: pre-slice-a */}
-        <p className="mt-2 text-xs font-semibold text-white/42">{liveText.advanceWhenDone}</p>
+        <p className={`mt-2 text-xs font-semibold ${ds.color.mutedClass.faint}`}>{liveText.advanceWhenDone}</p>
         {children && <div className="mt-2">{children}</div>}
       </section>
     );
@@ -77,21 +76,20 @@ export default function LiveTimer({
 
   return (
     <section
-      /* allow-arbitrary: pre-slice-a */
+      /* allow-arbitrary: rounded-[1.15rem] — timer section radius, no canonical ds.radius.* tier */
       className={`rounded-[1.15rem] border px-3.5 py-3 transition-all duration-500 ${
         urgency === "critical"
-          /* allow-arbitrary: pre-slice-a */
+          /* allow-arbitrary: shadow-[0_0_52px_...] critical-urgency yellow glow — no canonical ds.shadow.* tier */
           ? "border-yellow-200/75 bg-yellow-300/[0.11] shadow-[0_0_52px_rgba(250,204,21,0.30)]"
           : urgency === "attention"
             ? "border-orange-300/45 bg-orange-500/[0.06]"
-            /* allow-arbitrary: pre-slice-a */
+            /* allow-arbitrary: bg-white/[0.035] — non-subpanel normal-urgency tint, no canonical token */
             : "border-white/[0.07] bg-white/[0.035]"
       } ${isAttention && !reduceMotion ? "animate-pulse" : ""}`}
     >
       <div className="flex items-end justify-between gap-3">
         <div className="min-w-0">
-          {/* allow-arbitrary: pre-slice-a */}
-          <p className="text-[9px] font-black uppercase tracking-[0.22em] text-white/32">
+          <p className={`${ds.text.body9} font-black uppercase tracking-[0.22em] ${ds.color.mutedClass.disabled}`}>
             {phase === "complete" ? liveText.done : liveText.timeRemaining}
           </p>
           <p
@@ -103,23 +101,20 @@ export default function LiveTimer({
           </p>
         </div>
         <div className="shrink-0 text-right">
-          {/* allow-arbitrary: pre-slice-a */}
-          <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-white/28">
+          <p className={`${ds.text.body9} font-bold uppercase tracking-[0.16em] ${ds.color.mutedClass.disabled}`}>
             {liveText.stepDuration}
           </p>
-          {/* allow-arbitrary: pre-slice-a */}
-          <p className="mt-1 text-sm font-black tabular-nums text-white/65">{formatTime(duration)}</p>
+          <p className={`mt-1 text-sm font-black tabular-nums ${ds.color.mutedClass.secondary}`}>{formatTime(duration)}</p>
         </div>
       </div>
-      {/* allow-arbitrary: pre-slice-a */}
+      {/* allow-arbitrary: bg-white/[0.08] — non-subpanel progress-bar track, no canonical token */}
       <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-white/[0.08]">
         <div
           className={`h-full rounded-full transition-[width,background-color] duration-700 ease-linear ${BAR_COLOR[phase]}`}
           style={{ width: phase === "complete" ? "100%" : progressPct }}
         />
       </div>
-      {/* allow-arbitrary: pre-slice-a */}
-      <div className="mt-1.5 flex items-center justify-between text-[9px] font-bold text-white/30">
+      <div className={`mt-1.5 flex items-center justify-between ${ds.text.body9} font-bold ${ds.color.mutedClass.disabled}`}>
         <span>{liveText.timeRemaining}</span>
         <span>{Math.round(Math.max(0, Math.min(1, progress)) * 100)}%</span>
       </div>

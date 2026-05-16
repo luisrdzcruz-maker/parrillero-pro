@@ -1,5 +1,6 @@
 import type { LivePhase } from "./TimerDial";
 import type { LiveCookingStepState } from "./LiveCookingScreen";
+import { ds } from "@/lib/design-system";
 import { getLiveText, type SurfaceLang } from "@/lib/i18n/surfaceFallbacks";
 
 const CURRENT_SEGMENT: Record<LivePhase, string> = {
@@ -68,12 +69,10 @@ export default function LiveTimeline({
       </div>
 
       <div className="mt-0.5 flex items-center justify-between px-0.5">
-        {/* allow-arbitrary: pre-slice-a */}
-        <span className="text-[9px] font-semibold text-white/20">
+        <span className={`${ds.text.body9} font-semibold ${ds.color.mutedClass.disabled}`}>
           {`${text.step} ${currentIndex + 1} ${text.of} ${steps.length}`}
         </span>
-        {/* allow-arbitrary: pre-slice-a */}
-        <span className="text-[9px] font-semibold text-white/20">{progressPct}%</span>
+        <span className={`${ds.text.body9} font-semibold ${ds.color.mutedClass.disabled}`}>{progressPct}%</span>
       </div>
     </div>
   );

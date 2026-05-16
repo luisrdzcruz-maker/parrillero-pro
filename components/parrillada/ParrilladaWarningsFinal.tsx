@@ -1,5 +1,6 @@
 'use client';
 
+import { ds } from '@/lib/design-system';
 import type { PlannerResult } from '../../lib/planning';
 
 const severityOrder = { critical: 0, warning: 1, info: 2 } as const;
@@ -45,13 +46,11 @@ export function ParrilladaWarningsFinal({ result }: { result: PlannerResult | nu
         <article key={warning.id} className={`rounded-2xl border px-3 py-2.5 ${severityTone(warning.severity)}`}>
           <div className="flex items-start justify-between gap-3">
             <h3 className="text-sm font-semibold">{warning.title}</h3>
-            {/* allow-arbitrary: pre-slice-a */}
-            <span className="rounded-full border border-white/20 px-2 py-0.5 text-[10px] uppercase tracking-wide text-white/80">
+            <span className={`rounded-full border border-white/20 px-2 py-0.5 ${ds.text.body10} uppercase tracking-wide ${ds.color.mutedClass.body}`}>
               {severityLabel(warning.severity)}
             </span>
           </div>
-          {/* allow-arbitrary: pre-slice-a */}
-          <p className="mt-1 text-sm text-white/80">{toFriendlyMessage(warning.message)}</p>
+          <p className={`mt-1 text-sm ${ds.color.mutedClass.body}`}>{toFriendlyMessage(warning.message)}</p>
         </article>
       ))}
     </section>

@@ -2,6 +2,7 @@
 
 import { BrandImageIcon } from '@/components/ui/BrandImageIcon';
 import { getModeIcon } from '@/components/parrillada/icons/parrilladaIconResolver';
+import { ds } from '@/lib/design-system';
 import type { ParrilladaMode } from '@/lib/planning';
 
 type ParrilladaModeCardProps = {
@@ -21,9 +22,9 @@ export function ParrilladaModeCard({ mode, title, description, emphasized = fals
       onClick={() => onClick(mode)}
       className={`w-full rounded-3xl border p-4 text-left transition active:scale-[0.99] ${
         emphasized
-          /* allow-arbitrary: pre-slice-a */
+          /* allow-arbitrary: shadow-[0_18px_45px_...] emphasized mode-card ember glow — no canonical ds.shadow.* tier */
           ? 'border-orange-300/45 bg-gradient-to-br from-orange-500/18 to-white/[0.04] shadow-[0_18px_45px_rgba(249,115,22,0.16)]'
-          /* allow-arbitrary: pre-slice-a */
+          /* allow-arbitrary: bg-white/[0.04] — non-subpanel default mode-card surface, no canonical token */
           : 'border-white/10 bg-white/[0.04] hover:border-white/20'
       }`}
     >
@@ -38,8 +39,7 @@ export function ParrilladaModeCard({ mode, title, description, emphasized = fals
         />
         <div className="min-w-0">
           <h3 className="text-base font-semibold text-white">{title}</h3>
-          {/* allow-arbitrary: pre-slice-a */}
-          <p className="mt-1 text-sm leading-5 text-white/68">{description}</p>
+          <p className={`mt-1 text-sm leading-5 ${ds.color.mutedClass.base}`}>{description}</p>
         </div>
       </div>
     </button>

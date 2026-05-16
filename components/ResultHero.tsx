@@ -10,6 +10,7 @@ import {
 } from "@/components/ui";
 import { resolveEquipmentIconKey, resolveMethodIconKey } from "@/lib/assets/equipmentMethodIconResolver";
 import { brandIconAssets } from "@/lib/brand/iconAssets";
+import { ds } from "@/lib/design-system";
 import type { Lang } from "@/lib/i18n/texts";
 import { pushResultOverlayHistory, SetupDetailSurface } from "@/components/results/ResultGuidancePanel";
 import { detectSetupFromText } from "@/lib/setupVisualMap";
@@ -172,15 +173,15 @@ export default function ResultHero({
         // the dominant ember below; this Fire/Setup affordance is a quieter
         // secondary tile (neutral surface + warm eyebrow) so it does not
         // compete with the primary action.
-        /* allow-arbitrary: pre-slice-a */
+        /* allow-arbitrary: rounded-[1.15rem] + bg-white/[0.035] — fire-setup neutral tile chassis, no canonical token */
         className="col-span-2 min-w-0 rounded-[1.15rem] border border-white/[0.09] bg-white/[0.035] px-3 py-2.5 text-left shadow-lg shadow-black/10 ring-1 ring-inset ring-white/[0.025] transition hover:border-orange-300/35 hover:bg-orange-500/[0.06] active:scale-[0.99] xl:col-span-2"
       >
-        {/* allow-arbitrary: pre-slice-a */}
-        <p className="text-[9px] font-black uppercase tracking-[0.16em] text-orange-300/80 sm:text-[10px]">
+        {/* allow-arbitrary: sm:text-[10px] — breakpoint-prefixed text size, ds.text.body{N} lacks breakpoint variants (deferred to PR D-primitives/B) */}
+        <p className={`${ds.text.body9} font-black uppercase tracking-[0.16em] text-orange-300/80 sm:text-[10px]`}>
           {copy.resultHeroFireSetup}
         </p>
         <p
-          /* allow-arbitrary: pre-slice-a */
+          /* allow-arbitrary: text-[clamp(...)] responsive display-tier value — stays inline per slice-d-tokens.md §1 */
           className="mt-1 truncate text-[clamp(1rem,4vw,1.28rem)] font-black leading-tight tracking-[-0.04em] text-white"
           title={fireMetric?.value ?? copy.resultHeroFireSetup}
         >
@@ -224,11 +225,11 @@ export default function ResultHero({
               <button
                 type="button"
                 onClick={actions.onStartCooking}
-                /* allow-arbitrary: pre-slice-a */
+                /* allow-arbitrary: rounded-[1.45rem] + shadow-[...] — primary Live CTA chassis, no canonical token */
                 className="group col-span-2 flex min-h-[78px] w-full items-center justify-between gap-3 rounded-[1.45rem] border border-orange-200/55 bg-gradient-to-br from-orange-200 via-orange-500 to-orange-600 px-4 py-4 text-left text-slate-950 shadow-[0_24px_52px_rgba(234,88,12,0.5)] ring-1 ring-inset ring-white/30 transition-all duration-200 hover:border-orange-100/80 hover:shadow-[0_28px_60px_rgba(234,88,12,0.62)] hover:brightness-105 active:scale-[0.99] xl:row-span-2 xl:min-h-[148px] xl:flex-col xl:items-start xl:justify-between xl:p-5"
               >
                 <span className="flex min-w-0 items-center gap-3 xl:block">
-                  {/* allow-arbitrary: pre-slice-a */}
+                  {/* allow-arbitrary: shadow-[inset_...] CTA icon-box inset highlight — no canonical ds.shadow.* tier */}
                   <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-slate-950/20 bg-slate-950/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] ring-1 ring-white/25 xl:h-14 xl:w-14">
                     <BrandImageIcon
                       src={brandIconAssets.navLive}
@@ -236,11 +237,11 @@ export default function ResultHero({
                       size="sm"
                       shape="plain"
                       aria-hidden="true"
-                      /* allow-arbitrary: pre-slice-a */
+                      /* allow-arbitrary: drop-shadow-[...] — CTA icon depth shadow, no canonical ds.shadow.* tier */
                       className="h-7 w-7 rounded-md drop-shadow-[0_0_10px_rgba(0,0,0,0.28)] xl:h-8 xl:w-8"
                     />
                   </span>
-                  {/* allow-arbitrary: pre-slice-a */}
+                  {/* allow-arbitrary: text-[17px]/xl:text-[26px] — between body14 and 22+ display tier, no canonical token */}
                   <span className="min-w-0 text-[17px] font-black leading-[1.05] tracking-[-0.02em] xl:mt-4 xl:block xl:text-[26px]">
                     {copy.resultActionsLiveCta || t.startCooking}
                   </span>
@@ -274,7 +275,7 @@ export default function ResultHero({
                     void actions.onSave?.();
                   }}
                   disabled={saveMenuStatus === "saving"}
-                  /* allow-arbitrary: pre-slice-a */
+                  /* allow-arbitrary: bg-white/[0.04] + hover:bg-white/[0.08] — non-subpanel secondary button surface, no canonical token */
                   className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-orange-400/40 hover:bg-white/[0.08] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -300,7 +301,7 @@ export default function ResultHero({
                 <button
                   type="button"
                   onClick={actions.onShare}
-                  /* allow-arbitrary: pre-slice-a */
+                  /* allow-arbitrary: bg-white/[0.04] + hover:bg-white/[0.08] — non-subpanel secondary button surface, no canonical token */
                   className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-orange-400/40 hover:bg-white/[0.08] active:scale-[0.99]"
                 >
                   <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -324,8 +325,8 @@ export default function ResultHero({
             hideLabel={rationaleHideLabel}
           >
             {rationale.details.length > 0 ? (
-              /* allow-arbitrary: pre-slice-a */
-              <ul className="mt-2 space-y-1 text-[12px] leading-snug text-white/75 sm:text-[13px]">
+              /* allow-arbitrary: sm:text-[13px] — breakpoint-prefixed text size, ds.text.body{N} lacks breakpoint variants (deferred to PR D-primitives/B) */
+              <ul className={`mt-2 space-y-1 ${ds.text.body12} leading-snug ${ds.color.mutedClass.body} sm:text-[13px]`}>
                 {rationale.details.map((detail, index) => (
                   <li key={index} className="flex gap-2">
                     <span aria-hidden="true" className="mt-1 h-1 w-1 shrink-0 rounded-full bg-orange-300/70" />

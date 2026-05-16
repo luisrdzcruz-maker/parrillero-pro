@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { ds } from "@/lib/design-system";
 
 export type ScreenHeaderProps = {
   /** Optional small label above the title (e.g., "STEP 2 OF 4"). */
@@ -43,8 +44,8 @@ export function ScreenHeader({
       {leading ? <div className="shrink-0">{leading}</div> : null}
       <div className="min-w-0 flex-1">
         {eyebrow ? (
-          /* allow-arbitrary: pre-slice-a */
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-300/85 sm:text-[11px]">
+          /* allow-arbitrary: sm:text-[11px] — breakpoint-prefixed text size, ds.text.body{N} lacks breakpoint variants (deferred to PR D-primitives/B) */
+          <p className={`${ds.text.body10} font-black uppercase tracking-[0.18em] text-orange-300/85 sm:text-[11px]`}>
             {eyebrow}
           </p>
         ) : null}

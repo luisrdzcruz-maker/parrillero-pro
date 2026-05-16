@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { ds } from "@/lib/design-system";
 import type { LiveVisualGuide } from "./liveVisualGuide";
 
 type Props = {
@@ -19,7 +20,7 @@ export default function LiveVisualGuideCard({ guide }: Props) {
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/15 to-black/5" />
 
         {guide.type === "serve_cut" && (
-          /* allow-arbitrary: pre-slice-a */
+          /* allow-arbitrary: shadow-[0_0_18px_...] serve-cut indicator glow — no canonical ds.shadow.* tier */
           <div className="absolute inset-x-8 top-1/2 h-px -rotate-12 bg-emerald-300/80 shadow-[0_0_18px_rgba(110,231,183,0.55)]">
             <span className="absolute -right-1 -top-1.5 h-3 w-3 rotate-45 border-r-2 border-t-2 border-emerald-300" />
           </div>
@@ -29,8 +30,7 @@ export default function LiveVisualGuideCard({ guide }: Props) {
           {guide.chips.map((chip) => (
             <span
               key={chip}
-              /* allow-arbitrary: pre-slice-a */
-              className="rounded-full border border-white/12 bg-black/55 px-2 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-white/78 backdrop-blur"
+              className={`rounded-full border border-white/12 bg-black/55 px-2 py-1 ${ds.text.body9} font-black uppercase tracking-[0.14em] ${ds.color.mutedClass.body} backdrop-blur`}
             >
               {chip}
             </span>
@@ -39,21 +39,18 @@ export default function LiveVisualGuideCard({ guide }: Props) {
       </div>
 
       <div className="px-3.5 py-3">
-        {/* allow-arbitrary: pre-slice-a */}
-        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/35">
+        <p className={`${ds.text.body10} font-black uppercase tracking-[0.22em] ${ds.color.mutedClass.disabled}`}>
           Guía visual
         </p>
-        {/* allow-arbitrary: pre-slice-a */}
-        <p className="mt-1 text-[14px] font-black leading-tight text-white/90">
+        <p className={`mt-1 ${ds.text.body14} font-black leading-tight ${ds.color.mutedClass.strong}`}>
           {guide.title}
         </p>
-        {/* allow-arbitrary: pre-slice-a */}
-        <p className="mt-1.5 text-[12px] font-semibold leading-relaxed text-white/58">
+        <p className={`mt-1.5 ${ds.text.body12} font-semibold leading-relaxed ${ds.color.mutedClass.secondary}`}>
           {guide.action}
         </p>
         {guide.tip && (
-          /* allow-arbitrary: pre-slice-a */
-          <p className="mt-2 rounded-xl border border-white/[0.06] bg-white/[0.035] px-3 py-2 text-[11.5px] font-semibold leading-relaxed text-white/48">
+          /* allow-arbitrary: bg-white/[0.035] — non-subpanel tip surface (text-[11.5px] float not lint-flagged), no canonical token */
+          <p className={`mt-2 rounded-xl border border-white/[0.06] bg-white/[0.035] px-3 py-2 text-[11.5px] font-semibold leading-relaxed ${ds.color.mutedClass.helper}`}>
             {guide.tip}
           </p>
         )}

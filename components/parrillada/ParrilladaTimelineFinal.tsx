@@ -2,6 +2,7 @@
 
 import { CompactDisclosure } from '@/components/ui/CompactDisclosure';
 import { Panel } from '@/components/ui/Panel';
+import { ds } from '@/lib/design-system';
 import type { AppText, Lang } from '@/lib/i18n/texts';
 import type { ExecutionTimelineGroup, PlannerResult } from '../../lib/planning';
 import { getShortGroupLabel } from './utils/parrilladaTimelineLabels';
@@ -61,8 +62,7 @@ export function ParrilladaTimelineFinal({
     <Panel as="section" className="p-3 sm:p-4">
       <div className="mb-3 flex items-end justify-between gap-3">
         <h2 className="text-lg font-semibold tracking-tight text-white sm:text-xl">{t.parrilladaTimelineTitle}</h2>
-        {/* allow-arbitrary: text-white/55 — ds.color.muted exposes only 50/70/90 */}
-        <div className="flex items-baseline gap-1.5 text-xs text-white/55">
+        <div className={`flex items-baseline gap-1.5 text-xs ${ds.color.mutedClass.secondary}`}>
           <span>{t.parrilladaServe}</span>
           <span className="text-sm font-semibold text-white tabular-nums">{formatTime(result.request.serveAtIso)}</span>
         </div>
@@ -70,8 +70,7 @@ export function ParrilladaTimelineFinal({
 
       {executionGroups.length > 0 ? (
         <article className="rounded-2xl border border-white/10 bg-black/20 p-2.5">
-          {/* allow-arbitrary: text-[11px] eyebrow + text-white/55 — ds.text scale lacks 11px; ds.color.muted exposes only 50/70/90 */}
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">{t.parrilladaTimelineActionsEyebrow}</p>
+          <p className={`mb-2 ${ds.text.body11} font-semibold uppercase tracking-[0.16em] ${ds.color.mutedClass.secondary}`}>{t.parrilladaTimelineActionsEyebrow}</p>
           <div className="space-y-1.5">
             {executionGroups.map((group) => (
               <CompactDisclosure
@@ -82,14 +81,12 @@ export function ParrilladaTimelineFinal({
                 showLabel={t.parrilladaShowDetail}
                 hideLabel={t.parrilladaHideDetail}
               >
-                {/* allow-arbitrary: text-white/65 — ds.color.muted exposes only 50/70/90 */}
-                <div className="space-y-1 text-xs text-white/65">
+                <div className={`space-y-1 text-xs ${ds.color.mutedClass.secondary}`}>
                   <p>{formatActionMeta(group, t)}</p>
                   {itemQuantityLabel(group) ? (
                     <p className="text-orange-100/80">{itemQuantityLabel(group)}</p>
                   ) : null}
-                  {/* allow-arbitrary: text-white/75 — ds.color.muted exposes only 50/70/90 */}
-                  <p className="text-white/75">{compactExecutionInstruction(group)}</p>
+                  <p className={ds.color.mutedClass.body}>{compactExecutionInstruction(group)}</p>
                 </div>
               </CompactDisclosure>
             ))}

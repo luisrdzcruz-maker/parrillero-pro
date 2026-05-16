@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { AppIcon } from "@/components/ui";
 import { resolveMethodIconKey } from "@/lib/assets/equipmentMethodIconResolver";
+import { ds } from "@/lib/design-system";
 import { SETUP_VISUAL_FALLBACK, type SetupType } from "@/lib/setupVisualMap";
 import { buildSetupVisualResult, getSetupOverlayChipClass } from "@/lib/results/setupVisualResult";
 import type { ResultLang } from "@/lib/results/resultSummary";
@@ -60,11 +61,11 @@ function getCompactLines(value = "", maxLines = 2) {
 }
 
 function dotClass(tone: "avoid" | "prep" | "setup") {
-  /* allow-arbitrary: pre-slice-a */
+  /* allow-arbitrary: shadow-[...] tone-colored dot glow — no canonical ds.shadow.* tier */
   if (tone === "avoid") return "bg-red-300 shadow-[0_0_12px_rgba(252,165,165,0.42)]";
-  /* allow-arbitrary: pre-slice-a */
+  /* allow-arbitrary: shadow-[...] tone-colored dot glow — no canonical ds.shadow.* tier */
   if (tone === "prep") return "bg-amber-300 shadow-[0_0_12px_rgba(252,211,77,0.36)]";
-  /* allow-arbitrary: pre-slice-a */
+  /* allow-arbitrary: shadow-[...] tone-colored dot glow — no canonical ds.shadow.* tier */
   return "bg-orange-300 shadow-[0_0_12px_rgba(251,146,60,0.4)]";
 }
 
@@ -140,7 +141,7 @@ function SetupDetailContent({ equipment, lang, setup, setupContent }: Omit<Setup
 
   return (
     <div className="grid gap-3 sm:grid-cols-[minmax(240px,0.85fr)_minmax(0,1fr)] sm:items-stretch">
-      {/* allow-arbitrary: pre-slice-a */}
+      {/* allow-arbitrary: rounded-[1.2rem] — setup visual frame radius, no canonical ds.radius.* tier */}
       <div className="relative h-56 overflow-hidden rounded-[1.2rem] border border-orange-200/15 bg-slate-950 sm:h-[22rem]">
         <Image
           src={imageSrc}
@@ -162,8 +163,7 @@ function SetupDetailContent({ equipment, lang, setup, setupContent }: Omit<Setup
             return (
               <span
                 key={`${chip.tone}-${chip.label}`}
-                /* allow-arbitrary: pre-slice-a */
-                className={`${getSetupOverlayChipClass(chip.tone)} inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[10px]`}
+                className={`${getSetupOverlayChipClass(chip.tone)} inline-flex items-center gap-1.5 px-2.5 py-1.5 ${ds.text.body10}`}
               >
                 {chipIcon ? (
                   <AppIcon
@@ -183,8 +183,7 @@ function SetupDetailContent({ equipment, lang, setup, setupContent }: Omit<Setup
       </div>
 
       <div className="rounded-2xl border border-orange-300/15 bg-orange-500/[0.055] p-4">
-        {/* allow-arbitrary: pre-slice-a */}
-        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-orange-300/85">
+        <p className={`${ds.text.body10} font-black uppercase tracking-[0.16em] text-orange-300/85`}>
           {setupVisual.setupVisualLabel}
         </p>
         <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-100">
@@ -214,12 +213,11 @@ export function SetupDetailSurface({
       aria-modal="true"
       role="dialog"
     >
-      {/* allow-arbitrary: pre-slice-a */}
+      {/* allow-arbitrary: rounded-[1.65rem] — setup detail dialog radius, no canonical ds.radius.* tier */}
       <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-[1.65rem] border border-white/10 bg-slate-950 shadow-2xl shadow-black/45 ring-1 ring-inset ring-white/[0.05]">
         <div className="flex items-center justify-between gap-3 border-b border-white/8 px-4 py-3">
           <div className="min-w-0">
-            {/* allow-arbitrary: pre-slice-a */}
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-300/75">
+            <p className={`${ds.text.body10} font-black uppercase tracking-[0.18em] text-orange-300/75`}>
               {copy.setupKicker}
             </p>
             <h3 className="mt-0.5 truncate text-lg font-black tracking-tight text-white">
@@ -229,7 +227,7 @@ export function SetupDetailSurface({
           <button
             type="button"
             onClick={closeWithHistory}
-            /* allow-arbitrary: pre-slice-a */
+            /* allow-arbitrary: bg-white/[0.06] — non-subpanel close-button surface, no canonical token */
             className="shrink-0 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs font-black text-slate-200 transition hover:bg-white/[0.1] active:scale-[0.98]"
           >
             {copy.close}
@@ -254,12 +252,11 @@ export default function ResultGuidancePanel({ avoidContent, lang, prepGuidanceLi
   return (
     <section className="col-span-full grid gap-2.5 sm:grid-cols-2" aria-label="Result guidance">
       {avoidLines.length > 0 ? (
-        /* allow-arbitrary: pre-slice-a */
+        /* allow-arbitrary: rounded-[1.25rem] — avoid-tone article radius, no canonical ds.radius.* tier */
         <article className="rounded-[1.25rem] border border-red-300/22 bg-red-500/[0.07] p-3 ring-1 ring-inset ring-red-200/[0.04]">
           <div className="mb-2 flex items-center gap-2">
             <span className={`h-2 w-2 rounded-full ${dotClass("avoid")}`} />
-            {/* allow-arbitrary: pre-slice-a */}
-            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-red-200/85">
+            <p className={`${ds.text.body10} font-black uppercase tracking-[0.16em] text-red-200/85`}>
               {copy.avoid}
             </p>
           </div>
@@ -274,16 +271,14 @@ export default function ResultGuidancePanel({ avoidContent, lang, prepGuidanceLi
       ) : null}
 
       {prepLines.length > 0 ? (
-        /* allow-arbitrary: pre-slice-a */
+        /* allow-arbitrary: rounded-[1.25rem] — prep-tone article radius, no canonical ds.radius.* tier */
         <article className="rounded-[1.25rem] border border-amber-300/20 bg-amber-500/[0.07] p-3 ring-1 ring-inset ring-amber-200/[0.035]">
           <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className={`h-2 w-2 rounded-full ${dotClass("prep")}`} />
-            {/* allow-arbitrary: pre-slice-a */}
-            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-amber-200/90">
+            <p className={`${ds.text.body10} font-black uppercase tracking-[0.16em] text-amber-200/90`}>
               {copy.prep}
             </p>
-            {/* allow-arbitrary: pre-slice-a */}
-            <span className="text-[10px] font-black uppercase tracking-[0.12em] text-amber-100/45">
+            <span className={`${ds.text.body10} font-black uppercase tracking-[0.12em] text-amber-100/45`}>
               {copy.prepNote}
             </span>
           </div>
