@@ -84,7 +84,7 @@ function ResultCardHeader({
   const labelClassName = isTip ? "text-red-200" : "text-orange-300/90";
   const iconClassName = isTip
     ? "border-red-300/25 bg-red-500/15 text-red-100 ring-red-200/[0.05]"
-    /* allow-arbitrary: pre-slice-a */
+    /* allow-arbitrary: bg-white/[0.06] — non-subpanel icon-box surface, no canonical token */
     : "bg-white/[0.06] text-white ring-white/[0.04]";
   const registryIcon = getDefaultResultCardRegistryIcon(variant);
 
@@ -109,8 +109,7 @@ function ResultCardHeader({
 
       <div className="min-w-0 flex-1">
         {!isPrimary && (
-          /* allow-arbitrary: pre-slice-a */
-          <p className={`text-[10px] font-black uppercase tracking-[0.22em] ${labelClassName}`}>
+          <p className={`${ds.text.body10} font-black uppercase tracking-[0.22em] ${labelClassName}`}>
             {getVariantLabel(variant, lang)}
           </p>
         )}
@@ -168,11 +167,10 @@ function ResultCardContent({
                 key={`${line}-${index}`}
                 className="flex items-start gap-3 rounded-2xl border border-white/[0.07] bg-black/20 px-3.5 py-3 shadow-inner shadow-black/10 ring-1 ring-inset ring-white/[0.03] sm:px-4 sm:py-3.5"
               >
-                {/* allow-arbitrary: pre-slice-a */}
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-500/25 text-[11px] font-black text-orange-300 ring-1 ring-inset ring-orange-400/20">
+                <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-500/25 ${ds.text.body11} font-black text-orange-300 ring-1 ring-inset ring-orange-400/20`}>
                   {step.number}
                 </span>
-                {/* allow-arbitrary: pre-slice-a */}
+                {/* allow-arbitrary: text-[15px] — between body14 and 22+ display tier, no canonical token */}
                 <p className="flex-1 text-[15px] leading-relaxed text-slate-100 sm:text-base">
                   {step.text}
                 </p>
@@ -198,7 +196,7 @@ function ResultCardContent({
             key={`${line}-${index}`}
             className="flex items-start gap-3 rounded-2xl border border-red-300/30 bg-[radial-gradient(circle_at_0%_0%,rgba(248,113,113,0.16),transparent_34%),rgba(127,29,29,0.16)] px-3.5 py-3 text-sm font-bold leading-6 text-red-50 shadow-inner shadow-black/10 ring-1 ring-inset ring-red-200/[0.06]"
           >
-            {/* allow-arbitrary: pre-slice-a */}
+            {/* allow-arbitrary: shadow-[0_0_12px_...] tip-tone dot glow — no canonical ds.shadow.* tier */}
             <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-red-200 shadow-[0_0_12px_rgba(254,202,202,0.38)]" />
             <p className="whitespace-pre-wrap">{stripLinePrefix(line)}</p>
           </div>
@@ -254,7 +252,7 @@ function StepsDetailSurface({
       aria-modal="true"
       role="dialog"
     >
-      {/* allow-arbitrary: pre-slice-a */}
+      {/* allow-arbitrary: rounded-[1.65rem] — steps detail modal radius, no canonical ds.radius.* tier */}
       <div className="mx-auto flex h-full w-full max-w-4xl flex-col overflow-hidden rounded-[1.65rem] border border-white/10 bg-slate-950 shadow-2xl shadow-black/45 ring-1 ring-inset ring-white/[0.05]">
         <div className="flex items-center justify-between gap-3 border-b border-white/8 px-4 py-3">
           <h3 className="truncate text-xl font-black tracking-tight text-white sm:text-2xl">
@@ -263,7 +261,7 @@ function StepsDetailSurface({
           <button
             type="button"
             onClick={closeWithHistory}
-            /* allow-arbitrary: pre-slice-a */
+            /* allow-arbitrary: bg-white/[0.06] — non-subpanel close-button surface, no canonical token */
             className="shrink-0 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs font-black text-slate-200 transition hover:bg-white/[0.1] active:scale-[0.98]"
           >
             {getCloseLabel(lang)}
@@ -456,7 +454,7 @@ function SetupVisualToggle({
   if (!isSetupCard(title)) return null;
 
   return (
-    /* allow-arbitrary: pre-slice-a */
+    /* allow-arbitrary: rounded-[1.5rem] + bg-[radial-gradient(...)] — setup-visual toggle chassis, no canonical token */
     <div className="mt-4 rounded-[1.5rem] border border-orange-300/25 bg-[radial-gradient(circle_at_16%_0%,rgba(251,146,60,0.18),transparent_34%),rgba(249,115,22,0.055)] p-3 shadow-xl shadow-orange-950/10 ring-1 ring-inset ring-orange-200/[0.05]">
       <button
         type="button"
@@ -469,12 +467,10 @@ function SetupVisualToggle({
             🗺️
           </span>
           <div className="min-w-0">
-            {/* allow-arbitrary: pre-slice-a */}
-            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-orange-300">
+            <p className={`${ds.text.body11} font-black uppercase tracking-[0.2em] text-orange-300`}>
               {setupTitle}
             </p>
-            {/* allow-arbitrary: pre-slice-a */}
-            <p className="mt-0.5 line-clamp-1 text-[11px] text-slate-400">
+            <p className={`mt-0.5 line-clamp-1 ${ds.text.body11} text-slate-400`}>
               {setupSubtitle}
             </p>
           </div>
@@ -500,7 +496,7 @@ function SetupVisualToggle({
                 : "mt-4 translate-y-2 transition-transform duration-300 ease-out"
             }
           >
-            {/* allow-arbitrary: pre-slice-a */}
+            {/* allow-arbitrary: rounded-[1.25rem] — setup-visual image frame radius, no canonical ds.radius.* tier */}
             <div className="relative overflow-hidden rounded-[1.25rem] border border-orange-200/15 bg-slate-950 shadow-2xl shadow-black/30 ring-1 ring-inset ring-white/[0.04]">
               <div className="relative h-52 w-full sm:h-64">
                 <SetupVisualImage key={setupImage} src={setupImage} />
