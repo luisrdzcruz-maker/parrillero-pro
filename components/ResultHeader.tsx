@@ -44,7 +44,7 @@ export default function ResultHeader({
   return (
     <div className="flex min-w-0 items-start justify-between gap-3">
       <div className="min-w-0">
-        <p className={`truncate ${ds.text.body10} font-black uppercase tracking-[0.22em] text-orange-300/90`}>
+        <p className={`truncate ${ds.text.body10} font-black uppercase tracking-[0.22em] ${ds.color.mutedClass.helper}`}>
           {eyebrow}
         </p>
         <div className="mt-1 flex flex-wrap items-center gap-2">

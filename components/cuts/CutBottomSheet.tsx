@@ -159,7 +159,7 @@ function CutDetailContent({
             type="button"
             onClick={onClose}
             /* allow-arbitrary: bg-white/[0.07] — non-subpanel close-button surface, no canonical token */
-            className={`inline-flex h-9 min-h-[36px] min-w-[36px] items-center justify-center rounded-full border border-white/10 bg-white/[0.07] px-3 text-xs font-black text-zinc-200 shadow-lg transition hover:bg-white/12 active:scale-[0.97] ${
+            className={`inline-flex h-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-white/10 bg-white/[0.07] px-3 text-xs font-black text-zinc-200 shadow-lg transition hover:bg-white/12 active:scale-[0.97] ${
               inline ? "" : "sticky top-0"
             }`}
           >

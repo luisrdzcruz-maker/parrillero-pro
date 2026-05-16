@@ -18,7 +18,7 @@ export function LiveCommandCard({ action, ctaLabel, onMarkDone }: LiveCommandCar
   return (
     /* allow-arbitrary: shadow-[0_20px_45px_...] ember-glow command-card chassis — no canonical ds.shadow.* tier */
     <section className="rounded-3xl border border-orange-300/30 bg-gradient-to-br from-orange-500/22 to-white/[0.06] p-4 shadow-[0_20px_45px_rgba(249,115,22,0.2)]">
-      <p className={`${ds.text.body11} uppercase tracking-[0.18em] text-orange-100/90`}>{action.statusLabel}</p>
+      <p className={`${ds.text.body11} uppercase tracking-[0.18em] ${ds.color.mutedClass.faint}`}>{action.statusLabel}</p>
       <div className="mt-2 flex items-start gap-3">
         <BrandImageIcon src={iconSrc ?? '/icons/live/turn-food.webp'} alt="" size="md" shape="soft" aria-hidden="true" />
         <div>

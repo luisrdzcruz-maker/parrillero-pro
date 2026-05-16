@@ -84,7 +84,7 @@ export function ParrilladaTimelineFinal({
                 <div className={`space-y-1 text-xs ${ds.color.mutedClass.secondary}`}>
                   <p>{formatActionMeta(group, t)}</p>
                   {itemQuantityLabel(group) ? (
-                    <p className="text-orange-100/80">{itemQuantityLabel(group)}</p>
+                    <p className={ds.color.mutedClass.body}>{itemQuantityLabel(group)}</p>
                   ) : null}
                   <p className={ds.color.mutedClass.body}>{compactExecutionInstruction(group)}</p>
                 </div>

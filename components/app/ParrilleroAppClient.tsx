@@ -934,6 +934,7 @@ function ParrilleroAppContent() {
       onCloseProModal={closeProModal}
       isCutSelectionShell={isCutSelectionShell}
       isCutSelectionSheetOpen={isCutSelectionSheetOpen}
+      flattenBg={mode !== "inicio"}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onModeChange={handleModeChange}
@@ -944,7 +945,6 @@ function ParrilleroAppContent() {
           home={buildHomeModeProps({
             lang,
             t,
-            savedMenusCount: savedMenus.length,
             onLangChange: handleLanguageChange,
             onModeChange: handleModeChange,
             onPrimaryCtaClick: handleHomePrimaryCtaClick,

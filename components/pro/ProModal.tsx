@@ -92,8 +92,8 @@ export function ProModal({ lang, trigger, onUpgrade, onDismiss }: Props) {
         <button
           type="button"
           onClick={onDismiss}
-          /* allow-arbitrary: bg-white/[0.06] non-subpanel + hover:text-white/65 mutedClass hover variant deferred to PR D-primitives/B */
-          className={`absolute right-5 top-5 rounded-full border border-white/10 bg-white/[0.06] p-1.5 ${ds.text.body10} font-bold ${ds.color.mutedClass.disabled} transition hover:text-white/65 active:scale-[0.96]`}
+          /* allow-arbitrary: bg-white/[0.06] non-subpanel + hover:text-white/85 mutedClass hover variant deferred to PR D-primitives/B */
+          className={`absolute right-5 top-5 rounded-full border border-white/10 bg-white/[0.06] p-1.5 ${ds.text.body10} font-bold ${ds.color.mutedClass.secondary} transition hover:text-white/85 active:scale-[0.96]`}
           aria-label={t.proModalCloseAria}
         >
           ✕
@@ -127,12 +127,13 @@ export function ProModal({ lang, trigger, onUpgrade, onDismiss }: Props) {
           {benefits.map((b) => (
             <li key={b.title} className="flex items-start gap-3">
               {/* Icon chip */}
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10 text-base">
+              {/* allow-arbitrary: bg-white/[0.04] — non-subpanel benefit-icon chassis, no canonical token */}
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/[0.04] text-base">
                 {b.icon}
               </span>
               <div className="min-w-0 pt-0.5">
                 <p className={`${ds.text.body13} font-black ${ds.color.mutedClass.strong}`}>{b.title}</p>
-                <p className={`text-[11.5px] font-semibold ${ds.color.mutedClass.disabled}`}>{b.sub}</p>
+                <p className={`text-[11.5px] font-semibold ${ds.color.mutedClass.secondary}`}>{b.sub}</p>
               </div>
               {/* Check */}
               <span className={`ml-auto shrink-0 ${ds.text.body13} font-black text-emerald-400`}>✓</span>
@@ -153,8 +154,8 @@ export function ProModal({ lang, trigger, onUpgrade, onDismiss }: Props) {
         <button
           type="button"
           onClick={onDismiss}
-          /* allow-arbitrary: hover:text-white/55 — mutedClass hover variant deferred to PR D-primitives/B */
-          className={`mt-3 w-full py-2.5 ${ds.text.body13} font-semibold ${ds.color.mutedClass.disabled} transition hover:text-white/55 active:scale-[0.98]`}
+          /* allow-arbitrary: hover:text-white/85 — mutedClass hover variant deferred to PR D-primitives/B */
+          className={`mt-3 w-full py-2.5 ${ds.text.body13} font-semibold ${ds.color.mutedClass.secondary} transition hover:text-white/85 active:scale-[0.98]`}
         >
           {t.proModalSecondaryCta}
         </button>

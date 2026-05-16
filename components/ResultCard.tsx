@@ -81,7 +81,7 @@ function ResultCardHeader({
 }) {
   const isPrimary = variant === "primary";
   const isTip = variant === "tip";
-  const labelClassName = isTip ? "text-red-200" : "text-orange-300/90";
+  const labelClassName = isTip ? "text-red-200" : ds.color.mutedClass.helper;
   const iconClassName = isTip
     ? "border-red-300/25 bg-red-500/15 text-red-100 ring-red-200/[0.05]"
     /* allow-arbitrary: bg-white/[0.06] — non-subpanel icon-box surface, no canonical token */
@@ -167,7 +167,8 @@ function ResultCardContent({
                 key={`${line}-${index}`}
                 className="flex items-start gap-3 rounded-2xl border border-white/[0.07] bg-black/20 px-3.5 py-3 shadow-inner shadow-black/10 ring-1 ring-inset ring-white/[0.03] sm:px-4 sm:py-3.5"
               >
-                <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-500/25 ${ds.text.body11} font-black text-orange-300 ring-1 ring-inset ring-orange-400/20`}>
+                {/* allow-arbitrary: bg-white/[0.06] — non-subpanel step-number chip, no canonical token */}
+                <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/[0.06] ${ds.text.body11} font-black ${ds.color.mutedClass.strong}`}>
                   {step.number}
                 </span>
                 {/* allow-arbitrary: text-[15px] — between body14 and 22+ display tier, no canonical token */}
@@ -278,7 +279,8 @@ function StepsDetailSurface({
                   key={`${line}-${index}`}
                   className="flex items-start gap-3 rounded-2xl border border-white/[0.08] bg-black/22 px-4 py-4 ring-1 ring-inset ring-white/[0.03]"
                 >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-orange-500/25 text-xs font-black text-orange-300 ring-1 ring-inset ring-orange-400/20">
+                  {/* allow-arbitrary: bg-white/[0.06] — non-subpanel step-number chip (modal variant), no canonical token */}
+                  <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/[0.06] text-xs font-black ${ds.color.mutedClass.strong}`}>
                     {step?.number ?? index + 1}
                   </span>
                   <p className="flex-1 text-base leading-relaxed text-slate-100 sm:text-lg">
@@ -467,7 +469,7 @@ function SetupVisualToggle({
             🗺️
           </span>
           <div className="min-w-0">
-            <p className={`${ds.text.body11} font-black uppercase tracking-[0.2em] text-orange-300`}>
+            <p className={`${ds.text.body11} font-black uppercase tracking-[0.2em] ${ds.color.mutedClass.secondary}`}>
               {setupTitle}
             </p>
             <p className={`mt-0.5 line-clamp-1 ${ds.text.body11} text-slate-400`}>

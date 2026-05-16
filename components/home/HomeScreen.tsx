@@ -2,13 +2,11 @@
 
 import Image from "next/image";
 import { AppIcon } from "@/components/ui/AppIcon";
-import { useRouter } from "next/navigation";
 import type { Mode } from "@/components/navigation/AppHeader";
 import { ds } from "@/lib/design-system";
-import { buildLiveUrl } from "@/lib/navigation/buildLiveUrl";
 import type { IconCategory } from "@/lib/assets/iconTypes";
 import type { AppText, Lang } from "@/lib/i18n/texts";
-import { type MouseEvent, type ReactNode, useLayoutEffect, useMemo, useState } from "react";
+import { type MouseEvent, type ReactNode, useLayoutEffect, useState } from "react";
 
 // ─── Entrance animation ───────────────────────────────────────────────────────
 
@@ -59,7 +57,7 @@ function HeroSection({ t }: { t: AppText }) {
       </span>
 
       <div className="mt-3">
-        <p className={`${ds.text.body10} font-black uppercase tracking-[0.28em] text-orange-300/90`}>
+        <p className={`${ds.text.body10} font-black uppercase tracking-[0.28em] ${ds.color.mutedClass.helper}`}>
           {t.homeEyebrow}
         </p>
         <h1 className="mt-1 text-[2rem] font-black leading-none tracking-[-0.045em] text-white sm:text-[2.6rem]">
@@ -84,8 +82,6 @@ type QuickAction = {
     key: string;
   };
   title: string;
-  description: string;
-  emphasized?: boolean;
   onClick: (e: MouseEvent<HTMLButtonElement>) => void;
 };
 
@@ -96,30 +92,14 @@ function HomeQuickActions({
   title: string;
   actions: QuickAction[];
 }) {
-  // Spec §7.1: 2 main actions (Start Cooking, Plan Parrillada/Menu) +
-  // 2 secondary actions (Saved, Live). Partition by `emphasized` to render
-  // a clear visual hierarchy: primary tiles dominate at the top; secondary
-  // tiles below, visually quieter and shorter.
-  const primary = actions.filter((action) => action.emphasized);
-  const secondary = actions.filter((action) => !action.emphasized);
-
   return (
-    <section className="relative space-y-2.5 sm:space-y-3">
+    <section className="relative">
       <p className="sr-only">{title}</p>
-      {primary.length > 0 && (
-        <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
-          {primary.map((action) => (
-            <PrimaryActionTile key={action.id} action={action} />
-          ))}
-        </div>
-      )}
-      {secondary.length > 0 && (
-        <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
-          {secondary.map((action) => (
-            <SecondaryActionTile key={action.id} action={action} />
-          ))}
-        </div>
-      )}
+      <div className="flex flex-col gap-3.5 sm:gap-4">
+        {actions.map((action) => (
+          <PrimaryActionTile key={action.id} action={action} />
+        ))}
+      </div>
     </section>
   );
 }
@@ -130,72 +110,32 @@ function PrimaryActionTile({ action }: { action: QuickAction }) {
       type="button"
       onClick={(e) => action.onClick(e)}
       /* allow-arbitrary: rounded-[1.5rem]/rounded-[1.7rem] + bg-[radial-gradient(...)] + shadow-[...] — primary action tile chassis, no canonical token */
-      className="group relative min-h-[176px] w-full touch-manipulation overflow-hidden rounded-[1.5rem] border border-orange-300/55 bg-[radial-gradient(circle_at_30%_-10%,rgba(249,115,22,0.55),transparent_55%),linear-gradient(155deg,rgba(234,88,12,0.32)_0%,rgba(120,53,15,0.28)_38%,rgba(15,11,8,0.92)_100%)] px-4 pb-4 pt-5 text-left shadow-[0_28px_56px_rgba(0,0,0,0.6),0_18px_44px_rgba(249,115,22,0.28)] ring-1 ring-inset ring-orange-200/[0.12] transition-all duration-200 hover:border-orange-200/75 hover:shadow-[0_30px_60px_rgba(0,0,0,0.65),0_22px_52px_rgba(249,115,22,0.42)] active:scale-[0.98] sm:min-h-[208px] sm:rounded-[1.7rem] sm:px-5 sm:pb-5 sm:pt-6"
+      className="group relative min-h-[208px] w-full touch-manipulation overflow-hidden rounded-[1.5rem] bg-[radial-gradient(circle_at_30%_-10%,rgba(249,115,22,0.55),transparent_55%),linear-gradient(155deg,rgba(234,88,12,0.32)_0%,rgba(120,53,15,0.28)_38%,rgba(15,11,8,0.92)_100%)] px-4 pb-5 pt-6 text-center shadow-[0_28px_56px_rgba(0,0,0,0.6),0_18px_44px_rgba(249,115,22,0.28)] ring-1 ring-inset ring-orange-200/[0.12] transition-all duration-200 hover:shadow-[0_30px_60px_rgba(0,0,0,0.65),0_22px_52px_rgba(249,115,22,0.42)] active:scale-[0.98] sm:min-h-[232px] sm:rounded-[1.7rem] sm:px-5 sm:pb-6 sm:pt-7"
     >
       <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-orange-200/55 to-transparent" />
       <div className="pointer-events-none absolute -right-14 -top-16 h-40 w-40 rounded-full bg-orange-400/30 blur-3xl transition group-hover:bg-orange-400/45" />
       <div className="pointer-events-none absolute -bottom-16 -left-10 h-32 w-32 rounded-full bg-orange-700/24 blur-3xl" />
-      <div className="relative flex h-full flex-col justify-between gap-4">
-        <div className="flex items-start justify-between gap-3">
-          {action.registryIcon ? (
-            <AppIcon
-              category={action.registryIcon.category}
-              iconKey={action.registryIcon.key}
-              alt=""
-              size="lg"
-              aria-hidden="true"
-              /* allow-arbitrary: rounded-[1.35rem] + shadow-[...] — primary action icon chassis, no canonical token */
-              className="h-[4.25rem] w-[4.25rem] rounded-[1.35rem] border border-orange-300/40 bg-[#0a0503]/72 p-3 shadow-[0_14px_32px_rgba(249,115,22,0.36),inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-inset ring-white/[0.08] transition-transform duration-200 group-hover:scale-[1.04] sm:h-[5rem] sm:w-[5rem]"
-              fallback={<span className="text-xl" aria-hidden>{action.icon}</span>}
-            />
-          ) : (
-            /* allow-arbitrary: rounded-[1.35rem] + shadow-[...] — primary action icon chassis (emoji fallback), no canonical token */
-            <span className="flex h-[4.25rem] w-[4.25rem] shrink-0 items-center justify-center rounded-[1.35rem] border border-white/10 bg-black/40 text-3xl shadow-[0_10px_24px_rgba(0,0,0,0.36)]" aria-hidden>{action.icon}</span>
-          )}
-          {/* allow-arbitrary: shadow-[inset_0_1px_0_...] — arrow chip inset highlight, no canonical token */}
-          <span aria-hidden="true" className={`mt-1.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/40 ${ds.text.body11} font-black ${ds.color.mutedClass.body} shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:border-orange-200/55 group-hover:text-orange-100`}>→</span>
-        </div>
-        <div className="min-w-0">
-          {/* allow-arbitrary: text-[17px]/sm:text-[22px] — between body14 and 22+ display tier, no canonical token */}
-          <p className="text-[17px] font-black leading-[1.05] tracking-[-0.025em] text-white sm:text-[22px]">{action.title}</p>
-          {/* allow-arbitrary: sm:text-[13px] — breakpoint-prefixed text size, ds.text.body{N} lacks breakpoint variants (deferred to PR D-primitives/B) */}
-          <p className={`mt-1.5 line-clamp-2 ${ds.text.body11} font-medium leading-snug text-orange-100/72 sm:text-[13px] sm:leading-relaxed`}>{action.description}</p>
-        </div>
+      <div className="relative flex h-full min-w-0 flex-col items-center justify-center gap-4 sm:gap-5">
+        {action.registryIcon ? (
+          <AppIcon
+            category={action.registryIcon.category}
+            iconKey={action.registryIcon.key}
+            alt=""
+            size="lg"
+            aria-hidden="true"
+            /* allow-arbitrary: rounded-[1.5rem] + shadow-[...] — primary action icon chassis (hero size), no canonical token */
+            className="h-[6.25rem] w-[6.25rem] rounded-[1.5rem] border border-orange-300/40 bg-[#0a0503]/72 p-4 shadow-[0_14px_32px_rgba(249,115,22,0.36),inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-inset ring-white/[0.08] transition-transform duration-200 group-hover:scale-[1.04] sm:h-[7.5rem] sm:w-[7.5rem] sm:p-5"
+            fallback={<span className="text-4xl sm:text-5xl" aria-hidden>{action.icon}</span>}
+          />
+        ) : (
+          /* allow-arbitrary: rounded-[1.5rem] + shadow-[...] — primary action icon chassis (emoji fallback, hero size), no canonical token */
+          <span className="flex h-[6.25rem] w-[6.25rem] shrink-0 items-center justify-center rounded-[1.5rem] border border-white/10 bg-black/40 text-4xl shadow-[0_10px_24px_rgba(0,0,0,0.36)] sm:h-[7.5rem] sm:w-[7.5rem] sm:text-5xl" aria-hidden>{action.icon}</span>
+        )}
+        {/* Single-word label — card identity, full-strength white */}
+        <p className="text-xl font-black leading-none tracking-[-0.01em] text-white sm:text-2xl">
+          {action.title}
+        </p>
       </div>
-    </button>
-  );
-}
-
-function SecondaryActionTile({ action }: { action: QuickAction }) {
-  return (
-    <button
-      type="button"
-      onClick={(e) => action.onClick(e)}
-      /* allow-arbitrary: shadow-[0_14px_32px_...] — secondary tile lift, no canonical ds.shadow.* tier */
-      className="group relative flex min-h-[88px] w-full touch-manipulation items-center gap-3 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0a0807]/72 px-3.5 py-3 text-left shadow-[0_14px_32px_rgba(0,0,0,0.42)] ring-1 ring-inset ring-white/[0.04] backdrop-blur-xl transition-all duration-200 hover:border-orange-300/35 hover:bg-[#0d0a08]/82 active:scale-[0.98] sm:min-h-[100px] sm:px-4 sm:py-3.5"
-    >
-      <div className="pointer-events-none absolute inset-x-3 top-0 h-px bg-gradient-to-r from-transparent via-white/12 to-transparent" />
-      {action.registryIcon ? (
-        <AppIcon
-          category={action.registryIcon.category}
-          iconKey={action.registryIcon.key}
-          alt=""
-          size="md"
-          aria-hidden="true"
-          /* allow-arbitrary: shadow-[inset_...,...] — secondary icon inset+lift, no canonical token */
-          className="h-12 w-12 shrink-0 rounded-xl border border-white/[0.08] bg-black/40 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_8px_18px_rgba(0,0,0,0.32)] transition group-hover:border-orange-300/30 sm:h-[3.25rem] sm:w-[3.25rem]"
-          fallback={<span className="text-lg" aria-hidden>{action.icon}</span>}
-        />
-      ) : (
-        /* allow-arbitrary: shadow-[inset_...,...] — secondary icon inset+lift (emoji fallback), no canonical token */
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-black/40 text-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_8px_18px_rgba(0,0,0,0.32)] sm:h-[3.25rem] sm:w-[3.25rem]" aria-hidden>{action.icon}</span>
-      )}
-      <div className="min-w-0 flex-1">
-        {/* allow-arbitrary: sm:text-[15px] — breakpoint-prefixed text size, ds.text.body{N} lacks breakpoint variants (deferred to PR D-primitives/B) */}
-        <p className={`${ds.text.body14} font-black leading-tight tracking-[-0.015em] text-white sm:text-[15px]`}>{action.title}</p>
-        <p className={`mt-0.5 line-clamp-1 ${ds.text.body11} font-medium leading-snug text-slate-400 sm:text-xs`}>{action.description}</p>
-      </div>
-      <span aria-hidden="true" className={`ml-1 shrink-0 text-base font-black ${ds.color.mutedClass.disabled} transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-orange-200/55`}>→</span>
     </button>
   );
 }
@@ -226,7 +166,7 @@ function HomeSettingsStrip({
       <select
         value={lang}
         onChange={(e) => onLangChange(e.target.value as Lang)}
-        className="min-h-9 shrink-0 rounded-xl border border-white/[0.1] bg-[#050302]/70 px-3 text-xs font-bold text-slate-100 shadow-inner shadow-black/40 outline-none transition focus:border-orange-400/60 focus:ring-2 focus:ring-orange-500/15"
+        className="min-h-11 shrink-0 rounded-xl border border-white/[0.1] bg-[#050302]/70 px-3 text-xs font-bold text-slate-100 shadow-inner shadow-black/40 outline-none transition focus:border-orange-400/60 focus:ring-2 focus:ring-orange-500/15"
       >
         <option value="es">🇪🇸 {t.homeLangSpanish}</option>
         <option value="en">🇬🇧 {t.homeLangEnglish}</option>
@@ -244,20 +184,16 @@ type RippleState = { x: number; y: number; id: number } | null;
 export function HomeScreen({
   lang,
   onLangChange,
-  savedMenusCount,
   onModeChange,
   onPrimaryCtaClick,
   t,
 }: {
   lang: Lang;
   onLangChange: (lang: Lang) => void;
-  savedMenusCount: number;
   onModeChange: (mode: Mode) => void;
   onPrimaryCtaClick?: () => void;
   t: AppText;
 }) {
-  const router = useRouter();
-
   // Radial ripple that plays on tap then resolves into the cooking screen
   const [ripple, setRipple] = useState<RippleState>(null);
 
@@ -267,19 +203,12 @@ export function HomeScreen({
     setTimeout(action, 150);
   }
 
-  const savedPlansLabel = useMemo(() => {
-    if (savedMenusCount === 1) return `1 ${t.homeSavedPlanSingular}`;
-    return `${savedMenusCount} ${t.homeSavedPlanPlural}`;
-  }, [savedMenusCount, t.homeSavedPlanPlural, t.homeSavedPlanSingular]);
-
   const quickActions: QuickAction[] = [
     {
       id: "start-cooking",
       icon: "🥩",
       registryIcon: { category: "ui", key: "meat-selection" },
-      title: t.homePrimaryCta,
-      description: t.homeGuidedCookingSub,
-      emphasized: true,
+      title: t.homeStartCookTitle,
       onClick: (e) =>
         fireRipple(e.clientX, e.clientY, () => (onPrimaryCtaClick ? onPrimaryCtaClick() : onModeChange("coccion"))),
     },
@@ -287,26 +216,8 @@ export function HomeScreen({
       id: "plan-bbq",
       icon: "🧭",
       registryIcon: { category: "ui", key: "cooking-dashboard" },
-      title: t.homeParrillada,
-      description: t.homeParrilladaSub,
-      emphasized: true,
+      title: t.homeStartParrilladaTitle,
       onClick: () => onModeChange("plan"),
-    },
-    {
-      id: "saved-plans",
-      icon: "⭐",
-      registryIcon: { category: "ui", key: "shopping-list" },
-      title: t.homeSaved,
-      description: savedMenusCount > 0 ? savedPlansLabel : t.homeSavedSubEmpty,
-      onClick: () => onModeChange("guardados"),
-    },
-    {
-      id: "continue-live",
-      icon: "⏱️",
-      registryIcon: { category: "live", key: "place-food" },
-      title: t.homeLiveCooking,
-      description: t.homeLiveCookingSub,
-      onClick: () => router.push(buildLiveUrl({ lang })),
     },
   ];
 

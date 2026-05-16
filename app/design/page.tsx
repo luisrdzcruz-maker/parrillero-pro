@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ds } from "@/lib/design-system";
 import { designVariants } from "./designVariants";
 
 export const metadata = {
@@ -11,7 +12,7 @@ export default function DesignGalleryPage() {
       <div className="mx-auto max-w-6xl">
         {/* allow-arbitrary: rounded-[2rem] — design gallery hero radius, no canonical ds.radius.* tier */}
         <div className="rounded-[2rem] border border-orange-500/20 bg-orange-500/10 p-6">
-          <p className="text-xs font-black uppercase tracking-[0.26em] text-orange-300">
+          <p className={`text-xs font-black uppercase tracking-[0.26em] ${ds.color.mutedClass.helper}`}>
             Internal Design Preview
           </p>
           <h1 className="mt-4 text-4xl font-black tracking-tight sm:text-5xl">

@@ -364,6 +364,19 @@ export function getLiveText(lang: SurfaceLang) {
       durationShort: "Total",
       targetShort: "Objetivo",
       noTimer: "Manual",
+      // NOTE: hero/upcoming eyebrow language ("AHORA", "A SEGUIR", "Y DESPUÉS")
+      // and the inline fire-setup phrasing ("Fuego directo · Objetivo 54°C")
+      // deserve a Spanish-polish review during the texts.ts polish slice.
+      // Selected per canvas-voice-rule (1–3 word eyebrows, imperative tone).
+      nowEyebrow: "Ahora",
+      upNextEyebrow: "A seguir",
+      upNextAfterEyebrow: "Y después",
+      verifyBefore: "Verifica antes",
+      fireDirectLabel: "Fuego directo",
+      fireIndirectLabel: "Fuego indirecto",
+      fireRestLabel: "En reposo",
+      targetTempTemplate: "Objetivo {value}°C",
+      noTargetTempLabel: "Sin objetivo",
     };
   }
   return {
@@ -431,5 +444,14 @@ export function getLiveText(lang: SurfaceLang) {
     durationShort: "Total",
     targetShort: "Target",
     noTimer: "Manual",
+    nowEyebrow: "Now",
+    upNextEyebrow: "Up next",
+    upNextAfterEyebrow: "Then",
+    verifyBefore: "Check before",
+    fireDirectLabel: "Direct fire",
+    fireIndirectLabel: "Indirect fire",
+    fireRestLabel: "Resting",
+    targetTempTemplate: "Target {value}°C",
+    noTargetTempLabel: "No target",
   };
 }

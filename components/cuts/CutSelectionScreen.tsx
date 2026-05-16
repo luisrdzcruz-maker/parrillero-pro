@@ -560,7 +560,7 @@ function CatalogContent({
               type="button"
               onClick={onClearSearch}
               aria-label={getCutSearchClearLabel(lang)}
-              className="absolute right-1.5 top-1/2 flex h-8 min-w-8 -translate-y-1/2 items-center justify-center rounded-full border border-orange-400/25 bg-orange-500/12 px-2 text-xs font-black text-orange-200 transition hover:bg-orange-500/20 active:scale-[0.97]"
+              className="absolute right-1.5 top-1/2 flex h-11 min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-full border border-orange-400/25 bg-orange-500/12 px-2 text-xs font-black text-orange-200 transition hover:bg-orange-500/20 active:scale-[0.97]"
             >
               &#10005;
             </button>
@@ -639,7 +639,7 @@ function MobileCatalogSheet({
             <div className="mx-auto mb-3 h-1 w-12 rounded-full bg-white/20" />
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className={`${ds.text.body10} font-black uppercase tracking-[0.2em] text-orange-300`}>
+                <p className={`${ds.text.body10} font-black uppercase tracking-[0.2em] ${ds.color.mutedClass.secondary}`}>
                   {catalogProps.lang === "es" ? "Catálogo completo" : "Full catalog"}
                 </p>
                 <h2 id="mobile-cut-catalog-title" className="mt-1 truncate text-xl font-black tracking-tight text-white">
@@ -651,7 +651,7 @@ function MobileCatalogSheet({
                 type="button"
                 onClick={onClose}
                 /* allow-arbitrary: bg-white/[0.08] — non-subpanel close-button surface, no canonical token */
-                className="inline-flex h-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-full border border-white/10 bg-white/[0.08] px-3 text-xs font-black text-zinc-200 shadow-lg transition hover:bg-white/12 active:scale-[0.97]"
+                className="inline-flex h-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-white/10 bg-white/[0.08] px-3 text-xs font-black text-zinc-200 shadow-lg transition hover:bg-white/12 active:scale-[0.97]"
               >
                 {closeLabel}
               </button>

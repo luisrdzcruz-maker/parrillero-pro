@@ -10,12 +10,9 @@ import {
 import { ds } from "@/lib/design-system";
 import { parseLiveParams } from "@/lib/navigation/parseLiveParams";
 import type { Lang } from "@/lib/i18n/texts";
-import LiveExecutionGuide from "./LiveExecutionGuide";
 import LiveHeader from "./LiveHeader";
-import LiveNextStepPreview from "./LiveNextStepPreview";
-import LiveStepCard from "./LiveStepCard";
-import LiveTimeline from "./LiveTimeline";
-import LiveTimer from "./LiveTimer";
+import LiveHero from "./LiveHero";
+import LiveUpNext from "./LiveUpNext";
 import type { LivePhase } from "./TimerDial";
 import { getAnimalSurfaceLabel, getDonenessSurfaceLabel, getLiveText } from "@/lib/i18n/surfaceFallbacks";
 
@@ -52,14 +49,6 @@ const CTA_STYLE: Record<UrgencyLevel | "complete", string> = {
   critical: "bg-yellow-300 text-black shadow-[0_0_54px_rgba(250,204,21,0.58)] hover:bg-yellow-200",
   /* allow-arbitrary: shadow-[...] phase-colored CTA glow — no canonical ds.shadow.* tier */
   complete: "bg-emerald-500 text-black shadow-[0_10px_36px_rgba(16,185,129,0.34)]",
-};
-
-const DOT_CLASS: Record<LivePhase, string> = {
-  idle: "bg-zinc-500",
-  active: "animate-pulse bg-orange-500",
-  urgent: "animate-pulse bg-yellow-400",
-  rest: "bg-blue-400",
-  complete: "bg-emerald-400",
 };
 
 function getBgStyle(phase: LivePhase, zone?: LiveZone | null): CSSProperties {
@@ -114,7 +103,6 @@ export default function LiveCookingScreen({
   onPause,
   onCompleteStep,
   onPreviousStep,
-  onGoToStep,
   alertMessage,
   alertsEnabled,
   onEnableAlerts,
@@ -178,15 +166,9 @@ export default function LiveCookingScreen({
   const bgStyle = getBgStyle(phase, currentStep?.zone);
   const isFirst = currentStepIndex === 0;
   const isLast = currentStepIndex === allSteps.length - 1;
-  const overallProgress = isComplete
-    ? 1
-    : allSteps.length > 0
-      ? Math.max(0, Math.min(1, (currentStepIndex + (currentStep?.progress ?? 0)) / allSteps.length))
-      : 0;
-  const overallProgressPct = `${Math.round(overallProgress * 100)}%`;
   const ctaUrgency = ctaLabel === liveText.markDone && urgency === "normal" ? "normal" : urgency;
   const shouldPulseCta = !reduceMotion && (urgency === "attention" || urgency === "critical");
-  const dotClass = reduceMotion ? DOT_CLASS[phase].replace("animate-pulse ", "") : DOT_CLASS[phase];
+  const stepAfterNext = allSteps[currentStepIndex + 2] ?? null;
 
   function handleBack() {
     if (hasStarted && hasTimer && !paused && !isComplete && !window.confirm(liveText.leaveConfirm)) {
@@ -208,11 +190,6 @@ export default function LiveCookingScreen({
 
   function handlePauseToggle() {
     onPause();
-  }
-
-  function handleGoToStep(index: number) {
-    if (!hasStarted) return;
-    onGoToStep?.(index);
   }
 
   function handleTouchStart(e: TouchEvent) {
@@ -246,12 +223,12 @@ export default function LiveCookingScreen({
           <p className="max-w-[18rem] text-[clamp(1.75rem,8vw,2.45rem)] font-black leading-none tracking-[-0.05em]">
             {liveText.noStepsTitle}
           </p>
-          <p className={`mt-3 max-w-[19rem] text-sm font-semibold leading-snug ${ds.color.mutedClass.helper}`}>
+          <p className={`mt-3 max-w-[19rem] text-sm font-semibold leading-snug ${ds.color.mutedClass.secondary}`}>
             {liveText.noStepsBody}
           </p>
           {resolvedContext && (
             /* allow-arbitrary: bg-white/[0.04] — non-subpanel chip surface, no canonical token */
-            <p className={`mt-4 max-w-[17rem] truncate rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 ${ds.text.body11} font-bold ${ds.color.mutedClass.disabled}`}>
+            <p className={`mt-4 max-w-[17rem] truncate rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 ${ds.text.body11} font-bold ${ds.color.mutedClass.secondary}`}>
               {resolvedContext}
             </p>
           )}
@@ -279,75 +256,40 @@ export default function LiveCookingScreen({
     >
       <LiveHeader
         alertsEnabled={alertsEnabled}
-        currentIndex={currentStepIndex}
         currentStep={currentStep}
-        dotClass={dotClass}
         lang={resolvedLang}
         onBack={onBack ? handleBack : undefined}
         onEnableAlerts={onEnableAlerts}
-        overallProgressPct={overallProgressPct}
         phase={phase}
-        stepCount={allSteps.length}
       />
 
-      <main className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden px-3.5 py-2">
+      <main className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden px-3.5 py-3">
         {alertMessage && (
-          <div className="rounded-2xl border border-orange-400/30 bg-orange-500/10 px-3.5 py-2 text-xs font-bold text-orange-100">
+          <div className={`shrink-0 rounded-2xl border border-orange-400/30 bg-orange-500/10 px-3.5 py-2 ${ds.text.body11} font-bold text-orange-100`}>
             {alertMessage}
           </div>
         )}
 
-        <div className="shrink-0 rounded-2xl border border-white/[0.035] bg-black/[0.32] px-2.5 py-1.5 opacity-82 backdrop-blur-md">
-          <LiveTimeline
-            currentIndex={currentStepIndex}
+        <LiveHero
+          currentStep={currentStep}
+          feedback={feedback}
+          lang={resolvedLang}
+          phase={phase}
+          reduceMotion={reduceMotion}
+          urgency={urgency}
+        />
+
+        {/* Up-next sits directly below the hero so the relationship "this step
+            → next steps" reads naturally. The mt-auto previously wrapped this
+            block alongside context/reset and pushed both to the bottom; at
+            375×812 that produced ~210px of dead space between hero and
+            up-next. Tightened to flow-from-hero in /8b. */}
+        {!isComplete && (nextStep || stepAfterNext) && (
+          <LiveUpNext
+            nextStep={nextStep}
+            stepAfterNext={stepAfterNext}
             lang={resolvedLang}
-            onGoToStep={handleGoToStep}
-            phase={phase}
-            steps={allSteps}
           />
-        </div>
-
-        {/* allow-arbitrary: rounded-[1.5rem] + bg-[linear-gradient(...)] + shadow-[...] — hero step chassis, no canonical token */}
-        <div className="relative min-h-0 shrink overflow-hidden rounded-[1.5rem] border border-white/[0.09] bg-[linear-gradient(160deg,rgba(255,255,255,0.06)_0%,rgba(255,255,255,0.025)_45%,rgba(0,0,0,0.32)_100%)] shadow-[0_28px_56px_rgba(0,0,0,0.55)] ring-1 ring-inset ring-white/[0.06] backdrop-blur-xl">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/22 to-transparent" />
-          <LiveStepCard
-            currentStep={currentStep}
-            feedback={feedback}
-            lang={resolvedLang}
-            reduceMotion={reduceMotion}
-            transitionState="idle"
-            urgency={urgency}
-          />
-        </div>
-
-        {!isComplete && (
-          /* allow-arbitrary: rounded-[1.5rem] + bg-[radial-gradient(...)] + shadow-[...] — timer chassis, no canonical token */
-          <div className="relative shrink-0 overflow-hidden rounded-[1.5rem] border border-orange-300/[0.18] bg-[radial-gradient(ellipse_at_50%_-20%,rgba(249,115,22,0.18),transparent_60%),linear-gradient(160deg,rgba(255,255,255,0.04)_0%,rgba(0,0,0,0.4)_100%)] shadow-[0_24px_50px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] ring-1 ring-inset ring-orange-200/[0.08] backdrop-blur-xl">
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-300/40 to-transparent" />
-            <LiveTimer
-              duration={currentStep.duration}
-              remainingTime={currentStep.remainingTime}
-              progress={currentStep.progress}
-              phase={phase}
-              lang={resolvedLang}
-              reduceMotion={reduceMotion}
-              urgency={urgency}
-            />
-          </div>
-        )}
-
-        <div className="shrink-0 opacity-92">
-          <LiveExecutionGuide
-            currentStep={currentStep}
-            lang={resolvedLang}
-            urgency={urgency}
-          />
-        </div>
-
-        {!isComplete && nextStep && (
-          <div className="shrink-0 opacity-78">
-            <LiveNextStepPreview nextStep={nextStep} lang={resolvedLang} />
-          </div>
         )}
 
         {isComplete && (
@@ -356,7 +298,7 @@ export default function LiveCookingScreen({
               <p className={`${ds.text.body10} font-black uppercase tracking-[0.22em] text-emerald-400`}>
                 {liveText.cookingComplete}
               </p>
-              <p className={`mt-1 text-xs font-semibold ${ds.color.mutedClass.secondary}`}>
+              <p className={`mt-1 ${ds.text.body11} font-semibold ${ds.color.mutedClass.secondary}`}>
                 {liveText.cookingCompleteBody}
               </p>
             </div>
@@ -369,7 +311,7 @@ export default function LiveCookingScreen({
                   onSaveCook();
                   setSaveState("saved");
                 }}
-                className={`min-h-11 w-full rounded-2xl text-sm font-black transition-all duration-300 active:scale-[0.98] ${
+                className={`min-h-11 w-full rounded-2xl ${ds.text.body13} font-black transition-all duration-300 active:scale-[0.98] ${
                   saveState === "saved"
                     ? "border border-emerald-500/35 bg-emerald-500/15 text-emerald-300"
                     /* allow-arbitrary: shadow-[...] phase-colored CTA glow — no canonical ds.shadow.* tier */
@@ -384,17 +326,20 @@ export default function LiveCookingScreen({
           </div>
         )}
 
+        {/* Context + reset float at the bottom of the main area, just above the
+            sticky footer. mt-auto consumes any remaining vertical space so the
+            other content above flows from the top rather than collecting at
+            the bottom. */}
         {(resolvedContext || onReset) && (
           <div className="mt-auto flex min-h-6 shrink-0 items-center justify-center gap-3">
             {resolvedContext && (
-              <span className={`truncate ${ds.text.body10} font-semibold ${ds.color.mutedClass.disabled}`}>{resolvedContext}</span>
+              <span className={`truncate ${ds.text.body10} font-semibold ${ds.color.mutedClass.secondary}`}>{resolvedContext}</span>
             )}
             {onReset && (
               <button
                 type="button"
                 onClick={onReset}
-                /* allow-arbitrary: hover:text-white/38 — mutedClass hover variant deferred to PR D-primitives/B */
-                className={`shrink-0 px-2 py-1 ${ds.text.body10} font-bold ${ds.color.mutedClass.disabled} transition hover:text-white/38 active:scale-[0.98]`}
+                className={`shrink-0 px-2 py-1 ${ds.text.body10} font-bold ${ds.color.mutedClass.secondary} transition active:scale-[0.98]`}
               >
                 {liveText.reset}
               </button>
@@ -404,17 +349,14 @@ export default function LiveCookingScreen({
       </main>
 
       {/* allow-arbitrary: shadow-[0_-12px_...] bottom-nav lift — no canonical ds.shadow.* tier */}
-      <nav className="shrink-0 border-t border-white/[0.07] bg-black/[0.78] px-3.5 py-2 shadow-[0_-12px_30px_rgba(0,0,0,0.32)] backdrop-blur-xl pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-        <p className={`mb-1 text-center ${ds.text.body9} font-black uppercase tracking-[0.2em] ${ds.color.mutedClass.disabled}`}>
-          {liveText.nextAction}
-        </p>
+      <nav className="shrink-0 border-t border-white/[0.07] bg-black/[0.78] px-3.5 py-2.5 shadow-[0_-12px_30px_rgba(0,0,0,0.32)] backdrop-blur-xl pb-[max(0.625rem,env(safe-area-inset-bottom))]">
         <div className="flex items-center gap-2">
           {hasStarted && hasTimer && !isComplete && (
             <button
               type="button"
               onClick={handlePauseToggle}
               /* allow-arbitrary: rounded-[1.25rem] + bg-white/[0.075] non-subpanel + shadow-[inset_...] — pause button chassis, no canonical token */
-              className={`min-h-14 w-[4.9rem] shrink-0 rounded-[1.25rem] border border-white/14 bg-white/[0.075] px-2 ${ds.text.body11} font-black ${ds.color.mutedClass.body} shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition active:scale-[0.98]`}
+              className={`min-h-14 w-[5.5rem] shrink-0 rounded-[1.25rem] border border-white/14 bg-white/[0.075] px-2 ${ds.text.body11} font-black ${ds.color.mutedClass.body} shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition active:scale-[0.98]`}
             >
               {paused ? liveText.resumeTimer : liveText.pauseTimer}
             </button>

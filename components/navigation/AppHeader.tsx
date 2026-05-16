@@ -237,9 +237,9 @@ function Tab({
       className={
         active
           /* allow-arbitrary: rounded-[1.45rem] + shadow-[...] active mobile tab ember chassis, no canonical token */
-          ? "pointer-events-auto flex min-h-[54px] min-w-0 touch-manipulation items-center justify-center overflow-hidden rounded-[1.45rem] bg-gradient-to-br from-orange-200 via-orange-500 to-orange-600 px-1 py-2 text-black shadow-[0_10px_28px_rgba(249,115,22,0.42)] ring-1 ring-orange-100/55 transition-all duration-200 motion-reduce:transition-none active:scale-[0.97] motion-reduce:active:scale-100 active:brightness-95"
+          ? "pointer-events-auto flex min-h-[62px] min-w-0 flex-col touch-manipulation items-center justify-center gap-0.5 overflow-hidden rounded-[1.45rem] bg-gradient-to-br from-orange-200 via-orange-500 to-orange-600 px-1 py-2 text-black shadow-[0_10px_28px_rgba(249,115,22,0.42)] ring-1 ring-orange-100/55 transition-all duration-200 motion-reduce:transition-none active:scale-[0.97] motion-reduce:active:scale-100 active:brightness-95"
           /* allow-arbitrary: rounded-[1.45rem] + hover:bg-white/[0.05] inactive mobile tab chassis, no canonical token */
-          : "pointer-events-auto flex min-h-[54px] min-w-0 touch-manipulation items-center justify-center overflow-hidden rounded-[1.45rem] px-1 py-2 text-slate-400 transition-all duration-200 motion-reduce:transition-none hover:bg-white/[0.05] hover:text-slate-200 active:scale-[0.97] motion-reduce:active:scale-100 active:bg-white/10"
+          : "pointer-events-auto flex min-h-[62px] min-w-0 flex-col touch-manipulation items-center justify-center gap-0.5 overflow-hidden rounded-[1.45rem] px-1 py-2 text-slate-400 transition-all duration-200 motion-reduce:transition-none hover:bg-white/[0.05] hover:text-slate-200 active:scale-[0.97] motion-reduce:active:scale-100 active:bg-white/10"
       }
     >
       <NavIcon
@@ -249,7 +249,10 @@ function Tab({
         /* allow-arbitrary: text-[26px] display-tier fallback glyph — stays inline per slice-d-tokens.md §1 */
         fallbackClassName="text-[26px]"
       />
-      <span className="sr-only">{label}</span>
+      {/* allow-arbitrary: text-[9.5px] — bottom-nav label below body10 floor, no canonical ds.text.* tier */}
+      <span className="truncate text-[9.5px] font-black uppercase tracking-[0.06em] leading-none">
+        {label}
+      </span>
     </button>
   );
 }

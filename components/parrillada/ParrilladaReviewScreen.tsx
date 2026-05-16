@@ -8,6 +8,7 @@ import { ParrilladaHeroCard } from '@/components/parrillada/cards/ParrilladaHero
 import { GrillZoneStatusCard } from '@/components/parrillada/cards/GrillZoneStatusCard';
 import { ParrilladaTimelineFinal } from '@/components/parrillada/ParrilladaTimelineFinal';
 import { ParrilladaWarningsFinal } from '@/components/parrillada/ParrilladaWarningsFinal';
+import { ds } from '@/lib/design-system';
 import type { AppText, Lang } from '@/lib/i18n/texts';
 import type { ParrilladaPlan, PlannerResult } from '@/lib/planning';
 
@@ -38,13 +39,13 @@ export function ParrilladaReviewScreen({ lang, t, plan, plannerResult, ctaLabel,
         hideLabel={t.parrilladaHideDetail}
       >
         <div className="mt-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-100/55">{t.parrilladaZoneStatus}</p>
+          <p className={`text-xs font-semibold uppercase tracking-[0.16em] ${ds.color.mutedClass.secondary}`}>{t.parrilladaZoneStatus}</p>
           <div className="mt-1.5">
             <GrillZoneStatusCard zones={zoneStatus} />
           </div>
         </div>
         <div className="mt-3 border-t border-white/10 pt-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-100/55">{t.parrilladaWarnings}</p>
+          <p className={`text-xs font-semibold uppercase tracking-[0.16em] ${ds.color.mutedClass.secondary}`}>{t.parrilladaWarnings}</p>
           <div className="mt-1.5">
             <ParrilladaWarningsFinal result={plannerResult} />
           </div>

@@ -6,6 +6,7 @@ import type { GeneratedCutProfile } from "@/lib/generated/cutProfiles";
 import type { Lang } from "@/lib/i18n/texts";
 import {
   getCutDescriptor,
+  getDifficultyKey,
   getDifficultyLabel,
   getDisplayName,
   getEstimatedTimeLabel,
@@ -34,6 +35,13 @@ export function CutCard({ profile, lang, selected = false, onSelect, onViewDetai
     .filter(Boolean)
     .join(" · ");
   const cutIcon = getCutSelectionIconPath(profile);
+  const difficultyKey = getDifficultyKey(profile);
+  const difficultyToneClass =
+    difficultyKey === "easy"
+      ? "border-emerald-300/30 bg-emerald-500/15 text-emerald-300"
+      : difficultyKey === "hard"
+        ? "border-rose-300/30 bg-rose-500/15 text-rose-300"
+        : "border-amber-300/30 bg-amber-500/15 text-amber-300";
 
   return (
     <article
@@ -64,12 +72,12 @@ export function CutCard({ profile, lang, selected = false, onSelect, onViewDetai
               )}
               <h3 className={`truncate ${ds.text.body14} font-black tracking-tight text-white`}>{getDisplayName(profile, lang)}</h3>
             </div>
-            <span className={`shrink-0 rounded-full border border-orange-400/20 bg-orange-500/10 px-2 py-0.5 ${ds.text.body10} font-black text-orange-300`}>
+            <span className={`shrink-0 rounded-full border px-2 py-0.5 ${ds.text.body10} font-black ${difficultyToneClass}`}>
               {getDifficultyLabel(profile, lang)}
             </span>
           </div>
           <p className={`mt-1.5 line-clamp-1 ${ds.text.body11} font-semibold leading-4 text-zinc-400`}>{getCutDescriptor(profile, lang)}</p>
-          <p className={`mt-1 truncate ${ds.text.body11} font-black leading-4 text-orange-200`}>{metaSummary}</p>
+          <p className={`mt-1 truncate ${ds.text.body11} font-black leading-4 ${ds.color.mutedClass.body}`}>{metaSummary}</p>
         </button>
         <div className="flex items-center justify-between gap-2">
           <span className={`${ds.text.body10} font-bold text-zinc-600`}>

@@ -34,7 +34,6 @@ type CutItem = {
 export type BuildHomeModePropsArgs = {
   lang: Lang;
   t: AppText;
-  savedMenusCount: number;
   onLangChange: (lang: Lang) => void;
   onModeChange: (mode: Mode) => void;
   onPrimaryCtaClick: () => void;
@@ -44,7 +43,6 @@ export function buildHomeModeProps(args: BuildHomeModePropsArgs): HomeModeScreen
   return {
     lang: args.lang,
     onLangChange: args.onLangChange,
-    savedMenusCount: args.savedMenusCount,
     t: args.t,
     onModeChange: args.onModeChange,
     onPrimaryCtaClick: args.onPrimaryCtaClick,

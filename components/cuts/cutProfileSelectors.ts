@@ -235,14 +235,20 @@ export function getWhyChooseLabel(profile: GeneratedCutProfile, lang: Lang = "en
   return toDisplaySentence(fallbackByLang[lang]);
 }
 
+export type DifficultyKey = "easy" | "medium" | "hard";
+
+export function getDifficultyKey(profile: GeneratedCutProfile): DifficultyKey {
+  if (profile.confidenceLevel === "high" || profile.tipsEn.includes("easy")) return "easy";
+  if (profile.style === "lowSlow" || profile.confidenceLevel === "low") return "hard";
+  return "medium";
+}
+
 export function getDifficultyLabel(profile: GeneratedCutProfile, lang: Lang = "en") {
-  const labelsByLang: Record<Lang, { easy: string; medium: string; hard: string }> = {
+  const labelsByLang: Record<Lang, Record<DifficultyKey, string>> = {
     es: { easy: "Fácil", medium: "Media", hard: "Alta" },
     en: { easy: "Easy", medium: "Medium", hard: "Hard" },
   };
-  if (profile.confidenceLevel === "high" || profile.tipsEn.includes("easy")) return labelsByLang[lang].easy;
-  if (profile.style === "lowSlow" || profile.confidenceLevel === "low") return labelsByLang[lang].hard;
-  return labelsByLang[lang].medium;
+  return labelsByLang[lang][getDifficultyKey(profile)];
 }
 
 export function getEstimatedTimeLabel(profile: GeneratedCutProfile, lang: Lang = "en") {

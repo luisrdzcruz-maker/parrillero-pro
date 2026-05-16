@@ -269,7 +269,7 @@ export default function SavedMenusClient({ initialMenus }: { initialMenus: Saved
         <header className="mb-5 overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04] p-5 shadow-2xl shadow-black/30 backdrop-blur sm:mb-8 sm:p-8">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-3xl">
-              <p className="text-xs font-black uppercase tracking-[0.28em] text-orange-300 sm:text-sm">
+              <p className={`text-xs font-black uppercase tracking-[0.28em] ${ds.color.mutedClass.helper} sm:text-sm`}>
                 {t.eyebrow}
               </p>
               <h1 className="mt-3 text-3xl font-black tracking-tight text-white sm:mt-4 sm:text-6xl">
@@ -419,7 +419,8 @@ function SavedMenuCard({
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_0%,rgba(249,115,22,0.24),transparent_36%),linear-gradient(to_top,rgba(2,6,23,0.95),rgba(15,23,42,0.35))]" />
         <div className="relative">
           <div className="mb-5 flex items-start justify-between gap-4">
-            <div className={`rounded-full border border-orange-400/25 bg-orange-500/15 px-3 py-1 ${ds.text.body10} font-black uppercase tracking-[0.2em] text-orange-300`}>
+            {/* allow-arbitrary: bg-white/[0.06] — non-subpanel type chip surface, no canonical token */}
+            <div className={`rounded-full border border-white/15 bg-white/[0.06] px-3 py-1 ${ds.text.body10} font-black uppercase tracking-[0.2em] ${ds.color.mutedClass.body}`}>
               {getTypeLabel(meta.type, t)}
             </div>
             <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-xs font-bold text-slate-300">
@@ -515,7 +516,7 @@ function SavedMenuCard({
           <div className="space-y-3 border-t border-white/10 pt-5">
             {Object.entries(meta.blocks).map(([title, content]) => (
               <section key={title} className="rounded-2xl border border-white/10 bg-black/25 p-4">
-                <h3 className="text-sm font-black uppercase tracking-wide text-orange-300">
+                <h3 className={`text-sm font-black uppercase tracking-wide ${ds.color.mutedClass.helper}`}>
                   {title}
                 </h3>
                 <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-200">

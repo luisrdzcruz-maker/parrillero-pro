@@ -100,7 +100,7 @@ export function QuickPicks({
                   <span className={`block truncate ${ds.text.body13} font-black text-white sm:text-sm`}>{getDisplayName(profile, lang)}</span>
                   {/* allow-arbitrary: sm:text-[11px] — breakpoint-prefixed text size, ds.text.body{N} lacks breakpoint variants (deferred to PR D-primitives/B) */}
                   <span className={`mt-0.5 block truncate ${ds.text.body10} font-semibold text-zinc-500 sm:text-[11px]`}>{getCutDescriptor(profile, lang)}</span>
-                  <span className={`mt-0.5 block truncate ${ds.text.body10} font-black text-orange-300`}>{getEstimatedTimeLabel(profile, lang)}</span>
+                  <span className={`mt-0.5 block truncate ${ds.text.body10} font-black ${ds.color.mutedClass.body}`}>{getEstimatedTimeLabel(profile, lang)}</span>
                 </span>
               </button>
               {onViewDetails && (

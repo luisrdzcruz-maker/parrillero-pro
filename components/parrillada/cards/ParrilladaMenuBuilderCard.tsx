@@ -136,7 +136,7 @@ export function ParrilladaMenuBuilderCard({
           <div className="mx-auto flex h-full w-full max-w-3xl flex-col bg-[#070707] px-3 py-3 sm:px-4 sm:py-4">
             <Panel className="mb-2 flex items-center justify-between gap-2 px-3 py-2">
               <div>
-                <p className={`${ds.text.body11} uppercase tracking-[0.16em] ${ds.color.mutedClass.faint}`}>{t.parrilladaMenuCutSelectorEyebrow}</p>
+                <p className={`${ds.text.body11} uppercase tracking-[0.16em] ${ds.color.mutedClass.secondary}`}>{t.parrilladaMenuCutSelectorEyebrow}</p>
                 <h4 className="text-sm font-semibold text-white">{t.parrilladaMenuChooseCuts}</h4>
               </div>
               <div className="flex items-center gap-2">

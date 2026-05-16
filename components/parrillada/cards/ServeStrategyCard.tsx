@@ -57,7 +57,7 @@ export function ServeStrategyCard({
 
       {strategy === 'time' ? (
         <label className="mt-3 block space-y-1.5">
-          <span className={`text-xs font-semibold uppercase tracking-[0.16em] ${ds.color.mutedClass.faint}`}>{t.parrilladaServeTime}</span>
+          <span className={`text-xs font-semibold uppercase tracking-[0.16em] ${ds.color.mutedClass.secondary}`}>{t.parrilladaServeTime}</span>
           <input
             className="w-full rounded-2xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white outline-none focus:border-orange-300/60"
             type="datetime-local"
