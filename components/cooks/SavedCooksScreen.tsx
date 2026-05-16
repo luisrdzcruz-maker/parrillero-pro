@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { ds } from "@/lib/design-system";
 import { cutImages } from "@/lib/media/cutImages";
 
 // ─── Storage contract (mirrors live mode in app/page.tsx) ─────────────────────
@@ -136,8 +137,7 @@ function getLabel(cook: SavedCook, index: number): LabelStyle {
   if (cook.steps.length <= 2) {
     return { text: "Cocción rápida", cls: "border-blue-400/30 bg-blue-400/8 text-blue-300" };
   }
-  /* allow-arbitrary: pre-slice-a */
-  return { text: "Guardado", cls: "border-white/15 bg-white/5 text-white/45" };
+  return { text: "Guardado", cls: `border-white/15 bg-white/5 ${ds.color.mutedClass.faint}` };
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -156,12 +156,10 @@ function StepRow({ step }: { step: SavedStep }) {
     <div className="flex items-start gap-2.5 py-2">
       <span className={`mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full ${dotCls}`} />
       <div className="min-w-0 flex-1">
-        {/* allow-arbitrary: pre-slice-a */}
-        <p className="whitespace-pre-line text-[12.5px] font-bold leading-[1.3] text-white/75">
+        <p className={`whitespace-pre-line text-[12.5px] font-bold leading-[1.3] ${ds.color.mutedClass.body}`}>
           {step.label}
         </p>
-        {/* allow-arbitrary: pre-slice-a */}
-        <div className="mt-0.5 flex items-center gap-1.5 text-[10px] font-semibold text-white/28">
+        <div className={`mt-0.5 flex items-center gap-1.5 ${ds.text.body10} font-semibold ${ds.color.mutedClass.disabled}`}>
           <span>{step.zone}</span>
           {step.duration > 0 && (
             <>
@@ -200,12 +198,12 @@ function CookCard({
   const label = getLabel(cook, index);
 
   return (
-    /* allow-arbitrary: pre-slice-a */
+    /* allow-arbitrary: rounded-2xl + border-white/[0.07] + bg-white/[0.025] — top-level card, not nested; subpanel chassis would add unwanted inner ring */
     <div className="overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.025]">
       {/* ── Card body ─────────────────────────────────────────────────────── */}
       <div className="flex gap-3 p-3.5">
         {/* Thumbnail */}
-        {/* allow-arbitrary: pre-slice-a */}
+        {/* allow-arbitrary: bg-white/[0.04] — non-subpanel thumbnail surface, no canonical token */}
         <div className="relative h-[60px] w-[60px] shrink-0 overflow-hidden rounded-xl bg-white/[0.04]">
           {img && !imgError ? (
             <Image
@@ -217,7 +215,7 @@ function CookCard({
               onError={() => setImgError(true)}
             />
           ) : (
-            /* allow-arbitrary: pre-slice-a */
+            /* allow-arbitrary: text-[26px] display-tier glyph — stays inline per slice-d-tokens.md §1 */
             <div className="flex h-full w-full items-center justify-center text-[26px]">
               {animalEmoji(cook.context)}
             </div>
@@ -236,14 +234,12 @@ function CookCard({
           </span>
 
           {/* Cut name */}
-          {/* allow-arbitrary: pre-slice-a */}
-          <p className="mt-1 truncate text-[14px] font-black leading-tight text-white/88">
+          <p className={`mt-1 truncate ${ds.text.body14} font-black leading-tight ${ds.color.mutedClass.strong}`}>
             {cut || "Cocción guardada"}
           </p>
 
           {/* Meta row */}
-          {/* allow-arbitrary: pre-slice-a */}
-          <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] font-semibold text-white/32">
+          <div className={`mt-0.5 flex flex-wrap items-center gap-1.5 ${ds.text.body10} font-semibold ${ds.color.mutedClass.disabled}`}>
             {equipment && <span>{equipment}</span>}
             {equipment && <span className="opacity-50">·</span>}
             <span>{formatDate(cook.savedAt)}</span>
@@ -256,8 +252,7 @@ function CookCard({
         <button
           type="button"
           onClick={onDelete}
-          /* allow-arbitrary: pre-slice-a */
-          className="shrink-0 self-start rounded-lg p-1.5 text-[11px] font-bold text-white/20 transition hover:bg-red-500/10 hover:text-red-400 active:scale-[0.96]"
+          className={`shrink-0 self-start rounded-lg p-1.5 ${ds.text.body11} font-bold ${ds.color.mutedClass.disabled} transition hover:bg-red-500/10 hover:text-red-400 active:scale-[0.96]`}
           aria-label="Eliminar"
         >
           ✕
@@ -269,21 +264,20 @@ function CookCard({
         <button
           type="button"
           onClick={onCookAgain}
-          /* allow-arbitrary: pre-slice-a */
-          className="min-h-[2.5rem] flex-1 rounded-xl bg-orange-500 text-[13px] font-black text-black shadow-[0_3px_16px_rgba(249,115,22,0.32)] transition active:scale-[0.97] active:bg-orange-600 hover:bg-orange-400"
+          /* allow-arbitrary: shadow-[...] phase-colored CTA glow — no canonical ds.shadow.* tier */
+          className={`min-h-[2.5rem] flex-1 rounded-xl bg-orange-500 ${ds.text.body13} font-black text-black shadow-[0_3px_16px_rgba(249,115,22,0.32)] transition active:scale-[0.97] active:bg-orange-600 hover:bg-orange-400`}
         >
           Cocinar de nuevo →
         </button>
         <button
           type="button"
           onClick={() => setShowSteps((v) => !v)}
-          /* allow-arbitrary: pre-slice-a */
-          className={`min-h-[2.5rem] rounded-xl border px-4 text-[13px] font-black transition active:scale-[0.97] ${
+          className={`min-h-[2.5rem] rounded-xl border px-4 ${ds.text.body13} font-black transition active:scale-[0.97] ${
             showSteps
-              /* allow-arbitrary: pre-slice-a */
-              ? "border-white/20 bg-white/[0.08] text-white/75"
-              /* allow-arbitrary: pre-slice-a */
-              : "border-white/[0.08] bg-white/[0.04] text-white/45 hover:text-white/65"
+              /* allow-arbitrary: bg-white/[0.08] — non-subpanel button surface, no canonical token */
+              ? `border-white/20 bg-white/[0.08] ${ds.color.mutedClass.body}`
+              /* allow-arbitrary: bg-white/[0.04] non-subpanel button surface + hover:text-white/65 mutedClass hover variant deferred to PR D-primitives/B */
+              : `border-white/[0.08] bg-white/[0.04] ${ds.color.mutedClass.faint} hover:text-white/65`
           }`}
         >
           {showSteps ? "Ocultar" : "Ver pasos"}
@@ -332,7 +326,7 @@ export function SavedCooksScreen({ onStartCooking }: Props) {
         {[0, 1].map((n) => (
           <div
             key={n}
-            /* allow-arbitrary: pre-slice-a */
+            /* allow-arbitrary: rounded-2xl + border-white/[0.06] + bg-white/[0.02] — top-level skeleton card, not nested; subpanel chassis would add unwanted inner ring */
             className="h-[110px] animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.02]"
           />
         ))}
@@ -353,17 +347,16 @@ export function SavedCooksScreen({ onStartCooking }: Props) {
               transform: "scale(2.5)",
             }}
           />
-          {/* allow-arbitrary: pre-slice-a */}
+          {/* allow-arbitrary: text-[56px] display-tier glyph — stays inline per slice-d-tokens.md §1 */}
           <span className="relative text-[56px]">🔥</span>
         </div>
 
         <div>
-          {/* allow-arbitrary: pre-slice-a */}
-          <p className="text-[18px] font-black text-white/80">
+          {/* allow-arbitrary: text-[18px] — between body14 and 22+ display tier, no canonical ds.text.* tier */}
+          <p className={`text-[18px] font-black ${ds.color.mutedClass.body}`}>
             Tu historial te espera
           </p>
-          {/* allow-arbitrary: pre-slice-a */}
-          <p className="mt-2 text-[14px] font-semibold leading-relaxed text-white/42">
+          <p className={`mt-2 ${ds.text.body14} font-semibold leading-relaxed ${ds.color.mutedClass.faint}`}>
             Termina una cocción live y guárdala.{"\n"}
             Aquí construirás tu biblioteca personal.
           </p>
@@ -372,8 +365,8 @@ export function SavedCooksScreen({ onStartCooking }: Props) {
         <button
           type="button"
           onClick={onStartCooking}
-          /* allow-arbitrary: pre-slice-a */
-          className="min-h-[3rem] w-full max-w-[260px] rounded-2xl bg-orange-500 text-[14px] font-black text-black shadow-[0_4px_28px_rgba(249,115,22,0.38)] transition active:scale-[0.97] hover:bg-orange-400"
+          /* allow-arbitrary: shadow-[...] phase-colored CTA glow — no canonical ds.shadow.* tier */
+          className={`min-h-[3rem] w-full max-w-[260px] rounded-2xl bg-orange-500 ${ds.text.body14} font-black text-black shadow-[0_4px_28px_rgba(249,115,22,0.38)] transition active:scale-[0.97] hover:bg-orange-400`}
         >
           Empezar cocción →
         </button>
@@ -384,8 +377,7 @@ export function SavedCooksScreen({ onStartCooking }: Props) {
   return (
     <div className="space-y-3 pb-4">
       {/* Count header */}
-      {/* allow-arbitrary: pre-slice-a */}
-      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/25">
+      <p className={`${ds.text.body10} font-black uppercase tracking-[0.22em] ${ds.color.mutedClass.disabled}`}>
         {cooks.length} cocción{cooks.length !== 1 ? "es" : ""} en tu historial
       </p>
 
