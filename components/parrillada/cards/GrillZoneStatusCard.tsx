@@ -2,6 +2,7 @@
 
 import { BrandImageIcon } from '@/components/ui/BrandImageIcon';
 import { getZoneIcon } from '@/components/parrillada/icons/parrilladaIconResolver';
+import { ds } from '@/lib/design-system';
 import type { GrillZoneType } from '@/lib/planning';
 
 type GrillZoneStatus = {
@@ -22,10 +23,9 @@ function zoneTone(zone: GrillZoneType): string {
 
 export function GrillZoneStatusCard({ zones }: GrillZoneStatusCardProps) {
   return (
-    /* allow-arbitrary: pre-slice-a */
+    /* allow-arbitrary: bg-white/[0.04] — rounded-3xl card (not subpanel chassis pattern), no canonical token */
     <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
-      {/* allow-arbitrary: pre-slice-a */}
-      <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Zone Status</p>
+      <p className={`${ds.text.body11} uppercase tracking-[0.18em] ${ds.color.mutedClass.faint}`}>Zone Status</p>
       <h3 className="mt-1 text-base font-semibold text-white">Direct, indirect, resting</h3>
 
       <div className="mt-3 grid grid-cols-3 gap-2">
@@ -41,8 +41,7 @@ export function GrillZoneStatusCard({ zones }: GrillZoneStatusCardProps) {
               />
               <div>
                 <p className="text-xs font-medium text-white">{zoneStatus.label}</p>
-                {/* allow-arbitrary: pre-slice-a */}
-                <p className="text-[10px] text-white/65">{zoneStatus.activeCount} active</p>
+                <p className={`${ds.text.body10} ${ds.color.mutedClass.secondary}`}>{zoneStatus.activeCount} active</p>
               </div>
             </div>
           </div>

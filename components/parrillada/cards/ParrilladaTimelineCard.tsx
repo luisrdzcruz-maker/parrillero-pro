@@ -2,6 +2,7 @@
 
 import { BrandImageIcon } from '@/components/ui/BrandImageIcon';
 import { getParrilladaItemIcon, getZoneIcon } from '@/components/parrillada/icons/parrilladaIconResolver';
+import { ds } from '@/lib/design-system';
 import type { ParrilladaPlan, ParrilladaTimelineStep } from '@/lib/planning';
 
 // Legacy compatibility card. Production Review UI uses ParrilladaTimelineFinal.
@@ -13,10 +14,9 @@ type ParrilladaTimelineCardProps = {
 
 export function ParrilladaTimelineCard({ plan, timeline }: ParrilladaTimelineCardProps) {
   return (
-    /* allow-arbitrary: pre-slice-a */
+    /* allow-arbitrary: bg-white/[0.04] — rounded-3xl card (not subpanel chassis pattern), no canonical token */
     <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
-      {/* allow-arbitrary: pre-slice-a */}
-      <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Timeline</p>
+      <p className={`${ds.text.body11} uppercase tracking-[0.18em] ${ds.color.mutedClass.faint}`}>Timeline</p>
       <h3 className="mt-1 text-base font-semibold text-white">Execution order</h3>
 
       <div className="mt-3 space-y-3">
@@ -32,8 +32,7 @@ export function ParrilladaTimelineCard({ plan, timeline }: ParrilladaTimelineCar
               <div className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5">
                 <p className="text-xs font-semibold text-orange-100">{step.timeLabel}</p>
                 <p className="mt-0.5 text-sm font-medium text-white">{step.title}</p>
-                {/* allow-arbitrary: pre-slice-a */}
-                <p className="mt-1 text-xs text-white/55">
+                <p className={`mt-1 text-xs ${ds.color.mutedClass.secondary}`}>
                   {step.zone ? `${step.zone} zone` : 'coordination'}
                   {step.durationMinutes ? ` · ${step.durationMinutes} min` : ''}
                 </p>

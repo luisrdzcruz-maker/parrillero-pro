@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { ds } from "@/lib/design-system";
 
 // ─── Narrated messages ────────────────────────────────────────────────────────
 
@@ -65,7 +66,7 @@ export function CookingLoadingScreen({ cutImage, cutName, lang = "es" }: Props) 
         />
 
         {/* Cut image */}
-        {/* allow-arbitrary: pre-slice-a */}
+        {/* allow-arbitrary: shadow-[0_24px_80px_...] cut-image depth shadow, no canonical ds.shadow.* tier */}
         <div className="relative z-10 overflow-hidden rounded-3xl shadow-[0_24px_80px_rgba(0,0,0,0.8)]"
           style={{ width: 220, height: 220 }}
         >
@@ -95,8 +96,7 @@ export function CookingLoadingScreen({ cutImage, cutName, lang = "es" }: Props) 
         </div>
 
         {/* Cut name — small label below image */}
-        {/* allow-arbitrary: pre-slice-a */}
-        <p className="relative z-10 mt-5 text-[13px] font-bold tracking-wide text-white/40">
+        <p className={`relative z-10 mt-5 ${ds.text.body13} font-bold tracking-wide ${ds.color.mutedClass.disabled}`}>
           {cutName}
         </p>
       </div>
@@ -107,15 +107,15 @@ export function CookingLoadingScreen({ cutImage, cutName, lang = "es" }: Props) 
         <div className="mb-5 min-h-[1.6rem] text-center">
           <p
             key={step}
-            /* allow-arbitrary: pre-slice-a */
-            className="animate-msg-in text-[15px] font-semibold text-white/75"
+            /* allow-arbitrary: text-[15px] — between body14 and 22+ display tier, no canonical token (text-white/75 migrated to mutedClass.body) */
+            className={`animate-msg-in text-[15px] font-semibold ${ds.color.mutedClass.body}`}
           >
             {messages[step]}
           </p>
         </div>
 
         {/* Stepped progress bar */}
-        {/* allow-arbitrary: pre-slice-a */}
+        {/* allow-arbitrary: bg-white/[0.07] — non-subpanel progress-bar track, no canonical token */}
         <div className="relative h-[3px] w-full overflow-hidden rounded-full bg-white/[0.07]">
           {/* Fill — CSS transition creates smooth glide between steps */}
           <div
