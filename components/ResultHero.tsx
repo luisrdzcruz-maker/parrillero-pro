@@ -5,6 +5,7 @@ import ResultHeader from "@/components/ResultHeader";
 import {
   BrandImageIcon,
   CompactDisclosure,
+  getMetricToneClass,
   MetricTile,
   Panel,
 } from "@/components/ui";
@@ -159,6 +160,81 @@ export default function ResultHero({
     );
   }
 
+  /**
+   * Time metric tile with inline Save + Share icon-only buttons on the right.
+   * Replaces the standalone Save/Share button row that previously sat below
+   * the metrics grid. Each icon button is a 44px touch target with aria-label
+   * for screen reader accessibility (Decision: icon-only with aria-label, not
+   * overflow menu).
+   */
+  function renderTimeMetricWithActions() {
+    if (!timeMetric?.value) return null;
+    const hasActions = Boolean(actions.onSave || actions.onShare);
+    if (!hasActions) {
+      return renderControlMetric(timeMetric);
+    }
+    return (
+      <div
+        className={`col-span-2 xl:col-span-1 ${ds.panel.metric} ${getMetricToneClass(timeMetric.tone)} flex items-center justify-between gap-3`}
+      >
+        <div className="min-w-0 flex-1">
+          <p className={`${ds.text.metricEyebrow} text-current/58`}>{timeMetric.label}</p>
+          <p className={ds.text.metricLarge} title={timeMetric.value}>
+            {timeMetric.value}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {actions.onSave && (
+            <button
+              type="button"
+              onClick={() => {
+                void actions.onSave?.();
+              }}
+              disabled={saveMenuStatus === "saving"}
+              aria-label={saveMenuStatus === "saving" ? t.saving : t.save}
+              /* allow-arbitrary: bg-white/[0.04] + hover:bg-white/[0.08] — non-subpanel inline icon-action surface, no canonical token */
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] text-slate-200 transition hover:border-orange-400/40 hover:bg-white/[0.08] active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <svg className="h-5 w-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path
+                  d="M5 4.5h8.5L16 7v8.5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1Z"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M7 4.5v3.25h6V4.5"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          )}
+          {actions.onShare && (
+            <button
+              type="button"
+              onClick={actions.onShare}
+              aria-label={t.share}
+              /* allow-arbitrary: bg-white/[0.04] + hover:bg-white/[0.08] — non-subpanel inline icon-action surface, no canonical token */
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] text-slate-200 transition hover:border-orange-400/40 hover:bg-white/[0.08] active:scale-[0.96]"
+            >
+              <svg className="h-5 w-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path
+                  d="M13.5 6.5a2 2 0 1 0-1.94-2.5L7.7 6.1a2 2 0 1 0 0 3.8l3.86 2.1a2 2 0 1 0 .57-1.05L8.27 8.85a2.01 2.01 0 0 0 0-1.7l3.86-2.1c.34.28.79.45 1.37.45Z"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   function renderFireSetupButton() {
     if (!setupContent && !fireMetric?.value) return null;
 
@@ -218,8 +294,14 @@ export default function ResultHero({
           </div>
 
           <div className="grid grid-cols-2 gap-2 xl:grid-cols-4 xl:grid-rows-2">
-            {renderControlMetric(timeMetric)}
-            {renderControlMetric(tempMetric)}
+            {renderTimeMetricWithActions()}
+            {/* When time is widened to col-span-2 by inline actions, temp also widens
+               to col-span-2 so it doesn't orphan a single-column cell on mobile. */}
+            {tempMetric?.value && (
+              <div className={(actions.onSave || actions.onShare) ? "col-span-2 xl:col-span-1" : ""}>
+                {renderControlMetric(tempMetric)}
+              </div>
+            )}
 
             {actions.onStartCooking && (
               <button
@@ -265,58 +347,6 @@ export default function ResultHero({
 
             {renderFireSetupButton()}
           </div>
-
-          {(actions.onSave || actions.onShare) && (
-            <div className="flex w-full flex-col gap-2 sm:flex-row sm:gap-2.5">
-              {actions.onSave && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    void actions.onSave?.();
-                  }}
-                  disabled={saveMenuStatus === "saving"}
-                  /* allow-arbitrary: bg-white/[0.04] + hover:bg-white/[0.08] — non-subpanel secondary button surface, no canonical token */
-                  className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-orange-400/40 hover:bg-white/[0.08] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                    <path
-                      d="M5 4.5h8.5L16 7v8.5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1Z"
-                      stroke="currentColor"
-                      strokeWidth="1.4"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M7 4.5v3.25h6V4.5"
-                      stroke="currentColor"
-                      strokeWidth="1.4"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  <span>{saveMenuStatus === "saving" ? t.saving : t.save}</span>
-                </button>
-              )}
-
-              {actions.onShare && (
-                <button
-                  type="button"
-                  onClick={actions.onShare}
-                  /* allow-arbitrary: bg-white/[0.04] + hover:bg-white/[0.08] — non-subpanel secondary button surface, no canonical token */
-                  className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-orange-400/40 hover:bg-white/[0.08] active:scale-[0.99]"
-                >
-                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                    <path
-                      d="M13.5 6.5a2 2 0 1 0-1.94-2.5L7.7 6.1a2 2 0 1 0 0 3.8l3.86 2.1a2 2 0 1 0 .57-1.05L8.27 8.85a2.01 2.01 0 0 0 0-1.7l3.86-2.1c.34.28.79.45 1.37.45Z"
-                      stroke="currentColor"
-                      strokeWidth="1.4"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  <span>{t.share}</span>
-                </button>
-              )}
-            </div>
-          )}
 
           <CompactDisclosure
             label={rationaleLabel}
