@@ -1,6 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState, type TouchEvent } from "react";
+import { ds } from "@/lib/design-system";
 import { ONBOARDING_STORAGE_KEY } from "@/lib/storageKeys";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -55,19 +56,19 @@ function SlideView({ slide, direction }: { slide: SlideData; direction: 1 | -1 }
       }`}
     >
       {/* Icon tile */}
-      {/* allow-arbitrary: pre-slice-a */}
+      {/* allow-arbitrary: shadow-[0_0_64px_...] icon ember halo — no canonical ds.shadow.* tier */}
       <div className="mb-10 flex h-24 w-24 items-center justify-center rounded-3xl border border-orange-500/20 bg-orange-500/10 text-5xl shadow-[0_0_64px_rgba(249,115,22,0.20)]">
         {slide.icon}
       </div>
 
       {/* Headline — intentional whitespace-pre-line for line control */}
-      {/* allow-arbitrary: pre-slice-a */}
+      {/* allow-arbitrary: text-[clamp(...)] display-tier headline — stays inline per slice-d-tokens.md §1 */}
       <h1 className="whitespace-pre-line text-[clamp(2.8rem,13vw,5.5rem)] font-black leading-[0.88] tracking-[-0.05em] text-white">
         {slide.headline}
       </h1>
 
       {/* Supporting text */}
-      {/* allow-arbitrary: pre-slice-a */}
+      {/* allow-arbitrary: text-[15px] — between body14 and 22+ display tier, no canonical token */}
       <p className="mt-5 whitespace-pre-line text-[15px] font-medium leading-[1.65] text-slate-400">
         {slide.body}
       </p>
@@ -160,8 +161,7 @@ export function OnboardingSlides({ onDone }: { onDone: () => void }) {
         <button
           type="button"
           onClick={dismiss}
-          /* allow-arbitrary: pre-slice-a */
-          className="rounded-full px-3 py-1.5 text-[13px] font-semibold text-slate-500 transition-colors hover:text-slate-300 active:scale-95"
+          className={`rounded-full px-3 py-1.5 ${ds.text.body13} font-semibold text-slate-500 transition-colors hover:text-slate-300 active:scale-95`}
         >
           Skip
         </button>
@@ -179,13 +179,13 @@ export function OnboardingSlides({ onDone }: { onDone: () => void }) {
           <div className="relative">
             <div
               aria-hidden
-              /* allow-arbitrary: pre-slice-a */
+              /* allow-arbitrary: rounded-[20px] — final-CTA halo radius, no canonical ds.radius.* tier */
               className="pointer-events-none absolute -inset-2 rounded-[20px] bg-orange-500/25 blur-xl"
             />
             <button
               type="button"
               onClick={dismiss}
-              /* allow-arbitrary: pre-slice-a */
+              /* allow-arbitrary: shadow-[0_8px_36px_...] final-CTA ember glow — no canonical ds.shadow.* tier */
               className="relative w-full rounded-2xl bg-orange-500 py-5 text-base font-black text-black shadow-[0_8px_36px_rgba(249,115,22,0.42)] transition-all duration-200 hover:bg-orange-400 active:scale-[0.97]"
             >
               Start your first cook →
@@ -196,7 +196,7 @@ export function OnboardingSlides({ onDone }: { onDone: () => void }) {
           <button
             type="button"
             onClick={advance}
-            /* allow-arbitrary: pre-slice-a */
+            /* allow-arbitrary: bg-white/[0.05] + hover:bg-white/[0.08] — non-subpanel continue-button surface, no canonical token */
             className="w-full rounded-2xl border border-white/10 bg-white/[0.05] py-5 text-base font-black text-white backdrop-blur transition-all duration-200 hover:border-white/[0.15] hover:bg-white/[0.08] active:scale-[0.97]"
           >
             Continue
@@ -205,8 +205,7 @@ export function OnboardingSlides({ onDone }: { onDone: () => void }) {
 
         {/* Swipe hint — only on first slide */}
         {index === 0 && (
-          /* allow-arbitrary: pre-slice-a */
-          <p className="text-center text-[11px] font-medium tracking-wide text-slate-600">
+          <p className={`text-center ${ds.text.body11} font-medium tracking-wide text-slate-600`}>
             Swipe to explore
           </p>
         )}
