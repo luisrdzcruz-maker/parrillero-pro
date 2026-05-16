@@ -6,6 +6,7 @@ import {
   type SavedMenu,
   type ShareStatus,
 } from "@/components/results/CookingResultScreen";
+import { ds } from "@/lib/design-system";
 import type { AppText, Lang } from "@/lib/i18n/texts";
 
 type GuardadosTab = "plans" | "cooks";
@@ -54,18 +55,17 @@ export function GuardadosModeScreen({
   return (
     <div>
       {/* ── Tab toggle: Planes | Cocciones ─────────────────────────── */}
-      {/* allow-arbitrary: pre-slice-a */}
+      {/* allow-arbitrary: bg-white/[0.02] — non-subpanel tab strip surface, no canonical token */}
       <div className="mb-5 flex gap-1.5 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-1.5">
         <button
           type="button"
           onClick={() => onGuardadosTabChange("plans")}
-          /* allow-arbitrary: pre-slice-a */
-          className={`flex-1 rounded-xl py-2 text-[12px] font-black transition-all duration-200 ${
+          className={`flex-1 rounded-xl py-2 ${ds.text.body12} font-black transition-all duration-200 ${
             guardadosTab === "plans"
-              /* allow-arbitrary: pre-slice-a */
+              /* allow-arbitrary: shadow-[0_2px_12px_...] selected-tab ember glow — no canonical ds.shadow.* tier */
               ? "bg-orange-500 text-black shadow-[0_2px_12px_rgba(249,115,22,0.35)]"
-              /* allow-arbitrary: pre-slice-a */
-              : "text-white/45 hover:text-white/65"
+              /* allow-arbitrary: hover:text-white/65 — mutedClass hover variant deferred to PR D-primitives/B */
+              : `${ds.color.mutedClass.faint} hover:text-white/65`
           }`}
         >
           📋 Planes
@@ -73,13 +73,12 @@ export function GuardadosModeScreen({
         <button
           type="button"
           onClick={() => onGuardadosTabChange("cooks")}
-          /* allow-arbitrary: pre-slice-a */
-          className={`flex-1 rounded-xl py-2 text-[12px] font-black transition-all duration-200 ${
+          className={`flex-1 rounded-xl py-2 ${ds.text.body12} font-black transition-all duration-200 ${
             guardadosTab === "cooks"
-              /* allow-arbitrary: pre-slice-a */
+              /* allow-arbitrary: shadow-[0_2px_12px_...] selected-tab ember glow — no canonical ds.shadow.* tier */
               ? "bg-orange-500 text-black shadow-[0_2px_12px_rgba(249,115,22,0.35)]"
-              /* allow-arbitrary: pre-slice-a */
-              : "text-white/45 hover:text-white/65"
+              /* allow-arbitrary: hover:text-white/65 — mutedClass hover variant deferred to PR D-primitives/B */
+              : `${ds.color.mutedClass.faint} hover:text-white/65`
           }`}
         >
           🔥 Cocciones
