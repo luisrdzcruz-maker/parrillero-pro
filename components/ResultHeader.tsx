@@ -1,6 +1,7 @@
 "use client";
 
 import { AppIcon, Button } from "@/components/ui";
+import { ds } from "@/lib/design-system";
 import type { IconCategory } from "@/lib/assets/iconTypes";
 
 type ResolvedSetupIcon = { category: IconCategory; key: string } | null;
@@ -43,8 +44,7 @@ export default function ResultHeader({
   return (
     <div className="flex min-w-0 items-start justify-between gap-3">
       <div className="min-w-0">
-        {/* allow-arbitrary: pre-slice-a */}
-        <p className="truncate text-[10px] font-black uppercase tracking-[0.22em] text-orange-300/90">
+        <p className={`truncate ${ds.text.body10} font-black uppercase tracking-[0.22em] text-orange-300/90`}>
           {eyebrow}
         </p>
         <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -59,8 +59,7 @@ export default function ResultHeader({
         </div>
 
         {setupItems.length > 0 ? (
-          /* allow-arbitrary: pre-slice-a */
-          <p className="mt-1.5 flex min-w-0 items-center gap-2 overflow-hidden whitespace-nowrap text-[11px] font-semibold leading-5 text-slate-500">
+          <p className={`mt-1.5 flex min-w-0 items-center gap-2 overflow-hidden whitespace-nowrap ${ds.text.body11} font-semibold leading-5 text-slate-500`}>
             {setupItems.map((item, index) => (
               <span key={`${item.label}-${index}`} className="inline-flex min-w-0 items-center gap-1.5">
                 {item.icon ? (
