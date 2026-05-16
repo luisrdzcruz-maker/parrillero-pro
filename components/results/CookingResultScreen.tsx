@@ -2,6 +2,7 @@
 
 import { Button, Card, Grid, Section } from "@/components/ui";
 import { ResultCards, type Blocks } from "@/components/cooking/CookingWizard";
+import { ds } from "@/lib/design-system";
 import type { AppText, Lang } from "@/lib/i18n/texts";
 
 // ─── Exported types (consumed by app/page.tsx) ────────────────────────────────
@@ -110,7 +111,7 @@ function SavedMenusSection({
       <Grid>
         {menus.map((menu) => (
           <Card key={menu.id}>
-            <p className="text-sm font-medium text-orange-300">
+            <p className={`text-sm font-medium ${ds.color.mutedClass.helper}`}>
               {getSavedMenuTypeLabel(getSavedMenuType(menu), lang)}
             </p>
             <h3 className="mt-1 text-xl font-bold text-white">{menu.title}</h3>
@@ -215,7 +216,7 @@ function SavedMenuDetail({
       <Card>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-sm font-medium text-orange-300">{getSavedMenuTypeLabel(type, lang)}</p>
+            <p className={`text-sm font-medium ${ds.color.mutedClass.helper}`}>{getSavedMenuTypeLabel(type, lang)}</p>
             <h2 className="mt-1 text-2xl font-black text-white">{menu.title}</h2>
             <p className="mt-1 text-sm text-slate-400">{menu.date}</p>
           </div>

@@ -240,7 +240,7 @@ export function PlanHub({
       {/* allow-arbitrary: rounded-[1.75rem] + bg-white/[0.045] — plan-form card chassis, no canonical token */}
       <div className="rounded-[1.75rem] border border-white/10 bg-white/[0.045] p-4 shadow-2xl shadow-black/20 backdrop-blur sm:p-6">
         <div className="mb-4">
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-300">
+          <p className={`text-xs font-black uppercase tracking-[0.2em] ${ds.color.mutedClass.faint}`}>
             {copy.badge}
           </p>
           <p className="mt-1 text-sm leading-6 text-slate-400">{copy.description}</p>
@@ -476,7 +476,7 @@ function PlanResultView({
       <div className="animate-[fadeIn_260ms_ease-out] rounded-[2rem] border border-orange-400/20 bg-[radial-gradient(circle_at_85%_0%,rgba(249,115,22,0.22),transparent_30%),linear-gradient(145deg,rgba(15,23,42,0.98),rgba(2,6,23,0.96))] p-5 shadow-2xl shadow-orange-950/20 sm:p-7">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-orange-300">
+            <p className={`text-xs font-black uppercase tracking-[0.22em] ${ds.color.mutedClass.faint}`}>
               {t.planHubResultEyebrow}
             </p>
             <h1 className="mt-2 text-4xl font-black tracking-tight text-white sm:text-5xl">
@@ -613,7 +613,7 @@ function VisualSetupModal({ onClose, t }: { onClose: () => void; t: AppText }) {
       <div className="w-full max-w-xl rounded-[2rem] border border-white/10 bg-slate-950 p-5 shadow-2xl shadow-black/50">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-300">
+            <p className={`text-xs font-black uppercase tracking-[0.2em] ${ds.color.mutedClass.faint}`}>
               {t.planHubVisualEyebrow}
             </p>
             <h2 className="mt-2 text-2xl font-black text-white">{t.planHubVisualTitle}</h2>

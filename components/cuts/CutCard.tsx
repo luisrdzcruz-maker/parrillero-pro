@@ -69,7 +69,7 @@ export function CutCard({ profile, lang, selected = false, onSelect, onViewDetai
             </span>
           </div>
           <p className={`mt-1.5 line-clamp-1 ${ds.text.body11} font-semibold leading-4 text-zinc-400`}>{getCutDescriptor(profile, lang)}</p>
-          <p className={`mt-1 truncate ${ds.text.body11} font-black leading-4 text-orange-200`}>{metaSummary}</p>
+          <p className={`mt-1 truncate ${ds.text.body11} font-black leading-4 ${ds.color.mutedClass.body}`}>{metaSummary}</p>
         </button>
         <div className="flex items-center justify-between gap-2">
           <span className={`${ds.text.body10} font-bold text-zinc-600`}>

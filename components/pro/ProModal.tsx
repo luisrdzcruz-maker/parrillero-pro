@@ -127,7 +127,8 @@ export function ProModal({ lang, trigger, onUpgrade, onDismiss }: Props) {
           {benefits.map((b) => (
             <li key={b.title} className="flex items-start gap-3">
               {/* Icon chip */}
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10 text-base">
+              {/* allow-arbitrary: bg-white/[0.04] — non-subpanel benefit-icon chassis, no canonical token */}
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/[0.04] text-base">
                 {b.icon}
               </span>
               <div className="min-w-0 pt-0.5">

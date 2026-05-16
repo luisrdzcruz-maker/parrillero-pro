@@ -30,7 +30,7 @@ export function ParrilladaTimelineCard({ plan, timeline }: ParrilladaTimelineCar
                 <BrandImageIcon src={iconSrc ?? '/icons/ui/cooking-dashboard.webp'} alt="" size="sm" shape="plain" aria-hidden="true" />
               </div>
               <div className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5">
-                <p className="text-xs font-semibold text-orange-100">{step.timeLabel}</p>
+                <p className={`text-xs font-semibold ${ds.color.mutedClass.body}`}>{step.timeLabel}</p>
                 <p className="mt-0.5 text-sm font-medium text-white">{step.title}</p>
                 <p className={`mt-1 text-xs ${ds.color.mutedClass.secondary}`}>
                   {step.zone ? `${step.zone} zone` : 'coordination'}

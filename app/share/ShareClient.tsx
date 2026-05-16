@@ -150,7 +150,7 @@ function MetricPill({ label, value }: { label: string; value: string }) {
   return (
     /* allow-arbitrary: bg-white/[0.055] — non-subpanel metric tile (border-white/10 not /[0.08]), no canonical token */
     <div className="rounded-2xl border border-white/10 bg-white/[0.055] p-3 shadow-lg shadow-black/15 ring-1 ring-inset ring-white/[0.03]">
-      <p className={`${ds.text.body9} font-black uppercase tracking-[0.22em] text-orange-300/90`}>{label}</p>
+      <p className={`${ds.text.body9} font-black uppercase tracking-[0.22em] ${ds.color.mutedClass.helper}`}>{label}</p>
       <p className="mt-1.5 line-clamp-2 text-sm font-black leading-snug text-white">{value}</p>
     </div>
   );
@@ -162,7 +162,7 @@ function HighlightCard({ block }: { block: ResultBlock }) {
   return (
     /* allow-arbitrary: bg-white/[0.045] — non-subpanel highlight card, no canonical token */
     <article className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 shadow-lg shadow-black/15">
-      <p className={`${ds.text.body10} font-black uppercase tracking-[0.22em] text-orange-300`}>
+      <p className={`${ds.text.body10} font-black uppercase tracking-[0.22em] ${ds.color.mutedClass.faint}`}>
         {block.title}
       </p>
       <p className="mt-2 text-sm font-medium leading-6 text-slate-200">{text}</p>
@@ -258,7 +258,7 @@ export default function ShareClient() {
                   </div>
 
                   <div className="mt-7">
-                    <p className={`${ds.text.body10} font-black uppercase tracking-[0.26em] text-orange-300`}>
+                    <p className={`${ds.text.body10} font-black uppercase tracking-[0.26em] ${ds.color.mutedClass.faint}`}>
                       Resultado de cocción
                     </p>
                     {/* allow-arbitrary: text-[clamp(...)] display-tier hero — stays inline per slice-d-tokens.md §1 */}

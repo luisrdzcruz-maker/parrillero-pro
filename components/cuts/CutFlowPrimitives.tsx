@@ -49,7 +49,8 @@ export function CutMetaChip({ children, tone = "default" }: { children: ReactNod
     <span
       className={
         tone === "accent"
-          ? `inline-flex items-center rounded-full border border-orange-300/25 bg-orange-500/12 px-2.5 py-1 ${ds.text.body10} font-black uppercase tracking-[0.14em] text-orange-200`
+          /* allow-arbitrary: bg-white/[0.06] — non-subpanel accent chip surface (slightly elevated vs default), no canonical token */
+          ? `inline-flex items-center rounded-full border border-white/15 bg-white/[0.06] px-2.5 py-1 ${ds.text.body10} font-black uppercase tracking-[0.14em] ${ds.color.mutedClass.body}`
           /* allow-arbitrary: bg-white/[0.045] — non-subpanel default chip surface, no canonical token */
           : `inline-flex items-center rounded-full border border-white/10 bg-white/[0.045] px-2.5 py-1 ${ds.text.body10} font-bold uppercase tracking-[0.13em] text-zinc-400`
       }
@@ -90,7 +91,7 @@ export function CutIdentityHeader({
         <div className="flex min-w-0 items-start gap-3">
           <CutIconSlot src={iconSrc} alt="" size={compact ? "md" : "lg"} className={compact ? "mt-0.5" : ""} />
           <div className="min-w-0">
-            <p className={`${ds.text.body10} font-black uppercase tracking-[0.2em] text-orange-300/80`}>{eyebrow}</p>
+            <p className={`${ds.text.body10} font-black uppercase tracking-[0.2em] ${ds.color.mutedClass.faint}`}>{eyebrow}</p>
             <h2
               className={
                 compact

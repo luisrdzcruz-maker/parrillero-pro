@@ -158,7 +158,8 @@ function HeroSection({
       <div className="relative p-6 sm:p-8">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(251,146,60,0.30),transparent_36%),linear-gradient(to_top,rgba(2,6,23,0.98),rgba(15,23,42,0.74),rgba(255,255,255,0.07))]" />
         <div className="relative">
-          <p className={`inline-flex rounded-full border border-orange-400/25 bg-orange-500/10 px-3 py-1 ${ds.text.body10} font-black uppercase tracking-[0.24em] text-orange-300`}>
+          {/* allow-arbitrary: bg-white/[0.06] — non-subpanel hero type chip surface, no canonical token */}
+          <p className={`inline-flex rounded-full border border-white/15 bg-white/[0.06] px-3 py-1 ${ds.text.body10} font-black uppercase tracking-[0.24em] ${ds.color.mutedClass.body}`}>
             {getBadgeLabel(type)}
           </p>
           {/* allow-arbitrary: text-[clamp(...)] display-tier hero — stays inline per slice-d-tokens.md §1 */}
@@ -230,7 +231,7 @@ function SummaryItem({ label, value }: { label: string; value: string }) {
   return (
     /* allow-arbitrary: bg-white/[0.04] — non-subpanel summary tile (border-white/10 not /[0.08]), no canonical token */
     <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/10">
-      <p className={`${ds.text.body10} font-black uppercase tracking-[0.2em] text-orange-300`}>{label}</p>
+      <p className={`${ds.text.body10} font-black uppercase tracking-[0.2em] ${ds.color.mutedClass.faint}`}>{label}</p>
       <p className="mt-2 text-sm font-semibold text-white">{value || "No especificado"}</p>
     </div>
   );

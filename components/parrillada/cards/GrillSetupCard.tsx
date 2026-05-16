@@ -23,7 +23,7 @@ export function GrillSetupCard() {
   return (
     /* allow-arbitrary: bg-white/[0.04] — rounded-3xl card (not subpanel chassis pattern), no canonical token */
     <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-300/85">Zones</p>
+      <p className={`text-xs font-black uppercase tracking-[0.18em] ${ds.color.mutedClass.faint}`}>Zones</p>
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}

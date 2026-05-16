@@ -59,7 +59,7 @@ function HeroSection({ t }: { t: AppText }) {
       </span>
 
       <div className="mt-3">
-        <p className={`${ds.text.body10} font-black uppercase tracking-[0.28em] text-orange-300/90`}>
+        <p className={`${ds.text.body10} font-black uppercase tracking-[0.28em] ${ds.color.mutedClass.helper}`}>
           {t.homeEyebrow}
         </p>
         <h1 className="mt-1 text-[2rem] font-black leading-none tracking-[-0.045em] text-white sm:text-[2.6rem]">

@@ -72,7 +72,7 @@ export default function FoodCard({
 
       {badge && (
         /* allow-arbitrary: sm:text-[11px] — breakpoint-prefixed text size, ds.text.body{N} lacks breakpoint variants (deferred to PR D-primitives/B) */
-        <span className={`absolute right-2 top-2 z-10 rounded-full border border-white/10 bg-black/35 px-2.5 py-1 ${ds.text.body9} font-black uppercase tracking-[0.14em] text-orange-100 shadow-lg shadow-black/20 backdrop-blur-md sm:right-3 sm:top-3 sm:text-[11px]`}>
+        <span className={`absolute right-2 top-2 z-10 rounded-full border border-white/15 bg-black/35 px-2.5 py-1 ${ds.text.body9} font-black uppercase tracking-[0.14em] ${ds.color.mutedClass.body} shadow-lg shadow-black/20 backdrop-blur-md sm:right-3 sm:top-3 sm:text-[11px]`}>
           {badge}
         </span>
       )}

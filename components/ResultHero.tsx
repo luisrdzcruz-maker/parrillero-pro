@@ -177,7 +177,7 @@ export default function ResultHero({
         className="col-span-2 min-w-0 rounded-[1.15rem] border border-white/[0.09] bg-white/[0.035] px-3 py-2.5 text-left shadow-lg shadow-black/10 ring-1 ring-inset ring-white/[0.025] transition hover:border-orange-300/35 hover:bg-orange-500/[0.06] active:scale-[0.99] xl:col-span-2"
       >
         {/* allow-arbitrary: sm:text-[10px] — breakpoint-prefixed text size, ds.text.body{N} lacks breakpoint variants (deferred to PR D-primitives/B) */}
-        <p className={`${ds.text.body9} font-black uppercase tracking-[0.16em] text-orange-300/80 sm:text-[10px]`}>
+        <p className={`${ds.text.body9} font-black uppercase tracking-[0.16em] ${ds.color.mutedClass.faint} sm:text-[10px]`}>
           {copy.resultHeroFireSetup}
         </p>
         <p
