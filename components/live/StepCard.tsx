@@ -1,6 +1,7 @@
 import type { LivePhase } from "./TimerDial";
 import LiveVisualGuideCard from "./LiveVisualGuideCard";
 import { getLiveVisualGuide } from "./liveVisualGuide";
+import { ds } from "@/lib/design-system";
 
 export type Step = {
   id: string;
@@ -99,33 +100,29 @@ export default function StepCard({ step, phase, context, guidanceOpen, onToggleG
       {/* Header row: zone chip + duration */}
       <div className="flex items-center justify-between gap-2">
         <span
-          /* allow-arbitrary: pre-slice-a */
-          className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-[0.22em] transition-colors duration-500 ${ZONE_CHIP_BORDER[phase]}`}
+          className={`inline-flex items-center rounded-full border px-2.5 py-0.5 ${ds.text.body10} font-black uppercase tracking-[0.22em] transition-colors duration-500 ${ZONE_CHIP_BORDER[phase]}`}
         >
           {step.zone}
         </span>
 
         {step.duration > 0 && (
-          /* allow-arbitrary: pre-slice-a */
-          <span className="text-[11px] font-semibold tabular-nums text-white/30">
+          <span className={`${ds.text.body11} font-semibold tabular-nums ${ds.color.mutedClass.disabled}`}>
             {formatDuration(step.duration)}
           </span>
         )}
       </div>
 
       {/* Primary command */}
-      {/* allow-arbitrary: pre-slice-a */}
+      {/* allow-arbitrary: text-[32px] display-tier command + drop-shadow-[0_2px_10px_...] — stays inline per slice-d-tokens.md §1 */}
       <p className="mt-3 whitespace-pre-line text-[32px] font-black leading-[1.12] tracking-[-0.02em] text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)]">
         {step.label}
       </p>
 
       {/* Temperature target */}
       {step.tempTarget !== null && (
-        /* allow-arbitrary: pre-slice-a */
-        <p className={`mt-2 text-[14px] font-black ${TEMP_COLOR[phase]}`}>
+        <p className={`mt-2 ${ds.text.body14} font-black ${TEMP_COLOR[phase]}`}>
           {step.tempTarget}°C
-          {/* allow-arbitrary: pre-slice-a */}
-          <span className="ml-1.5 text-[11px] font-semibold text-white/30">objetivo</span>
+          <span className={`ml-1.5 ${ds.text.body11} font-semibold ${ds.color.mutedClass.disabled}`}>objetivo</span>
         </p>
       )}
 
@@ -136,12 +133,10 @@ export default function StepCard({ step, phase, context, guidanceOpen, onToggleG
             <div className="px-3.5 pt-3 pb-2.5">
               {step.notes && (
                 <>
-                  {/* allow-arbitrary: pre-slice-a */}
-                  <p className={`mb-1.5 text-[9px] font-black uppercase tracking-[0.22em] ${AHORA_LABEL[phase]}`}>
+                  <p className={`mb-1.5 ${ds.text.body9} font-black uppercase tracking-[0.22em] ${AHORA_LABEL[phase]}`}>
                     Ahora
                   </p>
-                  {/* allow-arbitrary: pre-slice-a */}
-                  <p className="text-[12.5px] font-semibold leading-[1.55] text-white/65">
+                  <p className={`text-[12.5px] font-semibold leading-[1.55] ${ds.color.mutedClass.secondary}`}>
                     {step.notes}
                   </p>
                 </>
@@ -154,8 +149,8 @@ export default function StepCard({ step, phase, context, guidanceOpen, onToggleG
           <button
             type="button"
             onClick={onToggleGuidance}
-            /* allow-arbitrary: pre-slice-a */
-            className={`flex w-full items-center justify-center gap-1.5 px-3.5 py-2 text-[10px] font-bold text-white/30 transition-colors hover:text-white/50 active:scale-[0.98] ${guidanceOpen ? "border-t border-white/[0.06]" : ""}`}
+            /* allow-arbitrary: hover:text-white/50 — mutedClass hover variant deferred to PR D-primitives/B */
+            className={`flex w-full items-center justify-center gap-1.5 px-3.5 py-2 ${ds.text.body10} font-bold ${ds.color.mutedClass.disabled} transition-colors hover:text-white/50 active:scale-[0.98] ${guidanceOpen ? "border-t border-white/[0.06]" : ""}`}
           >
             <svg
               width="10"
