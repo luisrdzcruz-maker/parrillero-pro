@@ -1,4 +1,5 @@
 import type { LiveCookingStepState, LiveZone, UrgencyLevel } from "@/hooks/useLiveCooking";
+import { ds } from "@/lib/design-system";
 import { getLiveText, type SurfaceLang } from "@/lib/i18n/surfaceFallbacks";
 
 type ActionKind = "preheat" | "sear" | "flip" | "move" | "rest" | "serve" | "manual";
@@ -16,15 +17,15 @@ const ACTION_TONE: Record<ActionKind, string> = {
   move: "border-orange-300/40 bg-orange-400/12 text-orange-100",
   rest: "border-blue-300/45 bg-blue-400/14 text-blue-100",
   serve: "border-emerald-300/45 bg-emerald-400/14 text-emerald-100",
-  /* allow-arbitrary: pre-slice-a */
-  manual: "border-white/12 bg-white/[0.055] text-white/82",
+  /* allow-arbitrary: bg-white/[0.055] — non-subpanel manual-action tint, no canonical token */
+  manual: `border-white/12 bg-white/[0.055] ${ds.color.mutedClass.body}`,
 };
 
 const GUIDE_TONE: Record<UrgencyLevel, string> = {
-  /* allow-arbitrary: pre-slice-a */
+  /* allow-arbitrary: bg-white/[0.032] — non-subpanel guide-normal tint, no canonical token */
   normal: "border-white/[0.07] bg-white/[0.032]",
   attention: "border-orange-300/34 bg-orange-500/[0.065]",
-  /* allow-arbitrary: pre-slice-a */
+  /* allow-arbitrary: shadow-[...] critical-urgency guide glow — no canonical ds.shadow.* tier */
   critical: "border-yellow-300/55 bg-yellow-400/[0.09] shadow-[0_0_34px_rgba(250,204,21,0.16)]",
 };
 
@@ -177,7 +178,7 @@ export default function LiveExecutionGuide({
   const durationLabel = currentStep.duration > 0 ? formatDuration(currentStep.duration) : text.manualStep;
 
   return (
-    /* allow-arbitrary: pre-slice-a */
+    /* allow-arbitrary: rounded-[1.25rem] — guide section radius, no canonical ds.radius.* tier */
     <section className={`rounded-[1.25rem] border px-3.5 py-3 ${GUIDE_TONE[urgency]}`}>
       <div className="flex min-w-0 items-center gap-3">
         <div
@@ -187,16 +188,14 @@ export default function LiveExecutionGuide({
         </div>
 
         <div className="min-w-0 flex-1">
-          {/* allow-arbitrary: pre-slice-a */}
-          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/32">
+          <p className={`${ds.text.body9} font-black uppercase tracking-[0.2em] ${ds.color.mutedClass.disabled}`}>
             {text.actionGuide}
           </p>
-          {/* allow-arbitrary: pre-slice-a */}
-          <p className="mt-0.5 truncate text-[15px] font-black leading-tight text-white/88">
+          {/* allow-arbitrary: text-[15px] — between body14 and 22+ display tier, no canonical token */}
+          <p className={`mt-0.5 truncate text-[15px] font-black leading-tight ${ds.color.mutedClass.strong}`}>
             {getActionLabel(actionKind, lang)}
           </p>
-          {/* allow-arbitrary: pre-slice-a */}
-          <p className="mt-1 overflow-hidden text-[11px] font-semibold leading-snug text-white/48 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">
+          <p className={`mt-1 overflow-hidden ${ds.text.body11} font-semibold leading-snug ${ds.color.mutedClass.helper} [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]`}>
             {getActionHint(actionKind, lang)}
           </p>
         </div>
@@ -204,28 +203,22 @@ export default function LiveExecutionGuide({
 
       <div className="mt-3 grid grid-cols-3 gap-1.5">
         <div className={`min-w-0 rounded-xl border px-2.5 py-2 ${ZONE_TONE[currentStep.zone]}`}>
-          {/* allow-arbitrary: pre-slice-a */}
-          <p className="text-[8px] font-black uppercase tracking-[0.16em] opacity-55">{text.zoneLabel}</p>
-          {/* allow-arbitrary: pre-slice-a */}
-          <p className="mt-0.5 truncate text-[11px] font-black">{getZoneLabel(currentStep.zone, lang)}</p>
+          <p className={`${ds.text.body8} font-black uppercase tracking-[0.16em] opacity-55`}>{text.zoneLabel}</p>
+          <p className={`mt-0.5 truncate ${ds.text.body11} font-black`}>{getZoneLabel(currentStep.zone, lang)}</p>
         </div>
 
-        {/* allow-arbitrary: pre-slice-a */}
-        <div className="min-w-0 rounded-xl border border-white/[0.08] bg-white/[0.04] px-2.5 py-2 text-white/78">
-          {/* allow-arbitrary: pre-slice-a */}
-          <p className="text-[8px] font-black uppercase tracking-[0.16em] text-white/34">{text.remainingShort}</p>
-          {/* allow-arbitrary: pre-slice-a */}
-          <p className="mt-0.5 truncate text-[11px] font-black tabular-nums">{remainingLabel}</p>
+        {/* allow-arbitrary: bg-white/[0.04] — non-subpanel metric chip surface, no canonical token */}
+        <div className={`min-w-0 rounded-xl border border-white/[0.08] bg-white/[0.04] px-2.5 py-2 ${ds.color.mutedClass.body}`}>
+          <p className={`${ds.text.body8} font-black uppercase tracking-[0.16em] ${ds.color.mutedClass.disabled}`}>{text.remainingShort}</p>
+          <p className={`mt-0.5 truncate ${ds.text.body11} font-black tabular-nums`}>{remainingLabel}</p>
         </div>
 
-        {/* allow-arbitrary: pre-slice-a */}
-        <div className="min-w-0 rounded-xl border border-white/[0.08] bg-white/[0.04] px-2.5 py-2 text-white/78">
-          {/* allow-arbitrary: pre-slice-a */}
-          <p className="text-[8px] font-black uppercase tracking-[0.16em] text-white/34">
+        {/* allow-arbitrary: bg-white/[0.04] — non-subpanel metric chip surface, no canonical token */}
+        <div className={`min-w-0 rounded-xl border border-white/[0.08] bg-white/[0.04] px-2.5 py-2 ${ds.color.mutedClass.body}`}>
+          <p className={`${ds.text.body8} font-black uppercase tracking-[0.16em] ${ds.color.mutedClass.disabled}`}>
             {currentStep.tempTarget !== null ? text.targetShort : text.durationShort}
           </p>
-          {/* allow-arbitrary: pre-slice-a */}
-          <p className="mt-0.5 truncate text-[11px] font-black tabular-nums">
+          <p className={`mt-0.5 truncate ${ds.text.body11} font-black tabular-nums`}>
             {currentStep.tempTarget !== null ? `${currentStep.tempTarget}°C` : durationLabel}
           </p>
         </div>
