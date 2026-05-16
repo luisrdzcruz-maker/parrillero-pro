@@ -4,6 +4,7 @@ import Image from "next/image";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { useRouter } from "next/navigation";
 import type { Mode } from "@/components/navigation/AppHeader";
+import { ds } from "@/lib/design-system";
 import { buildLiveUrl } from "@/lib/navigation/buildLiveUrl";
 import type { IconCategory } from "@/lib/assets/iconTypes";
 import type { AppText, Lang } from "@/lib/i18n/texts";
@@ -45,7 +46,7 @@ function HeroSection({ t }: { t: AppText }) {
       <div className="absolute left-1/2 top-2 -z-10 h-36 w-36 -translate-x-1/2 rounded-full bg-orange-500/12 blur-3xl" />
       <div className="absolute inset-x-8 top-12 -z-10 h-px bg-gradient-to-r from-transparent via-orange-300/45 to-transparent" />
 
-      {/* allow-arbitrary: pre-slice-a */}
+      {/* allow-arbitrary: shadow-[0_0_44px_...] ember-glow halo around hero logo — no canonical ds.shadow.* tier */}
       <span className="relative mx-auto block h-[clamp(5.75rem,25vw,7rem)] w-[clamp(5.75rem,25vw,7rem)] rounded-full shadow-[0_0_44px_rgba(249,115,22,0.16)]">
         <Image
           src={HOME_LOGO_SRC}
@@ -58,15 +59,13 @@ function HeroSection({ t }: { t: AppText }) {
       </span>
 
       <div className="mt-3">
-        {/* allow-arbitrary: pre-slice-a */}
-        <p className="text-[10px] font-black uppercase tracking-[0.28em] text-orange-300/90">
+        <p className={`${ds.text.body10} font-black uppercase tracking-[0.28em] text-orange-300/90`}>
           {t.homeEyebrow}
         </p>
         <h1 className="mt-1 text-[2rem] font-black leading-none tracking-[-0.045em] text-white sm:text-[2.6rem]">
           Parrillero Pro
         </h1>
-        {/* allow-arbitrary: pre-slice-a */}
-        <p className="mx-auto mt-2 max-w-[20rem] text-[13px] font-medium leading-[1.42] text-stone-300/78 sm:hidden">
+        <p className={`mx-auto mt-2 max-w-[20rem] ${ds.text.body13} font-medium leading-[1.42] text-stone-300/78 sm:hidden`}>
           {t.homeSubtitleShort}
         </p>
         <p className="mx-auto mt-2 hidden max-w-[28rem] text-sm font-medium leading-[1.5] text-stone-300/78 sm:block">
@@ -130,7 +129,7 @@ function PrimaryActionTile({ action }: { action: QuickAction }) {
     <button
       type="button"
       onClick={(e) => action.onClick(e)}
-      /* allow-arbitrary: pre-slice-a */
+      /* allow-arbitrary: rounded-[1.5rem]/rounded-[1.7rem] + bg-[radial-gradient(...)] + shadow-[...] — primary action tile chassis, no canonical token */
       className="group relative min-h-[176px] w-full touch-manipulation overflow-hidden rounded-[1.5rem] border border-orange-300/55 bg-[radial-gradient(circle_at_30%_-10%,rgba(249,115,22,0.55),transparent_55%),linear-gradient(155deg,rgba(234,88,12,0.32)_0%,rgba(120,53,15,0.28)_38%,rgba(15,11,8,0.92)_100%)] px-4 pb-4 pt-5 text-left shadow-[0_28px_56px_rgba(0,0,0,0.6),0_18px_44px_rgba(249,115,22,0.28)] ring-1 ring-inset ring-orange-200/[0.12] transition-all duration-200 hover:border-orange-200/75 hover:shadow-[0_30px_60px_rgba(0,0,0,0.65),0_22px_52px_rgba(249,115,22,0.42)] active:scale-[0.98] sm:min-h-[208px] sm:rounded-[1.7rem] sm:px-5 sm:pb-5 sm:pt-6"
     >
       <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-orange-200/55 to-transparent" />
@@ -145,22 +144,22 @@ function PrimaryActionTile({ action }: { action: QuickAction }) {
               alt=""
               size="lg"
               aria-hidden="true"
-              /* allow-arbitrary: pre-slice-a */
+              /* allow-arbitrary: rounded-[1.35rem] + shadow-[...] — primary action icon chassis, no canonical token */
               className="h-[4.25rem] w-[4.25rem] rounded-[1.35rem] border border-orange-300/40 bg-[#0a0503]/72 p-3 shadow-[0_14px_32px_rgba(249,115,22,0.36),inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-inset ring-white/[0.08] transition-transform duration-200 group-hover:scale-[1.04] sm:h-[5rem] sm:w-[5rem]"
               fallback={<span className="text-xl" aria-hidden>{action.icon}</span>}
             />
           ) : (
-            /* allow-arbitrary: pre-slice-a */
+            /* allow-arbitrary: rounded-[1.35rem] + shadow-[...] — primary action icon chassis (emoji fallback), no canonical token */
             <span className="flex h-[4.25rem] w-[4.25rem] shrink-0 items-center justify-center rounded-[1.35rem] border border-white/10 bg-black/40 text-3xl shadow-[0_10px_24px_rgba(0,0,0,0.36)]" aria-hidden>{action.icon}</span>
           )}
-          {/* allow-arbitrary: pre-slice-a */}
-          <span aria-hidden="true" className="mt-1.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/40 text-[11px] font-black text-white/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:border-orange-200/55 group-hover:text-orange-100">→</span>
+          {/* allow-arbitrary: shadow-[inset_0_1px_0_...] — arrow chip inset highlight, no canonical token */}
+          <span aria-hidden="true" className={`mt-1.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/40 ${ds.text.body11} font-black ${ds.color.mutedClass.body} shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:border-orange-200/55 group-hover:text-orange-100`}>→</span>
         </div>
         <div className="min-w-0">
-          {/* allow-arbitrary: pre-slice-a */}
+          {/* allow-arbitrary: text-[17px]/sm:text-[22px] — between body14 and 22+ display tier, no canonical token */}
           <p className="text-[17px] font-black leading-[1.05] tracking-[-0.025em] text-white sm:text-[22px]">{action.title}</p>
-          {/* allow-arbitrary: pre-slice-a */}
-          <p className="mt-1.5 line-clamp-2 text-[11px] font-medium leading-snug text-orange-100/72 sm:text-[13px] sm:leading-relaxed">{action.description}</p>
+          {/* allow-arbitrary: sm:text-[13px] — breakpoint-prefixed text size, ds.text.body{N} lacks breakpoint variants (deferred to PR D-primitives/B) */}
+          <p className={`mt-1.5 line-clamp-2 ${ds.text.body11} font-medium leading-snug text-orange-100/72 sm:text-[13px] sm:leading-relaxed`}>{action.description}</p>
         </div>
       </div>
     </button>
@@ -172,7 +171,7 @@ function SecondaryActionTile({ action }: { action: QuickAction }) {
     <button
       type="button"
       onClick={(e) => action.onClick(e)}
-      /* allow-arbitrary: pre-slice-a */
+      /* allow-arbitrary: shadow-[0_14px_32px_...] — secondary tile lift, no canonical ds.shadow.* tier */
       className="group relative flex min-h-[88px] w-full touch-manipulation items-center gap-3 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0a0807]/72 px-3.5 py-3 text-left shadow-[0_14px_32px_rgba(0,0,0,0.42)] ring-1 ring-inset ring-white/[0.04] backdrop-blur-xl transition-all duration-200 hover:border-orange-300/35 hover:bg-[#0d0a08]/82 active:scale-[0.98] sm:min-h-[100px] sm:px-4 sm:py-3.5"
     >
       <div className="pointer-events-none absolute inset-x-3 top-0 h-px bg-gradient-to-r from-transparent via-white/12 to-transparent" />
@@ -183,22 +182,20 @@ function SecondaryActionTile({ action }: { action: QuickAction }) {
           alt=""
           size="md"
           aria-hidden="true"
-          /* allow-arbitrary: pre-slice-a */
+          /* allow-arbitrary: shadow-[inset_...,...] — secondary icon inset+lift, no canonical token */
           className="h-12 w-12 shrink-0 rounded-xl border border-white/[0.08] bg-black/40 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_8px_18px_rgba(0,0,0,0.32)] transition group-hover:border-orange-300/30 sm:h-[3.25rem] sm:w-[3.25rem]"
           fallback={<span className="text-lg" aria-hidden>{action.icon}</span>}
         />
       ) : (
-        /* allow-arbitrary: pre-slice-a */
+        /* allow-arbitrary: shadow-[inset_...,...] — secondary icon inset+lift (emoji fallback), no canonical token */
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-black/40 text-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_8px_18px_rgba(0,0,0,0.32)] sm:h-[3.25rem] sm:w-[3.25rem]" aria-hidden>{action.icon}</span>
       )}
       <div className="min-w-0 flex-1">
-        {/* allow-arbitrary: pre-slice-a */}
-        <p className="text-[14px] font-black leading-tight tracking-[-0.015em] text-white sm:text-[15px]">{action.title}</p>
-        {/* allow-arbitrary: pre-slice-a */}
-        <p className="mt-0.5 line-clamp-1 text-[11px] font-medium leading-snug text-slate-400 sm:text-xs">{action.description}</p>
+        {/* allow-arbitrary: sm:text-[15px] — breakpoint-prefixed text size, ds.text.body{N} lacks breakpoint variants (deferred to PR D-primitives/B) */}
+        <p className={`${ds.text.body14} font-black leading-tight tracking-[-0.015em] text-white sm:text-[15px]`}>{action.title}</p>
+        <p className={`mt-0.5 line-clamp-1 ${ds.text.body11} font-medium leading-snug text-slate-400 sm:text-xs`}>{action.description}</p>
       </div>
-      {/* allow-arbitrary: pre-slice-a */}
-      <span aria-hidden="true" className="ml-1 shrink-0 text-base font-black text-white/22 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-orange-200/55">→</span>
+      <span aria-hidden="true" className={`ml-1 shrink-0 text-base font-black ${ds.color.mutedClass.disabled} transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-orange-200/55`}>→</span>
     </button>
   );
 }
@@ -215,16 +212,13 @@ function HomeSettingsStrip({
   onLangChange: (lang: Lang) => void;
 }) {
   return (
-    /* allow-arbitrary: pre-slice-a */
-    <section className="relative flex items-center justify-between gap-3 overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 ring-1 ring-inset ring-white/[0.04] backdrop-blur-xl sm:px-5">
+    <section className={`${ds.panel.subpanel} relative flex items-center justify-between gap-3 overflow-hidden px-4 py-3 backdrop-blur-xl sm:px-5`}>
       <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-white/12 to-transparent" />
       <div className="min-w-0">
-        {/* allow-arbitrary: pre-slice-a */}
-        <p className="truncate text-[10px] font-black uppercase tracking-[0.18em] text-white/62">
+        <p className={`truncate ${ds.text.body10} font-black uppercase tracking-[0.18em] ${ds.color.mutedClass.secondary}`}>
           {t.homeSettingsKicker}
         </p>
-        {/* allow-arbitrary: pre-slice-a */}
-        <p className="mt-0.5 truncate text-[11px] font-medium text-slate-500">
+        <p className={`mt-0.5 truncate ${ds.text.body11} font-medium text-slate-500`}>
           {t.homeSettingsSub}
         </p>
       </div>
