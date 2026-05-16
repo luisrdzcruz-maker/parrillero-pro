@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import ResultCard from "@/components/ResultCard";
 import { getPublicSavedMenuBySlug, type Json, type SavedMenu } from "@/lib/db/savedMenus";
+import { ds } from "@/lib/design-system";
 import ShareActions from "./ShareActions";
 
 type ShareSlugPageProps = {
@@ -99,7 +100,7 @@ function UnavailablePlan() {
       <div className="mx-auto max-w-[640px]">
         <BrandHeader />
       </div>
-      {/* allow-arbitrary: pre-slice-a */}
+      {/* allow-arbitrary: rounded-[2rem] + shadow-[0_30px_100px_...] — unavailable-state hero, no canonical token */}
       <section className="mx-auto mt-8 max-w-[640px] rounded-[2rem] border border-white/10 bg-slate-950/85 p-7 text-center shadow-[0_30px_100px_rgba(0,0,0,0.35)]">
         <h1 className="mt-5 text-3xl font-black tracking-tight text-white">
           Este plan no está disponible
@@ -128,8 +129,7 @@ function BrandHeader() {
           </div>
           <div>
             <p className="text-sm font-black text-white">Parrillero Pro</p>
-            {/* allow-arbitrary: pre-slice-a */}
-            <p className="text-[11px] font-semibold text-slate-400">Plan inteligente de parrilla</p>
+            <p className={`${ds.text.body11} font-semibold text-slate-400`}>Plan inteligente de parrilla</p>
           </div>
         </div>
         <Link
@@ -153,16 +153,15 @@ function HeroSection({
   type: SavedMenuType;
 }) {
   return (
-    /* allow-arbitrary: pre-slice-a */
+    /* allow-arbitrary: rounded-[2rem] + shadow-[0_30px_100px_...] — share hero chassis, no canonical token */
     <section className="overflow-hidden rounded-[2rem] border border-orange-400/20 bg-slate-950/80 shadow-[0_30px_100px_rgba(249,115,22,0.13)]">
       <div className="relative p-6 sm:p-8">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(251,146,60,0.30),transparent_36%),linear-gradient(to_top,rgba(2,6,23,0.98),rgba(15,23,42,0.74),rgba(255,255,255,0.07))]" />
         <div className="relative">
-          {/* allow-arbitrary: pre-slice-a */}
-          <p className="inline-flex rounded-full border border-orange-400/25 bg-orange-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">
+          <p className={`inline-flex rounded-full border border-orange-400/25 bg-orange-500/10 px-3 py-1 ${ds.text.body10} font-black uppercase tracking-[0.24em] text-orange-300`}>
             {getBadgeLabel(type)}
           </p>
-          {/* allow-arbitrary: pre-slice-a */}
+          {/* allow-arbitrary: text-[clamp(...)] display-tier hero — stays inline per slice-d-tokens.md §1 */}
           <h1 className="mt-5 text-[clamp(2.35rem,11vw,4.7rem)] font-black leading-[0.94] tracking-[-0.07em] text-white">
             Plan de parrilla listo 🔥
           </h1>
@@ -171,7 +170,7 @@ function HeroSection({
           </p>
           <p className="mt-3 max-w-xl text-sm leading-6 text-slate-300">{menu.name}</p>
           {(meta.products || meta.cut) && (
-            /* allow-arbitrary: pre-slice-a */
+            /* allow-arbitrary: bg-white/[0.05] — non-subpanel products chip surface, no canonical token */
             <p className="mt-4 rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm font-semibold text-slate-200">
               {meta.products || meta.cut}
             </p>
@@ -201,7 +200,7 @@ function ResultContent({ blocks }: { blocks: Blocks }) {
 
 function CtaSection() {
   return (
-    /* allow-arbitrary: pre-slice-a */
+    /* allow-arbitrary: rounded-[2rem] + bg-[radial-gradient(...)] — CTA section chassis, no canonical token */
     <section className="mt-6 overflow-hidden rounded-[2rem] border border-orange-400/20 bg-[radial-gradient(circle_at_50%_0%,rgba(249,115,22,0.25),transparent_38%),linear-gradient(145deg,rgba(15,23,42,0.95),rgba(2,6,23,0.98))] p-6 text-center shadow-2xl shadow-orange-950/20 sm:p-8">
       <h2 className="text-3xl font-black tracking-tight text-white">
         🔥 Crea tu propio plan en segundos
@@ -229,10 +228,9 @@ function Footer() {
 
 function SummaryItem({ label, value }: { label: string; value: string }) {
   return (
-    /* allow-arbitrary: pre-slice-a */
+    /* allow-arbitrary: bg-white/[0.04] — non-subpanel summary tile (border-white/10 not /[0.08]), no canonical token */
     <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/10">
-      {/* allow-arbitrary: pre-slice-a */}
-      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-300">{label}</p>
+      <p className={`${ds.text.body10} font-black uppercase tracking-[0.2em] text-orange-300`}>{label}</p>
       <p className="mt-2 text-sm font-semibold text-white">{value || "No especificado"}</p>
     </div>
   );
