@@ -263,89 +263,89 @@ export default function LiveCookingScreen({
         phase={phase}
       />
 
-      <main className="flex min-h-0 flex-1 flex-col overflow-hidden px-3.5 py-3">
-        {/* Top group — alert + hero hug the top of the main area */}
-        <div className="flex shrink-0 flex-col gap-2.5">
-          {alertMessage && (
-            <div className={`shrink-0 rounded-2xl border border-orange-400/30 bg-orange-500/10 px-3.5 py-2 ${ds.text.body11} font-bold text-orange-100`}>
-              {alertMessage}
-            </div>
-          )}
+      <main className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden px-3.5 py-3">
+        {alertMessage && (
+          <div className={`shrink-0 rounded-2xl border border-orange-400/30 bg-orange-500/10 px-3.5 py-2 ${ds.text.body11} font-bold text-orange-100`}>
+            {alertMessage}
+          </div>
+        )}
 
-          <LiveHero
-            currentStep={currentStep}
-            feedback={feedback}
+        <LiveHero
+          currentStep={currentStep}
+          feedback={feedback}
+          lang={resolvedLang}
+          phase={phase}
+          reduceMotion={reduceMotion}
+          urgency={urgency}
+        />
+
+        {/* Up-next sits directly below the hero so the relationship "this step
+            → next steps" reads naturally. The mt-auto previously wrapped this
+            block alongside context/reset and pushed both to the bottom; at
+            375×812 that produced ~210px of dead space between hero and
+            up-next. Tightened to flow-from-hero in /8b. */}
+        {!isComplete && (nextStep || stepAfterNext) && (
+          <LiveUpNext
+            nextStep={nextStep}
+            stepAfterNext={stepAfterNext}
             lang={resolvedLang}
-            phase={phase}
-            reduceMotion={reduceMotion}
-            urgency={urgency}
           />
-        </div>
+        )}
 
-        {/* Bottom group — pushed above the sticky footer via mt-auto. Up-next +
-            completion + context row collect at the bottom of the viewport so
-            empty space distributes between hero and this band rather than
-            collecting under it. */}
-        <div className="mt-auto flex shrink-0 flex-col gap-2.5">
-          {!isComplete && (nextStep || stepAfterNext) && (
-            <LiveUpNext
-              nextStep={nextStep}
-              stepAfterNext={stepAfterNext}
-              lang={resolvedLang}
-            />
-          )}
-
-          {isComplete && (
-            <div className="shrink-0 space-y-2">
-              <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-center">
-                <p className={`${ds.text.body10} font-black uppercase tracking-[0.22em] text-emerald-400`}>
-                  {liveText.cookingComplete}
-                </p>
-                <p className={`mt-1 ${ds.text.body11} font-semibold ${ds.color.mutedClass.secondary}`}>
-                  {liveText.cookingCompleteBody}
-                </p>
-              </div>
-
-              {onSaveCook && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (saveState === "saved") return;
-                    onSaveCook();
-                    setSaveState("saved");
-                  }}
-                  className={`min-h-11 w-full rounded-2xl ${ds.text.body13} font-black transition-all duration-300 active:scale-[0.98] ${
-                    saveState === "saved"
-                      ? "border border-emerald-500/35 bg-emerald-500/15 text-emerald-300"
-                      /* allow-arbitrary: shadow-[...] phase-colored CTA glow — no canonical ds.shadow.* tier */
-                      : "bg-emerald-500 text-black shadow-[0_4px_28px_rgba(16,185,129,0.38)] hover:bg-emerald-400 active:bg-emerald-600"
-                  }`}
-                >
-                  {saveState === "saved"
-                    ? liveText.savedCook
-                    : liveText.saveCook}
-                </button>
-              )}
+        {isComplete && (
+          <div className="shrink-0 space-y-2">
+            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-center">
+              <p className={`${ds.text.body10} font-black uppercase tracking-[0.22em] text-emerald-400`}>
+                {liveText.cookingComplete}
+              </p>
+              <p className={`mt-1 ${ds.text.body11} font-semibold ${ds.color.mutedClass.secondary}`}>
+                {liveText.cookingCompleteBody}
+              </p>
             </div>
-          )}
 
-          {(resolvedContext || onReset) && (
-            <div className="flex min-h-6 shrink-0 items-center justify-center gap-3">
-              {resolvedContext && (
-                <span className={`truncate ${ds.text.body10} font-semibold ${ds.color.mutedClass.secondary}`}>{resolvedContext}</span>
-              )}
-              {onReset && (
-                <button
-                  type="button"
-                  onClick={onReset}
-                  className={`shrink-0 px-2 py-1 ${ds.text.body10} font-bold ${ds.color.mutedClass.secondary} transition active:scale-[0.98]`}
-                >
-                  {liveText.reset}
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+            {onSaveCook && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (saveState === "saved") return;
+                  onSaveCook();
+                  setSaveState("saved");
+                }}
+                className={`min-h-11 w-full rounded-2xl ${ds.text.body13} font-black transition-all duration-300 active:scale-[0.98] ${
+                  saveState === "saved"
+                    ? "border border-emerald-500/35 bg-emerald-500/15 text-emerald-300"
+                    /* allow-arbitrary: shadow-[...] phase-colored CTA glow — no canonical ds.shadow.* tier */
+                    : "bg-emerald-500 text-black shadow-[0_4px_28px_rgba(16,185,129,0.38)] hover:bg-emerald-400 active:bg-emerald-600"
+                }`}
+              >
+                {saveState === "saved"
+                  ? liveText.savedCook
+                  : liveText.saveCook}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Context + reset float at the bottom of the main area, just above the
+            sticky footer. mt-auto consumes any remaining vertical space so the
+            other content above flows from the top rather than collecting at
+            the bottom. */}
+        {(resolvedContext || onReset) && (
+          <div className="mt-auto flex min-h-6 shrink-0 items-center justify-center gap-3">
+            {resolvedContext && (
+              <span className={`truncate ${ds.text.body10} font-semibold ${ds.color.mutedClass.secondary}`}>{resolvedContext}</span>
+            )}
+            {onReset && (
+              <button
+                type="button"
+                onClick={onReset}
+                className={`shrink-0 px-2 py-1 ${ds.text.body10} font-bold ${ds.color.mutedClass.secondary} transition active:scale-[0.98]`}
+              >
+                {liveText.reset}
+              </button>
+            )}
+          </div>
+        )}
       </main>
 
       {/* allow-arbitrary: shadow-[0_-12px_...] bottom-nav lift — no canonical ds.shadow.* tier */}
