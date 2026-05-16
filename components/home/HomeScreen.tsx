@@ -82,8 +82,6 @@ type QuickAction = {
     key: string;
   };
   title: string;
-  description: string;
-  emphasized?: boolean;
   onClick: (e: MouseEvent<HTMLButtonElement>) => void;
 };
 
@@ -97,7 +95,7 @@ function HomeQuickActions({
   return (
     <section className="relative">
       <p className="sr-only">{title}</p>
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+      <div className="flex flex-col gap-2.5 sm:gap-3">
         {actions.map((action) => (
           <PrimaryActionTile key={action.id} action={action} />
         ))}
@@ -112,41 +110,39 @@ function PrimaryActionTile({ action }: { action: QuickAction }) {
       type="button"
       onClick={(e) => action.onClick(e)}
       /* allow-arbitrary: rounded-[1.5rem]/rounded-[1.7rem] + bg-[radial-gradient(...)] + shadow-[...] — primary action tile chassis, no canonical token */
-      className="group relative min-h-[232px] w-full touch-manipulation overflow-hidden rounded-[1.5rem] border border-orange-300/55 bg-[radial-gradient(circle_at_30%_-10%,rgba(249,115,22,0.55),transparent_55%),linear-gradient(155deg,rgba(234,88,12,0.32)_0%,rgba(120,53,15,0.28)_38%,rgba(15,11,8,0.92)_100%)] px-4 pb-5 pt-6 text-left shadow-[0_28px_56px_rgba(0,0,0,0.6),0_18px_44px_rgba(249,115,22,0.28)] ring-1 ring-inset ring-orange-200/[0.12] transition-all duration-200 hover:border-orange-200/75 hover:shadow-[0_30px_60px_rgba(0,0,0,0.65),0_22px_52px_rgba(249,115,22,0.42)] active:scale-[0.98] sm:min-h-[272px] sm:rounded-[1.7rem] sm:px-5 sm:pb-6 sm:pt-7"
+      className="group relative min-h-[208px] w-full touch-manipulation overflow-hidden rounded-[1.5rem] border border-orange-300/55 bg-[radial-gradient(circle_at_30%_-10%,rgba(249,115,22,0.55),transparent_55%),linear-gradient(155deg,rgba(234,88,12,0.32)_0%,rgba(120,53,15,0.28)_38%,rgba(15,11,8,0.92)_100%)] px-4 pb-5 pt-6 text-center shadow-[0_28px_56px_rgba(0,0,0,0.6),0_18px_44px_rgba(249,115,22,0.28)] ring-1 ring-inset ring-orange-200/[0.12] transition-all duration-200 hover:border-orange-200/75 hover:shadow-[0_30px_60px_rgba(0,0,0,0.65),0_22px_52px_rgba(249,115,22,0.42)] active:scale-[0.98] sm:min-h-[232px] sm:rounded-[1.7rem] sm:px-5 sm:pb-6 sm:pt-7"
     >
       <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-orange-200/55 to-transparent" />
       <div className="pointer-events-none absolute -right-14 -top-16 h-40 w-40 rounded-full bg-orange-400/30 blur-3xl transition group-hover:bg-orange-400/45" />
       <div className="pointer-events-none absolute -bottom-16 -left-10 h-32 w-32 rounded-full bg-orange-700/24 blur-3xl" />
-      <div className="relative flex h-full min-w-0 flex-col">
-        {/* Visual zone — large centered icon anchors the card */}
-        <div className="flex flex-1 items-center justify-center pb-3 sm:pb-4">
-          {action.registryIcon ? (
-            <AppIcon
-              category={action.registryIcon.category}
-              iconKey={action.registryIcon.key}
-              alt=""
-              size="lg"
-              aria-hidden="true"
-              /* allow-arbitrary: rounded-[1.4rem] + shadow-[...] — primary action icon chassis (enlarged for hero composition), no canonical token */
-              className="h-[5.25rem] w-[5.25rem] rounded-[1.4rem] border border-orange-300/40 bg-[#0a0503]/72 p-3.5 shadow-[0_14px_32px_rgba(249,115,22,0.36),inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-inset ring-white/[0.08] transition-transform duration-200 group-hover:scale-[1.04] sm:h-[6.25rem] sm:w-[6.25rem] sm:p-4"
-              fallback={<span className="text-3xl sm:text-4xl" aria-hidden>{action.icon}</span>}
-            />
-          ) : (
-            /* allow-arbitrary: rounded-[1.4rem] + shadow-[...] — primary action icon chassis (emoji fallback, enlarged for hero composition), no canonical token */
-            <span className="flex h-[5.25rem] w-[5.25rem] shrink-0 items-center justify-center rounded-[1.4rem] border border-white/10 bg-black/40 text-4xl shadow-[0_10px_24px_rgba(0,0,0,0.36)] sm:h-[6.25rem] sm:w-[6.25rem] sm:text-5xl" aria-hidden>{action.icon}</span>
-          )}
-        </div>
-        {/* Text zone — title at top of zone, description + arrow at bottom-right */}
-        <div className="min-w-0 border-t border-white/10 pt-3 sm:pt-3.5">
-          {/* allow-arbitrary: text-[17px]/sm:text-[22px] — between body14 and 22+ display tier, no canonical token */}
-          <p className="text-[17px] font-black leading-[1.05] tracking-[-0.025em] text-white sm:text-[22px]">{action.title}</p>
-          <div className="mt-1.5 flex items-end justify-between gap-2">
-            {/* allow-arbitrary: sm:text-[13px] — breakpoint-prefixed text size, ds.text.body{N} lacks breakpoint variants (deferred to PR D-primitives/B) */}
-            <p className={`min-w-0 flex-1 line-clamp-2 ${ds.text.body11} font-medium leading-snug text-orange-100/72 sm:text-[13px] sm:leading-relaxed`}>{action.description}</p>
-            <span aria-hidden="true" className={`shrink-0 ${ds.text.body14} font-black ${ds.color.mutedClass.body} transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-orange-100`}>→</span>
-          </div>
-        </div>
+      <div className="relative flex h-full min-w-0 flex-col items-center justify-center gap-4 sm:gap-5">
+        {action.registryIcon ? (
+          <AppIcon
+            category={action.registryIcon.category}
+            iconKey={action.registryIcon.key}
+            alt=""
+            size="lg"
+            aria-hidden="true"
+            /* allow-arbitrary: rounded-[1.5rem] + shadow-[...] — primary action icon chassis (hero size), no canonical token */
+            className="h-[6.25rem] w-[6.25rem] rounded-[1.5rem] border border-orange-300/40 bg-[#0a0503]/72 p-4 shadow-[0_14px_32px_rgba(249,115,22,0.36),inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-inset ring-white/[0.08] transition-transform duration-200 group-hover:scale-[1.04] sm:h-[7.5rem] sm:w-[7.5rem] sm:p-5"
+            fallback={<span className="text-4xl sm:text-5xl" aria-hidden>{action.icon}</span>}
+          />
+        ) : (
+          /* allow-arbitrary: rounded-[1.5rem] + shadow-[...] — primary action icon chassis (emoji fallback, hero size), no canonical token */
+          <span className="flex h-[6.25rem] w-[6.25rem] shrink-0 items-center justify-center rounded-[1.5rem] border border-white/10 bg-black/40 text-4xl shadow-[0_10px_24px_rgba(0,0,0,0.36)] sm:h-[7.5rem] sm:w-[7.5rem] sm:text-5xl" aria-hidden>{action.icon}</span>
+        )}
+        {/* Single-word label — card identity, full-strength white */}
+        <p className="text-xl font-black leading-none tracking-[-0.01em] text-white sm:text-2xl">
+          {action.title}
+        </p>
       </div>
+      {/* Subtle chevron — bottom-right navigation hint */}
+      <span
+        aria-hidden="true"
+        className={`absolute bottom-3 right-4 ${ds.text.body14} font-black ${ds.color.mutedClass.faint} transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-orange-200/70`}
+      >
+        ›
+      </span>
     </button>
   );
 }
@@ -219,9 +215,7 @@ export function HomeScreen({
       id: "start-cooking",
       icon: "🥩",
       registryIcon: { category: "ui", key: "meat-selection" },
-      title: t.homePrimaryCta,
-      description: t.homeGuidedCookingSub,
-      emphasized: true,
+      title: t.homeStartCookTitle,
       onClick: (e) =>
         fireRipple(e.clientX, e.clientY, () => (onPrimaryCtaClick ? onPrimaryCtaClick() : onModeChange("coccion"))),
     },
@@ -229,9 +223,7 @@ export function HomeScreen({
       id: "plan-bbq",
       icon: "🧭",
       registryIcon: { category: "ui", key: "cooking-dashboard" },
-      title: t.homeParrillada,
-      description: t.homeParrilladaSub,
-      emphasized: true,
+      title: t.homeStartParrilladaTitle,
       onClick: () => onModeChange("plan"),
     },
   ];
