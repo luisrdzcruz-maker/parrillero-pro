@@ -95,7 +95,7 @@ function HomeQuickActions({
   return (
     <section className="relative">
       <p className="sr-only">{title}</p>
-      <div className="flex flex-col gap-2.5 sm:gap-3">
+      <div className="flex flex-col gap-3.5 sm:gap-4">
         {actions.map((action) => (
           <PrimaryActionTile key={action.id} action={action} />
         ))}
@@ -110,7 +110,7 @@ function PrimaryActionTile({ action }: { action: QuickAction }) {
       type="button"
       onClick={(e) => action.onClick(e)}
       /* allow-arbitrary: rounded-[1.5rem]/rounded-[1.7rem] + bg-[radial-gradient(...)] + shadow-[...] — primary action tile chassis, no canonical token */
-      className="group relative min-h-[208px] w-full touch-manipulation overflow-hidden rounded-[1.5rem] border border-orange-300/55 bg-[radial-gradient(circle_at_30%_-10%,rgba(249,115,22,0.55),transparent_55%),linear-gradient(155deg,rgba(234,88,12,0.32)_0%,rgba(120,53,15,0.28)_38%,rgba(15,11,8,0.92)_100%)] px-4 pb-5 pt-6 text-center shadow-[0_28px_56px_rgba(0,0,0,0.6),0_18px_44px_rgba(249,115,22,0.28)] ring-1 ring-inset ring-orange-200/[0.12] transition-all duration-200 hover:border-orange-200/75 hover:shadow-[0_30px_60px_rgba(0,0,0,0.65),0_22px_52px_rgba(249,115,22,0.42)] active:scale-[0.98] sm:min-h-[232px] sm:rounded-[1.7rem] sm:px-5 sm:pb-6 sm:pt-7"
+      className="group relative min-h-[208px] w-full touch-manipulation overflow-hidden rounded-[1.5rem] bg-[radial-gradient(circle_at_30%_-10%,rgba(249,115,22,0.55),transparent_55%),linear-gradient(155deg,rgba(234,88,12,0.32)_0%,rgba(120,53,15,0.28)_38%,rgba(15,11,8,0.92)_100%)] px-4 pb-5 pt-6 text-center shadow-[0_28px_56px_rgba(0,0,0,0.6),0_18px_44px_rgba(249,115,22,0.28)] ring-1 ring-inset ring-orange-200/[0.12] transition-all duration-200 hover:shadow-[0_30px_60px_rgba(0,0,0,0.65),0_22px_52px_rgba(249,115,22,0.42)] active:scale-[0.98] sm:min-h-[232px] sm:rounded-[1.7rem] sm:px-5 sm:pb-6 sm:pt-7"
     >
       <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-orange-200/55 to-transparent" />
       <div className="pointer-events-none absolute -right-14 -top-16 h-40 w-40 rounded-full bg-orange-400/30 blur-3xl transition group-hover:bg-orange-400/45" />
@@ -136,13 +136,6 @@ function PrimaryActionTile({ action }: { action: QuickAction }) {
           {action.title}
         </p>
       </div>
-      {/* Subtle chevron — bottom-right navigation hint */}
-      <span
-        aria-hidden="true"
-        className={`absolute bottom-3 right-4 ${ds.text.body14} font-black ${ds.color.mutedClass.faint} transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-orange-200/70`}
-      >
-        ›
-      </span>
     </button>
   );
 }
