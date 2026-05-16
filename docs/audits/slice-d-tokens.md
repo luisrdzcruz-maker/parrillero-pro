@@ -61,6 +61,33 @@ The **7-tier (rather than 6-tier) decision** kept `faint=0.45` as a distinct tie
 
 **Naming consistency.** Names descend by visual emphasis, mirroring how a reader would describe the role: `strong` titles, `body` text, `base` chrome, `secondary` annotations, `helper` hints, `faint` muted eyebrows, `disabled` chrome-off-state. Ordering in source descends by opacity.
 
+### Discovered during PR D-primitives/A: token-shape correction (`mutedClass`)
+
+`ds.color.muted.*` ships as **raw rgba strings** (e.g. `"rgba(255, 255, 255, 0.65)"`) for inline-style / CSS-variable consumption. During PR D-primitives/A consumer migration, discovery found that the overwhelming majority of muted-tone callsites apply the tone via `className` (e.g. `className="text-white/65"`), not via inline style. Migrating those sites with the rgba shape alone would have required a className → inline-style refactor across ~143 callsites — not the mechanical token swap PR D-primitives/A is scoped to deliver.
+
+The fix is net-additive: a parallel `ds.color.mutedClass.*` map exposing the same tier names as Tailwind class strings.
+
+```ts
+ds.color.mutedClass = {
+  strong:    'text-white/90',
+  body:      'text-white/80',
+  base:      'text-white/70',
+  secondary: 'text-white/65',
+  helper:    'text-white/50',
+  faint:     'text-white/45',
+  disabled:  'text-white/35',
+};
+```
+
+Consumers pick the form that fits the call:
+
+- `className={cx(..., ds.color.mutedClass.secondary)}` — the common case.
+- `style={{ color: ds.color.muted.secondary }}` — for CSS-variable / inline-style use.
+
+**Lint rule unchanged.** `scripts/lint-tokens.mjs` continues to reject `text-white/<not 50|70|90>` in `components/` and `app/`. The new tier classes (/35, /45, /65, /80) are still arbitrary at the lexer level — only references that flow through `ds.color.mutedClass.*` reach the compiled CSS without triggering the rule, because the source line contains the token reference rather than the literal class. `lib/design-system.ts` is the only file where the raw class strings live, and `lib/` is exempt from the lint scope.
+
+**Reasoning for the late shape addition.** The original Slice D-tokens locked-values discovery (recorded above) tracked the rgba values needed; it did not separately ask "which form does each callsite consume." That gap surfaced only when PR D-primitives/A's mechanical-migration scope met the actual call patterns. Treated here as a one-time spec correction inside the slice that owns muted-tone migration, not a scope expansion.
+
 ## 3. ds.panel.subpanel — nested low-tint chassis
 
 ```ts

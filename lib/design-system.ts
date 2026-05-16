@@ -232,6 +232,21 @@ export const ds = {
       faint: "rgba(255, 255, 255, 0.45)",
       disabled: "rgba(255, 255, 255, 0.35)",
     },
+    // Tailwind class strings mirroring `muted` (rgba). Use when applying
+    // a muted tone via className (the common case); use `muted` for
+    // inline-style / CSS-variable consumption. The `mutedClass` shape was
+    // added during PR D-primitives/A when the rgba-only form turned out
+    // to block mechanical className migration — see
+    // docs/audits/slice-d-tokens.md.
+    mutedClass: {
+      strong: "text-white/90",
+      body: "text-white/80",
+      base: "text-white/70",
+      secondary: "text-white/65",
+      helper: "text-white/50",
+      faint: "text-white/45",
+      disabled: "text-white/35",
+    },
   },
 
   // Tailwind class strings (consistent with the rest of ds.*). Arbitrary
