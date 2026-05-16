@@ -56,7 +56,7 @@ export function ParrilladaEntryScreen({
       <ParrilladaModeCard mode="pro" title={proTitle} description={proDescription} onClick={onSelectMode} />
 
       <Panel as="section" className="p-4">
-        <p className={`${ds.text.body11} uppercase tracking-[0.18em] ${ds.color.mutedClass.faint}`}>{recentTitle}</p>
+        <p className={`${ds.text.body11} uppercase tracking-[0.18em] ${ds.color.mutedClass.secondary}`}>{recentTitle}</p>
         <div className="mt-3 space-y-2">
           {recentPlans.map((plan) => (
             <article key={plan.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5">

@@ -162,7 +162,7 @@ function HighlightCard({ block }: { block: ResultBlock }) {
   return (
     /* allow-arbitrary: bg-white/[0.045] — non-subpanel highlight card, no canonical token */
     <article className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 shadow-lg shadow-black/15">
-      <p className={`${ds.text.body10} font-black uppercase tracking-[0.22em] ${ds.color.mutedClass.faint}`}>
+      <p className={`${ds.text.body10} font-black uppercase tracking-[0.22em] ${ds.color.mutedClass.secondary}`}>
         {block.title}
       </p>
       <p className="mt-2 text-sm font-medium leading-6 text-slate-200">{text}</p>
@@ -258,7 +258,7 @@ export default function ShareClient() {
                   </div>
 
                   <div className="mt-7">
-                    <p className={`${ds.text.body10} font-black uppercase tracking-[0.26em] ${ds.color.mutedClass.faint}`}>
+                    <p className={`${ds.text.body10} font-black uppercase tracking-[0.26em] ${ds.color.mutedClass.secondary}`}>
                       Resultado de cocción
                     </p>
                     {/* allow-arbitrary: text-[clamp(...)] display-tier hero — stays inline per slice-d-tokens.md §1 */}

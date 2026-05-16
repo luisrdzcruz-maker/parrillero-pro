@@ -96,7 +96,7 @@ export function CookingLoadingScreen({ cutImage, cutName, lang = "es" }: Props) 
         </div>
 
         {/* Cut name — small label below image */}
-        <p className={`relative z-10 mt-5 ${ds.text.body13} font-bold tracking-wide ${ds.color.mutedClass.disabled}`}>
+        <p className={`relative z-10 mt-5 ${ds.text.body13} font-bold tracking-wide ${ds.color.mutedClass.secondary}`}>
           {cutName}
         </p>
       </div>

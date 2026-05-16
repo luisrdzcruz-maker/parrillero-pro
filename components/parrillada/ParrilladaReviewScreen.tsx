@@ -39,13 +39,13 @@ export function ParrilladaReviewScreen({ lang, t, plan, plannerResult, ctaLabel,
         hideLabel={t.parrilladaHideDetail}
       >
         <div className="mt-2">
-          <p className={`text-xs font-semibold uppercase tracking-[0.16em] ${ds.color.mutedClass.faint}`}>{t.parrilladaZoneStatus}</p>
+          <p className={`text-xs font-semibold uppercase tracking-[0.16em] ${ds.color.mutedClass.secondary}`}>{t.parrilladaZoneStatus}</p>
           <div className="mt-1.5">
             <GrillZoneStatusCard zones={zoneStatus} />
           </div>
         </div>
         <div className="mt-3 border-t border-white/10 pt-3">
-          <p className={`text-xs font-semibold uppercase tracking-[0.16em] ${ds.color.mutedClass.faint}`}>{t.parrilladaWarnings}</p>
+          <p className={`text-xs font-semibold uppercase tracking-[0.16em] ${ds.color.mutedClass.secondary}`}>{t.parrilladaWarnings}</p>
           <div className="mt-1.5">
             <ParrilladaWarningsFinal result={plannerResult} />
           </div>

@@ -469,7 +469,7 @@ function SetupVisualToggle({
             🗺️
           </span>
           <div className="min-w-0">
-            <p className={`${ds.text.body11} font-black uppercase tracking-[0.2em] ${ds.color.mutedClass.faint}`}>
+            <p className={`${ds.text.body11} font-black uppercase tracking-[0.2em] ${ds.color.mutedClass.secondary}`}>
               {setupTitle}
             </p>
             <p className={`mt-0.5 line-clamp-1 ${ds.text.body11} text-slate-400`}>

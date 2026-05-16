@@ -91,7 +91,7 @@ export function CutIdentityHeader({
         <div className="flex min-w-0 items-start gap-3">
           <CutIconSlot src={iconSrc} alt="" size={compact ? "md" : "lg"} className={compact ? "mt-0.5" : ""} />
           <div className="min-w-0">
-            <p className={`${ds.text.body10} font-black uppercase tracking-[0.2em] ${ds.color.mutedClass.faint}`}>{eyebrow}</p>
+            <p className={`${ds.text.body10} font-black uppercase tracking-[0.2em] ${ds.color.mutedClass.secondary}`}>{eyebrow}</p>
             <h2
               className={
                 compact

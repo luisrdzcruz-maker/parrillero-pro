@@ -64,7 +64,7 @@ export function CutList({
         >
           <div className="mb-2.5 flex items-end justify-between gap-3 px-1">
             <div>
-              <p className={`${ds.text.body10} font-black uppercase tracking-[0.18em] ${ds.color.mutedClass.faint}`}>
+              <p className={`${ds.text.body10} font-black uppercase tracking-[0.18em] ${ds.color.mutedClass.secondary}`}>
                 {getCategoryLabelUi(lang)}
               </p>
               <h2 className="mt-1 text-lg font-black tracking-tight text-white">{group.label}</h2>

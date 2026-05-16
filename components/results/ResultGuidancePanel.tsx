@@ -184,7 +184,7 @@ function SetupDetailContent({ equipment, lang, setup, setupContent }: Omit<Setup
 
       {/* allow-arbitrary: bg-white/[0.04] — non-subpanel setup-visual info panel, no canonical token */}
       <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-        <p className={`${ds.text.body10} font-black uppercase tracking-[0.16em] ${ds.color.mutedClass.faint}`}>
+        <p className={`${ds.text.body10} font-black uppercase tracking-[0.16em] ${ds.color.mutedClass.secondary}`}>
           {setupVisual.setupVisualLabel}
         </p>
         <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-100">
@@ -218,7 +218,7 @@ export function SetupDetailSurface({
       <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-[1.65rem] border border-white/10 bg-slate-950 shadow-2xl shadow-black/45 ring-1 ring-inset ring-white/[0.05]">
         <div className="flex items-center justify-between gap-3 border-b border-white/8 px-4 py-3">
           <div className="min-w-0">
-            <p className={`${ds.text.body10} font-black uppercase tracking-[0.18em] ${ds.color.mutedClass.faint}`}>
+            <p className={`${ds.text.body10} font-black uppercase tracking-[0.18em] ${ds.color.mutedClass.secondary}`}>
               {copy.setupKicker}
             </p>
             <h3 className="mt-0.5 truncate text-lg font-black tracking-tight text-white">

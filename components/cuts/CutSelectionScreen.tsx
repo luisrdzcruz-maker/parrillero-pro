@@ -639,7 +639,7 @@ function MobileCatalogSheet({
             <div className="mx-auto mb-3 h-1 w-12 rounded-full bg-white/20" />
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className={`${ds.text.body10} font-black uppercase tracking-[0.2em] ${ds.color.mutedClass.faint}`}>
+                <p className={`${ds.text.body10} font-black uppercase tracking-[0.2em] ${ds.color.mutedClass.secondary}`}>
                   {catalogProps.lang === "es" ? "Catálogo completo" : "Full catalog"}
                 </p>
                 <h2 id="mobile-cut-catalog-title" className="mt-1 truncate text-xl font-black tracking-tight text-white">

@@ -45,7 +45,7 @@ export function ScreenHeader({
       <div className="min-w-0 flex-1">
         {eyebrow ? (
           /* allow-arbitrary: sm:text-[11px] — breakpoint-prefixed text size, ds.text.body{N} lacks breakpoint variants (deferred to PR D-primitives/B) */
-          <p className={`${ds.text.body10} font-black uppercase tracking-[0.18em] ${ds.color.mutedClass.faint} sm:text-[11px]`}>
+          <p className={`${ds.text.body10} font-black uppercase tracking-[0.18em] ${ds.color.mutedClass.secondary} sm:text-[11px]`}>
             {eyebrow}
           </p>
         ) : null}

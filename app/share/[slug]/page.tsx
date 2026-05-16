@@ -231,7 +231,7 @@ function SummaryItem({ label, value }: { label: string; value: string }) {
   return (
     /* allow-arbitrary: bg-white/[0.04] — non-subpanel summary tile (border-white/10 not /[0.08]), no canonical token */
     <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/10">
-      <p className={`${ds.text.body10} font-black uppercase tracking-[0.2em] ${ds.color.mutedClass.faint}`}>{label}</p>
+      <p className={`${ds.text.body10} font-black uppercase tracking-[0.2em] ${ds.color.mutedClass.secondary}`}>{label}</p>
       <p className="mt-2 text-sm font-semibold text-white">{value || "No especificado"}</p>
     </div>
   );

@@ -20,7 +20,7 @@ export function CutMap({ animal, lang, selectedZone, onZoneChange }: CutMapProps
     <section className="overflow-hidden rounded-[1.8rem] border border-white/10 bg-white/[0.04] p-4 shadow-2xl shadow-black/20 backdrop-blur-xl">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className={`${ds.text.body10} font-black uppercase tracking-[0.22em] ${ds.color.mutedClass.faint}`}>
+          <p className={`${ds.text.body10} font-black uppercase tracking-[0.22em] ${ds.color.mutedClass.secondary}`}>
             {lang === "es" ? "Filtro por zona" : "Zone filter"}
           </p>
           <h2 className="mt-1 text-2xl font-black tracking-tight text-white">

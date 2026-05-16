@@ -180,7 +180,7 @@ function SetupPanel({
       </div>
 
       <div className="rounded-2xl border border-orange-300/15 bg-orange-500/[0.055] p-3">
-        <p className={`${ds.text.body10} font-black uppercase tracking-[0.16em] ${ds.color.mutedClass.faint}`}>
+        <p className={`${ds.text.body10} font-black uppercase tracking-[0.16em] ${ds.color.mutedClass.secondary}`}>
           {setupVisual.setupVisualLabel}
         </p>
         <p className="mt-1 text-sm font-semibold leading-relaxed text-slate-100">
@@ -273,7 +273,7 @@ export default function ResultGuidanceToggles({
           <div className="w-full max-w-2xl overflow-hidden rounded-[1.65rem] border border-white/10 bg-slate-950 shadow-2xl shadow-black/45 ring-1 ring-inset ring-white/[0.05]">
             <div className="flex items-center justify-between gap-3 border-b border-white/8 px-4 py-3">
               <div className="min-w-0">
-                <p className={`${ds.text.body10} font-black uppercase tracking-[0.18em] ${ds.color.mutedClass.faint}`}>
+                <p className={`${ds.text.body10} font-black uppercase tracking-[0.18em] ${ds.color.mutedClass.secondary}`}>
                   {activeItem.kicker}
                 </p>
                 <h3 className="mt-0.5 truncate text-lg font-black tracking-tight text-white">

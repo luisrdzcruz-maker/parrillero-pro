@@ -16,7 +16,7 @@ export function ParrilladaTimelineCard({ plan, timeline }: ParrilladaTimelineCar
   return (
     /* allow-arbitrary: bg-white/[0.04] — rounded-3xl card (not subpanel chassis pattern), no canonical token */
     <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
-      <p className={`${ds.text.body11} uppercase tracking-[0.18em] ${ds.color.mutedClass.faint}`}>Timeline</p>
+      <p className={`${ds.text.body11} uppercase tracking-[0.18em] ${ds.color.mutedClass.secondary}`}>Timeline</p>
       <h3 className="mt-1 text-base font-semibold text-white">Execution order</h3>
 
       <div className="mt-3 space-y-3">
