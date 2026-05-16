@@ -1,5 +1,6 @@
 "use client";
 
+import { ds } from "@/lib/design-system";
 import type { GeneratedCutProfile } from "@/lib/generated/cutProfiles";
 import type { Lang } from "@/lib/i18n/texts";
 import { CutCard } from "./CutCard";
@@ -32,7 +33,7 @@ export function CutList({
 }: CutListProps) {
   if (groups.length === 0) {
     return (
-      /* allow-arbitrary: pre-slice-a */
+      /* allow-arbitrary: rounded-[1.5rem] + bg-white/[0.04] — no-cuts state chassis, no canonical token */
       <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-6 text-center">
         <p className="text-lg font-black tracking-tight text-white">
           {getNoCutsTitle(lang)}
@@ -58,13 +59,12 @@ export function CutList({
       {groups.map((group) => (
         <section
           key={group.id}
-          /* allow-arbitrary: pre-slice-a */
+          /* allow-arbitrary: rounded-[1.35rem] + bg-white/[0.04] — cut group section chassis, no canonical token */
           className="min-w-0 max-w-full rounded-[1.35rem] border border-white/10 bg-white/[0.04] p-2.5 shadow-2xl shadow-black/20 backdrop-blur-xl"
         >
           <div className="mb-2.5 flex items-end justify-between gap-3 px-1">
             <div>
-              {/* allow-arbitrary: pre-slice-a */}
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-300">
+              <p className={`${ds.text.body10} font-black uppercase tracking-[0.18em] text-orange-300`}>
                 {getCategoryLabelUi(lang)}
               </p>
               <h2 className="mt-1 text-lg font-black tracking-tight text-white">{group.label}</h2>
